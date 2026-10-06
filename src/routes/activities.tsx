@@ -1,20 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon } from "@/components/site/SiteLayout";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/activities")({
-  head: () => ({
-    meta: [
-      { title: "Hoạt động – The Mandarin League" },
-      { name: "description", content: "Workshop, cuộc thi, webinar, trại hè và hoạt động cộng đồng." },
-      { property: "og:title", content: "Hoạt động – The Mandarin League" },
-      { property: "og:description", content: "Workshop, cuộc thi, webinar, trại hè và hoạt động cộng đồng." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: PActivities,
+  component: () => <Outlet />,
 });
-
-function PActivities() {
-  return <ComingSoon eyebrow="Hoạt động" title="Hoạt động của TML" desc="Workshop, cuộc thi, webinar, trại hè và hoạt động cộng đồng." />;
-}

@@ -12,11 +12,20 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ActivitiesRouteImport } from './routes/activities'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as OrganizationRouteImport } from './routes/organization'
+import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
+import { Route as ActivitiesActivityIdRouteImport } from './routes/activities.$activityId'
 import { Route as CoursesHskRouteImport } from './routes/courses.hsk'
+import { Route as MemberMemberIdRouteImport } from './routes/member.$memberId'
+import { Route as NewsIndexRouteImport } from './routes/news.index'
+import { Route as NewsSlugRouteImport } from './routes/news.$slug'
 import { Route as VerifyIndexRouteImport } from './routes/verify.index'
+import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
+import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
 import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.certificate.index'
 import { Route as VerifyCertificateCodeRouteImport } from './routes/verify.certificate.$code'
 import { Route as VerifyHskIndexRouteImport } from './routes/verify.hsk.index'
@@ -37,6 +46,11 @@ const ActivitiesRoute = ActivitiesRouteImport.update({
   path: '/activities',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -52,15 +66,55 @@ const OrganizationRoute = OrganizationRouteImport.update({
   path: '/organization',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PartnersRoute = PartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivitiesIndexRoute = ActivitiesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ActivitiesRoute,
+} as any)
+const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
+  id: '/$activityId',
+  path: '/$activityId',
+  getParentRoute: () => ActivitiesRoute,
+} as any)
 const CoursesHskRoute = CoursesHskRouteImport.update({
   id: '/courses/hsk',
   path: '/courses/hsk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MemberMemberIdRoute = MemberMemberIdRouteImport.update({
+  id: '/member/$memberId',
+  path: '/member/$memberId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsIndexRoute = NewsIndexRouteImport.update({
+  id: '/news/',
+  path: '/news/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsSlugRoute = NewsSlugRouteImport.update({
+  id: '/news/$slug',
+  path: '/news/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyIndexRoute = VerifyIndexRouteImport.update({
   id: '/verify/',
   path: '/verify/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesHskIndexRoute = CoursesHskIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CoursesHskRoute,
+} as any)
+const CoursesHskCourseIdRoute = CoursesHskCourseIdRouteImport.update({
+  id: '/$courseId',
+  path: '/$courseId',
+  getParentRoute: () => CoursesHskRoute,
 } as any)
 const VerifyCertificateIndexRoute = VerifyCertificateIndexRouteImport.update({
   id: '/verify/certificate/',
@@ -86,28 +140,44 @@ const VerifyHskCodeRoute = VerifyHskCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/activities': typeof ActivitiesRoute
+  '/activities': typeof ActivitiesRouteWithChildren
+  '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
-  '/courses/hsk': typeof CoursesHskRoute
+  '/partners': typeof PartnersRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/courses/hsk': typeof CoursesHskRouteWithChildren
+  '/member/$memberId': typeof MemberMemberIdRoute
+  '/news/$slug': typeof NewsSlugRoute
+  '/activities/': typeof ActivitiesIndexRoute
+  '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
+  '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/activities': typeof ActivitiesRoute
+  '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
-  '/courses/hsk': typeof CoursesHskRoute
+  '/partners': typeof PartnersRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/member/$memberId': typeof MemberMemberIdRoute
+  '/news/$slug': typeof NewsSlugRoute
+  '/activities': typeof ActivitiesIndexRoute
+  '/news': typeof NewsIndexRoute
   '/verify': typeof VerifyIndexRoute
+  '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/courses/hsk': typeof CoursesHskIndexRoute
   '/verify/certificate': typeof VerifyCertificateIndexRoute
   '/verify/hsk': typeof VerifyHskIndexRoute
 }
@@ -115,14 +185,23 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/activities': typeof ActivitiesRoute
+  '/activities': typeof ActivitiesRouteWithChildren
+  '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
-  '/courses/hsk': typeof CoursesHskRoute
+  '/partners': typeof PartnersRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/courses/hsk': typeof CoursesHskRouteWithChildren
+  '/member/$memberId': typeof MemberMemberIdRoute
+  '/news/$slug': typeof NewsSlugRoute
+  '/activities/': typeof ActivitiesIndexRoute
+  '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
+  '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
 }
@@ -132,27 +211,43 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
+    | '/community'
     | '/contact'
     | '/join'
     | '/organization'
+    | '/partners'
+    | '/activities/$activityId'
     | '/courses/hsk'
+    | '/member/$memberId'
+    | '/news/$slug'
+    | '/activities/'
+    | '/news/'
     | '/verify/'
+    | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/activities'
+    | '/community'
     | '/contact'
     | '/join'
     | '/organization'
-    | '/courses/hsk'
+    | '/partners'
+    | '/activities/$activityId'
+    | '/member/$memberId'
+    | '/news/$slug'
+    | '/activities'
+    | '/news'
     | '/verify'
+    | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/courses/hsk'
     | '/verify/certificate'
     | '/verify/hsk'
   id:
@@ -160,13 +255,22 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
+    | '/community'
     | '/contact'
     | '/join'
     | '/organization'
+    | '/partners'
+    | '/activities/$activityId'
     | '/courses/hsk'
+    | '/member/$memberId'
+    | '/news/$slug'
+    | '/activities/'
+    | '/news/'
     | '/verify/'
+    | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
   fileRoutesById: FileRoutesById
@@ -174,11 +278,16 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  ActivitiesRoute: typeof ActivitiesRoute
+  ActivitiesRoute: typeof ActivitiesRouteWithChildren
+  CommunityRoute: typeof CommunityRoute
   ContactRoute: typeof ContactRoute
   JoinRoute: typeof JoinRoute
   OrganizationRoute: typeof OrganizationRoute
-  CoursesHskRoute: typeof CoursesHskRoute
+  PartnersRoute: typeof PartnersRoute
+  CoursesHskRoute: typeof CoursesHskRouteWithChildren
+  MemberMemberIdRoute: typeof MemberMemberIdRoute
+  NewsSlugRoute: typeof NewsSlugRoute
+  NewsIndexRoute: typeof NewsIndexRoute
   VerifyIndexRoute: typeof VerifyIndexRoute
   VerifyCertificateCodeRoute: typeof VerifyCertificateCodeRoute
   VerifyHskCodeRoute: typeof VerifyHskCodeRoute
@@ -209,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -230,11 +346,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/partners': {
+      id: '/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof PartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activities/': {
+      id: '/activities/'
+      path: '/'
+      fullPath: '/activities/'
+      preLoaderRoute: typeof ActivitiesIndexRouteImport
+      parentRoute: typeof ActivitiesRoute
+    }
+    '/activities/$activityId': {
+      id: '/activities/$activityId'
+      path: '/$activityId'
+      fullPath: '/activities/$activityId'
+      preLoaderRoute: typeof ActivitiesActivityIdRouteImport
+      parentRoute: typeof ActivitiesRoute
+    }
     '/courses/hsk': {
       id: '/courses/hsk'
       path: '/courses/hsk'
       fullPath: '/courses/hsk'
       preLoaderRoute: typeof CoursesHskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/member/$memberId': {
+      id: '/member/$memberId'
+      path: '/member/$memberId'
+      fullPath: '/member/$memberId'
+      preLoaderRoute: typeof MemberMemberIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news/': {
+      id: '/news/'
+      path: '/news'
+      fullPath: '/news/'
+      preLoaderRoute: typeof NewsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news/$slug': {
+      id: '/news/$slug'
+      path: '/news/$slug'
+      fullPath: '/news/$slug'
+      preLoaderRoute: typeof NewsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify/': {
@@ -243,6 +401,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify/'
       preLoaderRoute: typeof VerifyIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/courses/hsk/': {
+      id: '/courses/hsk/'
+      path: '/'
+      fullPath: '/courses/hsk/'
+      preLoaderRoute: typeof CoursesHskIndexRouteImport
+      parentRoute: typeof CoursesHskRoute
+    }
+    '/courses/hsk/$courseId': {
+      id: '/courses/hsk/$courseId'
+      path: '/$courseId'
+      fullPath: '/courses/hsk/$courseId'
+      preLoaderRoute: typeof CoursesHskCourseIdRouteImport
+      parentRoute: typeof CoursesHskRoute
     }
     '/verify/certificate/': {
       id: '/verify/certificate/'
@@ -275,14 +447,47 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ActivitiesRouteChildren {
+  ActivitiesActivityIdRoute: typeof ActivitiesActivityIdRoute
+  ActivitiesIndexRoute: typeof ActivitiesIndexRoute
+}
+
+const ActivitiesRouteChildren: ActivitiesRouteChildren = {
+  ActivitiesActivityIdRoute: ActivitiesActivityIdRoute,
+  ActivitiesIndexRoute: ActivitiesIndexRoute,
+}
+
+const ActivitiesRouteWithChildren = ActivitiesRoute._addFileChildren(
+  ActivitiesRouteChildren,
+)
+
+interface CoursesHskRouteChildren {
+  CoursesHskCourseIdRoute: typeof CoursesHskCourseIdRoute
+  CoursesHskIndexRoute: typeof CoursesHskIndexRoute
+}
+
+const CoursesHskRouteChildren: CoursesHskRouteChildren = {
+  CoursesHskCourseIdRoute: CoursesHskCourseIdRoute,
+  CoursesHskIndexRoute: CoursesHskIndexRoute,
+}
+
+const CoursesHskRouteWithChildren = CoursesHskRoute._addFileChildren(
+  CoursesHskRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  ActivitiesRoute: ActivitiesRoute,
+  ActivitiesRoute: ActivitiesRouteWithChildren,
+  CommunityRoute: CommunityRoute,
   ContactRoute: ContactRoute,
   JoinRoute: JoinRoute,
   OrganizationRoute: OrganizationRoute,
-  CoursesHskRoute: CoursesHskRoute,
+  PartnersRoute: PartnersRoute,
+  CoursesHskRoute: CoursesHskRouteWithChildren,
+  MemberMemberIdRoute: MemberMemberIdRoute,
+  NewsSlugRoute: NewsSlugRoute,
+  NewsIndexRoute: NewsIndexRoute,
   VerifyIndexRoute: VerifyIndexRoute,
   VerifyCertificateCodeRoute: VerifyCertificateCodeRoute,
   VerifyHskCodeRoute: VerifyHskCodeRoute,
