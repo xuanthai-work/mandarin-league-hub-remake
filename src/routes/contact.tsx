@@ -62,7 +62,7 @@ function PContact() {
           ))}
           <label className="block text-sm font-medium">Nội dung
             <textarea name="message" rows={5} className={field} />
-            {errors.message && <span className="mt-1 block text-xs text-destructive">{errors.message}</span>}
+            {errors["message"] && <span className="mt-1 block text-xs text-destructive">{errors["message"]}</span>}
           </label>
           <button type="submit" className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90">Gửi liên hệ</button>
           {sent && <p className="text-center text-sm text-success">Ứng dụng email của bạn đã được mở để gửi tin nhắn.</p>}
