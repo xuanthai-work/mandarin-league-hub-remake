@@ -15,6 +15,13 @@
       "when": 1791294496107,
       "tag": "0001_admin_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791294746806,
+      "tag": "0002_admin_invites",
+      "breakpoints": true
     }
   ]
 }
