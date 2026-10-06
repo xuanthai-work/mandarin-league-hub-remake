@@ -14,8 +14,16 @@ export const NAV = [
   { to: "/contact", label: "Liên hệ" },
 ] as const;
 
+export const TAGLINE = "Connecting learners, educators & opportunities across Vietnam and China.";
+
+const FOOTER_EXTRA = [
+  { to: "/community", label: "Cộng đồng" },
+  { to: "/partners", label: "Đối tác" },
+  { to: "/news", label: "Tin tức" },
+] as const;
+
 export const CONTACT = {
-  email: "contact@themandarinleague.vn",
+  email: "community@themandarinleague.bond",
   facebook: "https://facebook.com",
   youtube: "https://youtube.com",
 };
@@ -87,17 +95,18 @@ function Footer() {
             <div className="rounded-full bg-background p-1"><img src={logo.url} alt="" className="h-12 w-12" /></div>
             <div>
               <div className="font-bold">THE MANDARIN LEAGUE</div>
-              <div className="text-sm opacity-80">Online Chinese Learning Community</div>
+              <div className="text-sm opacity-80">Liên Đoàn Hán Ngữ · 普通话联盟</div>
+              <div className="text-xs opacity-70">Online Chinese Learning Community</div>
             </div>
           </div>
           <p className="mt-5 max-w-md text-sm leading-relaxed opacity-80">
-            Liên Đoàn Hán Ngữ – cộng đồng học tiếng Trung trực tuyến, kết nối người học, giáo viên và những người yêu văn hóa Trung Hoa.
+            {TAGLINE}
           </p>
         </div>
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">Khám phá</div>
           <ul className="space-y-2 text-sm">
-            {NAV.slice(1).map((n) => (
+            {[...NAV.slice(1), ...FOOTER_EXTRA].map((n) => (
               <li key={n.to}><Link to={n.to} className="opacity-85 hover:opacity-100 hover:underline">{n.label}</Link></li>
             ))}
           </ul>
@@ -105,7 +114,7 @@ function Footer() {
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">Liên hệ</div>
           <ul className="space-y-3 text-sm opacity-90">
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" />{CONTACT.email}</li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${CONTACT.email}`} className="hover:underline">{CONTACT.email}</a></li>
             <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={CONTACT.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
             <li className="flex items-center gap-2"><Youtube className="h-4 w-4" /><a href={CONTACT.youtube} target="_blank" rel="noreferrer" className="hover:underline">YouTube</a></li>
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" />Hoạt động trực tuyến</li>

@@ -5,7 +5,7 @@ import { SectionTitle } from "@/components/site/ui";
 import { getDepartments } from "@/lib/data/departments";
 import { pageMeta } from "@/lib/seo";
 
-export const APPLY_URL = "https://join.themandarinleague.bond";
+const APPLY_URL = "https://join.themandarinleague.bond";
 
 export const Route = createFileRoute("/join")({
   head: () => ({ meta: pageMeta("Tuyển thành viên", "Ứng tuyển vào một trong 8 Ban của The Mandarin League.") }),

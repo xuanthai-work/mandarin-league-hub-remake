@@ -6,7 +6,7 @@ import { CONTACT } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "The Mandarin League – Liên Đoàn Hán Ngữ | Online Chinese Learning Community" },
+      { title: "The Mandarin League | Liên Đoàn Hán Ngữ" },
       { name: "description", content: "Cộng đồng học tiếng Trung trực tuyến: khóa học HSK, workshop, cuộc thi và hoạt động cộng đồng." },
       { property: "og:title", content: "The Mandarin League – Liên Đoàn Hán Ngữ" },
       { property: "og:description", content: "Online Chinese Learning Community – khóa học HSK, hoạt động và cộng đồng học tiếng Trung." },
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
 
 const DEPARTMENTS = [
   "Nhân sự", "Chuyên môn – Giảng dạy", "Truyền thông – Marketing", "Thiết kế",
-  "Biên dịch – Phiên dịch", "Postcard – Podcast", "Tài chính – Đối ngoại",
+  "Biên dịch – Phiên dịch", "Postcard – Podcast", "Tài chính – Đối ngoại", "Công nghệ & Hệ thống",
 ];
 
 const COURSES = [
@@ -87,7 +87,7 @@ function Home() {
         <div className="mt-12 grid gap-4 sm:grid-cols-3">
           {[
             { icon: BookOpen, n: "HSK 1–6", l: "Lộ trình học bài bản" },
-            { icon: Users, n: "7 Ban", l: "Chuyên môn hoạt động" },
+            { icon: Users, n: "8 Ban", l: "Chuyên môn hoạt động" },
             { icon: CalendarDays, n: "Hàng tháng", l: "Workshop & sự kiện" },
           ].map((s) => (
             <div key={s.l} className="rounded-2xl border border-border bg-card p-6">
@@ -107,12 +107,12 @@ function Home() {
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">Bộ máy vận hành TML</h2>
           </div>
           <div className="mt-12 flex flex-col items-center">
-            <Node strong>Founder</Node>
+            <Node strong>THE MANDARIN LEAGUE</Node>
             <div className="h-8 w-px bg-primary/40" />
             <Node>Ban Điều hành</Node>
             <div className="h-8 w-px bg-primary/40" />
             <div className="w-full border-t border-primary/40 md:w-11/12" />
-            <div className="mt-6 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+            <div className="mt-6 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {DEPARTMENTS.map((d) => (
                 <div key={d} className="rounded-xl border border-border bg-card px-3 py-4 text-center text-sm font-medium text-foreground shadow-sm">
                   {d}
@@ -186,7 +186,7 @@ function Home() {
         <div className="grid overflow-hidden rounded-3xl bg-brand-gradient text-primary-foreground md:grid-cols-[1.4fr_1fr]">
           <div className="p-10 md:p-14">
             <h2 className="text-3xl font-bold md:text-4xl">Sẵn sàng trở thành một phần của TML?</h2>
-            <p className="mt-4 max-w-lg opacity-90">Ứng tuyển vào một trong 7 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.</p>
+            <p className="mt-4 max-w-lg opacity-90">Ứng tuyển vào một trong 8 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.</p>
             <Link to="/join" className="mt-8 inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 font-semibold text-primary-deep transition hover:opacity-90">
               Tham gia TML <ArrowRight className="h-4 w-4" />
             </Link>
