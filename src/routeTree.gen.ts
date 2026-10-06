@@ -15,11 +15,11 @@ import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as OrganizationRouteImport } from './routes/organization'
-import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as CoursesHskRouteImport } from './routes/courses.hsk'
-import { Route as VerifyCertificateRouteImport } from './routes/verify.certificate'
-import { Route as VerifyHskRouteImport } from './routes/verify.hsk'
+import { Route as VerifyIndexRouteImport } from './routes/verify.index'
+import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.certificate.index'
 import { Route as VerifyCertificateCodeRouteImport } from './routes/verify.certificate.$code'
+import { Route as VerifyHskIndexRouteImport } from './routes/verify.hsk.index'
 import { Route as VerifyHskCodeRouteImport } from './routes/verify.hsk.$code'
 
 const IndexRoute = IndexRouteImport.update({
@@ -52,35 +52,35 @@ const OrganizationRoute = OrganizationRouteImport.update({
   path: '/organization',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyRoute = VerifyRouteImport.update({
-  id: '/verify',
-  path: '/verify',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CoursesHskRoute = CoursesHskRouteImport.update({
   id: '/courses/hsk',
   path: '/courses/hsk',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyCertificateRoute = VerifyCertificateRouteImport.update({
-  id: '/certificate',
-  path: '/certificate',
-  getParentRoute: () => VerifyRoute,
+const VerifyIndexRoute = VerifyIndexRouteImport.update({
+  id: '/verify/',
+  path: '/verify/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyHskRoute = VerifyHskRouteImport.update({
-  id: '/hsk',
-  path: '/hsk',
-  getParentRoute: () => VerifyRoute,
+const VerifyCertificateIndexRoute = VerifyCertificateIndexRouteImport.update({
+  id: '/verify/certificate/',
+  path: '/verify/certificate/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyCertificateCodeRoute = VerifyCertificateCodeRouteImport.update({
-  id: '/$code',
-  path: '/$code',
-  getParentRoute: () => VerifyCertificateRoute,
+  id: '/verify/certificate/$code',
+  path: '/verify/certificate/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyHskIndexRoute = VerifyHskIndexRouteImport.update({
+  id: '/verify/hsk/',
+  path: '/verify/hsk/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyHskCodeRoute = VerifyHskCodeRouteImport.update({
-  id: '/$code',
-  path: '/$code',
-  getParentRoute: () => VerifyHskRoute,
+  id: '/verify/hsk/$code',
+  path: '/verify/hsk/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -90,12 +90,12 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
-  '/verify': typeof VerifyRouteWithChildren
   '/courses/hsk': typeof CoursesHskRoute
-  '/verify/certificate': typeof VerifyCertificateRouteWithChildren
-  '/verify/hsk': typeof VerifyHskRouteWithChildren
+  '/verify/': typeof VerifyIndexRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/verify/certificate/': typeof VerifyCertificateIndexRoute
+  '/verify/hsk/': typeof VerifyHskIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -104,12 +104,12 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
-  '/verify': typeof VerifyRouteWithChildren
   '/courses/hsk': typeof CoursesHskRoute
-  '/verify/certificate': typeof VerifyCertificateRouteWithChildren
-  '/verify/hsk': typeof VerifyHskRouteWithChildren
+  '/verify': typeof VerifyIndexRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/verify/certificate': typeof VerifyCertificateIndexRoute
+  '/verify/hsk': typeof VerifyHskIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,12 +119,12 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
-  '/verify': typeof VerifyRouteWithChildren
   '/courses/hsk': typeof CoursesHskRoute
-  '/verify/certificate': typeof VerifyCertificateRouteWithChildren
-  '/verify/hsk': typeof VerifyHskRouteWithChildren
+  '/verify/': typeof VerifyIndexRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/verify/certificate/': typeof VerifyCertificateIndexRoute
+  '/verify/hsk/': typeof VerifyHskIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,12 +135,12 @@ export interface FileRouteTypes {
     | '/contact'
     | '/join'
     | '/organization'
-    | '/verify'
     | '/courses/hsk'
-    | '/verify/certificate'
-    | '/verify/hsk'
+    | '/verify/'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/verify/certificate/'
+    | '/verify/hsk/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -149,12 +149,12 @@ export interface FileRouteTypes {
     | '/contact'
     | '/join'
     | '/organization'
-    | '/verify'
     | '/courses/hsk'
-    | '/verify/certificate'
-    | '/verify/hsk'
+    | '/verify'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/verify/certificate'
+    | '/verify/hsk'
   id:
     | '__root__'
     | '/'
@@ -163,12 +163,12 @@ export interface FileRouteTypes {
     | '/contact'
     | '/join'
     | '/organization'
-    | '/verify'
     | '/courses/hsk'
-    | '/verify/certificate'
-    | '/verify/hsk'
+    | '/verify/'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/verify/certificate/'
+    | '/verify/hsk/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,8 +178,12 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   JoinRoute: typeof JoinRoute
   OrganizationRoute: typeof OrganizationRoute
-  VerifyRoute: typeof VerifyRouteWithChildren
   CoursesHskRoute: typeof CoursesHskRoute
+  VerifyIndexRoute: typeof VerifyIndexRoute
+  VerifyCertificateCodeRoute: typeof VerifyCertificateCodeRoute
+  VerifyHskCodeRoute: typeof VerifyHskCodeRoute
+  VerifyCertificateIndexRoute: typeof VerifyCertificateIndexRoute
+  VerifyHskIndexRoute: typeof VerifyHskIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -226,13 +230,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify': {
-      id: '/verify'
-      path: '/verify'
-      fullPath: '/verify'
-      preLoaderRoute: typeof VerifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/courses/hsk': {
       id: '/courses/hsk'
       path: '/courses/hsk'
@@ -240,72 +237,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesHskRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify/certificate': {
-      id: '/verify/certificate'
-      path: '/certificate'
-      fullPath: '/verify/certificate'
-      preLoaderRoute: typeof VerifyCertificateRouteImport
-      parentRoute: typeof VerifyRoute
+    '/verify/': {
+      id: '/verify/'
+      path: '/verify'
+      fullPath: '/verify/'
+      preLoaderRoute: typeof VerifyIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/verify/hsk': {
-      id: '/verify/hsk'
-      path: '/hsk'
-      fullPath: '/verify/hsk'
-      preLoaderRoute: typeof VerifyHskRouteImport
-      parentRoute: typeof VerifyRoute
+    '/verify/certificate/': {
+      id: '/verify/certificate/'
+      path: '/verify/certificate'
+      fullPath: '/verify/certificate/'
+      preLoaderRoute: typeof VerifyCertificateIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/verify/certificate/$code': {
       id: '/verify/certificate/$code'
-      path: '/$code'
+      path: '/verify/certificate/$code'
       fullPath: '/verify/certificate/$code'
       preLoaderRoute: typeof VerifyCertificateCodeRouteImport
-      parentRoute: typeof VerifyCertificateRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify/hsk/': {
+      id: '/verify/hsk/'
+      path: '/verify/hsk'
+      fullPath: '/verify/hsk/'
+      preLoaderRoute: typeof VerifyHskIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/verify/hsk/$code': {
       id: '/verify/hsk/$code'
-      path: '/$code'
+      path: '/verify/hsk/$code'
       fullPath: '/verify/hsk/$code'
       preLoaderRoute: typeof VerifyHskCodeRouteImport
-      parentRoute: typeof VerifyHskRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface VerifyCertificateRouteChildren {
-  VerifyCertificateCodeRoute: typeof VerifyCertificateCodeRoute
-}
-
-const VerifyCertificateRouteChildren: VerifyCertificateRouteChildren = {
-  VerifyCertificateCodeRoute: VerifyCertificateCodeRoute,
-}
-
-const VerifyCertificateRouteWithChildren =
-  VerifyCertificateRoute._addFileChildren(VerifyCertificateRouteChildren)
-
-interface VerifyHskRouteChildren {
-  VerifyHskCodeRoute: typeof VerifyHskCodeRoute
-}
-
-const VerifyHskRouteChildren: VerifyHskRouteChildren = {
-  VerifyHskCodeRoute: VerifyHskCodeRoute,
-}
-
-const VerifyHskRouteWithChildren = VerifyHskRoute._addFileChildren(
-  VerifyHskRouteChildren,
-)
-
-interface VerifyRouteChildren {
-  VerifyCertificateRoute: typeof VerifyCertificateRouteWithChildren
-  VerifyHskRoute: typeof VerifyHskRouteWithChildren
-}
-
-const VerifyRouteChildren: VerifyRouteChildren = {
-  VerifyCertificateRoute: VerifyCertificateRouteWithChildren,
-  VerifyHskRoute: VerifyHskRouteWithChildren,
-}
-
-const VerifyRouteWithChildren =
-  VerifyRoute._addFileChildren(VerifyRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -314,8 +282,12 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   JoinRoute: JoinRoute,
   OrganizationRoute: OrganizationRoute,
-  VerifyRoute: VerifyRouteWithChildren,
   CoursesHskRoute: CoursesHskRoute,
+  VerifyIndexRoute: VerifyIndexRoute,
+  VerifyCertificateCodeRoute: VerifyCertificateCodeRoute,
+  VerifyHskCodeRoute: VerifyHskCodeRoute,
+  VerifyCertificateIndexRoute: VerifyCertificateIndexRoute,
+  VerifyHskIndexRoute: VerifyHskIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

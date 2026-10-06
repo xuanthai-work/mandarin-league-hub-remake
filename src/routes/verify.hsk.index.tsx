@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VerificationLookup } from "@/components/verification/VerificationLookup";
 
-export const Route = createFileRoute("/verify/hsk")({
+export const Route = createFileRoute("/verify/hsk/")({
   head: () => ({
     meta: [
       { title: "Xác minh kết quả HSK – The Mandarin League" },

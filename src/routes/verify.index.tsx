@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Award, LockKeyhole, QrCode, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/verify")({
+export const Route = createFileRoute("/verify/")({
   head: () => ({
     meta: [
       { title: "Trung tâm xác minh – The Mandarin League" },
