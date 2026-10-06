@@ -5,4 +5,8 @@
 - [x] Add verification navigation and supporting design tokens
 - [x] Validate build and desktop/mobile behavior
 - [x] Phase 2A: public pages (about, organization, HSK courses + detail, activities + detail, community, join, member, partners, news, contact)
-- [ ] Phase 2B: Lovable Cloud data + /admin dashboard (waiting for user approval of 2A)
+- [ ] Redesign: choose professional visual direction with existing TML identity
+- [ ] Redesign: remove homepage organization chart and add swipeable activity-photo carousel
+- [ ] Redesign: Lovable Cloud + secure administrator photo upload, replace, visibility, delete, and ordering
+- [ ] Redesign: verify public display and administrator controls
+- [ ] Phase 2B: remaining Lovable Cloud data + /admin dashboard (outside current photo-management scope)
