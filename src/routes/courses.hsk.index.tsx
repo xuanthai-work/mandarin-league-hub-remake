@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ComingSoon } from "@/components/site/SiteLayout";
 
-export const Route = createFileRoute("/courses/hsk")({
+export const Route = createFileRoute("/courses/hsk/")({
   head: () => ({
     meta: [
       { title: "Khóa học HSK – The Mandarin League" },
