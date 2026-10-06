@@ -27,8 +27,9 @@ export function useAdminAccess() {
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return { email: "", roles: [] as AdminRole[] };
+      await supabase.rpc("claim_invited_role");
       const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
-      const roles = (data ?? []).map((r) => r.role as AdminRole);
+      const roles = (data ?? []).map((r: { role: string }) => r.role as AdminRole);
       return { email: u.user.email ?? "", roles: ROLE_PRIORITY.filter((r) => roles.includes(r)) };
     },
   });
