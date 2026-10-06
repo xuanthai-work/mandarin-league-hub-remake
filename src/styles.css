@@ -26,7 +26,8 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-han: 'Noto Serif SC', serif;
   --color-primary-deep: var(--primary-deep);
   --color-background: var(--background);
@@ -69,21 +70,23 @@
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
   --color-brand-red: var(--brand-red);
+  --color-brand-blue: var(--brand-blue);
 }
 
 :root {
-  --radius: 0.75rem;
-  --primary-deep: oklch(0.42 0.12 245);
-  --gradient-brand: linear-gradient(135deg, oklch(0.42 0.12 245), oklch(0.68 0.16 235));
-  --background: oklch(0.99 0.003 230);
+  --radius: 0.25rem;
+  --primary-deep: oklch(0.456 0.111 242.6);
+  --gradient-brand: none;
+  --brand-blue: oklch(0.689 0.139 230.5);
+  --background: oklch(1 0 0);
   --foreground: oklch(0.22 0.03 245);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.68 0.16 235);
+  --primary: oklch(0.456 0.111 242.6);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0.01 235);
+  --secondary: oklch(0.978 0.002 240);
   --secondary-foreground: oklch(0.3 0.06 240);
   --muted: oklch(0.965 0.005 240);
   --muted-foreground: oklch(0.5 0.02 245);
@@ -98,7 +101,7 @@
   --success-foreground: oklch(0.99 0 0);
   --warning-soft: oklch(0.94 0.08 88);
   --warning-foreground: oklch(0.38 0.08 75);
-  --gold: oklch(0.74 0.14 80);
+  --gold: oklch(0.768 0.128 88.4);
   --gold-soft: oklch(0.95 0.05 88);
   --brand-red: oklch(0.56 0.2 27);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -166,6 +169,17 @@
   }
 }
 
-.bg-brand-gradient { background-image: var(--gradient-brand); }
+.bg-brand-gradient { background: var(--primary-deep); }
 .grid-lines { background-image: linear-gradient(to right, color-mix(in oklab, var(--primary) 10%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--primary) 10%, transparent) 1px, transparent 1px); background-size: 48px 48px; }
 .verification-grid { background-image: linear-gradient(to right, color-mix(in oklab, var(--primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--primary) 8%, transparent) 1px, transparent 1px); background-size: 32px 32px; }
+
+/* Restrained institutional presentation across existing public content. */
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); letter-spacing: 0; overflow-wrap: break-word; }
+body { letter-spacing: 0; }
+.grid-lines, .verification-grid { background-image: none; }
+main :is(.rounded-2xl, .rounded-3xl, .rounded-xl) { border-radius: var(--radius); }
+main :is(.shadow-lg, .shadow-xl, .shadow-2xl, .shadow-sm) { box-shadow: none; }
+main :is(article, section, a, div):hover { --tw-translate-y: 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
