@@ -42,7 +42,7 @@ export function EmptyState({ title = "Đang cập nhật", desc }: { title?: str
   );
 }
 
-export function PersonSlot({ role, name }: { role: string; name?: string }) {
+export function PersonSlot({ role, name }: { role: string; name?: string | undefined }) {
   return (
     <div className="flex items-center gap-3">
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-5 w-5" /></div>
