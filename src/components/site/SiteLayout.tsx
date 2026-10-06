@@ -9,6 +9,7 @@ export const NAV = [
   { to: "/organization", label: "Cơ cấu tổ chức" },
   { to: "/courses/hsk", label: "Khóa học HSK" },
   { to: "/activities", label: "Hoạt động" },
+  { to: "/verify", label: "Xác minh" },
   { to: "/join", label: "Tuyển thành viên" },
   { to: "/contact", label: "Liên hệ" },
 ] as const;

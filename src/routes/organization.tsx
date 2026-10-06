@@ -8,6 +8,8 @@ export const Route = createFileRoute("/organization")({
       { name: "description", content: "Founder, Ban Điều hành và 7 Ban chuyên môn." },
       { property: "og:title", content: "Cơ cấu tổ chức – The Mandarin League" },
       { property: "og:description", content: "Founder, Ban Điều hành và 7 Ban chuyên môn." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: POrganization,
