@@ -17,10 +17,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const DEPARTMENTS = [
-  "Nhân sự", "Chuyên môn – Giảng dạy", "Truyền thông – Marketing", "Thiết kế",
-  "Biên dịch – Phiên dịch", "Postcard – Podcast", "Tài chính – Đối ngoại", "Công nghệ & Hệ thống",
-];
+import { ActivityCarousel } from "@/components/site/ActivityCarousel";
 
 const COURSES = [
   { level: "HSK 1", name: "Nhập môn tiếng Trung", sessions: 24, mode: "Online qua Zoom", status: "Đang tuyển sinh" },
@@ -99,32 +96,7 @@ function Home() {
         </div>
       </section>
 
-      {/* Org chart preview */}
-      <section className="bg-secondary py-20">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="text-center">
-            <SectionLabel>Cơ cấu tổ chức</SectionLabel>
-            <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">Bộ máy vận hành TML</h2>
-          </div>
-          <div className="mt-12 flex flex-col items-center">
-            <Node strong>THE MANDARIN LEAGUE</Node>
-            <div className="h-8 w-px bg-primary/40" />
-            <Node>Ban Điều hành</Node>
-            <div className="h-8 w-px bg-primary/40" />
-            <div className="w-full border-t border-primary/40 md:w-11/12" />
-            <div className="mt-6 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {DEPARTMENTS.map((d) => (
-                <div key={d} className="rounded-xl border border-border bg-card px-3 py-4 text-center text-sm font-medium text-foreground shadow-sm">
-                  {d}
-                </div>
-              ))}
-            </div>
-            <Link to="/organization" className="mt-10 inline-flex items-center gap-1 font-semibold text-primary hover:underline">
-              Xem sơ đồ chi tiết <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <ActivityCarousel />
 
       {/* Courses */}
       <section className="mx-auto max-w-7xl px-4 py-20 md:px-6">
@@ -205,12 +177,4 @@ function Home() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="text-sm font-semibold uppercase tracking-widest text-primary">{children}</div>;
-}
-
-function Node({ children, strong }: { children: React.ReactNode; strong?: boolean }) {
-  return (
-    <div className={strong ? "rounded-xl bg-brand-gradient px-8 py-3 font-bold text-primary-foreground shadow-lg" : "rounded-xl border-2 border-primary bg-card px-8 py-3 font-semibold text-primary-deep"}>
-      {children}
-    </div>
-  );
 }
