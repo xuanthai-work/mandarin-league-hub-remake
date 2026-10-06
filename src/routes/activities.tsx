@@ -8,6 +8,8 @@ export const Route = createFileRoute("/activities")({
       { name: "description", content: "Workshop, cuộc thi, webinar, trại hè và hoạt động cộng đồng." },
       { property: "og:title", content: "Hoạt động – The Mandarin League" },
       { property: "og:description", content: "Workshop, cuộc thi, webinar, trại hè và hoạt động cộng đồng." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: PActivities,

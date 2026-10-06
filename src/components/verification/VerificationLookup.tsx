@@ -116,7 +116,7 @@ export function VerificationLookup({ kind, initialCode = "" }: VerificationLooku
             </Button>
           </div>
           <div id={`${kind}-hint`} className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span>Dữ liệu mẫu: <button type="button" onClick={() => { setCode(demoCode); verify(demoCode); }} className="font-mono font-semibold text-primary hover:underline">{demoCode}</button></span>
+            <span className="flex flex-wrap items-center gap-1">Dữ liệu mẫu: <Button type="button" variant="link" onClick={() => { setCode(demoCode); verify(demoCode); }} className="h-auto p-0 font-mono text-xs font-semibold">{demoCode}</Button></span>
             <span className="rounded-sm bg-warning-soft px-2 py-1 font-bold text-warning-foreground">DEMO DATA</span>
           </div>
         </form>

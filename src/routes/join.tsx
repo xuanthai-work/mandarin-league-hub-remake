@@ -8,6 +8,8 @@ export const Route = createFileRoute("/join")({
       { name: "description", content: "Cùng xây dựng cộng đồng học tiếng Trung trực tuyến." },
       { property: "og:title", content: "Tuyển thành viên – The Mandarin League" },
       { property: "og:description", content: "Cùng xây dựng cộng đồng học tiếng Trung trực tuyến." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: PJoin,

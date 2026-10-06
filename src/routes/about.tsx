@@ -8,6 +8,8 @@ export const Route = createFileRoute("/about")({
       { name: "description", content: "Sứ mệnh, tầm nhìn và giá trị cốt lõi của TML." },
       { property: "og:title", content: "Giới thiệu – The Mandarin League" },
       { property: "og:description", content: "Sứ mệnh, tầm nhìn và giá trị cốt lõi của TML." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: PAbout,
