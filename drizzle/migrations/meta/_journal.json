@@ -8,6 +8,13 @@
       "when": 1791289814781,
       "tag": "0000_tml_activity_gallery",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791290019883,
+      "tag": "0001_scope_gallery_role_lookup",
+      "breakpoints": true
     }
   ]
 }
