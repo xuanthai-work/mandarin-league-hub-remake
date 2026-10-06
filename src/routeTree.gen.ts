@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as ActivitiesRouteImport } from './routes/activities'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as JoinRouteImport } from './routes/join'
+import { Route as OrganizationRouteImport } from './routes/organization'
+import { Route as CoursesHskRouteImport } from './routes/courses.hsk'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivitiesRoute = ActivitiesRouteImport.update({
+  id: '/activities',
+  path: '/activities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinRoute = JoinRouteImport.update({
+  id: '/join',
+  path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationRoute = OrganizationRouteImport.update({
+  id: '/organization',
+  path: '/organization',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesHskRoute = CoursesHskRouteImport.update({
+  id: '/courses/hsk',
+  path: '/courses/hsk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activities': typeof ActivitiesRoute
+  '/contact': typeof ContactRoute
+  '/join': typeof JoinRoute
+  '/organization': typeof OrganizationRoute
+  '/courses/hsk': typeof CoursesHskRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activities': typeof ActivitiesRoute
+  '/contact': typeof ContactRoute
+  '/join': typeof JoinRoute
+  '/organization': typeof OrganizationRoute
+  '/courses/hsk': typeof CoursesHskRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activities': typeof ActivitiesRoute
+  '/contact': typeof ContactRoute
+  '/join': typeof JoinRoute
+  '/organization': typeof OrganizationRoute
+  '/courses/hsk': typeof CoursesHskRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/activities'
+    | '/contact'
+    | '/join'
+    | '/organization'
+    | '/courses/hsk'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/activities'
+    | '/contact'
+    | '/join'
+    | '/organization'
+    | '/courses/hsk'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/activities'
+    | '/contact'
+    | '/join'
+    | '/organization'
+    | '/courses/hsk'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  ActivitiesRoute: typeof ActivitiesRoute
+  ContactRoute: typeof ContactRoute
+  JoinRoute: typeof JoinRoute
+  OrganizationRoute: typeof OrganizationRoute
+  CoursesHskRoute: typeof CoursesHskRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activities': {
+      id: '/activities'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof ActivitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join': {
+      id: '/join'
+      path: '/join'
+      fullPath: '/join'
+      preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organization': {
+      id: '/organization'
+      path: '/organization'
+      fullPath: '/organization'
+      preLoaderRoute: typeof OrganizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses/hsk': {
+      id: '/courses/hsk'
+      path: '/courses/hsk'
+      fullPath: '/courses/hsk'
+      preLoaderRoute: typeof CoursesHskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  ActivitiesRoute: ActivitiesRoute,
+  ContactRoute: ContactRoute,
+  JoinRoute: JoinRoute,
+  OrganizationRoute: OrganizationRoute,
+  CoursesHskRoute: CoursesHskRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
