@@ -19,13 +19,17 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities.$activityId'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as CoursesHskRouteImport } from './routes/courses.hsk'
 import { Route as MemberMemberIdRouteImport } from './routes/member.$memberId'
 import { Route as NewsIndexRouteImport } from './routes/news.index'
 import { Route as NewsSlugRouteImport } from './routes/news.$slug'
 import { Route as VerifyIndexRouteImport } from './routes/verify.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminSectionRouteImport } from './routes/_authenticated/admin.$section'
 import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
@@ -83,6 +87,11 @@ const PartnersRoute = PartnersRouteImport.update({
   path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ActivitiesIndexRoute = ActivitiesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -92,6 +101,11 @@ const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
   id: '/$activityId',
   path: '/$activityId',
   getParentRoute: () => ActivitiesRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesHskRoute = CoursesHskRouteImport.update({
   id: '/courses/hsk',
@@ -118,11 +132,22 @@ const VerifyIndexRoute = VerifyIndexRouteImport.update({
   path: '/verify/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminSectionRoute =
+  AuthenticatedAdminSectionRouteImport.update({
+    id: '/$section',
+    path: '/$section',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPhotosRoute =
   AuthenticatedAdminPhotosRouteImport.update({
-    id: '/admin/photos',
-    path: '/admin/photos',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/photos',
+    path: '/photos',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const CoursesHskIndexRoute = CoursesHskIndexRouteImport.update({
   id: '/',
@@ -165,17 +190,21 @@ export interface FileRoutesByFullPath {
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/admin/login': typeof AdminLoginRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
   '/activities/': typeof ActivitiesIndexRoute
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
+  '/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
@@ -190,15 +219,18 @@ export interface FileRoutesByTo {
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/admin/login': typeof AdminLoginRoute
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
   '/activities': typeof ActivitiesIndexRoute
   '/news': typeof NewsIndexRoute
   '/verify': typeof VerifyIndexRoute
+  '/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/courses/hsk': typeof CoursesHskIndexRoute
   '/verify/certificate': typeof VerifyCertificateIndexRoute
   '/verify/hsk': typeof VerifyHskIndexRoute
@@ -215,17 +247,21 @@ export interface FileRoutesById {
   '/join': typeof JoinRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/admin/login': typeof AdminLoginRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
   '/activities/': typeof ActivitiesIndexRoute
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
+  '/_authenticated/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
@@ -242,17 +278,21 @@ export interface FileRouteTypes {
     | '/join'
     | '/organization'
     | '/partners'
+    | '/admin'
     | '/activities/$activityId'
+    | '/admin/login'
     | '/courses/hsk'
     | '/member/$memberId'
     | '/news/$slug'
     | '/activities/'
     | '/news/'
     | '/verify/'
+    | '/admin/$section'
     | '/admin/photos'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/admin/'
     | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
@@ -267,15 +307,18 @@ export interface FileRouteTypes {
     | '/organization'
     | '/partners'
     | '/activities/$activityId'
+    | '/admin/login'
     | '/member/$memberId'
     | '/news/$slug'
     | '/activities'
     | '/news'
     | '/verify'
+    | '/admin/$section'
     | '/admin/photos'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/admin'
     | '/courses/hsk'
     | '/verify/certificate'
     | '/verify/hsk'
@@ -291,17 +334,21 @@ export interface FileRouteTypes {
     | '/join'
     | '/organization'
     | '/partners'
+    | '/_authenticated/admin'
     | '/activities/$activityId'
+    | '/admin/login'
     | '/courses/hsk'
     | '/member/$memberId'
     | '/news/$slug'
     | '/activities/'
     | '/news/'
     | '/verify/'
+    | '/_authenticated/admin/$section'
     | '/_authenticated/admin/photos'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
+    | '/_authenticated/admin/'
     | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
@@ -318,6 +365,7 @@ export interface RootRouteChildren {
   JoinRoute: typeof JoinRoute
   OrganizationRoute: typeof OrganizationRoute
   PartnersRoute: typeof PartnersRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   CoursesHskRoute: typeof CoursesHskRouteWithChildren
   MemberMemberIdRoute: typeof MemberMemberIdRoute
   NewsSlugRoute: typeof NewsSlugRoute
@@ -401,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/activities/': {
       id: '/activities/'
       path: '/'
@@ -414,6 +469,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/activities/$activityId'
       preLoaderRoute: typeof ActivitiesActivityIdRouteImport
       parentRoute: typeof ActivitiesRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/courses/hsk': {
       id: '/courses/hsk'
@@ -450,12 +512,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/$section': {
+      id: '/_authenticated/admin/$section'
+      path: '/$section'
+      fullPath: '/admin/$section'
+      preLoaderRoute: typeof AuthenticatedAdminSectionRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/photos': {
       id: '/_authenticated/admin/photos'
-      path: '/admin/photos'
+      path: '/photos'
       fullPath: '/admin/photos'
       preLoaderRoute: typeof AuthenticatedAdminPhotosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/courses/hsk/': {
       id: '/courses/hsk/'
@@ -502,12 +578,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminSectionRoute: typeof AuthenticatedAdminSectionRoute
   AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminSectionRoute: AuthenticatedAdminSectionRoute,
+  AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -552,6 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinRoute: JoinRoute,
   OrganizationRoute: OrganizationRoute,
   PartnersRoute: PartnersRoute,
+  AdminLoginRoute: AdminLoginRoute,
   CoursesHskRoute: CoursesHskRouteWithChildren,
   MemberMemberIdRoute: MemberMemberIdRoute,
   NewsSlugRoute: NewsSlugRoute,

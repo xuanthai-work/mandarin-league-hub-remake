@@ -45,7 +45,7 @@ function AdminPhotos() {
     qc.invalidateQueries({ queryKey: ["activity-photos"] });
   };
 
-  const signOut = async () => { await supabase.auth.signOut(); navigate({ to: "/auth" }); };
+  const signOut = async () => { await supabase.auth.signOut(); navigate({ to: "/admin/login" }); };
 
   if (isAdmin.isLoading) return <p className="p-10 text-center">Đang kiểm tra quyền…</p>;
   if (!isAdmin.data) return (
