@@ -58,7 +58,8 @@ function AdminPhotos() {
   const list = photos.data ?? [];
   const move = (i: number, d: -1 | 1) => {
     const ids = list.map((p) => p.id);
-    [ids[i], ids[i + d]] = [ids[i + d], ids[i]];
+    const a = ids[i]!, b = ids[i + d]!;
+    ids[i] = b; ids[i + d] = a;
     run(() => reorderPhotos(ids), "Đã cập nhật thứ tự.");
   };
 
