@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ActivitiesRouteImport } from './routes/activities'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
@@ -24,6 +26,7 @@ import { Route as MemberMemberIdRouteImport } from './routes/member.$memberId'
 import { Route as NewsIndexRouteImport } from './routes/news.index'
 import { Route as NewsSlugRouteImport } from './routes/news.$slug'
 import { Route as VerifyIndexRouteImport } from './routes/verify.index'
+import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
 import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.certificate.index'
@@ -36,6 +39,10 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -44,6 +51,11 @@ const AboutRoute = AboutRouteImport.update({
 const ActivitiesRoute = ActivitiesRouteImport.update({
   id: '/activities',
   path: '/activities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -106,6 +118,12 @@ const VerifyIndexRoute = VerifyIndexRouteImport.update({
   path: '/verify/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminPhotosRoute =
+  AuthenticatedAdminPhotosRouteImport.update({
+    id: '/admin/photos',
+    path: '/admin/photos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const CoursesHskIndexRoute = CoursesHskIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -141,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
+  '/auth': typeof AuthRoute
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
@@ -153,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/activities/': typeof ActivitiesIndexRoute
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
+  '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -163,6 +183,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
@@ -174,6 +195,7 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesIndexRoute
   '/news': typeof NewsIndexRoute
   '/verify': typeof VerifyIndexRoute
+  '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -184,8 +206,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
+  '/auth': typeof AuthRoute
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
@@ -198,6 +222,7 @@ export interface FileRoutesById {
   '/activities/': typeof ActivitiesIndexRoute
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
+  '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -211,6 +236,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
+    | '/auth'
     | '/community'
     | '/contact'
     | '/join'
@@ -223,6 +249,7 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/news/'
     | '/verify/'
+    | '/admin/photos'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -233,6 +260,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/auth'
     | '/community'
     | '/contact'
     | '/join'
@@ -244,6 +272,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/news'
     | '/verify'
+    | '/admin/photos'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -253,8 +282,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/about'
     | '/activities'
+    | '/auth'
     | '/community'
     | '/contact'
     | '/join'
@@ -267,6 +298,7 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/news/'
     | '/verify/'
+    | '/_authenticated/admin/photos'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -277,8 +309,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   ActivitiesRoute: typeof ActivitiesRouteWithChildren
+  AuthRoute: typeof AuthRoute
   CommunityRoute: typeof CommunityRoute
   ContactRoute: typeof ContactRoute
   JoinRoute: typeof JoinRoute
@@ -304,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -316,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/activities'
       fullPath: '/activities'
       preLoaderRoute: typeof ActivitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -402,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/photos': {
+      id: '/_authenticated/admin/photos'
+      path: '/admin/photos'
+      fullPath: '/admin/photos'
+      preLoaderRoute: typeof AuthenticatedAdminPhotosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/courses/hsk/': {
       id: '/courses/hsk/'
       path: '/'
@@ -447,6 +502,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 interface ActivitiesRouteChildren {
   ActivitiesActivityIdRoute: typeof ActivitiesActivityIdRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
@@ -477,8 +543,10 @@ const CoursesHskRouteWithChildren = CoursesHskRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   ActivitiesRoute: ActivitiesRouteWithChildren,
+  AuthRoute: AuthRoute,
   CommunityRoute: CommunityRoute,
   ContactRoute: ContactRoute,
   JoinRoute: JoinRoute,
