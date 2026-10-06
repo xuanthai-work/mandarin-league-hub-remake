@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { Menu, X, Mail, Facebook, Youtube, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import logo from "@/assets/tml-logo.png.asset.json";
 
 export const NAV = [
@@ -32,35 +31,40 @@ export const CONTACT = {
 function Header() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background">
-      <div className="mx-auto grid h-18 max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 md:h-22 md:px-8 xl:flex xl:justify-between">
-        <Link to="/" className="flex min-w-0 items-center gap-3">
-          <img src={logo.url} alt="The Mandarin League" className="h-10 w-10 shrink-0 md:h-12 md:w-12" />
-          <div className="min-w-0 leading-tight">
-            <div className="text-xs font-bold text-primary-deep md:text-sm">THE MANDARIN LEAGUE</div>
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
+        <Link to="/" className="flex items-center gap-3">
+          <img src={logo.url} alt="The Mandarin League" className="h-10 w-10 md:h-12 md:w-12" />
+          <div className="leading-tight">
+            <div className="text-sm font-bold tracking-wide text-primary-deep md:text-base">THE MANDARIN LEAGUE</div>
             <div className="text-[11px] text-muted-foreground md:text-xs">Liên Đoàn Hán Ngữ · 普通话联盟</div>
           </div>
         </Link>
-        <nav className="hidden shrink-0 items-center gap-0 xl:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {NAV.map((n) => (
             <Link
               key={n.to}
               to={n.to}
               activeOptions={{ exact: n.to === "/" }}
-              className="px-2.5 py-2 text-xs font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground"
-              activeProps={{ className: "text-primary underline underline-offset-8" }}
+              className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground"
+              activeProps={{ className: "text-primary bg-accent" }}
             >
               {n.label}
             </Link>
           ))}
         </nav>
-        <Button asChild className="hidden shrink-0 xl:inline-flex"><Link to="/join">Tham gia TML</Link></Button>
-        <Button variant="ghost" size="icon" className="shrink-0 xl:hidden" onClick={() => setOpen(!open)} aria-label={open ? "Đóng menu" : "Mở menu"} aria-expanded={open}>
+        <Link
+          to="/join"
+          className="hidden rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 lg:inline-flex"
+        >
+          Tham gia TML
+        </Link>
+        <button className="rounded-md p-2 lg:hidden" onClick={() => setOpen(!open)} aria-label="Mở menu">
           {open ? <X /> : <Menu />}
-        </Button>
+        </button>
       </div>
       {open && (
-        <nav className="border-t border-border bg-background px-5 py-3 xl:hidden">
+        <nav className="border-t border-border bg-background px-4 py-3 lg:hidden">
           {NAV.map((n) => (
             <Link
               key={n.to}
@@ -68,12 +72,12 @@ function Header() {
               onClick={() => setOpen(false)}
               activeOptions={{ exact: n.to === "/" }}
               className="block rounded-md px-3 py-2.5 text-sm font-medium"
-              activeProps={{ className: "text-primary underline underline-offset-8" }}
+              activeProps={{ className: "text-primary bg-accent" }}
             >
               {n.label}
             </Link>
           ))}
-          <Link to="/join" onClick={() => setOpen(false)} className="mt-2 block rounded-md bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground">
+          <Link to="/join" onClick={() => setOpen(false)} className="mt-2 block rounded-full bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground">
             Tham gia TML
           </Link>
         </nav>
@@ -84,7 +88,7 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="mt-16 border-t border-border bg-background text-foreground">
+    <footer className="mt-24 bg-primary-deep text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
@@ -110,14 +114,14 @@ function Footer() {
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">Liên hệ</div>
           <ul className="space-y-3 text-sm opacity-90">
-            <li className="flex min-w-0 items-start gap-2"><Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${CONTACT.email}`} className="min-w-0 break-all hover:underline">{CONTACT.email}</a></li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${CONTACT.email}`} className="hover:underline">{CONTACT.email}</a></li>
             <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={CONTACT.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
             <li className="flex items-center gap-2"><Youtube className="h-4 w-4" /><a href={CONTACT.youtube} target="_blank" rel="noreferrer" className="hover:underline">YouTube</a></li>
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" />Hoạt động trực tuyến</li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-border py-5 text-center text-xs opacity-70">
+      <div className="border-t border-primary-foreground/15 py-5 text-center text-xs opacity-70">
         © {new Date().getFullYear()} The Mandarin League – Liên Đoàn Hán Ngữ
       </div>
     </footer>
@@ -136,10 +140,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
 
 export function PageHero({ eyebrow, title, desc }: { eyebrow: string; title: string; desc?: string }) {
   return (
-    <section className="border-b border-border bg-background">
-      <div className="mx-auto max-w-7xl px-5 py-12 md:px-8 md:py-16">
-        <div className="text-xs font-semibold uppercase text-muted-foreground">{eyebrow}</div>
-        <h1 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">{title}</h1>
+    <section className="grid-lines border-b border-border bg-secondary">
+      <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-24">
+        <div className="text-sm font-semibold uppercase tracking-widest text-primary">{eyebrow}</div>
+        <h1 className="mt-3 text-3xl font-bold text-primary-deep md:text-5xl">{title}</h1>
         {desc && <p className="mt-4 max-w-2xl text-muted-foreground">{desc}</p>}
       </div>
     </section>

@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ActivitiesRouteImport } from './routes/activities'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
@@ -45,11 +44,6 @@ const AboutRoute = AboutRouteImport.update({
 const ActivitiesRoute = ActivitiesRouteImport.update({
   id: '/activities',
   path: '/activities',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -147,7 +141,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
-  '/admin': typeof AdminRoute
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
@@ -170,7 +163,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
@@ -194,7 +186,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
-  '/admin': typeof AdminRoute
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
@@ -220,7 +211,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
-    | '/admin'
     | '/community'
     | '/contact'
     | '/join'
@@ -243,7 +233,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/admin'
     | '/community'
     | '/contact'
     | '/join'
@@ -266,7 +255,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
-    | '/admin'
     | '/community'
     | '/contact'
     | '/join'
@@ -291,7 +279,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ActivitiesRoute: typeof ActivitiesRouteWithChildren
-  AdminRoute: typeof AdminRoute
   CommunityRoute: typeof CommunityRoute
   ContactRoute: typeof ContactRoute
   JoinRoute: typeof JoinRoute
@@ -329,13 +316,6 @@ declare module '@tanstack/react-router' {
       path: '/activities'
       fullPath: '/activities'
       preLoaderRoute: typeof ActivitiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -499,7 +479,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ActivitiesRoute: ActivitiesRouteWithChildren,
-  AdminRoute: AdminRoute,
   CommunityRoute: CommunityRoute,
   ContactRoute: ContactRoute,
   JoinRoute: JoinRoute,
