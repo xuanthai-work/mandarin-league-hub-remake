@@ -40,7 +40,7 @@ export function EnrollmentDialog({ level, fee, onClose }: { level: number; fee: 
               <button onClick={() => { navigator.clipboard.writeText(done.code); toast.success("Đã sao chép mã"); }} aria-label="Sao chép mã" className="rounded p-1 hover:bg-muted"><Copy className="h-4 w-4" /></button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Tiếp nhận lúc {done.submittedAt}</p>
-            <div className="mt-4 rounded-lg border border-gold bg-accent px-3 py-2 text-sm font-bold text-primary-deep">ĐÃ TIẾP NHẬN – ĐANG CHỜ XÉT DUYỆT</div>
+            <div className="mt-4 rounded-lg border border-primary/40 bg-accent px-3 py-2 text-sm font-bold text-primary-deep">ĐÃ TIẾP NHẬN – ĐANG CHỜ XÉT DUYỆT</div>
             <p className="mt-4 text-sm text-muted-foreground">The Mandarin League sẽ xét duyệt hồ sơ và gửi kết quả qua Email tới các học viên được lựa chọn. Vui lòng kiểm tra cả hộp thư Spam.</p>
             <button onClick={onClose} className="mt-6 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground">Đóng</button>
           </div>

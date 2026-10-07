@@ -1,7 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { CheckCircle2, Clock, Users, Video, CalendarDays, Wallet, UserRound } from "lucide-react";
 import { DemoBadge, EmptyState, SectionTitle, StatusBadge } from "@/components/site/ui";
-import { CONTACT } from "@/components/site/SiteLayout";
+import { useState } from "react";
+import { EnrollmentDialog } from "@/components/courses/EnrollmentDialog";
+import { formatFee, useCourseSettings } from "@/lib/course-settings";
 import { getCourse } from "@/lib/data/courses";
 import { pageMeta } from "@/lib/seo";
 import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
@@ -29,7 +31,14 @@ function PCourse() {
   const { course: c } = Route.useLoaderData();
   const { data: teachers } = usePublicTeachers();
   const ts = teachersForLevel(teachers, c.level);
-  const registerHref = `mailto:${CONTACT.email}?subject=${encodeURIComponent(`Đăng ký khóa HSK ${c.level}`)}`;
+  const { data: settings } = useCourseSettings();
+  const st = settings?.find((x) => x.level === c.level);
+  const open = st ? st.registration_open : true;
+  const fee = formatFee(st);
+  const [dlg, setDlg] = useState(false);
+  const Btn = ({ block }: { block?: boolean }) => open
+    ? <button onClick={() => setDlg(true)} className={block ? "block w-full rounded-full bg-primary py-3 text-center font-semibold text-primary-foreground hover:opacity-90" : "mt-8 inline-flex rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:opacity-90"}>ĐĂNG KÝ KHÓA HỌC</button>
+    : <div className={block ? "rounded-xl bg-muted p-3 text-center text-sm" : "mt-8 max-w-xl rounded-xl bg-muted p-4 text-sm"}><div className="font-bold text-muted-foreground">TẠM ĐÓNG ĐĂNG KÝ</div><p className="mt-1 text-muted-foreground">Khóa học đã đủ sĩ số hoặc đã chốt danh sách. Hẹn gặp bạn ở đợt tuyển sinh tiếp theo!</p></div>;
   return (
     <>
       <section className="grid-lines border-b border-border bg-secondary">
@@ -38,7 +47,7 @@ function PCourse() {
           <div className="mt-4 flex flex-wrap items-center gap-2"><span className="rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">HSK {c.level}</span><StatusBadge status={c.status} />{c.demo && <DemoBadge />}</div>
           <h1 className="mt-4 text-3xl font-bold text-primary-deep md:text-5xl">{c.name}</h1>
           <p className="mt-4 max-w-2xl text-muted-foreground">{c.description}</p>
-          <a href={registerHref} className="mt-8 inline-flex rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:opacity-90">ĐĂNG KÝ KHÓA HỌC</a>
+          <Btn />
         </div>
       </section>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:px-6 lg:grid-cols-[1fr_340px]">
@@ -66,12 +75,13 @@ function PCourse() {
           <Info icon={Clock} l="Số buổi / thời lượng" v={`${c.sessions} buổi · ${c.duration}`} />
           <Info icon={CalendarDays} l="Lịch học" v={c.schedule} />
           <Info icon={Video} l="Hình thức" v={c.mode} />
-          <Info icon={Wallet} l="Học phí" v={c.fee} />
-          <Info icon={Users} l="Số lượng" v={`Tối đa ${c.capacity} học viên`} />
-          <a href={registerHref} className="block rounded-full bg-primary py-3 text-center font-semibold text-primary-foreground hover:opacity-90">ĐĂNG KÝ KHÓA HỌC</a>
-          <p className="text-center text-xs text-muted-foreground">Chưa cần thanh toán online.</p>
+          <Info icon={Wallet} l="Học phí" v={fee} />
+          <Info icon={Users} l="Số lượng" v={`Lớp chọn lọc, tối đa ${st?.capacity ?? c.capacity} học viên`} />
+          <Btn block />
+          <p className="text-center text-xs text-muted-foreground">Lớp có xét duyệt · Không thanh toán online.</p>
         </aside>
       </div>
+      {dlg && <EnrollmentDialog level={c.level} fee={fee} onClose={() => setDlg(false)} />}
     </>
   );
 }
