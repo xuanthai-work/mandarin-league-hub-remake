@@ -30,7 +30,7 @@ function EnrollmentApprovedEmail({ fullName = 'Bạn', code = '—', level, zalo
 
 export const template = {
   component: EnrollmentApprovedEmail,
-  subject: (d: Record<string, any>) => `[The Mandarin League] Chúc mừng bạn trúng tuyển lớp HSK ${d.level ?? ''}`.trim(),
+  subject: (d: Record<string, any>) => `[The Mandarin League] Chúc mừng bạn trúng tuyển lớp HSK ${d['level'] ?? ''}`.trim(),
   displayName: 'Thư mời trúng tuyển khóa học',
   previewData: { fullName: 'Nguyễn Văn A', code: 'TML-ENR-2610-0001', level: 1, zaloLink: 'https://zalo.me/g/example', feeNote: '' },
 } satisfies TemplateEntry

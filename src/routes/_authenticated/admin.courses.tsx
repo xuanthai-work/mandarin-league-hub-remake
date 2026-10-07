@@ -94,7 +94,7 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
   );
 }
 
-function ReviewDialog({ r, setting, onClose, onDone }: { r: Enrollment; setting?: CourseSetting; onClose: () => void; onDone: () => void }) {
+function ReviewDialog({ r, setting, onClose, onDone }: { r: Enrollment; setting: CourseSetting | undefined; onClose: () => void; onDone: () => void }) {
   const review = useServerFn(reviewEnrollment);
   const [status, setStatus] = useState(r.status === "pending" ? "approved" : r.status);
   const [note, setNote] = useState(r.admin_note);
