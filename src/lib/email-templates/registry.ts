@@ -10,6 +10,8 @@ export interface TemplateEntry {
 }
 
 import { template as applicationConfirmation } from './application-confirmation'
+import { template as enrollmentConfirmation } from './enrollment-confirmation'
+import { template as enrollmentApproved } from './enrollment-approved'
 
 /**
  * Template registry — maps template names to their React Email components.
@@ -17,4 +19,6 @@ import { template as applicationConfirmation } from './application-confirmation'
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'application-confirmation': applicationConfirmation,
+  'enrollment-confirmation': enrollmentConfirmation,
+  'enrollment-approved': enrollmentApproved,
 }

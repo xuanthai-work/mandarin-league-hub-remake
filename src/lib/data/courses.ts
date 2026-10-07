@@ -16,7 +16,7 @@ export const COURSES: Course[] = NAMES.map((name, i) => {
     sessions: SESSIONS[i] ?? 24,
     duration: "90 phút/buổi",
     schedule: "Đang cập nhật",
-    mode: "Online qua Zoom",
+    mode: "Trực tuyến qua Google Meet / phòng học online",
     fee: "Đang cập nhật",
     capacity: 20,
     status: STATUS[i] ?? "Sắp khai giảng",
@@ -25,8 +25,8 @@ export const COURSES: Course[] = NAMES.map((name, i) => {
     audience: level === 1 ? ["Người mới bắt đầu", "Học sinh, sinh viên yêu thích tiếng Trung"] : [`Đã hoàn thành HSK ${level - 1} hoặc tương đương`],
     outcomes: [`Sẵn sàng thi HSK ${level}`, "Tự tin giao tiếp theo trình độ", "Phương pháp tự học hiệu quả"],
     faq: [
-      { q: "Học online như thế nào?", a: "Lớp học trực tiếp qua Zoom, có tài liệu và bài tập sau mỗi buổi." },
-      { q: "Có cần thanh toán online không?", a: "Hiện chưa. TML sẽ liên hệ hướng dẫn sau khi bạn đăng ký." },
+      { q: "Học online như thế nào?", a: "Lớp học trực tiếp qua Google Meet hoặc phòng học online; lịch và link học gửi trong nhóm Zalo lớp." },
+      { q: "Có cần thanh toán online không?", a: "Hiện chưa. Không. Đơn được xét duyệt; học viên trúng tuyển nhận hướng dẫn qua email." },
     ],
     demo: true,
   };

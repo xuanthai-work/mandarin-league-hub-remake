@@ -6,6 +6,7 @@ import { Chips, DemoBadge, EmptyState, SectionTitle, StatusBadge } from "@/compo
 import { getCourses } from "@/lib/data/courses";
 import type { CourseStatus } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
+import { formatFee, useCourseSettings } from "@/lib/course-settings";
 import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
 
 export const Route = createFileRoute("/courses/hsk/")({ staticData: { sitemap: true },
@@ -19,6 +20,8 @@ const FILTER_STATUS: CourseStatus[] = ["Đang tuyển sinh", "Sắp khai giảng
 function PCourses() {
   const courses = getCourses();
   const { data: teachers } = usePublicTeachers();
+  const { data: settings } = useCourseSettings();
+  const st = (lv: number) => settings?.find((x) => x.level === lv);
   const [level, setLevel] = useState<(typeof LEVELS)[number] | "all">("all");
   const [status, setStatus] = useState<CourseStatus | "all">("all");
   const filtered = courses.filter((c) => (level === "all" || `HSK ${c.level}` === level) && (status === "all" || c.status === status));
@@ -32,13 +35,14 @@ function PCourses() {
             <Link key={c.id} to="/courses/hsk/$courseId" params={{ courseId: c.id }} className="flex flex-col rounded-2xl border border-border bg-card p-6 transition hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
               <div className="flex items-center justify-between gap-2">
                 <span className="rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">HSK {c.level}</span>
-                <div className="flex items-center gap-2">{c.demo && <DemoBadge />}<StatusBadge status={c.status} /></div>
+                <div className="flex items-center gap-2">{c.demo && <DemoBadge />}{st(c.level)?.registration_open === false ? <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">Tạm đóng đăng ký</span> : <StatusBadge status={c.status} />}</div>
               </div>
               <h3 className="mt-5 text-lg font-semibold">{c.name}</h3>
               <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{c.description}</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2"><Clock className="h-4 w-4" />{c.sessions} buổi</span>
-                <span className="flex items-center gap-2"><Video className="h-4 w-4" />{c.mode}</span>
+                <span className="flex items-center gap-2"><Video className="h-4 w-4" />Google Meet</span>
+                <span className="col-span-2 flex items-center gap-2 font-semibold text-primary-deep"><Wallet className="h-4 w-4" />{formatFee(st(c.level))}</span>
               </div>
             </Link>
           ))}
@@ -66,8 +70,8 @@ function PCourses() {
                 <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />{c.schedule}</span>
                   <span className="flex items-center gap-2"><Video className="h-4 w-4" />{c.mode}</span>
-                  <span className="flex items-center gap-2"><Wallet className="h-4 w-4" />{c.fee}</span>
-                  <span className="flex items-center gap-2"><Users className="h-4 w-4" />Tối đa {c.capacity} học viên</span>
+                  <span className="flex items-center gap-2"><Wallet className="h-4 w-4" />{formatFee(st(c.level))}</span>
+                  <span className="flex items-center gap-2"><Users className="h-4 w-4" />Tối đa {st(c.level)?.capacity ?? c.capacity} học viên</span>
                 </div>
                 <Link to="/courses/hsk/$courseId" params={{ courseId: c.id }} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Xem chi tiết →</Link>
               </div>
