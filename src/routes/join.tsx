@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDown, Award, BookOpen, Briefcase, CalendarDays, HeartHandshake, Network, Rocket, School } from "lucide-react";
+import { ArrowDown, Award, BookOpen, Briefcase, CalendarDays, FileText, HeartHandshake, Network, Rocket, School, Search } from "lucide-react";
+import { ApplicationLookup } from "@/components/recruitment/ApplicationLookup";
 import { PageHero } from "@/components/site/SiteLayout";
 import { SectionTitle } from "@/components/site/ui";
 import { ApplicationForm } from "@/components/recruitment/ApplicationForm";
@@ -18,6 +20,8 @@ const BENEFITS = [
 ];
 
 function PJoin() {
+  const [tab, setTab] = useState<"apply" | "lookup">("apply");
+  const [code, setCode] = useState("");
   return (
     <>
       <PageHero eyebrow="Tuyển thành viên" title="Tại sao tham gia TML?" desc="Vừa học tiếng Trung, vừa rèn kỹ năng và đóng góp cho cộng đồng." />
@@ -38,8 +42,16 @@ function PJoin() {
           </div>
         </section>
         <section id="apply" className="mx-auto max-w-3xl scroll-mt-24">
-          <SectionTitle label="Ứng tuyển" title="Đơn ứng tuyển thành viên TML" />
-          <div className="mt-8"><ApplicationForm /></div>
+          <SectionTitle label="Tuyển dụng" title="Ứng tuyển hoặc tra cứu hồ sơ" />
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {([["apply", "ỨNG TUYỂN", "Nộp hồ sơ tham gia THE MANDARIN LEAGUE", FileText], ["lookup", "TRA CỨU HỒ SƠ", "Kiểm tra trạng thái hồ sơ ứng tuyển", Search]] as const).map(([k, t, d, Icon]) => (
+              <button key={k} type="button" onClick={() => setTab(k)} aria-pressed={tab === k}
+                className={`flex items-start gap-3 rounded-2xl border p-5 text-left transition-colors ${tab === k ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-card hover:bg-secondary"}`}>
+                <Icon className="mt-0.5 h-5 w-5 text-gold" /><span><span className="block font-bold text-primary-deep">{t}</span><span className="text-sm text-muted-foreground">{d}</span></span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-6">{tab === "apply" ? <ApplicationForm onLookup={(c) => { setCode(c); setTab("lookup"); }} /> : <ApplicationLookup initial={code} />}</div>
         </section>
       </div>
     </>

@@ -30,7 +30,7 @@ const Label = ({ children, required }: { children: React.ReactNode; required?: b
   <span className="text-sm font-medium">{children}{required && <span className="text-destructive"> *</span>}</span>
 );
 
-export function ApplicationForm() {
+export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => void } = {}) {
   const { data, isLoading } = useQuery({ queryKey: ["open-recruitment"], queryFn: loadOpen });
   const upload = useServerFn(createApplicationUpload);
   const submit = useServerFn(submitApplication);
