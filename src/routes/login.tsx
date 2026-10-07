@@ -1,0 +1,92 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { Lock, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/tml-logo.png.asset.json";
+
+export const Route = createFileRoute("/login")({
+  head: () => ({
+    meta: [
+      { title: "Cổng nội bộ | The Mandarin League" },
+      { name: "description", content: "Đăng nhập Cổng nội bộ dành cho tài khoản do The Mandarin League cấp." },
+      { property: "og:title", content: "Cổng nội bộ – TML" },
+      { property: "og:description", content: "Chỉ dành cho tài khoản do TML cấp." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: LoginPage,
+});
+
+type Me = { roles: string[]; account: { account_status: string; must_change_password: boolean } | null };
+
+export async function routeAfterLogin(): Promise<"/admin" | "/member/dashboard" | "/change-password" | "blocked" | "none"> {
+  await supabase.rpc("record_login");
+  const { data } = await supabase.rpc("my_account");
+  const me = data as unknown as Me;
+  const isAdmin = me.roles.includes("admin");
+  if (me.account && me.account.account_status !== "active") return "blocked";
+  if (!me.account && !isAdmin) return "none";
+  if (me.account?.must_change_password) return "/change-password";
+  if (isAdmin || me.roles.includes("department_head")) return "/admin";
+  return "/member/dashboard";
+}
+
+function LoginPage() {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setError(""); setInfo("");
+    if (mode === "forgot") {
+      await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+      setBusy(false);
+      return setInfo("Nếu email đã được TML cấp tài khoản, bạn sẽ nhận được liên kết đặt lại mật khẩu.");
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setBusy(false);
+      return setError(/banned/i.test(error.message)
+        ? "Tài khoản đã bị tạm khóa hoặc vô hiệu hóa. Vui lòng liên hệ Ban Điều hành."
+        : "Email hoặc mật khẩu không đúng.");
+    }
+    const dest = await routeAfterLogin();
+    setBusy(false);
+    if (dest === "blocked" || dest === "none") {
+      await supabase.auth.signOut();
+      return setError(dest === "blocked" ? "Tài khoản đã bị tạm khóa hoặc vô hiệu hóa. Vui lòng liên hệ Ban Điều hành." : "Tài khoản chưa được TML cấp quyền truy cập nội bộ.");
+    }
+    navigate({ to: dest });
+  };
+
+  const inp = "w-full rounded-lg border border-input bg-background px-4 py-3";
+  return (
+    <section className="mx-auto max-w-md px-4 py-16">
+      <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+        <img src={logo.url} alt="TML" className="mx-auto h-16 w-16 object-contain" />
+        <h1 className="mt-4 text-center text-2xl font-bold text-primary-deep">{mode === "login" ? "Cổng nội bộ" : "Quên mật khẩu"}</h1>
+        <p className="mt-1 text-center text-sm text-muted-foreground">Chỉ dành cho tài khoản do TML cấp.</p>
+        <form onSubmit={submit} className="mt-8 space-y-4">
+          <input type="email" required autoComplete="email" placeholder="Email đăng nhập" value={email} onChange={(e) => setEmail(e.target.value)} className={inp} />
+          {mode === "login" && <input type="password" required autoComplete="current-password" placeholder="Mật khẩu" value={password} onChange={(e) => setPassword(e.target.value)} className={inp} />}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          {info && <p className="text-sm text-success">{info}</p>}
+          <button disabled={busy} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground disabled:opacity-60">
+            {mode === "login" ? <Lock className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+            {busy ? "Đang xử lý…" : mode === "login" ? "Đăng nhập" : "Gửi liên kết đặt lại"}
+          </button>
+        </form>
+        <button onClick={() => { setMode(mode === "login" ? "forgot" : "login"); setError(""); setInfo(""); }} className="mt-4 w-full text-center text-sm text-primary underline">
+          {mode === "login" ? "Quên mật khẩu?" : "Quay lại đăng nhập"}
+        </button>
+      </div>
+    </section>
+  );
+}
