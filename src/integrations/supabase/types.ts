@@ -578,6 +578,50 @@ export type Database = {
           },
         ]
       }
+      onboarding_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string
+          experience: string
+          goals: string
+          id: string
+          member_id: string
+          plan: Json
+          role_desc: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department: string
+          experience?: string
+          goals?: string
+          id?: string
+          member_id: string
+          plan?: Json
+          role_desc?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          experience?: string
+          goals?: string
+          id?: string
+          member_id?: string
+          plan?: Json
+          role_desc?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_plans_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       point_transactions: {
         Row: {
           balance_after: number
