@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LogOut, Menu, X, ShieldAlert } from "lucide-react";
+import { LogOut, Menu, X, ShieldAlert, IdCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, type AdminRole } from "@/lib/admin-nav";
@@ -90,7 +90,7 @@ function AdminLayout() {
     <div className="fixed inset-0 z-50 flex bg-muted/40">
       <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:block">
         <div className="portal-ai flex items-center gap-2 px-4 py-4">
-          <img src={logo.url} alt="TML" className="h-9 w-9 object-contain" />
+          <img src={logo.url} alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />
           <span className="portal-ink font-bold">TML Admin</span>
         </div>
         {nav}
@@ -113,6 +113,7 @@ function AdminLayout() {
         <header className="portal-ai portal-ink flex items-center justify-between gap-3 px-4 py-3">
           <button aria-label="Mở menu" className="lg:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="ml-auto flex items-center gap-3">
+            <Link to="/member/dashboard" className="inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><IdCard className="h-4 w-4" /><span className="hidden sm:inline">Thẻ thành viên của tôi</span></Link>
             <div className="text-right">
               <p className="max-w-[180px] truncate text-sm font-medium">{access.data?.email}</p>
               <p className="text-xs text-gold">{ROLE_LABELS[roles[0]!]}</p>

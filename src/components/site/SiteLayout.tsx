@@ -34,7 +34,7 @@ function Header() {
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
         <Link to="/" className="flex items-center gap-3">
-          <img src={logo.url} alt="The Mandarin League" className="h-10 w-10 md:h-12 md:w-12" />
+          <img src={logo.url} alt="The Mandarin League" className="h-10 w-10 rounded-full border border-gold/60 bg-background object-cover shadow-sm md:h-12 md:w-12" />
           <div className="leading-tight">
             <div className="text-sm font-bold tracking-wide text-primary-deep md:text-base">THE MANDARIN LEAGUE</div>
             <div className="text-[11px] text-muted-foreground md:text-xs">Liên Đoàn Hán Ngữ · 普通话联盟</div>
@@ -92,7 +92,7 @@ function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-background p-1"><img src={logo.url} alt="" className="h-12 w-12" /></div>
+            <div className="rounded-full bg-background p-1"><img src={logo.url} alt="" className="h-12 w-12 rounded-full object-cover" /></div>
             <div>
               <div className="font-bold">THE MANDARIN LEAGUE</div>
               <div className="text-sm opacity-80">Liên Đoàn Hán Ngữ · 普通话联盟</div>

@@ -99,6 +99,13 @@
       "when": 1791375996196,
       "tag": "0013_hsk_classes_and_program_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791389587885,
+      "tag": "0014_my_department",
+      "breakpoints": true
     }
   ]
 }

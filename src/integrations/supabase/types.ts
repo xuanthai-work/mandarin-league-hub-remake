@@ -967,6 +967,7 @@ export type Database = {
         Returns: undefined
       }
       my_account: { Args: never; Returns: Json }
+      my_department: { Args: never; Returns: Json }
       my_head_department: { Args: never; Returns: string }
       my_member_id: { Args: never; Returns: string }
       public_org_chart: {
