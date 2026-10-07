@@ -3,7 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const submitSchema = z.object({
-  level: z.number().int().min(1).max(6),
+  level: z.number().int().min(0).max(6),
+  course_id: z.string().uuid().optional(),
   full_name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(255),
   phone: z.string().trim().regex(/^[0-9+ .()-]{8,20}$/),
@@ -27,10 +28,18 @@ export const submitEnrollment = createServerFn({ method: "POST" })
     const d = parsed.data;
     const email = d.email.toLowerCase();
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-    const { data: setting } = await db.from("course_settings").select("*").eq("level", d.level).maybeSingle();
-    if (!setting?.registration_open) return { ok: false as const, error: "Khóa học này hiện đã đóng đăng ký." };
-    const { count } = await db.from("course_enrollments").select("id", { count: "exact", head: true })
-      .eq("email", email).eq("level", d.level).eq("status", "pending");
+    if (d.course_id) {
+      const { data: c } = await db.from("courses").select("status, is_published, deleted_at, registration_url").eq("id", d.course_id).maybeSingle();
+      if (!c || !c.is_published || c.deleted_at || c.status !== "enrolling" || c.registration_url)
+        return { ok: false as const, error: "Chương trình này hiện không nhận đăng ký trên website." };
+    } else {
+      if (d.level < 1) return { ok: false as const, error: "Khóa học không hợp lệ." };
+      const { data: setting } = await db.from("course_settings").select("*").eq("level", d.level).maybeSingle();
+      if (!setting?.registration_open) return { ok: false as const, error: "Khóa học này hiện đã đóng đăng ký." };
+    }
+    let dup = db.from("course_enrollments").select("id", { count: "exact", head: true }).eq("email", email).eq("status", "pending");
+    dup = d.course_id ? dup.eq("course_id", d.course_id) : dup.eq("level", d.level).is("course_id", null);
+    const { count } = await dup;
     if ((count ?? 0) > 0) return { ok: false as const, error: "Email này đã có đơn đăng ký khóa này đang chờ xét duyệt." };
 
     const { data: row, error } = await db.from("course_enrollments").insert({ ...d, email }).select("code, created_at").single();

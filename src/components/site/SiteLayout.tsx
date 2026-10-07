@@ -7,7 +7,7 @@ export const NAV = [
   { to: "/", label: "Trang chủ" },
   { to: "/about", label: "Giới thiệu" },
   { to: "/organization", label: "Cơ cấu tổ chức" },
-  { to: "/courses/hsk", label: "Khóa học HSK" },
+  { to: "/courses", label: "Khóa học" },
   { to: "/activities", label: "Hoạt động" },
   { to: "/verify", label: "Xác minh" },
   { to: "/join", label: "Tuyển thành viên" },
