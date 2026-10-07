@@ -5,7 +5,7 @@ import { getMember } from "@/lib/data/members";
 import { getDepartment } from "@/lib/data/departments";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/member/$memberId")({
+export const Route = createFileRoute("/member/$memberId")({ staticData: { sitemap: false },
   loader: ({ params }) => {
     const member = getMember(params.memberId);
     if (!member) throw notFound();

@@ -6,7 +6,7 @@ import { getNews, NEWS_CATEGORIES } from "@/lib/data/news";
 import type { NewsCategory } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/news/")({
+export const Route = createFileRoute("/news/")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Tin tức", "Tin tức chính thức của TML về tiếng Trung, HSK, giáo dục và văn hóa.") }),
   component: PNews,
 });

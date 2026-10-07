@@ -12,7 +12,7 @@ import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import { POINT_KIND, PRIORITY, TASK_STATUS, fmtDate, tierOf } from "@/lib/points";
 
-export const Route = createFileRoute("/_authenticated/member/dashboard")({
+export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Cổng thành viên | The Mandarin League" },

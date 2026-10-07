@@ -8,7 +8,7 @@ import type { CourseStatus } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
 import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
 
-export const Route = createFileRoute("/courses/hsk/")({
+export const Route = createFileRoute("/courses/hsk/")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Khóa học HSK", "Khóa học HSK 1–6 trực tuyến cùng đội ngũ giáo viên TML.") }),
   component: PCourses,
 });

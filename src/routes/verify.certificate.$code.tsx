@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VerificationLookup } from "@/components/verification/VerificationLookup";
 
-export const Route = createFileRoute("/verify/certificate/$code")({
+export const Route = createFileRoute("/verify/certificate/$code")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Kết quả xác minh chứng nhận – The Mandarin League" },

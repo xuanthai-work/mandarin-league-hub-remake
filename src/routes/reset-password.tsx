@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import { routeAfterLogin } from "@/lib/portal";
 
-export const Route = createFileRoute("/reset-password")({
+export const Route = createFileRoute("/reset-password")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Đặt lại mật khẩu | The Mandarin League" },

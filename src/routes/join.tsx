@@ -8,7 +8,7 @@ import { ApplicationForm } from "@/components/recruitment/ApplicationForm";
 import { getDepartments } from "@/lib/data/departments";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/join")({
+export const Route = createFileRoute("/join")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Tuyển thành viên", "Ứng tuyển vào một trong 8 Ban của The Mandarin League.") }),
   component: PJoin,
 });

@@ -10,7 +10,7 @@ import { positionsFor } from "@/lib/recruitment";
 import { Link } from "@tanstack/react-router";
 import { APP_STATUS, RECRUIT_DEPTS, deptName, type Choice } from "@/lib/recruitment";
 
-export const Route = createFileRoute("/_authenticated/admin/candidates")({ component: Candidates });
+export const Route = createFileRoute("/_authenticated/admin/candidates")({ staticData: { sitemap: false }, component: Candidates });
 
 const inp = "rounded-lg border border-input bg-background px-3 py-2 text-sm";
 

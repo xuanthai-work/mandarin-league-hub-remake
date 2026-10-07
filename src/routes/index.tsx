@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, Users, CalendarDays, Mail, Facebook, Youtube, Clo
 import logo from "@/assets/tml-logo.png.asset.json";
 import { CONTACT } from "@/components/site/SiteLayout";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")({ staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "The Mandarin League | Liên Đoàn Hán Ngữ" },

@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import { PRIORITY, TASK_STATUS, fmtDate } from "@/lib/points";
 
-export const Route = createFileRoute("/_authenticated/admin/tasks")({
+export const Route = createFileRoute("/_authenticated/admin/tasks")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Nhiệm vụ | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: TasksPage,
 });

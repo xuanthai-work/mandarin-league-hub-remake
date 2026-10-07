@@ -4,7 +4,7 @@ import { PageHero } from "@/components/site/SiteLayout";
 import { SectionTitle } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/community")({
+export const Route = createFileRoute("/community")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Cộng đồng", "Thành viên, giáo viên, tình nguyện viên, mentor và đại sứ của The Mandarin League.") }),
   component: PCommunity,
 });

@@ -5,7 +5,7 @@ import { Briefcase, GraduationCap, Handshake, Mail, Megaphone, Users } from "luc
 import { PageHero, CONTACT } from "@/components/site/SiteLayout";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/contact")({
+export const Route = createFileRoute("/contact")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Liên hệ", "Liên hệ The Mandarin League qua community@themandarinleague.bond.") }),
   component: PContact,
 });
