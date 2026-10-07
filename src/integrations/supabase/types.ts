@@ -183,6 +183,84 @@ export type Database = {
           },
         ]
       }
+      course_enrollments: {
+        Row: {
+          admin_note: string
+          code: string
+          created_at: string
+          current_level: string
+          email: string
+          full_name: string
+          goal: string
+          id: string
+          level: number
+          message: string
+          phone: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          admin_note?: string
+          code?: string
+          created_at?: string
+          current_level?: string
+          email: string
+          full_name: string
+          goal?: string
+          id?: string
+          level: number
+          message?: string
+          phone: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          admin_note?: string
+          code?: string
+          created_at?: string
+          current_level?: string
+          email?: string
+          full_name?: string
+          goal?: string
+          id?: string
+          level?: number
+          message?: string
+          phone?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      course_settings: {
+        Row: {
+          capacity: number
+          fee_amount: number
+          fee_type: string
+          level: number
+          registration_open: boolean
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number
+          fee_amount?: number
+          fee_type?: string
+          level: number
+          registration_open?: boolean
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          fee_amount?: number
+          fee_type?: string
+          level?: number
+          registration_open?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       department_channels: {
         Row: {
           department: string
