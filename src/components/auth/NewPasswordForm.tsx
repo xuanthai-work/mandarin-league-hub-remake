@@ -22,7 +22,15 @@ export function NewPasswordForm({ onDone, requireCurrent }: { onDone: () => void
       if (error) { setBusy(false); return setErr("Mật khẩu hiện tại không đúng."); }
     }
     const { error } = await supabase.auth.updateUser({ password: pw });
-    if (error) { setBusy(false); return setErr(/same|different/i.test(error.message) ? "Mật khẩu mới phải khác mật khẩu cũ." : "Không đổi được mật khẩu: " + error.message); }
+    if (error) {
+      setBusy(false);
+      const m = error.message;
+      return setErr(/weak|easy to guess|pwned|leaked/i.test(m)
+        ? "Mật khẩu này quá phổ biến hoặc đã từng bị lộ trên mạng. Hãy chọn mật khẩu khó đoán hơn (kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt)."
+        : /should be different|same/i.test(m)
+          ? "Mật khẩu mới phải khác mật khẩu cũ."
+          : "Không đổi được mật khẩu: " + m);
+    }
     await supabase.rpc("mark_password_changed");
     setBusy(false); setCur(""); setPw(""); setPw2("");
     onDone();
