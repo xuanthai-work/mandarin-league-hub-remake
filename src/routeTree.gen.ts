@@ -35,9 +35,11 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminSectionRouteImport } from './routes/_authenticated/admin.$section'
 import { Route as AuthenticatedAdminAccountsRouteImport } from './routes/_authenticated/admin.accounts'
 import { Route as AuthenticatedAdminCandidatesRouteImport } from './routes/_authenticated/admin.candidates'
+import { Route as AuthenticatedAdminContributionsRouteImport } from './routes/_authenticated/admin.contributions'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
 import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
 import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_authenticated/admin.recruitment'
+import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authenticated/admin.tasks'
 import { Route as AuthenticatedMemberDashboardRouteImport } from './routes/_authenticated/member.dashboard'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
@@ -179,6 +181,12 @@ const AuthenticatedAdminCandidatesRoute =
     path: '/candidates',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminContributionsRoute =
+  AuthenticatedAdminContributionsRouteImport.update({
+    id: '/contributions',
+    path: '/contributions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminMembersRoute =
   AuthenticatedAdminMembersRouteImport.update({
     id: '/members',
@@ -197,6 +205,11 @@ const AuthenticatedAdminRecruitmentRoute =
     path: '/recruitment',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminTasksRoute = AuthenticatedAdminTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedMemberDashboardRoute =
   AuthenticatedMemberDashboardRouteImport.update({
     id: '/member/dashboard',
@@ -259,9 +272,11 @@ export interface FileRoutesByFullPath {
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
+  '/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -293,9 +308,11 @@ export interface FileRoutesByTo {
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
+  '/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -332,9 +349,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/_authenticated/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/_authenticated/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
+  '/_authenticated/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/_authenticated/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/_authenticated/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/_authenticated/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -371,9 +390,11 @@ export interface FileRouteTypes {
     | '/admin/$section'
     | '/admin/accounts'
     | '/admin/candidates'
+    | '/admin/contributions'
     | '/admin/members'
     | '/admin/photos'
     | '/admin/recruitment'
+    | '/admin/tasks'
     | '/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -405,9 +426,11 @@ export interface FileRouteTypes {
     | '/admin/$section'
     | '/admin/accounts'
     | '/admin/candidates'
+    | '/admin/contributions'
     | '/admin/members'
     | '/admin/photos'
     | '/admin/recruitment'
+    | '/admin/tasks'
     | '/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -443,9 +466,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/$section'
     | '/_authenticated/admin/accounts'
     | '/_authenticated/admin/candidates'
+    | '/_authenticated/admin/contributions'
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/photos'
     | '/_authenticated/admin/recruitment'
+    | '/_authenticated/admin/tasks'
     | '/_authenticated/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -665,6 +690,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCandidatesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/contributions': {
+      id: '/_authenticated/admin/contributions'
+      path: '/contributions'
+      fullPath: '/admin/contributions'
+      preLoaderRoute: typeof AuthenticatedAdminContributionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/members': {
       id: '/_authenticated/admin/members'
       path: '/members'
@@ -684,6 +716,13 @@ declare module '@tanstack/react-router' {
       path: '/recruitment'
       fullPath: '/admin/recruitment'
       preLoaderRoute: typeof AuthenticatedAdminRecruitmentRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/tasks': {
+      id: '/_authenticated/admin/tasks'
+      path: '/tasks'
+      fullPath: '/admin/tasks'
+      preLoaderRoute: typeof AuthenticatedAdminTasksRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/member/dashboard': {
@@ -742,9 +781,11 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminSectionRoute: typeof AuthenticatedAdminSectionRoute
   AuthenticatedAdminAccountsRoute: typeof AuthenticatedAdminAccountsRoute
   AuthenticatedAdminCandidatesRoute: typeof AuthenticatedAdminCandidatesRoute
+  AuthenticatedAdminContributionsRoute: typeof AuthenticatedAdminContributionsRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
   AuthenticatedAdminRecruitmentRoute: typeof AuthenticatedAdminRecruitmentRoute
+  AuthenticatedAdminTasksRoute: typeof AuthenticatedAdminTasksRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -752,9 +793,11 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSectionRoute: AuthenticatedAdminSectionRoute,
   AuthenticatedAdminAccountsRoute: AuthenticatedAdminAccountsRoute,
   AuthenticatedAdminCandidatesRoute: AuthenticatedAdminCandidatesRoute,
+  AuthenticatedAdminContributionsRoute: AuthenticatedAdminContributionsRoute,
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
   AuthenticatedAdminRecruitmentRoute: AuthenticatedAdminRecruitmentRoute,
+  AuthenticatedAdminTasksRoute: AuthenticatedAdminTasksRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
