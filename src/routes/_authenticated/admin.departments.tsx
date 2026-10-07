@@ -59,7 +59,7 @@ function DepartmentsPage() {
 type Member = Awaited<ReturnType<typeof load>>["members"][number];
 type Channel = Awaited<ReturnType<typeof load>>["channels"][number];
 
-function DeptDetail({ id, members, channel, onBack, onPick }: { id: string; members: Member[]; channel?: Channel; onBack: () => void; onPick: (id: string) => void }) {
+function DeptDetail({ id, members, channel, onBack, onPick }: { id: string; members: Member[]; channel: Channel | undefined; onBack: () => void; onPick: (id: string) => void }) {
   const d = DEPARTMENTS.find((x) => x.id === id)!;
   const sorted = [...members].sort((a, b) => (RANK[a.position] ?? 9) - (RANK[b.position] ?? 9) || a.member_code.localeCompare(b.member_code));
   const leaders = sorted.filter((m) => m.position in RANK);
