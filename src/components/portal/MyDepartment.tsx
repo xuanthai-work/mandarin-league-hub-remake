@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Crown, FolderOpen, MessageCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
+import { OnboardingPlans } from "./OnboardingPlans";
 
 type Peer = { id: string; full_name: string; member_code: string; position: string; is_me: boolean };
 type Dept = { department: string; channel: { zalo_url: string; resources_url: string; note: string } | null; members: Peer[] } | null;
@@ -19,7 +20,7 @@ function PeerCard({ p, lead }: { p: Peer; lead?: boolean }) {
   );
 }
 
-export function MyDepartment() {
+export function MyDepartment({ canManage = false }: { canManage?: boolean }) {
   const q = useQuery({ queryKey: ["my-department"], queryFn: async () => (await supabase.rpc("my_department")).data as unknown as Dept });
   if (q.isLoading) return <p className="mt-6 text-center text-sm text-muted-foreground">Đang tải…</p>;
   const d = q.data;
@@ -50,6 +51,7 @@ export function MyDepartment() {
         {rest.length ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{rest.map((p) => <PeerCard key={p.id} p={p} />)}</div>
           : <p className="text-sm text-muted-foreground">Chưa có thành viên khác.</p>}
       </section>
+      <OnboardingPlans peers={d.members.filter((m) => !m.is_me)} canManage={canManage} />
     </div>
   );
 }
