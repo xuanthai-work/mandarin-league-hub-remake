@@ -114,46 +114,45 @@ function MemberDashboard() {
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
           <div>
           <div className="[perspective:1200px]">
-          <div ref={cardRef} className="id-card relative overflow-hidden rounded-[18px] p-[3px] text-primary-foreground">
-            <div className="id-card-inner relative overflow-hidden rounded-[15px] p-5">
-              <div aria-hidden className="id-guilloche pointer-events-none absolute inset-0" />
-              <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute -right-12 -bottom-12 h-56 w-56 rounded-full opacity-[0.07]" />
-              <div className="relative flex items-center gap-3 border-b border-gold/40 pb-3">
-                <img src={logo.url} alt="TML" className="h-11 w-11 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
-                <div className="min-w-0 leading-tight">
-                  <p className="text-[13px] font-bold tracking-wide">THE MANDARIN LEAGUE</p>
-                  <p className="text-[10px] text-gold">LIÊN ĐOÀN HÁN NGỮ · 普通话联盟</p>
-                </div>
-                <div aria-hidden className="id-chip ml-auto h-8 w-11 shrink-0 rounded-md" />
+          <div ref={cardRef} className="tml-pass relative overflow-hidden rounded-[18px] text-primary-deep">
+            <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
+            <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute left-[30%] top-[38%] h-48 w-48 rounded-full opacity-[0.06]" />
+            <div className="relative flex items-center gap-2 pl-4 pt-4">
+              <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
+              <div className="min-w-0 leading-tight">
+                <p className="font-serif text-[15px] font-bold tracking-wide text-primary">普通话联盟</p>
+                <p className="text-[10px] font-semibold tracking-wide">The Mandarin League</p>
+                <p className="text-[8px] uppercase tracking-[0.2em] opacity-70">Liên Đoàn Hán Ngữ</p>
               </div>
-              <p className="relative mt-2 text-[9px] font-semibold uppercase tracking-[0.3em] text-gold/90">Member Identification Card · 会员证</p>
-              <div className="relative mt-3 flex gap-4">
-                <label className="group relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full border-[3px] border-gold bg-primary-deep ring-2 ring-gold/30 ring-offset-2 ring-offset-primary-deep">
-                  {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-3xl font-bold">{m.full_name.charAt(0)}</span>}
-                  <span className="absolute inset-0 flex items-center justify-center bg-foreground/50 opacity-0 transition group-hover:opacity-100"><Camera className="h-5 w-5" /></span>
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
-                </label>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[9px] uppercase tracking-wider opacity-70">Họ và tên / Name</p>
-                  <p className="truncate text-lg font-bold uppercase">{m.full_name}</p>
-                  <p className="font-mono text-sm tracking-wider text-gold">{m.member_code}</p>
-                  <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tier.className}`}>{tier.label}</span>
-                </div>
-              </div>
-              <div className="relative mt-4 flex items-end gap-3">
-                <dl className="grid flex-1 grid-cols-2 gap-x-3 gap-y-2 text-xs">
-                  <div><dt className="text-[9px] uppercase opacity-70">Ban / Department</dt><dd className="font-semibold">{deptName(m.department)}</dd></div>
-                  <div><dt className="text-[9px] uppercase opacity-70">Chức vụ / Position</dt><dd className="font-semibold">{m.position}</dd></div>
-                  <div><dt className="text-[9px] uppercase opacity-70">Ngày cấp / Issued</dt><dd>{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
-                  <div><dt className="text-[9px] uppercase opacity-70">Điểm / Credits</dt><dd className="font-bold text-gold">{m.contribution_points}</dd></div>
-                </dl>
-                {qr && <img src={qr} alt={`QR ${m.member_code}`} className="h-[72px] w-[72px] shrink-0 rounded-md border border-gold bg-card p-1" />}
-              </div>
-              <div className="relative mt-4 flex items-center justify-between gap-3">
-                <div aria-hidden className="id-barcode h-7 flex-1 rounded-sm" />
-                <span className="rotate-[-8deg] rounded-full border-2 border-gold/60 px-2 py-0.5 text-[9px] font-bold tracking-widest text-gold/80">TML VERIFIED</span>
+              <div className="tml-banner ml-auto flex h-10 flex-1 items-center justify-end pr-4 sm:max-w-[48%]">
+                <div className="text-right leading-none text-primary-foreground"><p className="text-lg font-bold tracking-[0.2em]">会员证</p><p className="mt-0.5 text-[8px] tracking-[0.25em] text-gold">THẺ THÀNH VIÊN</p></div>
               </div>
             </div>
+            <div className="relative grid grid-cols-[1fr_auto] gap-3 px-4 pb-4 pt-3">
+              <dl className="space-y-1.5 text-[11px]">
+                <div><dt className="text-[9px] opacity-60">姓名 · Họ và tên</dt><dd className="truncate text-base font-bold uppercase text-primary">{m.full_name}</dd></div>
+                {barcode && <img src={barcode} alt={`Mã vạch ${m.member_code}`} className="h-9 max-w-[190px] bg-background px-1" />}
+                <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="font-semibold">{deptName(m.department)}</dd></div>
+                <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="font-semibold">{m.position}</dd></div>
+                <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
+                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
+              </dl>
+              <div className="flex flex-col items-center">
+                <label className="group relative h-[120px] w-[92px] cursor-pointer overflow-hidden rounded-md border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60">
+                  {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-3xl font-bold text-primary">{m.full_name.charAt(0)}</span>}
+                  <span className="absolute inset-0 flex items-center justify-center bg-foreground/50 text-background opacity-0 transition group-hover:opacity-100"><Camera className="h-5 w-5" /></span>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
+                </label>
+                {qr && <img src={qr} alt={`QR ${m.member_code}`} className="mt-2 h-14 w-14 rounded bg-background p-0.5" />}
+                <p className="mt-1 font-mono text-[9px] font-bold tracking-wider text-primary">{m.member_code}</p>
+              </div>
+            </div>
+            <div className="relative flex items-center justify-between bg-primary-deep px-4 py-1.5 text-[8px] tracking-[0.3em] text-gold"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
+          </div>
+          </div>
+          <div className="portal-glass mt-3 rounded-2xl px-5 py-4">
+            <p className="text-xs portal-ink-muted">Điểm cống hiến · Credits</p>
+            <p className="text-3xl font-bold text-gold">{m.contribution_points.toLocaleString("vi-VN")} <span className="text-base font-medium portal-ink-muted">điểm</span></p>
           </div>
           </div>
           <button onClick={downloadCard} className="portal-ink mt-3 inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><Download className="h-4 w-4" />Tải thẻ ảnh</button>
