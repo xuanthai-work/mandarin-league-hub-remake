@@ -27,6 +27,8 @@ import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authe
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities.$activityId'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as CoursesIndexRouteImport } from './routes/courses.index'
+import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as CoursesHskRouteImport } from './routes/courses.hsk'
 import { Route as MemberMemberIdRouteImport } from './routes/member.$memberId'
 import { Route as NewsIndexRouteImport } from './routes/news.index'
@@ -143,6 +145,16 @@ const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesIndexRoute = CoursesIndexRouteImport.update({
+  id: '/courses/',
+  path: '/courses/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesSlugRoute = CoursesSlugRouteImport.update({
+  id: '/courses/$slug',
+  path: '/courses/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesHskRoute = CoursesHskRouteImport.update({
@@ -310,10 +322,12 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
+  '/courses/$slug': typeof CoursesSlugRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
   '/activities/': typeof ActivitiesIndexRoute
+  '/courses/': typeof CoursesIndexRoute
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
@@ -354,9 +368,11 @@ export interface FileRoutesByTo {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
+  '/courses/$slug': typeof CoursesSlugRoute
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
   '/activities': typeof ActivitiesIndexRoute
+  '/courses': typeof CoursesIndexRoute
   '/news': typeof NewsIndexRoute
   '/verify': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
@@ -401,10 +417,12 @@ export interface FileRoutesById {
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
+  '/courses/$slug': typeof CoursesSlugRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
   '/activities/': typeof ActivitiesIndexRoute
+  '/courses/': typeof CoursesIndexRoute
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/_authenticated/admin/$section': typeof AuthenticatedAdminSectionRoute
@@ -449,10 +467,12 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
+    | '/courses/$slug'
     | '/courses/hsk'
     | '/member/$memberId'
     | '/news/$slug'
     | '/activities/'
+    | '/courses/'
     | '/news/'
     | '/verify/'
     | '/admin/$section'
@@ -493,9 +513,11 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
+    | '/courses/$slug'
     | '/member/$memberId'
     | '/news/$slug'
     | '/activities'
+    | '/courses'
     | '/news'
     | '/verify'
     | '/admin/$section'
@@ -539,10 +561,12 @@ export interface FileRouteTypes {
     | '/_authenticated/change-password'
     | '/activities/$activityId'
     | '/admin/login'
+    | '/courses/$slug'
     | '/courses/hsk'
     | '/member/$memberId'
     | '/news/$slug'
     | '/activities/'
+    | '/courses/'
     | '/news/'
     | '/verify/'
     | '/_authenticated/admin/$section'
@@ -584,9 +608,11 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  CoursesSlugRoute: typeof CoursesSlugRoute
   CoursesHskRoute: typeof CoursesHskRouteWithChildren
   MemberMemberIdRoute: typeof MemberMemberIdRoute
   NewsSlugRoute: typeof NewsSlugRoute
+  CoursesIndexRoute: typeof CoursesIndexRoute
   NewsIndexRoute: typeof NewsIndexRoute
   VerifyIndexRoute: typeof VerifyIndexRoute
   VerifyCertificateCodeRoute: typeof VerifyCertificateCodeRoute
@@ -724,6 +750,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses/': {
+      id: '/courses/'
+      path: '/courses'
+      fullPath: '/courses/'
+      preLoaderRoute: typeof CoursesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses/$slug': {
+      id: '/courses/$slug'
+      path: '/courses/$slug'
+      fullPath: '/courses/$slug'
+      preLoaderRoute: typeof CoursesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses/hsk': {
@@ -1009,9 +1049,11 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminLoginRoute: AdminLoginRoute,
+  CoursesSlugRoute: CoursesSlugRoute,
   CoursesHskRoute: CoursesHskRouteWithChildren,
   MemberMemberIdRoute: MemberMemberIdRoute,
   NewsSlugRoute: NewsSlugRoute,
+  CoursesIndexRoute: CoursesIndexRoute,
   NewsIndexRoute: NewsIndexRoute,
   VerifyIndexRoute: VerifyIndexRoute,
   VerifyCertificateCodeRoute: VerifyCertificateCodeRoute,

@@ -7,7 +7,7 @@ import { submitEnrollment } from "@/lib/courses.functions";
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const GOALS = ["Ôn thi chứng chỉ HSK", "Giao tiếp / công việc", "Chuẩn bị du học", "Yêu thích ngôn ngữ & văn hóa"];
 
-export function EnrollmentDialog({ level, fee, onClose }: { level: number; fee: string; onClose: () => void }) {
+export function EnrollmentDialog({ level, fee, onClose, courseId, title }: { level: number; fee: string; onClose: () => void; courseId?: string; title?: string }) {
   const submit = useServerFn(submitEnrollment);
   const [f, setF] = useState({ full_name: "", email: "", phone: "", current_level: "", goal: GOALS[0], message: "" });
   const [busy, setBusy] = useState(false);
@@ -18,7 +18,7 @@ export function EnrollmentDialog({ level, fee, onClose }: { level: number; fee: 
     e.preventDefault();
     setBusy(true);
     try {
-      const r = await submit({ data: { ...f, level } });
+      const r = await submit({ data: { ...f, level, course_id: courseId } });
       if (r.ok) setDone({ code: r.code, submittedAt: r.submittedAt }); else toast.error(r.error);
     } catch { toast.error("Không gửi được đơn, vui lòng thử lại."); }
     setBusy(false);
@@ -28,7 +28,7 @@ export function EnrollmentDialog({ level, fee, onClose }: { level: number; fee: 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={onClose}>
       <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
-          <div><div className="text-xs font-semibold uppercase tracking-widest text-primary">Đăng ký khóa học</div><h2 className="mt-1 text-xl font-bold text-primary-deep">HSK {level} · {fee}</h2></div>
+          <div><div className="text-xs font-semibold uppercase tracking-widest text-primary">Đăng ký khóa học</div><h2 className="mt-1 text-xl font-bold text-primary-deep">{title ?? `HSK ${level}`} · {fee}</h2></div>
           <button onClick={onClose} aria-label="Đóng" className="rounded-full p-1 hover:bg-muted"><X className="h-5 w-5" /></button>
         </div>
         {done ? (
