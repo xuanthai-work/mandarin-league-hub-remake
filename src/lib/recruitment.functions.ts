@@ -86,6 +86,24 @@ export const submitApplication = createServerFn({ method: "POST" })
       console.error(error);
       return { ok: false as const, error: "Không gửi được hồ sơ, vui lòng thử lại." };
     }
+
+    // Confirmation email — a send failure must never fail the submission.
+    try {
+      const { sendTemplateEmail } = await import("./email-templates/send-email");
+      await sendTemplateEmail("application-confirmation", data.email.toLowerCase(), {
+        templateData: {
+          fullName: data.full_name,
+          code: row.code,
+          periodName: period.name,
+          choices: choices.map((c) => `${deptName(c.department)} — ${c.position}`),
+          phone: data.phone,
+        },
+        idempotencyKey: `application-confirm-${row.code}`,
+        replyTo: "community@themandarinleague.bond",
+      });
+    } catch (e) {
+      console.error("application confirmation email failed", e);
+    }
     return { ok: true as const, code: row.code };
   });
 
