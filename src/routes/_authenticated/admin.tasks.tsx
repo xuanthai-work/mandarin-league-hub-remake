@@ -1,3 +1,4 @@
+import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -97,12 +98,7 @@ function TasksPage() {
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS[t.status]?.className}`}>{TASK_STATUS[t.status]?.label}</span>
             </div>
             {t.description && <p className="mt-2 whitespace-pre-line text-sm">{t.description}</p>}
-            {t.evidence_url && (
-              <div className="mt-3 rounded-lg bg-secondary p-3 text-sm">
-                <a href={t.evidence_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline">Minh chứng <ExternalLink className="h-3 w-3" /></a>
-                {t.report_note && <p className="mt-1 whitespace-pre-line text-muted-foreground">{t.report_note}</p>}
-              </div>
-            )}
+            {t.evidence_url && <TaskEvidence value={t.evidence_url} note={t.report_note} />}
             {t.review_note && <p className="mt-2 text-xs text-muted-foreground">Phản hồi: {t.review_note}</p>}
             <div className="mt-3 flex flex-wrap gap-2">
               {t.status === "submitted" && <>
