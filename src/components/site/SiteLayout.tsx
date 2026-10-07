@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { Menu, X, Mail, Facebook, Youtube, MapPin } from "lucide-react";
+import { Menu, X, Mail, Facebook, Youtube, MapPin, Lock } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
 
 export const NAV = [
@@ -121,8 +121,10 @@ function Footer() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-primary-foreground/15 py-5 text-center text-xs opacity-70">
-        © {new Date().getFullYear()} The Mandarin League – Liên Đoàn Hán Ngữ
+      <div className="border-t border-primary-foreground/15 py-5 text-center text-xs">
+        <span className="opacity-70">© {new Date().getFullYear()} The Mandarin League – Liên Đoàn Hán Ngữ</span>
+        <span className="mx-2 opacity-40">·</span>
+        <Link to="/admin" className="inline-flex items-center gap-1 opacity-60 transition hover:opacity-100 hover:underline"><Lock className="h-3 w-3" />Cổng nội bộ</Link>
       </div>
     </footer>
   );

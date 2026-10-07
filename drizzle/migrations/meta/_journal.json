@@ -22,6 +22,13 @@
       "when": 1791294746806,
       "tag": "0002_admin_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791341554659,
+      "tag": "0003_recruitment_system",
+      "breakpoints": true
     }
   ]
 }

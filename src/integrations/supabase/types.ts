@@ -62,6 +62,259 @@ export type Database = {
         }
         Relationships: []
       }
+      application_status_history: {
+        Row: {
+          application_id: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_status: string
+          note: string
+          old_status: string | null
+        }
+        Insert: {
+          application_id: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status: string
+          note?: string
+          old_status?: string | null
+        }
+        Update: {
+          application_id?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string
+          note?: string
+          old_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_status_history_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_applications: {
+        Row: {
+          admin_note: string
+          ai_summary: string | null
+          answers: Json
+          chinese_level: string
+          choices: Json
+          code: string
+          created_at: string
+          cv_path: string | null
+          email: string
+          full_name: string
+          hsk_level: string
+          id: string
+          intro: string
+          organization: string
+          period_id: string
+          phone: string
+          status: string
+        }
+        Insert: {
+          admin_note?: string
+          ai_summary?: string | null
+          answers?: Json
+          chinese_level?: string
+          choices?: Json
+          code?: string
+          created_at?: string
+          cv_path?: string | null
+          email: string
+          full_name: string
+          hsk_level?: string
+          id?: string
+          intro: string
+          organization: string
+          period_id: string
+          phone: string
+          status?: string
+        }
+        Update: {
+          admin_note?: string
+          ai_summary?: string | null
+          answers?: Json
+          chinese_level?: string
+          choices?: Json
+          code?: string
+          created_at?: string
+          cv_path?: string | null
+          email?: string
+          full_name?: string
+          hsk_level?: string
+          id?: string
+          intro?: string
+          organization?: string
+          period_id?: string
+          phone?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_applications_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_periods: {
+        Row: {
+          created_at: string
+          description: string
+          ends_on: string
+          id: string
+          name: string
+          starts_on: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          ends_on: string
+          id?: string
+          name: string
+          starts_on: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          ends_on?: string
+          id?: string
+          name?: string
+          starts_on?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      recruitment_positions: {
+        Row: {
+          department: string
+          enabled: boolean
+          id: string
+          period_id: string
+          position: string
+        }
+        Insert: {
+          department: string
+          enabled?: boolean
+          id?: string
+          period_id: string
+          position: string
+        }
+        Update: {
+          department?: string
+          enabled?: boolean
+          id?: string
+          period_id?: string
+          position?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_positions_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_questions: {
+        Row: {
+          id: string
+          kind: string
+          options: string[]
+          prompt: string
+          required: boolean
+          sort_order: number
+          topic_id: string
+          visible: boolean
+        }
+        Insert: {
+          id?: string
+          kind?: string
+          options?: string[]
+          prompt: string
+          required?: boolean
+          sort_order?: number
+          topic_id: string
+          visible?: boolean
+        }
+        Update: {
+          id?: string
+          kind?: string
+          options?: string[]
+          prompt?: string
+          required?: boolean
+          sort_order?: number
+          topic_id?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_questions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_topics: {
+        Row: {
+          created_at: string
+          department: string | null
+          description: string
+          id: string
+          period_id: string | null
+          position: string | null
+          sort_order: number
+          title: string
+          visible: boolean
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          description?: string
+          id?: string
+          period_id?: string | null
+          position?: string | null
+          sort_order?: number
+          title: string
+          visible?: boolean
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          description?: string
+          id?: string
+          period_id?: string | null
+          position?: string | null
+          sort_order?: number
+          title?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_topics_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string

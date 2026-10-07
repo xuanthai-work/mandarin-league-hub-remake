@@ -30,7 +30,9 @@ import { Route as NewsSlugRouteImport } from './routes/news.$slug'
 import { Route as VerifyIndexRouteImport } from './routes/verify.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminSectionRouteImport } from './routes/_authenticated/admin.$section'
+import { Route as AuthenticatedAdminCandidatesRouteImport } from './routes/_authenticated/admin.candidates'
 import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
+import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_authenticated/admin.recruitment'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
 import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.certificate.index'
@@ -143,10 +145,22 @@ const AuthenticatedAdminSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCandidatesRoute =
+  AuthenticatedAdminCandidatesRouteImport.update({
+    id: '/candidates',
+    path: '/candidates',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPhotosRoute =
   AuthenticatedAdminPhotosRouteImport.update({
     id: '/photos',
     path: '/photos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRecruitmentRoute =
+  AuthenticatedAdminRecruitmentRouteImport.update({
+    id: '/recruitment',
+    path: '/recruitment',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const CoursesHskIndexRoute = CoursesHskIndexRouteImport.update({
@@ -200,7 +214,9 @@ export interface FileRoutesByFullPath {
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
+  '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
+  '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -226,7 +242,9 @@ export interface FileRoutesByTo {
   '/news': typeof NewsIndexRoute
   '/verify': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
+  '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
+  '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -257,7 +275,9 @@ export interface FileRoutesById {
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/_authenticated/admin/$section': typeof AuthenticatedAdminSectionRoute
+  '/_authenticated/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
   '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
+  '/_authenticated/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -288,7 +308,9 @@ export interface FileRouteTypes {
     | '/news/'
     | '/verify/'
     | '/admin/$section'
+    | '/admin/candidates'
     | '/admin/photos'
+    | '/admin/recruitment'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -314,7 +336,9 @@ export interface FileRouteTypes {
     | '/news'
     | '/verify'
     | '/admin/$section'
+    | '/admin/candidates'
     | '/admin/photos'
+    | '/admin/recruitment'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -344,7 +368,9 @@ export interface FileRouteTypes {
     | '/news/'
     | '/verify/'
     | '/_authenticated/admin/$section'
+    | '/_authenticated/admin/candidates'
     | '/_authenticated/admin/photos'
+    | '/_authenticated/admin/recruitment'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -526,11 +552,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSectionRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/candidates': {
+      id: '/_authenticated/admin/candidates'
+      path: '/candidates'
+      fullPath: '/admin/candidates'
+      preLoaderRoute: typeof AuthenticatedAdminCandidatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/photos': {
       id: '/_authenticated/admin/photos'
       path: '/photos'
       fullPath: '/admin/photos'
       preLoaderRoute: typeof AuthenticatedAdminPhotosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/recruitment': {
+      id: '/_authenticated/admin/recruitment'
+      path: '/recruitment'
+      fullPath: '/admin/recruitment'
+      preLoaderRoute: typeof AuthenticatedAdminRecruitmentRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/courses/hsk/': {
@@ -580,13 +620,17 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminSectionRoute: typeof AuthenticatedAdminSectionRoute
+  AuthenticatedAdminCandidatesRoute: typeof AuthenticatedAdminCandidatesRoute
   AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
+  AuthenticatedAdminRecruitmentRoute: typeof AuthenticatedAdminRecruitmentRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSectionRoute: AuthenticatedAdminSectionRoute,
+  AuthenticatedAdminCandidatesRoute: AuthenticatedAdminCandidatesRoute,
   AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
+  AuthenticatedAdminRecruitmentRoute: AuthenticatedAdminRecruitmentRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
