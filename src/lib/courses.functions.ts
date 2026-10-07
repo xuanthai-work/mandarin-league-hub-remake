@@ -42,7 +42,7 @@ export const submitEnrollment = createServerFn({ method: "POST" })
     const { count } = await dup;
     if ((count ?? 0) > 0) return { ok: false as const, error: "Email này đã có đơn đăng ký khóa này đang chờ xét duyệt." };
 
-    const { data: row, error } = await db.from("course_enrollments").insert({ ...d, email }).select("code, created_at").single();
+    const { data: row, error } = await db.from("course_enrollments").insert({ ...d, course_id: d.course_id ?? null, email }).select("code, created_at").single();
     if (error || !row) { console.error(error); return { ok: false as const, error: "Không gửi được đơn, vui lòng thử lại." }; }
     const submittedAt = fmtTime(new Date(row.created_at));
     try {

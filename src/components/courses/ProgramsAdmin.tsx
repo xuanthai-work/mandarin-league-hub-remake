@@ -19,7 +19,7 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
   const { data: teachers } = useQuery({ queryKey: ["admin-teacher-names"], queryFn: async () => (await supabase.from("teachers").select("id, full_name").order("sort_order")).data ?? [] });
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-programs"] }); qc.invalidateQueries({ queryKey: ["public-programs"] }); };
 
-  const patch = async (p: Program, v: Partial<Program>, msg: string) => {
+  const patch = async (p: Program, v: { is_published?: boolean; deleted_at?: string }, msg: string) => {
     const { error } = await supabase.from("courses").update({ ...v, updated_at: new Date().toISOString() }).eq("id", p.id);
     if (error) toast.error("Không lưu được (cần quyền Admin/Ban Chuyên môn)"); else { toast.success(msg); refresh(); }
   };
@@ -75,15 +75,15 @@ function ProgramForm({ init, teachers, onClose, onSaved }: { init: Partial<Progr
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!f.title?.trim()) return toast.error("Vui lòng nhập tên chương trình");
-    if (![f.facebook_url, f.registration_url, f.website_url].every(urlOk)) return toast.error("Các liên kết phải bắt đầu bằng https://");
-    if (file && (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 5 * 1024 * 1024)) return toast.error("Ảnh JPG/PNG/WebP tối đa 5 MB");
+    if (!f.title?.trim()) { toast.error("Vui lòng nhập tên chương trình"); return; }
+    if (![f.facebook_url, f.registration_url, f.website_url].every(urlOk)) { toast.error("Các liên kết phải bắt đầu bằng https://"); return; }
+    if (file && (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 5 * 1024 * 1024)) { toast.error("Ảnh JPG/PNG/WebP tối đa 5 MB"); return; }
     setBusy(true);
     let thumbnail_path = f.thumbnail_path ?? "";
     if (file) {
       const path = `${crypto.randomUUID()}.${file.type.split("/")[1]}`;
       const { error } = await supabase.storage.from(COURSE_BUCKET).upload(path, file, { contentType: file.type });
-      if (error) { setBusy(false); return toast.error("Không tải được ảnh"); }
+      if (error) { setBusy(false); toast.error("Không tải được ảnh"); return; }
       thumbnail_path = path;
     }
     const row = {
