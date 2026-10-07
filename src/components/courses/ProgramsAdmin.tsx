@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
+import { BookOpen, CalendarCheck, Copy, ExternalLink, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { COURSE_BUCKET, programFee, slugify, STATUS_LABEL, TYPE_LABEL, withThumbs, type CourseType, type Program, type ProgramStatus } from "@/lib/programs";
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-const EMPTY: Partial<Program> = { title: "", slug: "", short_description: "", description: "", thumbnail_path: "", level: "", course_type: "FREE_COMMUNITY", teacher_id: null, duration: "", schedule: "", format: "Online qua Google Meet", price: 0, capacity: 30, facebook_url: "", registration_url: "", website_url: "", status: "upcoming", is_published: false };
+const EMPTY: Partial<Program> = { title: "", slug: "", short_description: "", description: "", thumbnail_path: "", level: "", course_type: "FREE_COMMUNITY", teacher_id: null, duration: "", schedule: "", format: "Online qua Google Meet", price: 0, capacity: 30, facebook_url: "", registration_url: "", website_url: "", status: "upcoming", is_published: false, show_in_courses: true, show_in_activities: false };
 
 /** Admin CRUD for the program catalog; enrollment counts come from course_enrollments.course_id. */
 export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<string, number>; onFilter: (id: string) => void }) {
@@ -19,7 +19,7 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
   const { data: teachers } = useQuery({ queryKey: ["admin-teacher-names"], queryFn: async () => (await supabase.from("teachers").select("id, full_name").order("sort_order")).data ?? [] });
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-programs"] }); qc.invalidateQueries({ queryKey: ["public-programs"] }); };
 
-  const patch = async (p: Program, v: { is_published?: boolean; deleted_at?: string }, msg: string) => {
+  const patch = async (p: Program, v: { is_published?: boolean; deleted_at?: string; show_in_activities?: boolean }, msg: string) => {
     const { error } = await supabase.from("courses").update({ ...v, updated_at: new Date().toISOString() }).eq("id", p.id);
     if (error) toast.error("Không lưu được (cần quyền Admin/Ban Chuyên môn)"); else { toast.success(msg); refresh(); }
   };
@@ -32,8 +32,8 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-lg font-bold">Chương trình học</h2><p className="text-sm text-muted-foreground">Miễn phí cộng đồng, khóa học có phí và chương trình đặc biệt hiển thị tại trang Khóa học.</p></div>
-        <button onClick={() => setEdit({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Thêm chương trình</button>
+        <div><h2 className="text-lg font-bold">Chương trình học</h2><p className="text-sm text-muted-foreground">Chương trình cộng đồng, giao tiếp, phát âm, chuyên đề… Một bản ghi có thể hiện ở cả Khóa học và Hoạt động.</p></div>
+        <button onClick={() => setEdit({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo chương trình học</button>
       </div>
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="w-full text-sm">
@@ -48,11 +48,14 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
                 </div></td>
                 <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${TYPE_LABEL[p.course_type].tone}`}>{TYPE_LABEL[p.course_type].label}</span></td>
                 <td className="p-3 text-xs">{teachers?.find((t) => t.id === p.teacher_id)?.full_name ?? "—"}</td>
-                <td className="p-3 text-xs">{STATUS_LABEL[p.status]}{!p.is_published && <div className="font-semibold text-destructive">Đang ẩn</div>}</td>
+                <td className="p-3 text-xs">{STATUS_LABEL[p.status]}{!p.is_published && <div className="font-semibold text-destructive">Đang ẩn</div>}{p.show_in_activities && <div className="font-semibold text-primary">+ Hoạt động</div>}</td>
                 <td className="p-3"><button onClick={() => onFilter(p.id)} className="font-semibold text-primary hover:underline">{p.registration_url ? "Link ngoài" : enrollCounts.get(p.id) ?? 0}</button></td>
                 <td className="p-3 text-xs">{new Date(p.created_at).toLocaleDateString("vi-VN")}</td>
                 <td className="p-3"><div className="flex gap-1">
                   <button title={p.is_published ? "Ẩn" : "Hiện"} onClick={() => patch(p, { is_published: !p.is_published }, p.is_published ? "Đã ẩn" : "Đã hiển thị")} className="rounded p-1.5 hover:bg-muted">{p.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</button>
+                  <button title={p.show_in_activities ? "Đang hiện trong Hoạt động — bấm để tắt" : "Hiển thị trong Hoạt động"} onClick={() => patch(p, { show_in_activities: !p.show_in_activities }, p.show_in_activities ? "Đã gỡ khỏi Hoạt động" : "Đã hiển thị trong Hoạt động")} className={`rounded p-1.5 hover:bg-muted ${p.show_in_activities ? "text-primary" : "text-muted-foreground"}`}><CalendarCheck className="h-4 w-4" /></button>
+                  <button title="Sao chép" onClick={() => setEdit({ ...p, id: undefined, title: `${p.title} (bản sao)`, slug: "", is_published: false })} className="rounded p-1.5 hover:bg-muted"><Copy className="h-4 w-4" /></button>
+                  {p.is_published && <a title="Xem" href={`/courses/${p.slug}`} target="_blank" rel="noreferrer" className="rounded p-1.5 hover:bg-muted"><ExternalLink className="h-4 w-4" /></a>}
                   <button title="Sửa" onClick={() => setEdit(p)} className="rounded p-1.5 hover:bg-muted"><Pencil className="h-4 w-4" /></button>
                   <button title="Xóa" onClick={() => remove(p)} className="rounded p-1.5 text-destructive hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
                 </div></td>
@@ -92,7 +95,7 @@ function ProgramForm({ init, teachers, onClose, onSaved }: { init: Partial<Progr
       course_type: f.course_type!, teacher_id: f.teacher_id || null, duration: f.duration ?? "", schedule: f.schedule ?? "", format: f.format ?? "",
       price: f.course_type === "FREE_COMMUNITY" ? 0 : Math.max(0, Number(f.price) || 0), capacity: Math.max(1, Number(f.capacity) || 1),
       facebook_url: f.facebook_url ?? "", registration_url: f.registration_url ?? "", website_url: f.website_url ?? "",
-      status: f.status!, is_published: !!f.is_published, updated_at: new Date().toISOString(),
+      status: f.status!, is_published: !!f.is_published, show_in_courses: f.show_in_courses ?? true, show_in_activities: !!f.show_in_activities, updated_at: new Date().toISOString(),
     };
     const { error } = f.id ? await supabase.from("courses").update(row).eq("id", f.id) : await supabase.from("courses").insert(row);
     setBusy(false);
@@ -123,6 +126,8 @@ function ProgramForm({ init, teachers, onClose, onSaved }: { init: Partial<Progr
           <label className="text-sm">Link website<input placeholder="https://..." className={inp} value={f.website_url} onChange={s("website_url")} /></label>
           <label className="text-sm sm:col-span-2">Link đăng ký ngoài <span className="text-xs text-muted-foreground">(để trống = dùng form xét duyệt của TML)</span><input placeholder="https://forms.gle/..." className={inp} value={f.registration_url} onChange={s("registration_url")} /></label>
           <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={!!f.is_published} onChange={(e) => setF({ ...f, is_published: e.target.checked })} />Hiển thị trên website</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.show_in_courses ?? true} onChange={(e) => setF({ ...f, show_in_courses: e.target.checked })} />Hiện trong Khóa học</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!f.show_in_activities} onChange={(e) => setF({ ...f, show_in_activities: e.target.checked })} />Hiện trong Hoạt động</label>
         </div>
         <button disabled={busy} className="w-full rounded-full bg-primary py-2.5 font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang lưu…" : "Lưu chương trình"}</button>
       </form>

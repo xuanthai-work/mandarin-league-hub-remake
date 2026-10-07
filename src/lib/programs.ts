@@ -8,7 +8,7 @@ export type Program = {
   id: string; title: string; slug: string; short_description: string; description: string; thumbnail_path: string;
   level: string; course_type: CourseType; teacher_id: string | null; duration: string; schedule: string; format: string;
   price: number; capacity: number; facebook_url: string; registration_url: string; website_url: string;
-  status: ProgramStatus; is_published: boolean; created_by: string | null; created_at: string; deleted_at: string | null;
+  status: ProgramStatus; is_published: boolean; show_in_courses: boolean; show_in_activities: boolean; created_by: string | null; created_at: string; deleted_at: string | null;
   thumb?: string;
 };
 
