@@ -123,7 +123,7 @@ function Group({ title, rows, empty }: { title: string; rows: Member[]; empty: s
   );
 }
 
-function ChannelBox({ dept, channel }: { dept: string; channel?: Channel }) {
+function ChannelBox({ dept, channel }: { dept: string; channel: Channel | undefined }) {
   const qc = useQueryClient();
   const [f, setF] = useState({ zalo_url: channel?.zalo_url ?? "", resources_url: channel?.resources_url ?? "", note: channel?.note ?? "" });
   const [msg, setMsg] = useState<string | null>(null);
