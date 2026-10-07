@@ -3,7 +3,7 @@ import { DemoBadge, EmptyState } from "@/components/site/ui";
 import { getArticle } from "@/lib/data/news";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/news/$slug")({ staticData: { sitemap: false },
+export const Route = createFileRoute("/news/$slug")({ staticData: { sitemap: true },
   loader: ({ params }) => {
     const article = getArticle(params.slug);
     if (!article) throw notFound();

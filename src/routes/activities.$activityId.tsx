@@ -4,7 +4,7 @@ import { DemoBadge, EmptyState, StatusBadge } from "@/components/site/ui";
 import { getActivity } from "@/lib/data/activities";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/activities/$activityId")({ staticData: { sitemap: false },
+export const Route = createFileRoute("/activities/$activityId")({ staticData: { sitemap: true },
   loader: ({ params }) => {
     const activity = getActivity(params.activityId);
     if (!activity) throw notFound();
