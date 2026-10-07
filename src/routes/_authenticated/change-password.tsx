@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
-import { routeAfterLogin } from "../login";
+import { routeAfterLogin } from "@/lib/portal";
 
 export const Route = createFileRoute("/_authenticated/change-password")({
   head: () => ({

@@ -17,9 +17,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities.$activityId'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -79,6 +82,11 @@ const JoinRoute = JoinRouteImport.update({
   path: '/join',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationRoute = OrganizationRouteImport.update({
   id: '/organization',
   path: '/organization',
@@ -89,11 +97,22 @@ const PartnersRoute = PartnersRouteImport.update({
   path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChangePasswordRoute =
+  AuthenticatedChangePasswordRouteImport.update({
+    id: '/change-password',
+    path: '/change-password',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ActivitiesIndexRoute = ActivitiesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -202,9 +221,12 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
@@ -232,8 +254,11 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
   '/member/$memberId': typeof MemberMemberIdRoute
@@ -263,9 +288,12 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
@@ -296,9 +324,12 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/login'
     | '/organization'
     | '/partners'
+    | '/reset-password'
     | '/admin'
+    | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
     | '/courses/hsk'
@@ -326,8 +357,11 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/login'
     | '/organization'
     | '/partners'
+    | '/reset-password'
+    | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
     | '/member/$memberId'
@@ -356,9 +390,12 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/login'
     | '/organization'
     | '/partners'
+    | '/reset-password'
     | '/_authenticated/admin'
+    | '/_authenticated/change-password'
     | '/activities/$activityId'
     | '/admin/login'
     | '/courses/hsk'
@@ -389,8 +426,10 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   ContactRoute: typeof ContactRoute
   JoinRoute: typeof JoinRoute
+  LoginRoute: typeof LoginRoute
   OrganizationRoute: typeof OrganizationRoute
   PartnersRoute: typeof PartnersRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   AdminLoginRoute: typeof AdminLoginRoute
   CoursesHskRoute: typeof CoursesHskRouteWithChildren
   MemberMemberIdRoute: typeof MemberMemberIdRoute
@@ -461,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JoinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organization': {
       id: '/organization'
       path: '/organization'
@@ -475,11 +521,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/change-password': {
+      id: '/_authenticated/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/activities/': {
@@ -639,10 +699,12 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -685,8 +747,10 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   ContactRoute: ContactRoute,
   JoinRoute: JoinRoute,
+  LoginRoute: LoginRoute,
   OrganizationRoute: OrganizationRoute,
   PartnersRoute: PartnersRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   AdminLoginRoute: AdminLoginRoute,
   CoursesHskRoute: CoursesHskRouteWithChildren,
   MemberMemberIdRoute: MemberMemberIdRoute,
