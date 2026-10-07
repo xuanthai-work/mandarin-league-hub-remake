@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "The Mandarin League | Liên Đoàn Hán Ngữ" },
-      { name: "description", content: "The Mandarin League – Online Chinese Learning Community kết nối người học, giáo viên và cơ hội học tập giữa Việt Nam và Trung Quốc." },
+      { name: "description", content: "Cộng đồng học tiếng Trung trực tuyến: khóa học HSK, workshop, cuộc thi và hoạt động cộng đồng." },
       { name: "author", content: "The Mandarin League" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
