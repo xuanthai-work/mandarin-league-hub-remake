@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-// Legacy sign-in path used by the protected-area gate; the admin login lives at /admin/login.
+// Legacy sign-in path used by the protected-area gate; the internal portal login lives at /login.
 export const Route = createFileRoute("/auth")({
   beforeLoad: () => {
-    throw redirect({ to: "/admin/login" });
+    throw redirect({ to: "/login" });
   },
 });

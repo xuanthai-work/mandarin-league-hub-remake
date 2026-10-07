@@ -168,6 +168,103 @@ export type Database = {
           },
         ]
       }
+      member_accounts: {
+        Row: {
+          account_status: string
+          created_at: string
+          last_login_at: string | null
+          login_email: string
+          member_id: string
+          must_change_password: boolean
+          permissions: string[]
+          user_id: string
+        }
+        Insert: {
+          account_status?: string
+          created_at?: string
+          last_login_at?: string | null
+          login_email: string
+          member_id: string
+          must_change_password?: boolean
+          permissions?: string[]
+          user_id: string
+        }
+        Update: {
+          account_status?: string
+          created_at?: string
+          last_login_at?: string | null
+          login_email?: string
+          member_id?: string
+          must_change_password?: boolean
+          permissions?: string[]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_accounts_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          application_id: string | null
+          avatar_path: string | null
+          contribution_points: number
+          created_at: string
+          department: string
+          email: string
+          full_name: string
+          id: string
+          joined_on: string
+          member_code: string
+          phone: string
+          position: string
+          status: string
+        }
+        Insert: {
+          application_id?: string | null
+          avatar_path?: string | null
+          contribution_points?: number
+          created_at?: string
+          department: string
+          email?: string
+          full_name: string
+          id?: string
+          joined_on?: string
+          member_code?: string
+          phone?: string
+          position: string
+          status?: string
+        }
+        Update: {
+          application_id?: string | null
+          avatar_path?: string | null
+          contribution_points?: number
+          created_at?: string
+          department?: string
+          email?: string
+          full_name?: string
+          id?: string
+          joined_on?: string
+          member_code?: string
+          phone?: string
+          position?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: true
+            referencedRelation: "candidate_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruitment_periods: {
         Row: {
           created_at: string
@@ -346,8 +443,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_password_changed: { Args: never; Returns: undefined }
+      my_account: { Args: never; Returns: Json }
+      my_head_department: { Args: never; Returns: string }
+      record_login: { Args: never; Returns: undefined }
       reorder_activity_photos: {
         Args: { photo_ids: string[] }
+        Returns: undefined
+      }
+      update_my_profile: {
+        Args: { _avatar_path: string; _full_name: string }
         Returns: undefined
       }
     }

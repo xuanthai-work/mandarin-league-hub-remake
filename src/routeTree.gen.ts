@@ -17,9 +17,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities.$activityId'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -30,9 +33,12 @@ import { Route as NewsSlugRouteImport } from './routes/news.$slug'
 import { Route as VerifyIndexRouteImport } from './routes/verify.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminSectionRouteImport } from './routes/_authenticated/admin.$section'
+import { Route as AuthenticatedAdminAccountsRouteImport } from './routes/_authenticated/admin.accounts'
 import { Route as AuthenticatedAdminCandidatesRouteImport } from './routes/_authenticated/admin.candidates'
+import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
 import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
 import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_authenticated/admin.recruitment'
+import { Route as AuthenticatedMemberDashboardRouteImport } from './routes/_authenticated/member.dashboard'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
 import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.certificate.index'
@@ -79,6 +85,11 @@ const JoinRoute = JoinRouteImport.update({
   path: '/join',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationRoute = OrganizationRouteImport.update({
   id: '/organization',
   path: '/organization',
@@ -89,11 +100,22 @@ const PartnersRoute = PartnersRouteImport.update({
   path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChangePasswordRoute =
+  AuthenticatedChangePasswordRouteImport.update({
+    id: '/change-password',
+    path: '/change-password',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ActivitiesIndexRoute = ActivitiesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -145,10 +167,22 @@ const AuthenticatedAdminSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAccountsRoute =
+  AuthenticatedAdminAccountsRouteImport.update({
+    id: '/accounts',
+    path: '/accounts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCandidatesRoute =
   AuthenticatedAdminCandidatesRouteImport.update({
     id: '/candidates',
     path: '/candidates',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminMembersRoute =
+  AuthenticatedAdminMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminPhotosRoute =
@@ -162,6 +196,12 @@ const AuthenticatedAdminRecruitmentRoute =
     id: '/recruitment',
     path: '/recruitment',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedMemberDashboardRoute =
+  AuthenticatedMemberDashboardRouteImport.update({
+    id: '/member/dashboard',
+    path: '/member/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const CoursesHskIndexRoute = CoursesHskIndexRouteImport.update({
   id: '/',
@@ -202,9 +242,12 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
@@ -214,9 +257,12 @@ export interface FileRoutesByFullPath {
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
+  '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -232,8 +278,11 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
   '/member/$memberId': typeof MemberMemberIdRoute
@@ -242,9 +291,12 @@ export interface FileRoutesByTo {
   '/news': typeof NewsIndexRoute
   '/verify': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
+  '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -263,9 +315,12 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
   '/courses/hsk': typeof CoursesHskRouteWithChildren
@@ -275,9 +330,12 @@ export interface FileRoutesById {
   '/news/': typeof NewsIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/_authenticated/admin/$section': typeof AuthenticatedAdminSectionRoute
+  '/_authenticated/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/_authenticated/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
+  '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/_authenticated/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/_authenticated/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -296,9 +354,12 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/login'
     | '/organization'
     | '/partners'
+    | '/reset-password'
     | '/admin'
+    | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
     | '/courses/hsk'
@@ -308,9 +369,12 @@ export interface FileRouteTypes {
     | '/news/'
     | '/verify/'
     | '/admin/$section'
+    | '/admin/accounts'
     | '/admin/candidates'
+    | '/admin/members'
     | '/admin/photos'
     | '/admin/recruitment'
+    | '/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -326,8 +390,11 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/login'
     | '/organization'
     | '/partners'
+    | '/reset-password'
+    | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
     | '/member/$memberId'
@@ -336,9 +403,12 @@ export interface FileRouteTypes {
     | '/news'
     | '/verify'
     | '/admin/$section'
+    | '/admin/accounts'
     | '/admin/candidates'
+    | '/admin/members'
     | '/admin/photos'
     | '/admin/recruitment'
+    | '/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -356,9 +426,12 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/login'
     | '/organization'
     | '/partners'
+    | '/reset-password'
     | '/_authenticated/admin'
+    | '/_authenticated/change-password'
     | '/activities/$activityId'
     | '/admin/login'
     | '/courses/hsk'
@@ -368,9 +441,12 @@ export interface FileRouteTypes {
     | '/news/'
     | '/verify/'
     | '/_authenticated/admin/$section'
+    | '/_authenticated/admin/accounts'
     | '/_authenticated/admin/candidates'
+    | '/_authenticated/admin/members'
     | '/_authenticated/admin/photos'
     | '/_authenticated/admin/recruitment'
+    | '/_authenticated/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -389,8 +465,10 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   ContactRoute: typeof ContactRoute
   JoinRoute: typeof JoinRoute
+  LoginRoute: typeof LoginRoute
   OrganizationRoute: typeof OrganizationRoute
   PartnersRoute: typeof PartnersRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   AdminLoginRoute: typeof AdminLoginRoute
   CoursesHskRoute: typeof CoursesHskRouteWithChildren
   MemberMemberIdRoute: typeof MemberMemberIdRoute
@@ -461,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JoinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organization': {
       id: '/organization'
       path: '/organization'
@@ -475,11 +560,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/change-password': {
+      id: '/_authenticated/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/activities/': {
@@ -552,11 +651,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSectionRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/accounts': {
+      id: '/_authenticated/admin/accounts'
+      path: '/accounts'
+      fullPath: '/admin/accounts'
+      preLoaderRoute: typeof AuthenticatedAdminAccountsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/candidates': {
       id: '/_authenticated/admin/candidates'
       path: '/candidates'
       fullPath: '/admin/candidates'
       preLoaderRoute: typeof AuthenticatedAdminCandidatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/members': {
+      id: '/_authenticated/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/photos': {
@@ -572,6 +685,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/recruitment'
       preLoaderRoute: typeof AuthenticatedAdminRecruitmentRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/member/dashboard': {
+      id: '/_authenticated/member/dashboard'
+      path: '/member/dashboard'
+      fullPath: '/member/dashboard'
+      preLoaderRoute: typeof AuthenticatedMemberDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/courses/hsk/': {
       id: '/courses/hsk/'
@@ -620,7 +740,9 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminSectionRoute: typeof AuthenticatedAdminSectionRoute
+  AuthenticatedAdminAccountsRoute: typeof AuthenticatedAdminAccountsRoute
   AuthenticatedAdminCandidatesRoute: typeof AuthenticatedAdminCandidatesRoute
+  AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
   AuthenticatedAdminRecruitmentRoute: typeof AuthenticatedAdminRecruitmentRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -628,7 +750,9 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSectionRoute: AuthenticatedAdminSectionRoute,
+  AuthenticatedAdminAccountsRoute: AuthenticatedAdminAccountsRoute,
   AuthenticatedAdminCandidatesRoute: AuthenticatedAdminCandidatesRoute,
+  AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
   AuthenticatedAdminRecruitmentRoute: AuthenticatedAdminRecruitmentRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -639,10 +763,14 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
+  AuthenticatedMemberDashboardRoute: typeof AuthenticatedMemberDashboardRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
+  AuthenticatedMemberDashboardRoute: AuthenticatedMemberDashboardRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -685,8 +813,10 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   ContactRoute: ContactRoute,
   JoinRoute: JoinRoute,
+  LoginRoute: LoginRoute,
   OrganizationRoute: OrganizationRoute,
   PartnersRoute: PartnersRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   AdminLoginRoute: AdminLoginRoute,
   CoursesHskRoute: CoursesHskRouteWithChildren,
   MemberMemberIdRoute: MemberMemberIdRoute,

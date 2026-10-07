@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogOut, Menu, X, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
@@ -25,12 +25,11 @@ export function useAdminAccess() {
   return useQuery({
     queryKey: ["admin-access"],
     queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return { email: "", roles: [] as AdminRole[] };
-      await supabase.rpc("claim_invited_role");
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
-      const roles = (data ?? []).map((r: { role: string }) => r.role as AdminRole);
-      return { email: u.user.email ?? "", roles: ROLE_PRIORITY.filter((r) => roles.includes(r)) };
+      const { data } = await supabase.rpc("my_account");
+      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null };
+      const blocked = !!me.account && me.account.account_status !== "active";
+      const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
+      return { email: me.email ?? "", roles, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
     },
   });
 }
@@ -45,13 +44,22 @@ function AdminLayout() {
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/admin/login", replace: true });
+    navigate({ to: "/login", replace: true });
   };
+
+  useEffect(() => {
+    const d = access.data;
+    if (!d) return;
+    if (d.mustChange) navigate({ to: "/change-password", replace: true });
+    else if (d.hasAccount && !d.roles.includes("admin") && !d.roles.includes("department_head")) navigate({ to: "/member/dashboard", replace: true });
+  }, [access.data, navigate]);
 
   if (access.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
 
   const roles = access.data?.roles ?? [];
-  if (roles.length === 0) {
+  const isAdmin = roles.includes("admin");
+  const sections = isAdmin ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => s.slug === "members");
+  if (!isAdmin && !roles.includes("department_head")) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
@@ -70,7 +78,7 @@ function AdminLayout() {
       <Link to="/admin" activeOptions={{ exact: true }} className={link} activeProps={active} onClick={() => setOpen(false)}>
         <OVERVIEW_ICON className="h-4 w-4" /> Tổng quan
       </Link>
-      {ADMIN_SECTIONS.map((s) => (
+      {sections.map((s) => (
         <Link key={s.slug} to="/admin/$section" params={{ section: s.slug }} className={link} activeProps={active} onClick={() => setOpen(false)}>
           <s.icon className="h-4 w-4" /> {s.label}
         </Link>
