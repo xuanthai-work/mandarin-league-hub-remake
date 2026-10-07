@@ -8,8 +8,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "The Mandarin League | Liên Đoàn Hán Ngữ" },
       { name: "description", content: "Cộng đồng học tiếng Trung trực tuyến: khóa học HSK, workshop, cuộc thi và hoạt động cộng đồng." },
-      { property: "og:title", content: "The Mandarin League – Liên Đoàn Hán Ngữ" },
-      { property: "og:description", content: "Online Chinese Learning Community – khóa học HSK, hoạt động và cộng đồng học tiếng Trung." },
+      { property: "og:title", content: "The Mandarin League | Liên Đoàn Hán Ngữ" },
+      { property: "og:description", content: "Cộng đồng học tiếng Trung trực tuyến: khóa học HSK, workshop, cuộc thi và hoạt động cộng đồng." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
