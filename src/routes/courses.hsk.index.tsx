@@ -6,6 +6,7 @@ import { Chips, DemoBadge, EmptyState, SectionTitle, StatusBadge } from "@/compo
 import { getCourses } from "@/lib/data/courses";
 import type { CourseStatus } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
+import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
 
 export const Route = createFileRoute("/courses/hsk/")({
   head: () => ({ meta: pageMeta("Khóa học HSK", "Khóa học HSK 1–6 trực tuyến cùng đội ngũ giáo viên TML.") }),
@@ -17,6 +18,7 @@ const FILTER_STATUS: CourseStatus[] = ["Đang tuyển sinh", "Sắp khai giảng
 
 function PCourses() {
   const courses = getCourses();
+  const { data: teachers } = usePublicTeachers();
   const [level, setLevel] = useState<(typeof LEVELS)[number] | "all">("all");
   const [status, setStatus] = useState<CourseStatus | "all">("all");
   const filtered = courses.filter((c) => (level === "all" || `HSK ${c.level}` === level) && (status === "all" || c.status === status));
@@ -57,7 +59,7 @@ function PCourses() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div>
-                    <div><div className="font-semibold">{c.teacher?.name ?? "Giáo viên: Đang cập nhật"}</div><div className="text-xs text-muted-foreground">HSK {c.level} · {c.name}</div></div>
+                    <div><div className="font-semibold">{teachersForLevel(teachers, c.level).map((t) => t.full_name).join(", ") || "Giáo viên: Đang cập nhật"}</div><div className="text-xs text-muted-foreground">HSK {c.level} · {c.name}</div></div>
                   </div>
                   <StatusBadge status={c.status} />
                 </div>
