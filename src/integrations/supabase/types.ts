@@ -187,6 +187,7 @@ export type Database = {
         Row: {
           admin_note: string
           code: string
+          course_id: string | null
           created_at: string
           current_level: string
           email: string
@@ -203,6 +204,7 @@ export type Database = {
         Insert: {
           admin_note?: string
           code?: string
+          course_id?: string | null
           created_at?: string
           current_level?: string
           email: string
@@ -219,6 +221,7 @@ export type Database = {
         Update: {
           admin_note?: string
           code?: string
+          course_id?: string | null
           created_at?: string
           current_level?: string
           email?: string
@@ -232,7 +235,15 @@ export type Database = {
           reviewed_by?: string | null
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       course_settings: {
         Row: {
@@ -260,6 +271,92 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      courses: {
+        Row: {
+          capacity: number
+          course_type: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string
+          duration: string
+          facebook_url: string
+          format: string
+          id: string
+          is_published: boolean
+          level: string
+          price: number
+          registration_url: string
+          schedule: string
+          short_description: string
+          slug: string
+          status: string
+          teacher_id: string | null
+          thumbnail_path: string
+          title: string
+          updated_at: string
+          website_url: string
+        }
+        Insert: {
+          capacity?: number
+          course_type?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          duration?: string
+          facebook_url?: string
+          format?: string
+          id?: string
+          is_published?: boolean
+          level?: string
+          price?: number
+          registration_url?: string
+          schedule?: string
+          short_description?: string
+          slug: string
+          status?: string
+          teacher_id?: string | null
+          thumbnail_path?: string
+          title: string
+          updated_at?: string
+          website_url?: string
+        }
+        Update: {
+          capacity?: number
+          course_type?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          duration?: string
+          facebook_url?: string
+          format?: string
+          id?: string
+          is_published?: boolean
+          level?: string
+          price?: number
+          registration_url?: string
+          schedule?: string
+          short_description?: string
+          slug?: string
+          status?: string
+          teacher_id?: string | null
+          thumbnail_path?: string
+          title?: string
+          updated_at?: string
+          website_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       department_channels: {
         Row: {
