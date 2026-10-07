@@ -4,16 +4,17 @@ import {
   BookOpen, CalendarDays, Newspaper, Handshake, BadgeCheck, FileCheck2, FileText, Settings, Megaphone, KeyRound,
 } from "lucide-react";
 
-export type AdminRole = "admin" | "department_head" | "member";
+export type AdminRole = "admin" | "department_head" | "deputy_head" | "member";
 
 export const ROLE_LABELS: Record<AdminRole, string> = {
   admin: "Quản trị viên",
   department_head: "Trưởng Ban",
+  deputy_head: "Phó Ban",
   member: "Thành viên",
 };
 
 /** Highest role first. */
-export const ROLE_PRIORITY: AdminRole[] = ["admin", "department_head", "member"];
+export const ROLE_PRIORITY: AdminRole[] = ["admin", "department_head", "deputy_head", "member"];
 
 export type AdminSection = { slug: string; label: string; icon: LucideIcon };
 

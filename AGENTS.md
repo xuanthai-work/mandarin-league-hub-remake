@@ -26,3 +26,5 @@
 - Program catalog lives in the `courses` table (soft delete via deleted_at, public reads only published rows, thumbnails in private `course-thumbnails` bucket readable when published); enrollments link via course_enrollments.course_id while HSK 1–6 level enrollments keep course_id null, so old HSK flows keep working.
 - Concrete HSK classes live in `hsk_classes` under fixed levels 1–6 (no levels table); enrollments link via course_enrollments.hsk_class_id and the server re-checks status and seats, so a class can be created without touching code.
 - Programs (`courses` table) carry show_in_courses / show_in_activities flags so one record feeds both /courses and /activities without duplicates.
+- Deputy heads use their own `deputy_head` role that `my_head_department()` treats like a head, so department-scoped rules cover both without granting admin rights.
+- AI onboarding plans are generated once by an authenticated server function and stored in `onboarding_plans` (read-only to managers and the member), so reopening a plan never spends AI calls again.
