@@ -18,4 +18,5 @@
 - Internal accounts are created only by admins through server functions using the admin auth API; there is no public sign-up, and suspended/disabled status is enforced with an auth ban so blocked users cannot sign in.
 - Account, member profile, department/position, access role and fine-grained permissions are stored separately (members, member_accounts, user_roles) so each can change independently.
 - Tasks and contribution points change only through security-definer database functions (create/update/review task, adjust points) that write an append-only point history row; clients have read-only table access so points can never be edited directly.
-- Member codes are assigned by a database trigger from the join date with a per-day sequence, so every insert path gets a consistent code.
+- Member codes are assigned by a database trigger (join month + global running sequence), so every insert path gets a consistent code.
+- Application status changes go through a security-definer function that snapshots the reviewer from the session into an append-only history, so reviewers cannot be spoofed or history edited.

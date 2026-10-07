@@ -71,6 +71,11 @@ export type Database = {
           new_status: string
           note: string
           old_status: string | null
+          reviewer_department: string
+          reviewer_member_code: string
+          reviewer_member_id: string | null
+          reviewer_name: string
+          reviewer_position: string
         }
         Insert: {
           application_id: string
@@ -80,6 +85,11 @@ export type Database = {
           new_status: string
           note?: string
           old_status?: string | null
+          reviewer_department?: string
+          reviewer_member_code?: string
+          reviewer_member_id?: string | null
+          reviewer_name?: string
+          reviewer_position?: string
         }
         Update: {
           application_id?: string
@@ -89,6 +99,11 @@ export type Database = {
           new_status?: string
           note?: string
           old_status?: string | null
+          reviewer_department?: string
+          reviewer_member_code?: string
+          reviewer_member_id?: string | null
+          reviewer_name?: string
+          reviewer_position?: string
         }
         Relationships: [
           {
@@ -167,6 +182,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      department_channels: {
+        Row: {
+          department: string
+          note: string
+          resources_url: string
+          updated_at: string
+          zalo_url: string
+        }
+        Insert: {
+          department: string
+          note?: string
+          resources_url?: string
+          updated_at?: string
+          zalo_url?: string
+        }
+        Update: {
+          department?: string
+          note?: string
+          resources_url?: string
+          updated_at?: string
+          zalo_url?: string
+        }
+        Relationships: []
       }
       member_accounts: {
         Row: {
@@ -574,6 +613,7 @@ export type Database = {
         Returns: undefined
       }
       can_manage_department: { Args: { _dept: string }; Returns: boolean }
+      can_review_application: { Args: { _app: string }; Returns: boolean }
       claim_invited_role: { Args: never; Returns: undefined }
       create_task: {
         Args: {
@@ -614,6 +654,10 @@ export type Database = {
       }
       review_task: {
         Args: { _approve: boolean; _note: string; _task: string }
+        Returns: undefined
+      }
+      set_application_status: {
+        Args: { _app: string; _note: string; _status: string }
         Returns: undefined
       }
       update_my_profile: {

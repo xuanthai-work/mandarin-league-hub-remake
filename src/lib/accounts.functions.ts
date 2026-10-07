@@ -147,6 +147,6 @@ export const approveApplication = createServerFn({ method: "POST" })
       department: data.department, position: data.position, application_id: app.id,
     }).select("id, member_code").single();
     if (error) throw new Error(error.message);
-    await context.supabase.from("candidate_applications").update({ status: "approved" }).eq("id", app.id);
+    await context.supabase.rpc("set_application_status", { _app: app.id, _status: "approved", _note: `Kết nạp thành viên ${(m as { member_code: string }).member_code}` });
     return m as { id: string; member_code: string };
   });
