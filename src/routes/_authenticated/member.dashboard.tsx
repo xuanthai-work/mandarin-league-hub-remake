@@ -226,6 +226,7 @@ function MemberDashboard() {
           </ol>
         </div>
       )}
+      {tab === "dept" && <MyDepartment />}
       {reporting && <SubmitReportDialog title={reporting.title} onClose={() => setReporting(null)} onSubmit={(ev, n) => act(reporting.id, "submit", ev, n)} />}
     </div></div>
   );
