@@ -96,7 +96,7 @@ export function ApplicationForm() {
     try {
       const r = await submit({ data: { periodId: data.period.id, ...info, positionIds: chosen.map((c) => c.id), answers, cvPath, consent: true } });
       if (r.ok) setDone(r.code); else setError(r.error);
-    } catch { setError("Thông tin chưa hợp lệ, vui lòng kiểm tra lại."); }
+    } catch (e) { console.error(e); setError("Không gửi được hồ sơ, vui lòng thử lại sau ít phút."); }
     setBusy(null);
   };
 

@@ -23,21 +23,28 @@ const submitSchema = z.object({
   periodId: z.string().uuid(),
   full_name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(200),
-  phone: z.string().trim().min(8).max(20),
+  phone: z.string().trim().min(8).max(30),
   organization: z.string().trim().min(2).max(200),
   chinese_level: z.string().trim().max(100).default(""),
   hsk_level: z.string().trim().max(20).default(""),
   intro: z.string().trim().min(10).max(3000),
   positionIds: z.array(z.string().uuid()).min(1).max(2),
-  answers: z.record(z.union([z.string().max(5000), z.array(z.string().max(200)).max(20)])),
+  answers: z.record(z.union([z.string().max(5000), z.array(z.string().max(1000)).max(50)])),
   cvPath: z.string().regex(/^pending\/[\w-]+\.\w+$/).nullable(),
   consent: z.literal(true),
 });
 
 /** Public submission — every rule is re-checked here, never trusted from the browser. */
 export const submitApplication = createServerFn({ method: "POST" })
-  .inputValidator((d) => submitSchema.parse(d))
-  .handler(async ({ data }) => {
+  .inputValidator((d) => d as unknown)
+  .handler(async ({ data: raw }) => {
+    const parsed = submitSchema.safeParse(raw);
+    if (!parsed.success) {
+      const LABEL: Record<string, string> = { full_name: "Họ và tên (ít nhất 2 ký tự)", email: "Email", phone: "Số điện thoại (8–30 ký tự)", organization: "Trường / Đơn vị (ít nhất 2 ký tự)", chinese_level: "Trình độ tiếng Trung", hsk_level: "HSK", intro: "Giới thiệu ngắn (10–3000 ký tự)", positionIds: "Nguyện vọng", answers: "Câu trả lời (quá dài)", cvPath: "Tệp CV", consent: "Xác nhận thông tin" };
+      const key = String(parsed.error.issues[0]?.path[0] ?? "");
+      return { ok: false as const, error: `Vui lòng kiểm tra lại: ${LABEL[key] ?? key}.` };
+    }
+    const data = parsed.data;
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const today = new Date().toISOString().slice(0, 10);
     const { data: period } = await db.from("recruitment_periods").select("*").eq("id", data.periodId).maybeSingle();
