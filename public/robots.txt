@@ -12,3 +12,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /change-password
+Disallow: /member/dashboard
+
+Sitemap: https://themandarinleague.bond/sitemap.xml
