@@ -126,7 +126,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       {isPortal ? (
         <div className="relative min-h-screen">
-          <Link to="/" className="absolute left-4 top-4 z-40 rounded-full border border-gold/40 bg-background/80 px-3 py-1.5 text-xs font-medium text-primary-deep backdrop-blur hover:bg-background">← Trở về Website TML</Link>
+          {!pathname.startsWith("/admin/") && pathname !== "/admin" && !pathname.startsWith("/member") || pathname === "/admin/login" ? <Link to="/" className="absolute left-4 top-4 z-40 rounded-full border border-gold/40 bg-background/80 px-3 py-1.5 text-xs font-medium text-primary-deep backdrop-blur hover:bg-background">← Trở về Website TML</Link> : null}
           <Outlet />
         </div>
       ) : (
