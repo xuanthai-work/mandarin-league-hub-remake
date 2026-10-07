@@ -52,7 +52,7 @@ export function HskClassesAdmin({ pendingCounts, onFilter }: { pendingCounts: Ma
                     <button onClick={() => onFilter(c.id)} className="text-xs font-semibold text-primary hover:underline">{c.seats}/{c.max_students} học viên · {pendingCounts.get(c.id) ?? 0} chờ duyệt</button>
                     <div className="flex gap-1">
                       <button title={c.is_published ? "Ẩn" : "Hiện"} onClick={() => patch(c, { is_published: !c.is_published }, c.is_published ? "Đã ẩn" : "Đã hiển thị")} className="rounded p-1.5 hover:bg-muted">{c.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</button>
-                      <button title="Sao chép" onClick={() => setEdit({ ...c, id: undefined, name: `${c.name} (bản sao)`, is_published: false })} className="rounded p-1.5 hover:bg-muted"><Copy className="h-4 w-4" /></button>
+                      <button title="Sao chép" onClick={() => setEdit({ ...(({ id: _i, ...r }) => r)(c), name: `${c.name} (bản sao)`, is_published: false })} className="rounded p-1.5 hover:bg-muted"><Copy className="h-4 w-4" /></button>
                       <button title="Sửa" onClick={() => setEdit(c)} className="rounded p-1.5 hover:bg-muted"><Pencil className="h-4 w-4" /></button>
                       <button title="Xóa" onClick={() => confirm(`Xóa lớp "${c.name}"? Đơn đăng ký vẫn được giữ lại.`) && patch(c, { deleted_at: new Date().toISOString(), is_published: false }, "Đã xóa lớp")} className="rounded p-1.5 text-destructive hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
                     </div>

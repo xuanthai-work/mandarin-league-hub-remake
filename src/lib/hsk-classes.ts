@@ -21,10 +21,10 @@ export async function decorateClasses(rows: HskClass[]): Promise<HskClass[]> {
   const map = new Map<string, string>();
   if (paths.length) {
     const { data } = await supabase.storage.from(COURSE_BUCKET).createSignedUrls(paths, 60 * 60 * 6);
-    (data ?? []).forEach((d) => d.path && map.set(d.path, d.signedUrl));
+    (data ?? []).forEach((d) => { if (d.path) map.set(d.path, d.signedUrl); });
   }
   const seats = await Promise.all(rows.map((r) => supabase.rpc("hsk_class_seats", { _class: r.id })));
-  return rows.map((r, i) => ({ ...r, thumb: map.get(r.thumbnail_path) ?? "", seats: (seats[i].data as number) ?? 0 }));
+  return rows.map((r, i) => ({ ...r, thumb: map.get(r.thumbnail_path) ?? "", seats: (seats[i]?.data as number) ?? 0 }));
 }
 
 export function usePublishedClasses() {
