@@ -21,6 +21,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
@@ -110,6 +111,11 @@ const PartnersRoute = PartnersRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
@@ -335,6 +342,7 @@ export interface FileRoutesByTo {
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/organization'
     | '/partners'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/admin'
     | '/change-password'
     | '/activities/$activityId'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/organization'
     | '/partners'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
@@ -511,6 +522,7 @@ export interface FileRouteTypes {
     | '/organization'
     | '/partners'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/change-password'
     | '/activities/$activityId'
@@ -557,6 +569,7 @@ export interface RootRouteChildren {
   OrganizationRoute: typeof OrganizationRoute
   PartnersRoute: typeof PartnersRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminLoginRoute: typeof AdminLoginRoute
   CoursesHskRoute: typeof CoursesHskRouteWithChildren
   MemberMemberIdRoute: typeof MemberMemberIdRoute
@@ -656,6 +669,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -965,6 +985,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrganizationRoute: OrganizationRoute,
   PartnersRoute: PartnersRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminLoginRoute: AdminLoginRoute,
   CoursesHskRoute: CoursesHskRouteWithChildren,
   MemberMemberIdRoute: MemberMemberIdRoute,
