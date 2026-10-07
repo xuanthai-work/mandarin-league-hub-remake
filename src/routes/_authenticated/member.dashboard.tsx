@@ -83,12 +83,10 @@ function MemberDashboard() {
     try { const url = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
     catch { setErr("Không tải được thẻ, vui lòng thử lại."); }
   };
-  const act = async (id: string, action: "start" | "submit") => {
+  const act = async (id: string, action: "start" | "submit", evidence = "", note = "") => {
     setErr(""); setMsg("");
-    let evidence = "", note = "";
-    if (action === "submit") { evidence = window.prompt("Link minh chứng (Google Drive, tài liệu, sản phẩm…):") ?? ""; if (!evidence) return; note = window.prompt("Ghi chú kết quả (không bắt buộc):") ?? ""; }
     const { error } = await supabase.rpc("member_update_task", { _task: id, _action: action, _evidence: evidence, _note: note });
-    if (error) setErr(error.message); else { setMsg(action === "submit" ? "Đã nộp báo cáo." : "Đã tiếp nhận nhiệm vụ."); qc.invalidateQueries({ queryKey: ["my-tasks"] }); }
+    if (error) setErr(error.message); else { setMsg(action === "submit" ? "Đã nộp báo cáo." : "Đã tiếp nhận nhiệm vụ."); setReporting(null); qc.invalidateQueries({ queryKey: ["my-tasks"] }); }
   };
   return (
     <div className="portal-ai min-h-screen"><div className="mx-auto max-w-4xl px-4 py-10">
@@ -163,7 +161,7 @@ function MemberDashboard() {
               </div>
               {t.description && <p className="mt-2 whitespace-pre-line text-sm">{t.description}</p>}
               {t.review_note && <p className="mt-2 rounded-lg bg-secondary p-2 text-xs">Phản hồi: {t.review_note}</p>}
-              {t.evidence_url && <a href={t.evidence_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-primary underline">Minh chứng đã nộp <ExternalLink className="h-3 w-3" /></a>}
+              {t.evidence_url && <TaskEvidence value={t.evidence_url} note={t.report_note} />}
               <div className="mt-3 flex gap-2">
                 {["assigned", "revision"].includes(t.status) && <button onClick={() => act(t.id, "start")} className="rounded-lg border border-border px-3 py-1.5 text-xs">Tiếp nhận</button>}
                 {["assigned", "in_progress", "revision"].includes(t.status) && <button onClick={() => act(t.id, "submit")} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Nộp báo cáo</button>}
