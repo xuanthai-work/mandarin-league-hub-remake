@@ -25,14 +25,14 @@ function TeachersPage() {
 
   const rows = (data ?? []).filter((t) => (!q || `${t.full_name} ${t.title}`.toLowerCase().includes(q.toLowerCase())) && (!lv || t.teaching_levels.includes(lv)));
 
-  const save = async () => {
+  const save = async (): Promise<void> => {
     if (!edit) return;
-    if (edit.full_name.trim().length < 2) return toast.error("Vui lòng nhập họ tên");
-    if (edit.avatar_url && !/^https:\/\//.test(edit.avatar_url)) return toast.error("Link ảnh phải bắt đầu bằng https://");
+    if (edit.full_name.trim().length < 2) { toast.error("Vui lòng nhập họ tên"); return; }
+    if (edit.avatar_url && !/^https:\/\//.test(edit.avatar_url)) { toast.error("Link ảnh phải bắt đầu bằng https://"); return; }
     const { id, ...body } = edit;
     const payload = { ...body, full_name: body.full_name.trim() };
     const { error } = id ? await supabase.from("teachers").update(payload).eq("id", id) : await supabase.from("teachers").insert(payload);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Đã lưu hồ sơ giáo viên"); setEdit(null); refresh();
   };
   const toggle = async (t: Teacher) => { await supabase.from("teachers").update({ visible: !t.visible }).eq("id", t.id); refresh(); };
