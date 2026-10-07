@@ -102,7 +102,7 @@ export const updateAccount = createServerFn({ method: "POST" })
     if (losesAdmin && data.userId === context.userId) throw new Error("Bạn không thể tự hạ quyền hoặc khóa tài khoản Quản trị viên của chính mình.");
     if (losesAdmin && (await adminCount(db)) <= 1) throw new Error("Hệ thống phải luôn còn ít nhất một Quản trị viên.");
     const { data: acct } = await db.from("member_accounts").select("member_id").eq("user_id", data.userId).single();
-    await db.from("members").update({ department: data.department, position: data.position }).eq("id", acct.member_id);
+    await db.from("members").update({ department: data.department, position: data.position }).eq("id", acct!.member_id);
     await db.from("member_accounts").update({ account_status: data.status, permissions: data.permissions }).eq("user_id", data.userId);
     await db.auth.admin.updateUserById(data.userId, { ban_duration: ban(data.status) });
     await setAccess(db, data.userId, data.access);
@@ -125,7 +125,7 @@ export const resetAccountPassword = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       await db.from("member_accounts").update({ must_change_password: true }).eq("user_id", data.userId);
     } else {
-      const { error } = await db.auth.resetPasswordForEmail(acct.login_email, { redirectTo: data.redirectTo });
+      const { error } = await db.auth.resetPasswordForEmail(acct.login_email, data.redirectTo ? { redirectTo: data.redirectTo } : {});
       if (error) throw new Error(error.message);
     }
     return { ok: true };
