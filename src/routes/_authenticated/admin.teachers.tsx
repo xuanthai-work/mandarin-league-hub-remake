@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Eye, EyeOff, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveTeacherPhotos, TEACHER_BUCKET } from "@/lib/teachers";
 
 export const Route = createFileRoute("/_authenticated/admin/teachers")({
   head: () => ({ meta: [{ title: "Giáo viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: TeachersPage,
 });
 
-type Teacher = { id: string; full_name: string; title: string; avatar_url: string; bio: string; teaching_levels: number[]; visible: boolean; sort_order: number };
+type Teacher = { id: string; full_name: string; title: string; avatar_url: string; bio: string; teaching_levels: number[]; visible: boolean; sort_order: number; photo?: string };
 const EMPTY: Omit<Teacher, "id"> = { full_name: "", title: "", avatar_url: "", bio: "", teaching_levels: [], visible: true, sort_order: 0 };
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const LEVELS = [1, 2, 3, 4, 5, 6];
@@ -19,17 +20,32 @@ function TeachersPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [lv, setLv] = useState(0);
-  const [edit, setEdit] = useState<(Omit<Teacher, "id"> & { id?: string }) | null>(null);
-  const { data, isLoading } = useQuery({ queryKey: ["admin-teachers"], queryFn: async () => ((await supabase.from("teachers").select("*").order("sort_order")).data ?? []) as Teacher[] });
+  const [edit, setEditRaw] = useState<(Omit<Teacher, "id"> & { id?: string }) | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const setEdit = (v: typeof edit) => { if (!v || v.id !== edit?.id) setPreview(null); setEditRaw(v); };
+  const { data, isLoading } = useQuery({ queryKey: ["admin-teachers"], queryFn: async () => resolveTeacherPhotos(((await supabase.from("teachers").select("*").order("sort_order")).data ?? []) as Teacher[]) });
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-teachers"] }); qc.invalidateQueries({ queryKey: ["public-teachers"] }); };
 
   const rows = (data ?? []).filter((t) => (!q || `${t.full_name} ${t.title}`.toLowerCase().includes(q.toLowerCase())) && (!lv || t.teaching_levels.includes(lv)));
 
+  const upload = async (file: File) => {
+    if (!edit) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { toast.error("Chỉ nhận ảnh JPG, PNG hoặc WebP"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Ảnh tối đa 5MB"); return; }
+    setUploading(true);
+    const path = `${crypto.randomUUID()}.${file.name.split(".").pop()?.toLowerCase() || "jpg"}`;
+    const { error } = await supabase.storage.from(TEACHER_BUCKET).upload(path, file, { contentType: file.type });
+    setUploading(false);
+    if (error) { toast.error(error.message); return; }
+    setPreview(URL.createObjectURL(file));
+    setEditRaw({ ...edit, avatar_url: path });
+  };
+
   const save = async (): Promise<void> => {
     if (!edit) return;
     if (edit.full_name.trim().length < 2) { toast.error("Vui lòng nhập họ tên"); return; }
-    if (edit.avatar_url && !/^https:\/\//.test(edit.avatar_url)) { toast.error("Link ảnh phải bắt đầu bằng https://"); return; }
-    const { id, ...body } = edit;
+    const { id, photo: _p, ...body } = edit;
     const payload = { ...body, full_name: body.full_name.trim() };
     const { error } = id ? await supabase.from("teachers").update(payload).eq("id", id) : await supabase.from("teachers").insert(payload);
     if (error) { toast.error(error.message); return; }
@@ -62,7 +78,7 @@ function TeachersPage() {
             {!isLoading && rows.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Chưa có giáo viên.</td></tr>}
             {rows.map((t) => (
               <tr key={t.id} className="border-t border-border">
-                <td className="p-3"><Avatar url={t.avatar_url} /></td>
+                <td className="p-3"><Avatar url={t.photo ?? ""} /></td>
                 <td className="p-3 font-medium">{t.full_name}</td>
                 <td className="p-3">{t.title || "—"}</td>
                 <td className="p-3 text-xs">{t.teaching_levels.length ? t.teaching_levels.map((l) => `HSK ${l}`).join(", ") : "—"}</td>
@@ -85,7 +101,17 @@ function TeachersPage() {
             <h2 className="text-lg font-bold">{edit.id ? "Sửa hồ sơ giáo viên" : "Thêm giáo viên"}</h2>
             <label className="block text-sm">Họ tên *<input className={inp} value={edit.full_name} onChange={(e) => setEdit({ ...edit, full_name: e.target.value })} /></label>
             <label className="block text-sm">Chức danh<input className={inp} placeholder="VD: Giảng viên HSK" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></label>
-            <label className="block text-sm">Link ảnh chân dung (https://)<input className={inp} value={edit.avatar_url} onChange={(e) => setEdit({ ...edit, avatar_url: e.target.value })} /></label>
+            <div className="text-sm">Ảnh chân dung
+              <div className="mt-1 flex items-center gap-3">
+                <Avatar url={preview ?? edit.photo ?? ""} />
+                <label className="cursor-pointer rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent">
+                  {uploading ? "Đang tải lên…" : "Chọn ảnh từ máy"}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void upload(f); }} />
+                </label>
+                {edit.avatar_url && <button type="button" onClick={() => { setPreview(null); setEdit({ ...edit, avatar_url: "", photo: "" }); }} className="text-xs text-destructive">Gỡ ảnh</button>}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">JPG, PNG hoặc WebP, tối đa 5MB.</p>
+            </div>
             <label className="block text-sm">Giới thiệu ngắn<textarea rows={4} maxLength={1000} className={inp} value={edit.bio} onChange={(e) => setEdit({ ...edit, bio: e.target.value })} /></label>
             <div className="text-sm">Cấp HSK phụ trách
               <div className="mt-1 flex flex-wrap gap-2">{LEVELS.map((l) => {

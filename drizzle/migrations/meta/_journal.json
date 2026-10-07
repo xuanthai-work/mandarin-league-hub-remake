@@ -64,6 +64,13 @@
       "when": 1791359755174,
       "tag": "0008_org_public_and_teachers",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791360691553,
+      "tag": "0009_teacher_photos_policies",
+      "breakpoints": true
     }
   ]
 }

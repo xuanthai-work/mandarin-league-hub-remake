@@ -1,0 +1,4 @@
+CREATE POLICY "Teacher photos readable" ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id = 'teacher-photos');
+CREATE POLICY "Admins upload teacher photos" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'teacher-photos' AND public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins update teacher photos" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'teacher-photos' AND public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins delete teacher photos" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'teacher-photos' AND public.has_role(auth.uid(), 'admin'));
