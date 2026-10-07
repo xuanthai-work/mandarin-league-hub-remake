@@ -169,3 +169,28 @@
 .bg-brand-gradient { background-image: var(--gradient-brand); }
 .grid-lines { background-image: linear-gradient(to right, color-mix(in oklab, var(--primary) 10%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--primary) 10%, transparent) 1px, transparent 1px); background-size: 48px 48px; }
 .verification-grid { background-image: linear-gradient(to right, color-mix(in oklab, var(--primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--primary) 8%, transparent) 1px, transparent 1px); background-size: 32px 32px; }
+
+/* Internal portal — "AI EdTech" deep navy theme with neural network pattern */
+:root {
+  --portal-bg: oklch(0.17 0.04 255);
+  --portal-bg-2: oklch(0.23 0.07 250);
+  --portal-glow: oklch(0.62 0.17 240 / 0.35);
+  --portal-gold-glow: oklch(0.74 0.14 80 / 0.18);
+  --portal-line: oklch(0.75 0.12 235 / 0.16);
+}
+.portal-ai {
+  background-color: var(--portal-bg);
+  background-image:
+    radial-gradient(60rem 40rem at 10% -10%, var(--portal-glow), transparent 60%),
+    radial-gradient(50rem 35rem at 110% 110%, var(--portal-gold-glow), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg stroke='%2393c5fd' stroke-opacity='.14' fill='none'%3E%3Cpath d='M20 30L110 70L200 20M110 70L70 160L180 150L200 20M70 160L20 220M180 150L230 230M110 70L180 150'/%3E%3C/g%3E%3Cg fill='%2393c5fd' fill-opacity='.35'%3E%3Ccircle cx='20' cy='30' r='2'/%3E%3Ccircle cx='110' cy='70' r='2.5'/%3E%3Ccircle cx='200' cy='20' r='2'/%3E%3Ccircle cx='70' cy='160' r='2'/%3E%3Ccircle cx='180' cy='150' r='2.5'/%3E%3C/g%3E%3Ccircle cx='180' cy='150' r='2.5' fill='%23e6b85c' fill-opacity='.5'/%3E%3C/svg%3E"),
+    linear-gradient(160deg, var(--portal-bg), var(--portal-bg-2));
+  background-attachment: fixed;
+}
+.portal-glass {
+  background-color: oklch(1 0 0 / 0.96);
+  border: 1px solid oklch(0.75 0.12 235 / 0.35);
+  box-shadow: 0 0 0 1px oklch(0.74 0.14 80 / 0.12), 0 20px 60px -20px oklch(0.62 0.17 240 / 0.55);
+}
+.portal-ink { color: oklch(0.96 0.01 240); }
+.portal-ink-muted { color: oklch(0.8 0.03 240); }
