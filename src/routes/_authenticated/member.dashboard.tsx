@@ -136,6 +136,13 @@ function MemberDashboard() {
 
           <div className="space-y-6">
             <section className="portal-glass rounded-2xl p-5">
+              <h2 className="font-semibold">Hiển thị công khai</h2>
+              <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={(m as { is_public?: boolean }).is_public !== false} onChange={async (e) => {
+                const { error } = await supabase.rpc("set_my_visibility", { _public: e.target.checked });
+                if (error) setErr(error.message); else { setMsg("Đã cập nhật tùy chọn hiển thị."); qc.invalidateQueries({ queryKey: ["my-account"] }); }
+              }} />Hiện tên tôi trên trang Cơ cấu tổ chức (nếu là Trưởng/Phó Ban)</label>
+            </section>
+            <section className="portal-glass rounded-2xl p-5">
               <h2 className="font-semibold">Thông tin cá nhân</h2>
               <label className="mt-3 block text-xs text-muted-foreground">Họ và tên
                 <input className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>

@@ -4,6 +4,7 @@ import { DemoBadge, EmptyState, SectionTitle, StatusBadge } from "@/components/s
 import { CONTACT } from "@/components/site/SiteLayout";
 import { getCourse } from "@/lib/data/courses";
 import { pageMeta } from "@/lib/seo";
+import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
 
 export const Route = createFileRoute("/courses/hsk/$courseId")({
   loader: ({ params }) => {
@@ -26,6 +27,8 @@ function CourseNotFound() {
 
 function PCourse() {
   const { course: c } = Route.useLoaderData();
+  const { data: teachers } = usePublicTeachers();
+  const ts = teachersForLevel(teachers, c.level);
   const registerHref = `mailto:${CONTACT.email}?subject=${encodeURIComponent(`Đăng ký khóa HSK ${c.level}`)}`;
   return (
     <>
@@ -52,7 +55,14 @@ function PCourse() {
           </section>
         </div>
         <aside className="h-fit space-y-4 rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-24">
-          <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div><div><div className="text-xs text-muted-foreground">Giáo viên</div><div className="font-semibold">{c.teacher?.name ?? "Đang cập nhật"}</div></div></div>
+          {ts.length === 0 ? (
+            <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div><div><div className="text-xs text-muted-foreground">Giáo viên</div><div className="font-semibold">Đang cập nhật</div></div></div>
+          ) : ts.map((t) => (
+            <div key={t.id} className="flex items-start gap-3">
+              {t.avatar_url ? <img src={t.avatar_url} alt={t.full_name} className="h-12 w-12 shrink-0 rounded-full object-cover" /> : <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div>}
+              <div><div className="text-xs text-muted-foreground">Giáo viên{t.title ? ` · ${t.title}` : ""}</div><div className="font-semibold">{t.full_name}</div>{t.bio && <p className="mt-1 text-sm text-muted-foreground">{t.bio}</p>}</div>
+            </div>
+          ))}
           <Info icon={Clock} l="Số buổi / thời lượng" v={`${c.sessions} buổi · ${c.duration}`} />
           <Info icon={CalendarDays} l="Lịch học" v={c.schedule} />
           <Info icon={Video} l="Hình thức" v={c.mode} />

@@ -20,3 +20,5 @@
 - Tasks and contribution points change only through security-definer database functions (create/update/review task, adjust points) that write an append-only point history row; clients have read-only table access so points can never be edited directly.
 - Member codes are assigned by a database trigger (join month + global running sequence), so every insert path gets a consistent code.
 - Application status changes go through a security-definer function that snapshots the reviewer from the session into an append-only history, so reviewers cannot be spoofed or history edited.
+- Public org chart reads leaders/counts only via the security-definer `public_org_chart()` function, which respects each member's `is_public` flag, so the members table never becomes publicly readable.
+- Teachers are a separate admin-managed table linked to HSK courses by teaching level, so courses can stay static until they move to Lovable Cloud.

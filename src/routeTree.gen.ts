@@ -41,6 +41,7 @@ import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
 import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_authenticated/admin.recruitment'
 import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authenticated/admin.tasks'
+import { Route as AuthenticatedAdminTeachersRouteImport } from './routes/_authenticated/admin.teachers'
 import { Route as AuthenticatedMemberDashboardRouteImport } from './routes/_authenticated/member.dashboard'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
@@ -217,6 +218,12 @@ const AuthenticatedAdminTasksRoute = AuthenticatedAdminTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminTeachersRoute =
+  AuthenticatedAdminTeachersRouteImport.update({
+    id: '/teachers',
+    path: '/teachers',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedMemberDashboardRoute =
   AuthenticatedMemberDashboardRouteImport.update({
     id: '/member/dashboard',
@@ -285,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
+  '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -322,6 +330,7 @@ export interface FileRoutesByTo {
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
+  '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -364,6 +373,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/_authenticated/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
   '/_authenticated/admin/tasks': typeof AuthenticatedAdminTasksRoute
+  '/_authenticated/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/_authenticated/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/admin/photos'
     | '/admin/recruitment'
     | '/admin/tasks'
+    | '/admin/teachers'
     | '/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -443,6 +454,7 @@ export interface FileRouteTypes {
     | '/admin/photos'
     | '/admin/recruitment'
     | '/admin/tasks'
+    | '/admin/teachers'
     | '/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -484,6 +496,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/photos'
     | '/_authenticated/admin/recruitment'
     | '/_authenticated/admin/tasks'
+    | '/_authenticated/admin/teachers'
     | '/_authenticated/member/dashboard'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -745,6 +758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTasksRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/teachers': {
+      id: '/_authenticated/admin/teachers'
+      path: '/teachers'
+      fullPath: '/admin/teachers'
+      preLoaderRoute: typeof AuthenticatedAdminTeachersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/member/dashboard': {
       id: '/_authenticated/member/dashboard'
       path: '/member/dashboard'
@@ -807,6 +827,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
   AuthenticatedAdminRecruitmentRoute: typeof AuthenticatedAdminRecruitmentRoute
   AuthenticatedAdminTasksRoute: typeof AuthenticatedAdminTasksRoute
+  AuthenticatedAdminTeachersRoute: typeof AuthenticatedAdminTeachersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -820,6 +841,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
   AuthenticatedAdminRecruitmentRoute: AuthenticatedAdminRecruitmentRoute,
   AuthenticatedAdminTasksRoute: AuthenticatedAdminTasksRoute,
+  AuthenticatedAdminTeachersRoute: AuthenticatedAdminTeachersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

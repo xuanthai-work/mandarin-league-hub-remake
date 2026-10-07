@@ -258,6 +258,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_public: boolean
           joined_on: string
           member_code: string
           phone: string
@@ -273,6 +274,7 @@ export type Database = {
           email?: string
           full_name: string
           id?: string
+          is_public?: boolean
           joined_on?: string
           member_code?: string
           phone?: string
@@ -288,6 +290,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_public?: boolean
           joined_on?: string
           member_code?: string
           phone?: string
@@ -570,6 +573,53 @@ export type Database = {
           },
         ]
       }
+      teachers: {
+        Row: {
+          avatar_url: string
+          bio: string
+          created_at: string
+          full_name: string
+          id: string
+          member_id: string | null
+          sort_order: number
+          teaching_levels: number[]
+          title: string
+          visible: boolean
+        }
+        Insert: {
+          avatar_url?: string
+          bio?: string
+          created_at?: string
+          full_name: string
+          id?: string
+          member_id?: string | null
+          sort_order?: number
+          teaching_levels?: number[]
+          title?: string
+          visible?: boolean
+        }
+        Update: {
+          avatar_url?: string
+          bio?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          member_id?: string | null
+          sort_order?: number
+          teaching_levels?: number[]
+          title?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teachers_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -647,6 +697,15 @@ export type Database = {
       my_account: { Args: never; Returns: Json }
       my_head_department: { Args: never; Returns: string }
       my_member_id: { Args: never; Returns: string }
+      public_org_chart: {
+        Args: never
+        Returns: {
+          dept: string
+          display_name: string
+          member_count: number
+          role_title: string
+        }[]
+      }
       record_login: { Args: never; Returns: undefined }
       reorder_activity_photos: {
         Args: { photo_ids: string[] }
@@ -660,6 +719,11 @@ export type Database = {
         Args: { _app: string; _note: string; _status: string }
         Returns: undefined
       }
+      set_member_visibility: {
+        Args: { _member: string; _public: boolean }
+        Returns: undefined
+      }
+      set_my_visibility: { Args: { _public: boolean }; Returns: undefined }
       update_my_profile: {
         Args: { _avatar_path: string; _full_name: string }
         Returns: undefined
