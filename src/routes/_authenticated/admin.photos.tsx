@@ -7,7 +7,7 @@ import {
   deletePhoto, listAllPhotos, reorderPhotos, replacePhoto, updatePhoto, uploadPhoto, type ActivityPhoto,
 } from "@/lib/activity-photos";
 
-export const Route = createFileRoute("/_authenticated/admin/photos")({
+export const Route = createFileRoute("/_authenticated/admin/photos")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Quản lý ảnh hoạt động | TML Admin" },

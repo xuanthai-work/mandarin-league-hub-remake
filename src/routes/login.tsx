@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { routeAfterLogin } from "@/lib/portal";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/login")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Cổng nội bộ | The Mandarin League" },

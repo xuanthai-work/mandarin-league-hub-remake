@@ -7,7 +7,7 @@ import { getPartners, PARTNER_CATEGORIES } from "@/lib/data/partners";
 import type { PartnerCategory } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/partners")({
+export const Route = createFileRoute("/partners")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Đối tác", "Các đối tác giáo dục, công nghệ và cộng đồng đồng hành cùng The Mandarin League.") }),
   component: PPartners,
 });

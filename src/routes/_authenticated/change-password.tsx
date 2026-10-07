@@ -3,7 +3,7 @@ import { ShieldCheck } from "lucide-react";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import { routeAfterLogin } from "@/lib/portal";
 
-export const Route = createFileRoute("/_authenticated/change-password")({
+export const Route = createFileRoute("/_authenticated/change-password")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Đổi mật khẩu lần đầu | The Mandarin League" },

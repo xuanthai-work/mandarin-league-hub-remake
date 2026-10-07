@@ -7,7 +7,7 @@ import { deptName } from "@/lib/recruitment";
 import { POINT_KIND, tierOf } from "@/lib/points";
 import { useAdminAccess } from "./admin";
 
-export const Route = createFileRoute("/_authenticated/admin/contributions")({
+export const Route = createFileRoute("/_authenticated/admin/contributions")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Điểm đóng góp | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: PointsPage,
 });

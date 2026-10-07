@@ -5,7 +5,7 @@ import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIOD_STATUS, QUESTION_BANK, QUESTION_KINDS, RECRUIT_DEPTS, deptName, positionsFor } from "@/lib/recruitment";
 
-export const Route = createFileRoute("/_authenticated/admin/recruitment")({ component: RecruitmentAdmin });
+export const Route = createFileRoute("/_authenticated/admin/recruitment")({ staticData: { sitemap: false }, component: RecruitmentAdmin });
 
 const inp = "rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const btn = "rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent";

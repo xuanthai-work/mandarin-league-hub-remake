@@ -5,7 +5,7 @@ import { ArrowLeft, Download, ExternalLink, FolderOpen, ListChecks, MessageCircl
 import { supabase } from "@/integrations/supabase/client";
 import { DEPARTMENTS } from "@/lib/data/departments";
 
-export const Route = createFileRoute("/_authenticated/admin/departments")({
+export const Route = createFileRoute("/_authenticated/admin/departments")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Ban | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: DepartmentsPage,
 });

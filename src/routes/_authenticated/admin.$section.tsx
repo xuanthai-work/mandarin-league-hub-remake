@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Construction } from "lucide-react";
 import { ADMIN_SECTIONS } from "@/lib/admin-nav";
 
-export const Route = createFileRoute("/_authenticated/admin/$section")({
+export const Route = createFileRoute("/_authenticated/admin/$section")({ staticData: { sitemap: false },
   beforeLoad: ({ params }) => {
     if (!ADMIN_SECTIONS.some((s) => s.slug === params.section)) throw notFound();
   },

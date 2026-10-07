@@ -6,7 +6,7 @@ import { PersonSlot } from "@/components/site/ui";
 import { getDepartments } from "@/lib/data/departments";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/organization")({
+export const Route = createFileRoute("/organization")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Cơ cấu tổ chức", "Sơ đồ tổ chức TML: Ban Điều hành và 8 Ban chuyên môn.") }),
   component: POrganization,
 });

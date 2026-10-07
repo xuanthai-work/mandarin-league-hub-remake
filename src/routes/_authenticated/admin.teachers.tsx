@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveTeacherPhotos, TEACHER_BUCKET } from "@/lib/teachers";
 
-export const Route = createFileRoute("/_authenticated/admin/teachers")({
+export const Route = createFileRoute("/_authenticated/admin/teachers")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Giáo viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: TeachersPage,
 });

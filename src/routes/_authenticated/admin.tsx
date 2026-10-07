@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, type AdminRole } from "@/lib/admin-nav";
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/_authenticated/admin")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Quản trị | The Mandarin League" },

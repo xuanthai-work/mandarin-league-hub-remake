@@ -4,7 +4,7 @@ import { PageHero } from "@/components/site/SiteLayout";
 import { SectionTitle } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/about")({
+export const Route = createFileRoute("/about")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Giới thiệu", "TML – cộng đồng giáo dục tiếng Trung trực tuyến kết nối người học Việt Nam và Trung Quốc.") }),
   component: PAbout,
 });

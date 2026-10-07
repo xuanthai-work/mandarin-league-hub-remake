@@ -8,7 +8,7 @@ import { createAccount, listAccounts, resetAccountPassword, updateAccount } from
 import { ACCESS_LABELS, ACCOUNT_DEPTS, ACCOUNT_STATUS, PERMISSIONS, PERMISSION_TEMPLATES, positionsFor, type AccessLevel, type AccountStatus } from "@/lib/accounts";
 import { deptName } from "@/lib/recruitment";
 
-export const Route = createFileRoute("/_authenticated/admin/accounts")({
+export const Route = createFileRoute("/_authenticated/admin/accounts")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Tài khoản nội bộ | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: AccountsPage,
 });

@@ -7,7 +7,7 @@ import { ACTIVITY_TYPES, getActivities } from "@/lib/data/activities";
 import type { ActivityType } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/activities/")({
+export const Route = createFileRoute("/activities/")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Hoạt động", "Workshop, cuộc thi, webinar, giao lưu Việt – Trung và dự án cộng đồng của TML.") }),
   component: PActivities,
 });

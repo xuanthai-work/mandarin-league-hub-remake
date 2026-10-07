@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ADMIN_SECTIONS, ROLE_LABELS } from "@/lib/admin-nav";
 import { useAdminAccess } from "./admin";
 
-export const Route = createFileRoute("/_authenticated/admin/")({
+export const Route = createFileRoute("/_authenticated/admin/")({ staticData: { sitemap: false },
   component: Overview,
 });
 

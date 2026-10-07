@@ -5,7 +5,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 
-export const Route = createFileRoute("/_authenticated/admin/members")({
+export const Route = createFileRoute("/_authenticated/admin/members")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Thành viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: MembersPage,
 });
