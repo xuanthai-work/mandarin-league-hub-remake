@@ -120,10 +120,13 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
     const { data } = await supabase.storage.from("applications").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener");
   };
+  const [reason, setReason] = useState("");
   const save = async () => {
     setBusy("save"); setErr(null);
-    const { error } = await supabase.from("candidate_applications").update({ status, admin_note: note }).eq("id", app.id);
-    if (error) setErr(error.message); else qc.invalidateQueries({ queryKey: ["admin-candidates"] });
+    const r1 = await supabase.rpc("set_application_status", { _app: app.id, _status: status, _note: reason });
+    const r2 = note !== app.admin_note ? await supabase.from("candidate_applications").update({ admin_note: note }).eq("id", app.id) : { error: null };
+    const error = r1.error ?? r2.error;
+    if (error) setErr(error.message); else { setReason(""); qc.invalidateQueries({ queryKey: ["admin-candidates"] }); qc.invalidateQueries({ queryKey: ["app-history", app.id] }); }
     setBusy(null);
   };
   const runAi = async () => {
@@ -158,19 +161,30 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
       <div className="mt-2">{app.ai_summary ? <AiBox summary={app.ai_summary} /> : <p className="text-sm text-muted-foreground">Chưa phân tích. AI chỉ hỗ trợ tóm tắt — quyết định cuối cùng thuộc về Ban Nhân sự.</p>}</div>
 
       <h3 className="mt-6 font-semibold">Xử lý hồ sơ</h3>
+      <p className="text-xs text-muted-foreground">Người xử lý được ghi tự động theo tài khoản đang đăng nhập.</p>
       <div className="mt-2 space-y-2">
         <select className={`${inp} w-full`} value={status} onChange={(e) => setStatus(e.target.value)}>{Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        <textarea className={`${inp} w-full`} rows={3} placeholder="Ghi chú nội bộ" value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={`${inp} w-full`} rows={2} placeholder="Lý do / ghi chú cho lần xử lý này (không bắt buộc)" value={reason} onChange={(e) => setReason(e.target.value)} />
+        <textarea className={`${inp} w-full`} rows={2} placeholder="Ghi chú nội bộ chung của hồ sơ" value={note} onChange={(e) => setNote(e.target.value)} />
         <button onClick={save} disabled={!!busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">Lưu</button>
       </div>
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
 
       <Approve app={app} />
 
-      <h3 className="mt-6 font-semibold">Lịch sử xử lý</h3>
-      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-        {(history ?? []).map((h) => <li key={h.id}>{new Date(h.created_at).toLocaleString("vi-VN")}: {h.old_status ? `${APP_STATUS[h.old_status]} → ` : ""}{APP_STATUS[h.new_status]}</li>)}
-      </ul>
+      <h3 className="mt-6 font-semibold">Lịch sử xử lý hồ sơ</h3>
+      <ol className="mt-3 border-l-2 border-gold/40 pl-4">
+        {[...(history ?? [])].reverse().map((h) => (
+          <li key={h.id} className="relative mb-4">
+            <span className="absolute -left-[23px] top-1 h-3 w-3 rounded-full border-2 border-background bg-primary" />
+            <div className="text-xs font-bold uppercase tracking-wide text-primary-deep">{APP_STATUS[h.new_status]}</div>
+            <div className="text-sm font-medium">{h.reviewer_name || "—"}{h.reviewer_member_code && <span className="ml-2 font-mono text-xs text-muted-foreground">{h.reviewer_member_code}</span>}</div>
+            {(h.reviewer_department || h.reviewer_position) && <div className="text-xs text-muted-foreground">{[h.reviewer_department && deptName(h.reviewer_department), h.reviewer_position].filter(Boolean).join(" · ")}</div>}
+            <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("vi-VN")}{h.old_status ? ` · từ "${APP_STATUS[h.old_status]}"` : ""}</div>
+            {h.note && <p className="mt-1 rounded-md bg-secondary px-2 py-1 text-xs italic">“{h.note}”</p>}
+          </li>
+        ))}
+      </ol>
     </Drawer>
   );
 }
