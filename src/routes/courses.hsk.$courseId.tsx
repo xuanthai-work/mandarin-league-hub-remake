@@ -6,7 +6,7 @@ import { getCourse } from "@/lib/data/courses";
 import { pageMeta } from "@/lib/seo";
 import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
 
-export const Route = createFileRoute("/courses/hsk/$courseId")({ staticData: { sitemap: false },
+export const Route = createFileRoute("/courses/hsk/$courseId")({ staticData: { sitemap: true },
   loader: ({ params }) => {
     const course = getCourse(params.courseId);
     if (!course) throw notFound();
