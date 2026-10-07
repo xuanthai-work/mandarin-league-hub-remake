@@ -193,6 +193,7 @@ export type Database = {
           email: string
           full_name: string
           goal: string
+          hsk_class_id: string | null
           id: string
           level: number
           message: string
@@ -210,6 +211,7 @@ export type Database = {
           email: string
           full_name: string
           goal?: string
+          hsk_class_id?: string | null
           id?: string
           level: number
           message?: string
@@ -227,6 +229,7 @@ export type Database = {
           email?: string
           full_name?: string
           goal?: string
+          hsk_class_id?: string | null
           id?: string
           level?: number
           message?: string
@@ -241,6 +244,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_hsk_class_id_fkey"
+            columns: ["hsk_class_id"]
+            isOneToOne: false
+            referencedRelation: "hsk_classes"
             referencedColumns: ["id"]
           },
         ]
@@ -290,6 +300,8 @@ export type Database = {
           registration_url: string
           schedule: string
           short_description: string
+          show_in_activities: boolean
+          show_in_courses: boolean
           slug: string
           status: string
           teacher_id: string | null
@@ -315,6 +327,8 @@ export type Database = {
           registration_url?: string
           schedule?: string
           short_description?: string
+          show_in_activities?: boolean
+          show_in_courses?: boolean
           slug: string
           status?: string
           teacher_id?: string | null
@@ -340,6 +354,8 @@ export type Database = {
           registration_url?: string
           schedule?: string
           short_description?: string
+          show_in_activities?: boolean
+          show_in_courses?: boolean
           slug?: string
           status?: string
           teacher_id?: string | null
@@ -381,6 +397,86 @@ export type Database = {
           zalo_url?: string
         }
         Relationships: []
+      }
+      hsk_classes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string
+          duration: string
+          end_date: string | null
+          fee_amount: number
+          fee_type: string
+          format: string
+          id: string
+          is_published: boolean
+          level: number
+          max_students: number
+          name: string
+          registration_url: string
+          schedule: string
+          start_date: string | null
+          status: string
+          teacher_id: string | null
+          thumbnail_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          duration?: string
+          end_date?: string | null
+          fee_amount?: number
+          fee_type?: string
+          format?: string
+          id?: string
+          is_published?: boolean
+          level: number
+          max_students?: number
+          name: string
+          registration_url?: string
+          schedule?: string
+          start_date?: string | null
+          status?: string
+          teacher_id?: string | null
+          thumbnail_path?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          duration?: string
+          end_date?: string | null
+          fee_amount?: number
+          fee_type?: string
+          format?: string
+          id?: string
+          is_published?: boolean
+          level?: number
+          max_students?: number
+          name?: string
+          registration_url?: string
+          schedule?: string
+          start_date?: string | null
+          status?: string
+          teacher_id?: string | null
+          thumbnail_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hsk_classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       member_accounts: {
         Row: {
@@ -859,6 +955,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      hsk_class_seats: { Args: { _class: string }; Returns: number }
       mark_password_changed: { Args: never; Returns: undefined }
       member_update_task: {
         Args: {
