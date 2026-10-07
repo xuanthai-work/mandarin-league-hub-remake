@@ -21,7 +21,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           ["/activities/$activityId", "/activities/$activityId", "activityId", getActivities().map((a) => a.id)],
         ];
         for (const [routeId, to, param, values] of dynamic) {
-          if (!isSitemapRouteIncluded((router.routesById as Record<string, AnyRoute>)[routeId])) continue;
+          if (!isSitemapRouteIncluded((router.routesById as unknown as Record<string, AnyRoute>)[routeId])) continue;
           for (const value of values) {
             const location = router.buildLocation({ to, params: { [param]: value }, search: () => ({}), hash: "" } as never);
             const path = sitemapPathForLocation(router, location, routeId);
