@@ -30,7 +30,7 @@ const Label = ({ children, required }: { children: React.ReactNode; required?: b
   <span className="text-sm font-medium">{children}{required && <span className="text-destructive"> *</span>}</span>
 );
 
-export function ApplicationForm() {
+export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => void } = {}) {
   const { data, isLoading } = useQuery({ queryKey: ["open-recruitment"], queryFn: loadOpen });
   const upload = useServerFn(createApplicationUpload);
   const submit = useServerFn(submitApplication);
@@ -53,7 +53,11 @@ export function ApplicationForm() {
   if (!data || data.positions.length === 0)
     return <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center"><p className="font-semibold text-primary-deep">Hiện chưa có đợt tuyển nào đang mở</p><p className="mt-1 text-sm text-muted-foreground">Vui lòng theo dõi TML để cập nhật đợt tuyển tiếp theo.</p></div>;
   if (done)
-    return <div className="rounded-2xl border border-border bg-card p-10 text-center"><CheckCircle2 className="mx-auto h-10 w-10 text-success" /><h3 className="mt-3 text-xl font-bold text-primary-deep">Đăng ký thành công!</h3><p className="mt-2 text-muted-foreground">Mã hồ sơ của bạn:</p><p className="mt-1 font-mono text-lg font-bold text-primary">{done}</p><p className="mt-3 text-sm text-muted-foreground">Vui lòng lưu lại mã này. TML sẽ liên hệ qua email khi có kết quả.</p></div>;
+    return <div className="rounded-2xl border border-border bg-card p-10 text-center"><CheckCircle2 className="mx-auto h-10 w-10 text-success" /><h3 className="mt-3 text-xl font-bold text-primary-deep">Đăng ký thành công!</h3><p className="mt-2 text-muted-foreground">Mã hồ sơ của bạn:</p><p className="mt-1 font-mono text-lg font-bold text-primary">{done}</p><p className="mt-3 text-sm text-muted-foreground">Vui lòng lưu lại mã này để tra cứu trạng thái hồ sơ.</p>
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        <button type="button" onClick={() => void navigator.clipboard?.writeText(done)} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-secondary">Sao chép mã</button>
+        {onLookup && <button type="button" onClick={() => onLookup(done)} className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">Xem trạng thái hồ sơ</button>}
+      </div></div>;
 
   const allPositions = data.positions.slice().sort((a, b) => (a.department + a.position).localeCompare(b.department + b.position));
   const setAns = (id: string, v: string | string[]) => setAnswers((a) => ({ ...a, [id]: v }));
