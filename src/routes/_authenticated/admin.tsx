@@ -58,7 +58,7 @@ function AdminLayout() {
 
   const roles = access.data?.roles ?? [];
   const isAdmin = roles.includes("admin");
-  const sections = isAdmin ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => s.slug === "members");
+  const sections = isAdmin ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => ["members", "tasks", "contributions"].includes(s.slug));
   if (!isAdmin && !roles.includes("department_head")) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
@@ -89,9 +89,9 @@ function AdminLayout() {
   return (
     <div className="fixed inset-0 z-50 flex bg-muted/40">
       <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:block">
-        <div className="flex items-center gap-2 border-b border-border px-4 py-4">
+        <div className="portal-ai flex items-center gap-2 px-4 py-4">
           <img src={logo.url} alt="TML" className="h-9 w-9 object-contain" />
-          <span className="font-bold text-primary-deep">TML Admin</span>
+          <span className="portal-ink font-bold">TML Admin</span>
         </div>
         {nav}
       </aside>
@@ -110,14 +110,14 @@ function AdminLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3">
+        <header className="portal-ai portal-ink flex items-center justify-between gap-3 px-4 py-3">
           <button aria-label="Mở menu" className="lg:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right">
               <p className="max-w-[180px] truncate text-sm font-medium">{access.data?.email}</p>
               <p className="text-xs text-gold">{ROLE_LABELS[roles[0]!]}</p>
             </div>
-            <button onClick={signOut} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent">
+            <button onClick={signOut} className="inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20">
               <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Đăng xuất</span>
             </button>
           </div>

@@ -1,11 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Camera, Lock, LogOut } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Camera, Download, ExternalLink, Lock, LogOut } from "lucide-react";
+import QRCode from "qrcode";
+import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { deptName } from "@/lib/recruitment";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
+import { POINT_KIND, PRIORITY, TASK_STATUS, fmtDate, tierOf } from "@/lib/points";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({
   head: () => ({
@@ -31,7 +34,15 @@ function MemberDashboard() {
   const me = useQuery({ queryKey: ["my-account"], queryFn: async () => (await supabase.rpc("my_account")).data as unknown as Me });
   const avatar = useQuery({ queryKey: ["my-avatar", me.data?.member?.avatar_path], enabled: !!me.data?.member?.avatar_path,
     queryFn: async () => (await supabase.storage.from("avatars").createSignedUrl(me.data!.member!.avatar_path!, 3600)).data?.signedUrl ?? null });
-  const [tab, setTab] = useState<"card" | "tasks">("card");
+  const [tab, setTab] = useState<"card" | "tasks" | "points">("card");
+  const [qr, setQr] = useState("");
+  const cardRef = useRef<HTMLDivElement>(null);
+  const memberId = me.data?.member?.id;
+  const tasks = useQuery({ queryKey: ["my-tasks", memberId], enabled: !!memberId, queryFn: async () =>
+    (await supabase.from("tasks").select("*").eq("assignee_id", memberId!).order("created_at", { ascending: false })).data ?? [] });
+  const history = useQuery({ queryKey: ["my-points", memberId], enabled: !!memberId, queryFn: async () =>
+    (await supabase.from("point_transactions").select("*").eq("member_id", memberId!).order("created_at", { ascending: false })).data ?? [] });
+  useEffect(() => { const c = me.data?.member?.member_code; if (c) QRCode.toDataURL(c, { margin: 0, width: 160 }).then(setQr); }, [me.data?.member?.member_code]);
   const [name, setName] = useState("");
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
 
@@ -40,14 +51,14 @@ function MemberDashboard() {
 
   const signOut = async () => { await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); navigate({ to: "/login", replace: true }); };
 
-  if (me.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang tải…</p>;
+  if (me.isLoading) return <div className="portal-ai min-h-screen p-16 text-center portal-ink-muted">Đang tải…</div>;
   const m = me.data?.member;
   if (!m || me.data?.account?.account_status !== "active") return (
-    <div className="mx-auto max-w-md px-4 py-20 text-center">
+    <div className="portal-ai min-h-screen px-4 py-20 text-center"><div className="portal-glass mx-auto max-w-md rounded-2xl p-8">
       <h1 className="text-xl font-bold">Tài khoản không có hồ sơ thành viên hợp lệ</h1>
       <p className="mt-2 text-sm text-muted-foreground">Vui lòng liên hệ Ban Công nghệ & Hệ thống.</p>
       <button onClick={signOut} className="mt-6 rounded-full bg-primary px-6 py-2 font-semibold text-primary-foreground">Đăng xuất</button>
-    </div>
+    </div></div>
   );
 
   const saveName = async () => {
@@ -66,22 +77,37 @@ function MemberDashboard() {
     if (e2) setErr(e2.message); else { setMsg("Đã cập nhật ảnh đại diện."); qc.invalidateQueries({ queryKey: ["my-account"] }); }
   };
 
-  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent(m.member_code)}`;
+  const tier = tierOf(m.contribution_points);
+  const downloadCard = async () => {
+    if (!cardRef.current) return;
+    try { const url = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
+    catch { setErr("Không tải được thẻ, vui lòng thử lại."); }
+  };
+  const act = async (id: string, action: "start" | "submit") => {
+    setErr(""); setMsg("");
+    let evidence = "", note = "";
+    if (action === "submit") { evidence = window.prompt("Link minh chứng (Google Drive, tài liệu, sản phẩm…):") ?? ""; if (!evidence) return; note = window.prompt("Ghi chú kết quả (không bắt buộc):") ?? ""; }
+    const { error } = await supabase.rpc("member_update_task", { _task: id, _action: action, _evidence: evidence, _note: note });
+    if (error) setErr(error.message); else { setMsg(action === "submit" ? "Đã nộp báo cáo." : "Đã tiếp nhận nhiệm vụ."); qc.invalidateQueries({ queryKey: ["my-tasks"] }); }
+  };
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="portal-ai min-h-screen"><div className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary-deep">Cổng thành viên</h1>
-        <button onClick={signOut} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent"><LogOut className="h-4 w-4" />Đăng xuất</button>
+        <h1 className="portal-ink text-2xl font-bold">Cổng thành viên</h1>
+        <button onClick={signOut} className="portal-ink inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><LogOut className="h-4 w-4" />Đăng xuất</button>
       </div>
-      <div className="mt-4 flex gap-2 border-b border-border">
-        {([["card", "Thẻ & Hồ sơ"], ["tasks", "Nhiệm vụ & Điểm"]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${tab === k ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>{l}</button>
+      <div className="mt-4 flex gap-2 overflow-x-auto border-b border-primary/30">
+        {([["card", "Thẻ & Hồ sơ"], ["tasks", "Nhiệm vụ"], ["points", "Lịch sử điểm"]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-medium ${tab === k ? "border-gold text-gold" : "border-transparent portal-ink-muted"}`}>{l}</button>
         ))}
       </div>
 
-      {tab === "card" ? (
+      {msg && <p className="mt-4 rounded-lg bg-success/15 px-3 py-2 text-sm text-success">{msg}</p>}
+      {err && <p className="mt-4 rounded-lg bg-destructive/15 px-3 py-2 text-sm text-destructive">{err}</p>}
+      {tab === "card" && (
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
-          <div className="relative overflow-hidden rounded-2xl border-2 border-gold bg-brand-gradient p-6 text-primary-foreground shadow-lg">
+          <div>
+          <div ref={cardRef} className="relative overflow-hidden rounded-2xl border-2 border-gold bg-brand-gradient p-6 text-primary-foreground shadow-lg">
             <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute -right-10 -bottom-10 h-56 w-56 opacity-10" />
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold"><img src={logo.url} alt="TML" className="h-6 w-6" />The Mandarin League</div>
             <div className="mt-5 flex items-center gap-4">
@@ -93,6 +119,7 @@ function MemberDashboard() {
               <div className="min-w-0">
                 <p className="truncate text-xl font-bold">{m.full_name}</p>
                 <p className="font-mono text-sm text-gold">{m.member_code}</p>
+                <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[11px] font-semibold ${tier.className}`}>{tier.label}</span>
               </div>
             </div>
             <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
@@ -101,32 +128,71 @@ function MemberDashboard() {
               <div><dt className="text-xs opacity-70">Ngày gia nhập</dt><dd>{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
               <div><dt className="text-xs opacity-70">Điểm đóng góp</dt><dd className="text-lg font-bold text-gold">{m.contribution_points}</dd></div>
             </dl>
-            <img src={qr} alt={`QR ${m.member_code}`} className="absolute right-5 top-5 h-16 w-16 rounded bg-card p-1" />
+            {qr && <img src={qr} alt={`QR ${m.member_code}`} className="absolute right-5 top-5 h-16 w-16 rounded bg-card p-1" />}
+          </div>
+          <button onClick={downloadCard} className="portal-ink mt-3 inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><Download className="h-4 w-4" />Tải thẻ ảnh</button>
           </div>
 
           <div className="space-y-6">
-            <section className="rounded-2xl border border-border bg-card p-5">
+            <section className="portal-glass rounded-2xl p-5">
               <h2 className="font-semibold">Thông tin cá nhân</h2>
               <label className="mt-3 block text-xs text-muted-foreground">Họ và tên
                 <input className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
               <button onClick={saveName} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Lưu họ tên</button>
               <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground"><Lock className="h-3 w-3" />Mã thành viên, Ban, Chức vụ và Điểm do TML quản lý.</p>
-              {msg && <p className="mt-2 text-sm text-success">{msg}</p>}
-              {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
             </section>
-            <section className="rounded-2xl border border-border bg-card p-5">
+            <section className="portal-glass rounded-2xl p-5">
               <h2 className="mb-3 font-semibold">Đổi mật khẩu</h2>
               <NewPasswordForm requireCurrent onDone={() => setMsg("Đã đổi mật khẩu.")} />
             </section>
           </div>
         </div>
-      ) : (
-        <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-          <p className="text-3xl font-bold text-gold">{m.contribution_points}</p>
-          <p className="text-sm text-muted-foreground">điểm đóng góp</p>
-          <p className="mt-4 text-sm text-muted-foreground">Chưa có nhiệm vụ nào được giao. Mô-đun Nhiệm vụ sẽ được bổ sung ở giai đoạn sau.</p>
+      )}
+
+      {tab === "tasks" && (
+        <div className="mt-6 space-y-3">
+          {(tasks.data ?? []).length === 0 && <p className="portal-glass rounded-2xl p-8 text-center text-sm text-muted-foreground">Chưa có nhiệm vụ nào được giao.</p>}
+          {(tasks.data ?? []).map((t) => (
+            <article key={t.id} className="portal-glass rounded-2xl p-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h3 className="font-semibold">{t.title}</h3>
+                  <p className="text-xs text-muted-foreground">Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
+                </div>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS[t.status]?.className}`}>{TASK_STATUS[t.status]?.label}</span>
+              </div>
+              {t.description && <p className="mt-2 whitespace-pre-line text-sm">{t.description}</p>}
+              {t.review_note && <p className="mt-2 rounded-lg bg-secondary p-2 text-xs">Phản hồi: {t.review_note}</p>}
+              {t.evidence_url && <a href={t.evidence_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-primary underline">Minh chứng đã nộp <ExternalLink className="h-3 w-3" /></a>}
+              <div className="mt-3 flex gap-2">
+                {["assigned", "revision"].includes(t.status) && <button onClick={() => act(t.id, "start")} className="rounded-lg border border-border px-3 py-1.5 text-xs">Tiếp nhận</button>}
+                {["assigned", "in_progress", "revision"].includes(t.status) && <button onClick={() => act(t.id, "submit")} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Nộp báo cáo</button>}
+              </div>
+            </article>
+          ))}
         </div>
       )}
-    </div>
+
+      {tab === "points" && (
+        <div className="mt-6 space-y-4">
+          <div className="portal-glass flex items-center justify-between rounded-2xl p-5">
+            <div><p className="text-sm text-muted-foreground">Tổng điểm đóng góp</p><p className="text-3xl font-bold text-gold">{m.contribution_points}</p></div>
+            <span className={`rounded-full border px-3 py-1 text-sm font-semibold ${tier.className}`}>{tier.label}</span>
+          </div>
+          <ol className="portal-glass divide-y divide-border rounded-2xl">
+            {(history.data ?? []).length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">Chưa có lịch sử điểm.</li>}
+            {(history.data ?? []).map((h) => (
+              <li key={h.id} className="flex items-center gap-3 p-4 text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{h.reason}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("vi-VN")} · {POINT_KIND[h.kind] ?? h.kind} · Số dư {h.balance_after}</p>
+                </div>
+                <span className={`font-bold ${h.delta >= 0 ? "text-success" : "text-destructive"}`}>{h.delta > 0 ? `+${h.delta}` : h.delta}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div></div>
   );
 }
