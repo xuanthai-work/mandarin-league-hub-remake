@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHero } from "@/components/site/SiteLayout";
 import { PersonSlot } from "@/components/site/ui";
 import { getDepartments } from "@/lib/data/departments";
@@ -9,8 +11,13 @@ export const Route = createFileRoute("/organization")({
   component: POrganization,
 });
 
+type OrgRow = { dept: string; role_title: string | null; display_name: string | null; member_count: number };
+
 function POrganization() {
   const deps = getDepartments();
+  const { data: org } = useQuery({ queryKey: ["public-org"], queryFn: async () => ((await supabase.rpc("public_org_chart")).data ?? []) as OrgRow[] });
+  const pick = (dept: string, role: string) => org?.find((r) => r.dept === dept && r.role_title === role)?.display_name ?? undefined;
+  const count = (dept: string) => org?.find((r) => r.dept === dept)?.member_count ?? 0;
   return (
     <>
       <PageHero eyebrow="Cơ cấu tổ chức" title="Sơ đồ tổ chức TML" desc="The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn." />
@@ -35,9 +42,9 @@ function POrganization() {
                 </div>
               )}
               <div className="mt-5 space-y-3 border-t border-border pt-4">
-                <PersonSlot role="Trưởng ban" name={d.lead?.name} />
-                <PersonSlot role="Phó ban" name={d.deputy?.name} />
-                <div className="text-xs text-muted-foreground">Thành viên: {d.members.length ? d.members.length : "Đang cập nhật"}</div>
+                <PersonSlot role="Trưởng ban" name={pick(d.id, "Trưởng Ban")} />
+                <PersonSlot role="Phó ban" name={pick(d.id, "Phó Ban")} />
+                <div className="text-xs text-muted-foreground">Thành viên: {count(d.id) ? count(d.id) : "Đang cập nhật"}</div>
               </div>
             </article>
           ))}
