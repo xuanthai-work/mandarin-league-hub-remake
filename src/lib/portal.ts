@@ -10,7 +10,7 @@ export async function routeAfterLogin(): Promise<"/admin" | "/member/dashboard" 
   if (me.account && me.account.account_status !== "active") return "blocked";
   if (!me.account && !isAdmin) return "none";
   if (me.account?.must_change_password) return "/change-password";
-  if (isAdmin || me.roles.includes("department_head")) return "/admin";
+  if (isAdmin || me.roles.includes("department_head") || me.roles.includes("deputy_head")) return "/admin";
   return "/member/dashboard";
 }
 

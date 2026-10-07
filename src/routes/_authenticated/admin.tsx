@@ -51,7 +51,7 @@ function AdminLayout() {
     const d = access.data;
     if (!d) return;
     if (d.mustChange) navigate({ to: "/change-password", replace: true });
-    else if (d.hasAccount && !d.roles.includes("admin") && !d.roles.includes("department_head")) navigate({ to: "/member/dashboard", replace: true });
+    else if (d.hasAccount && !d.roles.includes("admin") && !d.roles.includes("department_head") && !d.roles.includes("deputy_head")) navigate({ to: "/member/dashboard", replace: true });
   }, [access.data, navigate]);
 
   if (access.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
@@ -59,7 +59,7 @@ function AdminLayout() {
   const roles = access.data?.roles ?? [];
   const isAdmin = roles.includes("admin");
   const sections = isAdmin ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => ["members", "tasks", "contributions"].includes(s.slug));
-  if (!isAdmin && !roles.includes("department_head")) {
+  if (!isAdmin && !roles.includes("department_head") && !roles.includes("deputy_head")) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />

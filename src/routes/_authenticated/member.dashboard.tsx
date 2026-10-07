@@ -37,7 +37,7 @@ function MemberDashboard() {
   const me = useQuery({ queryKey: ["my-account"], queryFn: async () => (await supabase.rpc("my_account")).data as unknown as Me });
   const avatar = useQuery({ queryKey: ["my-avatar", me.data?.member?.avatar_path], enabled: !!me.data?.member?.avatar_path,
     queryFn: async () => (await supabase.storage.from("avatars").createSignedUrl(me.data!.member!.avatar_path!, 3600)).data?.signedUrl ?? null });
-  const canAdmin = !!me.data?.roles?.some((r) => r === "admin" || r === "department_head");
+  const canAdmin = !!me.data?.roles?.some((r) => r === "admin" || r === "department_head" || r === "deputy_head");
   const [tab, setTab] = useState<"card" | "tasks" | "points" | "dept">("card");
   const [qr, setQr] = useState("");
   const cardRef = useRef<HTMLDivElement>(null);

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const access = z.enum(["admin", "department_head", "member"]);
+const access = z.enum(["admin", "department_head", "deputy_head", "member"]);
 const status = z.enum(["inactive", "active", "suspended", "disabled"]);
 const perms = z.array(z.string().max(40)).max(30);
 

@@ -2,10 +2,11 @@ import { RECRUIT_DEPTS, positionsFor } from "@/lib/recruitment";
 
 export { RECRUIT_DEPTS as ACCOUNT_DEPTS, positionsFor };
 
-export type AccessLevel = "admin" | "department_head" | "member";
+export type AccessLevel = "admin" | "department_head" | "deputy_head" | "member";
 export const ACCESS_LABELS: Record<AccessLevel, string> = {
   admin: "Quản trị viên",
   department_head: "Trưởng Ban (quản lý trong Ban)",
+  deputy_head: "Phó Ban (quản lý công việc trong Ban)",
   member: "Thành viên",
 };
 
@@ -38,5 +39,6 @@ export type Permission = (typeof PERMISSIONS)[number][0];
 export const PERMISSION_TEMPLATES: Record<AccessLevel, Permission[]> = {
   admin: PERMISSIONS.map((p) => p[0]),
   department_head: ["members.view", "tasks.create", "tasks.assign", "tasks.confirm", "points.view"],
+  deputy_head: ["members.view", "tasks.create", "tasks.assign", "tasks.confirm", "points.view"],
   member: ["points.view"],
 };
