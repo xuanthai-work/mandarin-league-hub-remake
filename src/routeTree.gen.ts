@@ -49,6 +49,7 @@ import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.cert
 import { Route as VerifyCertificateCodeRouteImport } from './routes/verify.certificate.$code'
 import { Route as VerifyHskIndexRouteImport } from './routes/verify.hsk.index'
 import { Route as VerifyHskCodeRouteImport } from './routes/verify.hsk.$code'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -260,6 +261,12 @@ const VerifyHskCodeRoute = VerifyHskCodeRouteImport.update({
   path: '/verify/hsk/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -339,6 +347,7 @@ export interface FileRoutesByTo {
   '/courses/hsk': typeof CoursesHskIndexRoute
   '/verify/certificate': typeof VerifyCertificateIndexRoute
   '/verify/hsk': typeof VerifyHskIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -382,6 +391,7 @@ export interface FileRoutesById {
   '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -425,6 +435,7 @@ export interface FileRouteTypes {
     | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -463,6 +474,7 @@ export interface FileRouteTypes {
     | '/courses/hsk'
     | '/verify/certificate'
     | '/verify/hsk'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -505,6 +517,7 @@ export interface FileRouteTypes {
     | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -530,6 +543,7 @@ export interface RootRouteChildren {
   VerifyHskCodeRoute: typeof VerifyHskCodeRoute
   VerifyCertificateIndexRoute: typeof VerifyCertificateIndexRoute
   VerifyHskIndexRoute: typeof VerifyHskIndexRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -814,6 +828,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyHskCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -914,6 +935,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyHskCodeRoute: VerifyHskCodeRoute,
   VerifyCertificateIndexRoute: VerifyCertificateIndexRoute,
   VerifyHskIndexRoute: VerifyHskIndexRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
