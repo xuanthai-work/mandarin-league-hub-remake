@@ -7,6 +7,8 @@ import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { deptName } from "@/lib/recruitment";
+import { SubmitReportDialog } from "@/components/portal/SubmitReportDialog";
+import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import { POINT_KIND, PRIORITY, TASK_STATUS, fmtDate, tierOf } from "@/lib/points";
 
@@ -43,6 +45,7 @@ function MemberDashboard() {
   const history = useQuery({ queryKey: ["my-points", memberId], enabled: !!memberId, queryFn: async () =>
     (await supabase.from("point_transactions").select("*").eq("member_id", memberId!).order("created_at", { ascending: false })).data ?? [] });
   useEffect(() => { const c = me.data?.member?.member_code; if (c) QRCode.toDataURL(c, { margin: 0, width: 160 }).then(setQr); }, [me.data?.member?.member_code]);
+  const [reporting, setReporting] = useState<{ id: string; title: string } | null>(null);
   const [name, setName] = useState("");
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
 
@@ -164,7 +167,7 @@ function MemberDashboard() {
               {t.evidence_url && <TaskEvidence value={t.evidence_url} note={t.report_note} />}
               <div className="mt-3 flex gap-2">
                 {["assigned", "revision"].includes(t.status) && <button onClick={() => act(t.id, "start")} className="rounded-lg border border-border px-3 py-1.5 text-xs">Tiếp nhận</button>}
-                {["assigned", "in_progress", "revision"].includes(t.status) && <button onClick={() => act(t.id, "submit")} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Nộp báo cáo</button>}
+                {["assigned", "in_progress", "revision"].includes(t.status) && <button onClick={() => setReporting({ id: t.id, title: t.title })} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Nộp báo cáo</button>}
               </div>
             </article>
           ))}
@@ -191,6 +194,7 @@ function MemberDashboard() {
           </ol>
         </div>
       )}
+      {reporting && <SubmitReportDialog title={reporting.title} onClose={() => setReporting(null)} onSubmit={(ev, n) => act(reporting.id, "submit", ev, n)} />}
     </div></div>
   );
 }
