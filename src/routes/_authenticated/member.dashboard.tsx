@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, Download, ExternalLink, Lock, LogOut, ShieldCheck } from "lucide-react";
 import { MyDepartment } from "@/components/portal/MyDepartment";
 import QRCode from "qrcode";
+import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
@@ -40,6 +41,9 @@ function MemberDashboard() {
   const canAdmin = !!me.data?.roles?.some((r) => r === "admin" || r === "department_head" || r === "deputy_head");
   const [tab, setTab] = useState<"card" | "tasks" | "points" | "dept">("card");
   const [qr, setQr] = useState("");
+  const [barcode, setBarcode] = useState("");
+  useEffect(() => { const c = me.data?.member?.member_code; if (!c) return;
+    const cv = document.createElement("canvas"); JsBarcode(cv, c, { format: "CODE128", displayValue: false, margin: 0, height: 40, width: 1.4 }); setBarcode(cv.toDataURL("image/png")); }, [me.data?.member?.member_code]);
   const cardRef = useRef<HTMLDivElement>(null);
   const memberId = me.data?.member?.id;
   const tasks = useQuery({ queryKey: ["my-tasks", memberId], enabled: !!memberId, queryFn: async () =>
@@ -153,7 +157,6 @@ function MemberDashboard() {
           <div className="portal-glass mt-3 rounded-2xl px-5 py-4">
             <p className="text-xs portal-ink-muted">Điểm cống hiến · Credits</p>
             <p className="text-3xl font-bold text-gold">{m.contribution_points.toLocaleString("vi-VN")} <span className="text-base font-medium portal-ink-muted">điểm</span></p>
-          </div>
           </div>
           <button onClick={downloadCard} className="portal-ink mt-3 inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><Download className="h-4 w-4" />Tải thẻ ảnh</button>
           </div>
