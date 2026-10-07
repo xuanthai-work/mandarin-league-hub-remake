@@ -5,6 +5,9 @@ import { useMemo, useState } from "react";
 import { Download, FileText, Loader2, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeApplication } from "@/lib/recruitment.functions";
+import { approveApplication } from "@/lib/accounts.functions";
+import { positionsFor } from "@/lib/recruitment";
+import { Link } from "@tanstack/react-router";
 import { APP_STATUS, RECRUIT_DEPTS, deptName, type Choice } from "@/lib/recruitment";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({ component: Candidates });
@@ -162,6 +165,8 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
       </div>
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
 
+      <Approve app={app} />
+
       <h3 className="mt-6 font-semibold">Lịch sử xử lý</h3>
       <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
         {(history ?? []).map((h) => <li key={h.id}>{new Date(h.created_at).toLocaleString("vi-VN")}: {h.old_status ? `${APP_STATUS[h.old_status]} → ` : ""}{APP_STATUS[h.new_status]}</li>)}
@@ -185,5 +190,40 @@ function FreeAnalyze({ onClose }: { onClose: () => void }) {
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
       {out && <div className="mt-4"><AiBox summary={out} /></div>}
     </Drawer>
+  );
+}
+
+function Approve({ app }: { app: App }) {
+  const qc = useQueryClient();
+  const approve = useServerFn(approveApplication);
+  const first = ((app.choices ?? []) as Choice[])[0];
+  const [dept, setDept] = useState(first?.department ?? "executive");
+  const [pos, setPos] = useState(first?.position ?? positionsFor(first?.department ?? "executive")[0]!);
+  const existing = useQuery({ queryKey: ["app-member", app.id], queryFn: async () => (await supabase.from("members").select("member_code").eq("application_id", app.id).maybeSingle()).data });
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  const code = existing.data?.member_code;
+  const run = async () => {
+    setBusy(true); setErr("");
+    try { await approve({ data: { applicationId: app.id, department: dept, position: pos } }); qc.invalidateQueries({ queryKey: ["app-member", app.id] }); qc.invalidateQueries({ queryKey: ["admin-candidates"] }); }
+    catch (e) { setErr((e as Error).message); }
+    setBusy(false);
+  };
+  return (
+    <div className="mt-6 rounded-xl border border-gold/50 bg-gold-soft/20 p-4">
+      <h3 className="font-semibold">Chấp thuận kết nạp</h3>
+      {code ? (
+        <div className="mt-2 text-sm">Đã kết nạp — Mã thành viên: <span className="font-mono font-semibold text-primary">{code}</span>
+          <p className="mt-1 text-muted-foreground">Chưa tự động có tài khoản. Nếu cần, cấp tại <Link to="/admin/accounts" className="text-primary underline">Tài khoản nội bộ</Link>.</p></div>
+      ) : (
+        <div className="mt-2 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <select className={inp} value={dept} onChange={(e) => { setDept(e.target.value); setPos(positionsFor(e.target.value)[0]!); }}>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+            <select className={inp} value={pos} onChange={(e) => setPos(e.target.value)}>{positionsFor(dept).map((p) => <option key={p}>{p}</option>)}</select>
+          </div>
+          <button disabled={busy} onClick={run} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang xử lý…" : "Chấp thuận & cấp mã TML-MBR"}</button>
+          {err && <p className="text-sm text-destructive">{err}</p>}
+        </div>
+      )}
+    </div>
   );
 }
