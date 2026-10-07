@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Copy, MessageCircle, Phone, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ProgramsAdmin } from "@/components/courses/ProgramsAdmin";
 import { reviewEnrollment } from "@/lib/courses.functions";
 import { ENROLL_STATUS, formatFee, useCourseSettings, type CourseSetting } from "@/lib/course-settings";
 
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/admin/courses")({ staticDa
   component: CoursesAdmin,
 });
 
-type Enrollment = { id: string; code: string; level: number; full_name: string; email: string; phone: string; current_level: string; goal: string; message: string; status: string; admin_note: string; created_at: string };
+type Enrollment = { id: string; code: string; level: number; full_name: string; email: string; phone: string; current_level: string; goal: string; message: string; status: string; admin_note: string; created_at: string; course_id: string | null };
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const zaloOf = (p: string) => { const d = p.replace(/\D/g, ""); return `https://zalo.me/${d.startsWith("84") ? "0" + d.slice(2) : d}`; };
 
@@ -23,13 +24,14 @@ function CoursesAdmin() {
   const [lv, setLv] = useState(0);
   const [stF, setStF] = useState("pending");
   const [q, setQ] = useState("");
+  const [cid, setCid] = useState("");
   const [sel, setSel] = useState<Enrollment | null>(null);
   const { data: rows, isLoading } = useQuery({
     queryKey: ["admin-enrollments"],
     queryFn: async () => ((await supabase.from("course_enrollments").select("*").order("created_at", { ascending: false }).limit(1000)).data ?? []) as Enrollment[],
   });
-  const list = (rows ?? []).filter((r) => (!lv || r.level === lv) && (!stF || r.status === stF) && (!q || `${r.code} ${r.full_name} ${r.email} ${r.phone}`.toLowerCase().includes(q.toLowerCase())));
-  const count = (l: number, s: string) => (rows ?? []).filter((r) => r.level === l && r.status === s).length;
+  const list = (rows ?? []).filter((r) => (!cid || r.course_id === cid) && (!lv || r.level === lv) && (!stF || r.status === stF) && (!q || `${r.code} ${r.full_name} ${r.email} ${r.phone}`.toLowerCase().includes(q.toLowerCase())));
+  const count = (l: number, s: string) => (rows ?? []).filter((r) => !r.course_id && r.level === l && r.status === s).length;
 
   const saveSetting = async (s: CourseSetting, patch: Partial<CourseSetting>) => {
     const { error } = await supabase.from("course_settings").update({ ...patch, updated_at: new Date().toISOString() }).eq("level", s.level);
@@ -40,6 +42,8 @@ function CoursesAdmin() {
     <div className="space-y-8">
       <div><h1 className="text-2xl font-bold">Khóa học & Đơn đăng ký</h1><p className="text-sm text-muted-foreground">Mở/đóng đăng ký, đặt học phí và xét duyệt học viên HSK 1–6.</p></div>
 
+      <ProgramsAdmin enrollCounts={(rows ?? []).reduce((m, r) => (r.course_id ? m.set(r.course_id, (m.get(r.course_id) ?? 0) + 1) : m), new Map<string, number>())} onFilter={(id) => { setCid(id); setStF(""); setLv(0); }} />
+      <h2 className="text-lg font-bold">Lớp HSK 1–6</h2>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {(settings ?? []).map((s) => <SettingCard key={s.level} s={s} pending={count(s.level, "pending")} approved={count(s.level, "approved")} onSave={(p) => saveSetting(s, p)} />)}
       </section>
@@ -47,6 +51,7 @@ function CoursesAdmin() {
       <section className="rounded-2xl border border-border bg-card p-4">
         <div className="flex flex-wrap gap-2">
           <input placeholder="Tìm mã, tên, email, SĐT…" className={`${inp} max-w-xs`} value={q} onChange={(e) => setQ(e.target.value)} />
+          {cid && <button onClick={() => setCid("")} className="rounded-full bg-accent px-3 text-xs font-semibold text-primary">Đang lọc theo chương trình ✕</button>}
           <select className={`${inp} w-auto`} value={lv} onChange={(e) => setLv(Number(e.target.value))}><option value={0}>Mọi lớp</option>{[1, 2, 3, 4, 5, 6].map((l) => <option key={l} value={l}>HSK {l}</option>)}</select>
           <select className={`${inp} w-auto`} value={stF} onChange={(e) => setStF(e.target.value)}><option value="">Mọi trạng thái</option>{Object.entries(ENROLL_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select>
         </div>
@@ -60,7 +65,7 @@ function CoursesAdmin() {
                 <tr key={r.id} onClick={() => setSel(r)} className="cursor-pointer border-t border-border hover:bg-muted/50">
                   <td className="p-2 font-mono text-xs">{r.code}</td><td className="p-2 font-medium">{r.full_name}</td>
                   <td className="p-2 text-xs">{r.phone}<div className="text-muted-foreground">{r.email}</div></td>
-                  <td className="p-2">HSK {r.level}</td><td className="p-2 text-xs">{new Date(r.created_at).toLocaleString("vi-VN")}</td>
+                  <td className="p-2">{r.course_id ? "Chương trình" : `HSK ${r.level}`}</td><td className="p-2 text-xs">{new Date(r.created_at).toLocaleString("vi-VN")}</td>
                   <td className="p-2"><span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ENROLL_STATUS[r.status]?.tone}`}>{ENROLL_STATUS[r.status]?.label}</span></td>
                 </tr>
               ))}
