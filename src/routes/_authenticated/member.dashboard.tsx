@@ -81,7 +81,7 @@ function MemberDashboard() {
 
       {tab === "card" ? (
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
-          <div className="relative overflow-hidden rounded-2xl border-2 border-gold bg-gradient-brand p-6 text-primary-foreground shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl border-2 border-gold bg-brand-gradient p-6 text-primary-foreground shadow-lg">
             <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute -right-10 -bottom-10 h-56 w-56 opacity-10" />
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold"><img src={logo.url} alt="TML" className="h-6 w-6" />The Mandarin League</div>
             <div className="mt-5 flex items-center gap-4">
