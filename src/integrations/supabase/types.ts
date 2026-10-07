@@ -265,6 +265,57 @@ export type Database = {
           },
         ]
       }
+      point_transactions: {
+        Row: {
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          delta: number
+          id: string
+          kind: string
+          member_id: string
+          reason: string
+          task_id: string | null
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          created_by?: string | null
+          delta: number
+          id?: string
+          kind?: string
+          member_id: string
+          reason: string
+          task_id?: string | null
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          delta?: number
+          id?: string
+          kind?: string
+          member_id?: string
+          reason?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_transactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "point_transactions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruitment_periods: {
         Row: {
           created_at: string
@@ -412,6 +463,74 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          assignee_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          department: string
+          description: string
+          due_on: string | null
+          evidence_url: string
+          id: string
+          points: number
+          priority: string
+          report_note: string
+          review_note: string
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          title: string
+        }
+        Insert: {
+          assignee_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          department: string
+          description?: string
+          due_on?: string | null
+          evidence_url?: string
+          id?: string
+          points?: number
+          priority?: string
+          report_note?: string
+          review_note?: string
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          title: string
+        }
+        Update: {
+          assignee_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          description?: string
+          due_on?: string | null
+          evidence_url?: string
+          id?: string
+          points?: number
+          priority?: string
+          report_note?: string
+          review_note?: string
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -435,7 +554,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _apply_points: {
+        Args: {
+          _delta: number
+          _kind: string
+          _member: string
+          _reason: string
+          _task: string
+        }
+        Returns: undefined
+      }
+      adjust_points: {
+        Args: {
+          _delta: number
+          _kind: string
+          _member: string
+          _reason: string
+        }
+        Returns: undefined
+      }
+      can_manage_department: { Args: { _dept: string }; Returns: boolean }
       claim_invited_role: { Args: never; Returns: undefined }
+      create_task: {
+        Args: {
+          _assignee: string
+          _description: string
+          _due_on: string
+          _points: number
+          _priority: string
+          _title: string
+        }
+        Returns: string
+      }
+      delete_task: { Args: { _task: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -444,11 +595,25 @@ export type Database = {
         Returns: boolean
       }
       mark_password_changed: { Args: never; Returns: undefined }
+      member_update_task: {
+        Args: {
+          _action: string
+          _evidence: string
+          _note: string
+          _task: string
+        }
+        Returns: undefined
+      }
       my_account: { Args: never; Returns: Json }
       my_head_department: { Args: never; Returns: string }
+      my_member_id: { Args: never; Returns: string }
       record_login: { Args: never; Returns: undefined }
       reorder_activity_photos: {
         Args: { photo_ids: string[] }
+        Returns: undefined
+      }
+      review_task: {
+        Args: { _approve: boolean; _note: string; _task: string }
         Returns: undefined
       }
       update_my_profile: {

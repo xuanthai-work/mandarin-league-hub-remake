@@ -36,6 +36,13 @@
       "when": 1791343916963,
       "tag": "0004_internal_accounts_members",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791347158892,
+      "tag": "0005_phase3_tasks_points_member_code",
+      "breakpoints": true
     }
   ]
 }
