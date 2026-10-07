@@ -7,7 +7,7 @@ import { submitEnrollment } from "@/lib/courses.functions";
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const GOALS = ["Ôn thi chứng chỉ HSK", "Giao tiếp / công việc", "Chuẩn bị du học", "Yêu thích ngôn ngữ & văn hóa"];
 
-export function EnrollmentDialog({ level, fee, onClose, courseId, title }: { level: number; fee: string; onClose: () => void; courseId?: string; title?: string }) {
+export function EnrollmentDialog({ level, fee, onClose, courseId, classId, title }: { level: number; fee: string; onClose: () => void; courseId?: string; classId?: string; title?: string }) {
   const submit = useServerFn(submitEnrollment);
   const [f, setF] = useState({ full_name: "", email: "", phone: "", current_level: "", goal: GOALS[0], message: "" });
   const [busy, setBusy] = useState(false);
@@ -18,7 +18,7 @@ export function EnrollmentDialog({ level, fee, onClose, courseId, title }: { lev
     e.preventDefault();
     setBusy(true);
     try {
-      const r = await submit({ data: { ...f, level, course_id: courseId } });
+      const r = await submit({ data: { ...f, level, course_id: courseId, hsk_class_id: classId } });
       if (r.ok) setDone({ code: r.code, submittedAt: r.submittedAt }); else toast.error(r.error);
     } catch { toast.error("Không gửi được đơn, vui lòng thử lại."); }
     setBusy(false);

@@ -24,3 +24,5 @@
 - Teachers are a separate admin-managed table linked to HSK courses by teaching level, so courses can stay static until they move to Lovable Cloud.
 - Course registrations live in course_enrollments (code TML-ENR-YYMM-NNNN via sequence default) with per-level open/fee/capacity in course_settings; public submits only through a server function and review goes through an authenticated server function that emails the approval, so applicants never touch the table directly.
 - Program catalog lives in the `courses` table (soft delete via deleted_at, public reads only published rows, thumbnails in private `course-thumbnails` bucket readable when published); enrollments link via course_enrollments.course_id while HSK 1–6 level enrollments keep course_id null, so old HSK flows keep working.
+- Concrete HSK classes live in `hsk_classes` under fixed levels 1–6 (no levels table); enrollments link via course_enrollments.hsk_class_id and the server re-checks status and seats, so a class can be created without touching code.
+- Programs (`courses` table) carry show_in_courses / show_in_activities flags so one record feeds both /courses and /activities without duplicates.

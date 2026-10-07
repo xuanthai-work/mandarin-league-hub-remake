@@ -6,6 +6,8 @@ import { Chips, DemoBadge, EmptyState, StatusBadge } from "@/components/site/ui"
 import { ACTIVITY_TYPES, getActivities } from "@/lib/data/activities";
 import type { ActivityType } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
+import { usePublishedPrograms } from "@/lib/programs";
+import { ProgramCard } from "@/components/courses/ProgramCard";
 
 export const Route = createFileRoute("/activities/")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Hoạt động", "Workshop, cuộc thi, webinar, giao lưu Việt – Trung và dự án cộng đồng của TML.") }),
@@ -14,6 +16,8 @@ export const Route = createFileRoute("/activities/")({ staticData: { sitemap: tr
 
 function PActivities() {
   const [type, setType] = useState<ActivityType | "all">("all");
+  const { data: programs } = usePublishedPrograms();
+  const progs = (programs ?? []).filter((p) => p.show_in_activities);
   const list = getActivities().filter((a) => type === "all" || a.type === type);
   return (
     <>
@@ -33,6 +37,11 @@ function PActivities() {
             </Link>
           ))}
         </div>
+        {progs.length > 0 && <div className="mt-14">
+          <h2 className="text-2xl font-bold text-primary-deep">CHƯƠNG TRÌNH HỌC</h2>
+          <p className="text-sm text-muted-foreground">Chương trình giáo dục của TML — cùng thông tin với trang Khóa học.</p>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{progs.map((p) => <ProgramCard key={p.id} p={p} />)}</div>
+        </div>}
       </section>
     </>
   );
