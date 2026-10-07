@@ -71,6 +71,13 @@
       "when": 1791360691553,
       "tag": "0009_teacher_photos_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791363016964,
+      "tag": "0010_migration",
+      "breakpoints": true
     }
   ]
 }
