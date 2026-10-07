@@ -29,6 +29,13 @@
       "when": 1791341554659,
       "tag": "0003_recruitment_system",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791343916963,
+      "tag": "0004_internal_accounts_members",
+      "breakpoints": true
     }
   ]
 }
