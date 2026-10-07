@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Download, ExternalLink, Lock, LogOut } from "lucide-react";
+import { Camera, Download, ExternalLink, Lock, LogOut, ShieldCheck } from "lucide-react";
+import { MyDepartment } from "@/components/portal/MyDepartment";
 import QRCode from "qrcode";
 import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/member/dashboard")({ stati
 });
 
 type Member = { id: string; member_code: string; full_name: string; department: string; position: string; joined_on: string; contribution_points: number; avatar_path: string | null; status: string };
-type Me = { email: string; account: { account_status: string; must_change_password: boolean } | null; member: Member | null };
+type Me = { email: string; roles?: string[]; account: { account_status: string; must_change_password: boolean } | null; member: Member | null };
 
 function MemberDashboard() {
   const qc = useQueryClient();
@@ -36,7 +37,8 @@ function MemberDashboard() {
   const me = useQuery({ queryKey: ["my-account"], queryFn: async () => (await supabase.rpc("my_account")).data as unknown as Me });
   const avatar = useQuery({ queryKey: ["my-avatar", me.data?.member?.avatar_path], enabled: !!me.data?.member?.avatar_path,
     queryFn: async () => (await supabase.storage.from("avatars").createSignedUrl(me.data!.member!.avatar_path!, 3600)).data?.signedUrl ?? null });
-  const [tab, setTab] = useState<"card" | "tasks" | "points">("card");
+  const canAdmin = !!me.data?.roles?.some((r) => r === "admin" || r === "department_head");
+  const [tab, setTab] = useState<"card" | "tasks" | "points" | "dept">("card");
   const [qr, setQr] = useState("");
   const cardRef = useRef<HTMLDivElement>(null);
   const memberId = me.data?.member?.id;
@@ -93,12 +95,15 @@ function MemberDashboard() {
   };
   return (
     <div className="portal-ai min-h-screen"><div className="mx-auto max-w-4xl px-4 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="portal-ink text-2xl font-bold">Cổng thành viên</h1>
-        <button onClick={signOut} className="portal-ink inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><LogOut className="h-4 w-4" />Đăng xuất</button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="portal-ink flex items-center gap-2 text-2xl font-bold"><img src={logo.url} alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />Cổng thành viên</h1>
+        <div className="flex gap-2">
+          {canAdmin && <Link to="/admin" className="inline-flex items-center gap-1 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-deep"><ShieldCheck className="h-4 w-4" />Vào Bàn Quản trị</Link>}
+          <button onClick={signOut} className="portal-ink inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><LogOut className="h-4 w-4" />Đăng xuất</button>
+        </div>
       </div>
       <div className="mt-4 flex gap-2 overflow-x-auto border-b border-primary/30">
-        {([["card", "Thẻ & Hồ sơ"], ["tasks", "Nhiệm vụ"], ["points", "Lịch sử điểm"]] as const).map(([k, l]) => (
+        {([["card", "Thẻ & Hồ sơ"], ["tasks", "Nhiệm vụ"], ["points", "Lịch sử điểm"], ["dept", "Ban của tôi"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-medium ${tab === k ? "border-gold text-gold" : "border-transparent portal-ink-muted"}`}>{l}</button>
         ))}
       </div>
@@ -108,28 +113,48 @@ function MemberDashboard() {
       {tab === "card" && (
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
           <div>
-          <div ref={cardRef} className="relative overflow-hidden rounded-2xl border-2 border-gold bg-brand-gradient p-6 text-primary-foreground shadow-lg">
-            <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute -right-10 -bottom-10 h-56 w-56 opacity-10" />
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold"><img src={logo.url} alt="TML" className="h-6 w-6" />The Mandarin League</div>
-            <div className="mt-5 flex items-center gap-4">
-              <label className="group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full border-2 border-gold bg-primary-deep">
-                {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-2xl font-bold">{m.full_name.charAt(0)}</span>}
-                <span className="absolute inset-0 flex items-center justify-center bg-foreground/50 opacity-0 transition group-hover:opacity-100"><Camera className="h-5 w-5" /></span>
-                <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
-              </label>
-              <div className="min-w-0">
-                <p className="truncate text-xl font-bold">{m.full_name}</p>
-                <p className="font-mono text-sm text-gold">{m.member_code}</p>
-                <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[11px] font-semibold ${tier.className}`}>{tier.label}</span>
+          <div className="[perspective:1200px]">
+          <div ref={cardRef} className="id-card relative overflow-hidden rounded-[18px] p-[3px] text-primary-foreground">
+            <div className="id-card-inner relative overflow-hidden rounded-[15px] p-5">
+              <div aria-hidden className="id-guilloche pointer-events-none absolute inset-0" />
+              <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute -right-12 -bottom-12 h-56 w-56 rounded-full opacity-[0.07]" />
+              <div className="relative flex items-center gap-3 border-b border-gold/40 pb-3">
+                <img src={logo.url} alt="TML" className="h-11 w-11 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
+                <div className="min-w-0 leading-tight">
+                  <p className="text-[13px] font-bold tracking-wide">THE MANDARIN LEAGUE</p>
+                  <p className="text-[10px] text-gold">LIÊN ĐOÀN HÁN NGỮ · 普通话联盟</p>
+                </div>
+                <div aria-hidden className="id-chip ml-auto h-8 w-11 shrink-0 rounded-md" />
+              </div>
+              <p className="relative mt-2 text-[9px] font-semibold uppercase tracking-[0.3em] text-gold/90">Member Identification Card · 会员证</p>
+              <div className="relative mt-3 flex gap-4">
+                <label className="group relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full border-[3px] border-gold bg-primary-deep ring-2 ring-gold/30 ring-offset-2 ring-offset-primary-deep">
+                  {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-3xl font-bold">{m.full_name.charAt(0)}</span>}
+                  <span className="absolute inset-0 flex items-center justify-center bg-foreground/50 opacity-0 transition group-hover:opacity-100"><Camera className="h-5 w-5" /></span>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
+                </label>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] uppercase tracking-wider opacity-70">Họ và tên / Name</p>
+                  <p className="truncate text-lg font-bold uppercase">{m.full_name}</p>
+                  <p className="font-mono text-sm tracking-wider text-gold">{m.member_code}</p>
+                  <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tier.className}`}>{tier.label}</span>
+                </div>
+              </div>
+              <div className="relative mt-4 flex items-end gap-3">
+                <dl className="grid flex-1 grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                  <div><dt className="text-[9px] uppercase opacity-70">Ban / Department</dt><dd className="font-semibold">{deptName(m.department)}</dd></div>
+                  <div><dt className="text-[9px] uppercase opacity-70">Chức vụ / Position</dt><dd className="font-semibold">{m.position}</dd></div>
+                  <div><dt className="text-[9px] uppercase opacity-70">Ngày cấp / Issued</dt><dd>{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
+                  <div><dt className="text-[9px] uppercase opacity-70">Điểm / Credits</dt><dd className="font-bold text-gold">{m.contribution_points}</dd></div>
+                </dl>
+                {qr && <img src={qr} alt={`QR ${m.member_code}`} className="h-[72px] w-[72px] shrink-0 rounded-md border border-gold bg-card p-1" />}
+              </div>
+              <div className="relative mt-4 flex items-center justify-between gap-3">
+                <div aria-hidden className="id-barcode h-7 flex-1 rounded-sm" />
+                <span className="rotate-[-8deg] rounded-full border-2 border-gold/60 px-2 py-0.5 text-[9px] font-bold tracking-widest text-gold/80">TML VERIFIED</span>
               </div>
             </div>
-            <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              <div><dt className="text-xs opacity-70">Ban</dt><dd className="font-medium">{deptName(m.department)}</dd></div>
-              <div><dt className="text-xs opacity-70">Chức vụ</dt><dd className="font-medium">{m.position}</dd></div>
-              <div><dt className="text-xs opacity-70">Ngày gia nhập</dt><dd>{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
-              <div><dt className="text-xs opacity-70">Điểm đóng góp</dt><dd className="text-lg font-bold text-gold">{m.contribution_points}</dd></div>
-            </dl>
-            {qr && <img src={qr} alt={`QR ${m.member_code}`} className="absolute right-5 top-5 h-16 w-16 rounded bg-card p-1" />}
+          </div>
           </div>
           <button onClick={downloadCard} className="portal-ink mt-3 inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><Download className="h-4 w-4" />Tải thẻ ảnh</button>
           </div>
