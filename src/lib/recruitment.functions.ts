@@ -93,10 +93,14 @@ export const submitApplication = createServerFn({ method: "POST" })
       await sendTemplateEmail("application-confirmation", data.email.toLowerCase(), {
         templateData: {
           fullName: data.full_name,
+          email: data.email.toLowerCase(),
           code: row.code,
-          periodName: period.name,
-          choices: choices.map((c) => `${deptName(c.department)} — ${c.position}`),
-          phone: data.phone,
+          positions: choices.map((c) => c.position),
+          departments: [...new Set(choices.map((c) => deptName(c.department)))],
+          message: data.intro,
+          submittedAt: new Intl.DateTimeFormat("vi-VN", {
+            timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric",
+          }).format(new Date()),
         },
         idempotencyKey: `application-confirm-${row.code}`,
         replyTo: "community@themandarinleague.bond",
