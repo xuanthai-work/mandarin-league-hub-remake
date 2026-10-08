@@ -11,6 +11,7 @@ import {
 
 import { useAdminAccess } from "./admin";
 import { canReviewNews } from "@/lib/admin-permissions";
+import { TrashList, useConfirm } from "@/components/admin/Trash";
 export const Route = createFileRoute("/_authenticated/admin/activities")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Hoạt động | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: ActivitiesAdmin,
@@ -32,7 +33,8 @@ function useCanPublish() {
 }
 
 function ActivitiesAdmin() {
-  const [tab, setTab] = useState<"list" | "regs" | "audit">("list");
+  const [tab, setTab] = useState<"list" | "regs" | "audit" | "trash">("list");
+  const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const canPublish = useCanPublish();
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -41,13 +43,14 @@ function ActivitiesAdmin() {
         <p className="text-sm text-muted-foreground">Quản lý workshop, cuộc thi, trại, sự kiện. Chương trình học bật "Hiện ở Hoạt động" tự xuất hiện trên trang công khai.</p>
       </div>
       <div className="flex gap-2">
-        {([["list", "Danh sách hoạt động"], ["regs", "Đơn đăng ký"], ["audit", "Nhật ký thay đổi"]] as const).filter(([k]) => canPublish || k === "list").map(([k, l]) => (
+        {([["list", "Danh sách hoạt động"], ["regs", "Đơn đăng ký"], ["audit", "Nhật ký thay đổi"], ["trash", "Thùng rác"]] as const).filter(([k]) => canPublish || k === "list").map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>
         ))}
       </div>
       {tab === "list" && <ListTab />}
       {tab === "regs" && <RegsTab />}
       {tab === "audit" && <AuditTab />}
+      {tab === "trash" && <TrashList table="activities" canHardDelete={isAdmin} invalidate={["admin-activities", "public-activities"]} />}
     </div>
   );
 }
@@ -101,8 +104,9 @@ function ListTab() {
     const { id: _i, created_at: _c, deleted_at: _d, banner: _b, ...rest } = a;
     setF({ ...rest, title: `${a.title} (bản sao)`, slug: `${a.slug}-copy-${Date.now().toString(36)}`, manual_status: "draft" });
   };
+  const { confirm, dialog } = useConfirm();
   const remove = async (a: ActivityRow) => {
-    if (!window.confirm(`Xóa hoạt động "${a.title}"? Dữ liệu đăng ký vẫn được lưu.`)) return;
+    if (!(await confirm({ title: "Chuyển hoạt động vào Thùng rác?", description: `"${a.title}" sẽ bị ẩn khỏi website. Toàn bộ đơn đăng ký vẫn được bảo lưu và có thể khôi phục lại.`, confirmLabel: "Chuyển vào Thùng rác", destructive: true }))) return;
     patch(a, { deleted_at: new Date().toISOString() } as Partial<Omit<ActivityRow, "banner">>);
   };
 
@@ -152,6 +156,7 @@ function ListTab() {
 
   return (
     <div className="space-y-3">
+      {dialog}
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo hoạt động</button>
         <input className="rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Tìm theo tên…" value={q} onChange={(e) => setQ(e.target.value)} />
