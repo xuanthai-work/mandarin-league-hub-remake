@@ -11,7 +11,7 @@ import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/join")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Tuyển thành viên", "Ứng tuyển vào một trong 8 Ban của The Mandarin League.") }),
-  validateSearch: (s: Record<string, unknown>): { ban?: string } => (typeof s.ban === "string" && /^[a-z_-]{2,30}$/.test(s.ban) ? { ban: s.ban } : {}),
+  validateSearch: (s: Record<string, unknown>): { ban?: string } => (typeof s["ban"] === "string" && /^[a-z_-]{2,30}$/.test(s["ban"]) ? { ban: s["ban"] } : {}),
   component: PJoin,
 });
 
