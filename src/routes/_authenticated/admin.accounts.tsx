@@ -118,7 +118,7 @@ function CreateDrawer({ onClose, presetMemberId }: { onClose: () => void; preset
   const [v, setV] = useState({ memberId: presetMemberId ?? "", full_name: "", phone: "", email: "", password: randomPassword(), department: "executive", position: "Co-founder", access: "member" as AccessLevel, permissions: PERMISSION_TEMPLATES.member as string[], status: "active" as AccountStatus, mustChange: true });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [done, setDone] = useState(false);
   const set = (p: Partial<typeof v>) => setV((s) => ({ ...s, ...p }));
-  const pick = (id: string) => { const m = members?.find((x) => x.id === id); set({ memberId: id, ...(m ? { email: m.email, department: m.department, position: m.position } : {}) }); };
+  const pick = (id: string) => { const m = members?.find((x) => x.id === id); set({ memberId: id, ...(m ? { email: m.email || v.email, department: m.department, position: m.position } : {}) }); };
 
   const submit = async () => {
     setBusy(true); setErr("");
