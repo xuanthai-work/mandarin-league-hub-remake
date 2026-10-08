@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/admin/tasks")({ staticData
   component: TasksPage,
 });
 
-type Task = { id: string; title: string; description: string; department: string; assignee_id: string; priority: string; due_on: string | null; points: number; status: string; evidence_url: string; report_note: string; review_note: string };
+type Task = { id: string; title: string; description: string; department: string; assignee_id: string; priority: string; due_on: string | null; points: number; status: string; evidence_url: string; report_note: string; review_note: string; assigned_by_name: string; assigned_by_note: string };
 
 function TasksPage() {
   const qc = useQueryClient();
@@ -20,9 +20,16 @@ function TasksPage() {
     (await supabase.from("members").select("id, full_name, member_code, department").eq("status", "active").order("full_name")).data ?? [] });
   const tasks = useQuery({ queryKey: ["admin-tasks"], queryFn: async () =>
     ((await supabase.from("tasks").select("*").order("created_at", { ascending: false })).data ?? []) as Task[] });
+  const me = useQuery({ queryKey: ["me-label"], queryFn: async () => {
+    const { data } = await supabase.rpc("my_account");
+    const m = (data as { member?: { full_name?: string; position?: string } } | null)?.member;
+    return m?.full_name ? `${m.full_name}${m.position ? ` · ${m.position}` : ""}` : "";
+  } });
   const nameOf = (id: string) => members.data?.find((m) => m.id === id)?.full_name ?? "—";
 
   const [f, setF] = useState({ title: "", description: "", priority: "medium", due: "", points: 10 });
+  const [note, setNote] = useState("");
+  const [giver, setGiver] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [dept, setDept] = useState(""); const [q, setQ] = useState("");
   const [person, setPerson] = useState("");
@@ -30,6 +37,7 @@ function TasksPage() {
   const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-tasks"] });
   const depts = [...new Set((members.data ?? []).map((m) => m.department))];
+  const givers = [...new Set((tasks.data ?? []).map((t) => t.assigned_by_name).filter(Boolean))];
   const term = q.trim().toLowerCase();
   const pool = (members.data ?? []).filter((m) => (!dept || m.department === dept) && (!term || m.full_name.toLowerCase().includes(term) || m.member_code.toLowerCase().includes(term)));
   const toggle = (id: string) => setPicked((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
@@ -41,7 +49,7 @@ function TasksPage() {
     const group = picked.length > 1 ? `\n\n[Nhiệm vụ nhóm cùng: ${picked.map(nameOf).join(", ")}]` : "";
     const fails: string[] = [];
     for (const id of picked) {
-      const { error } = await supabase.rpc("create_task", { _title: f.title, _description: (f.description + group).slice(0, 3000), _assignee: id, _priority: f.priority, _due_on: (f.due || null) as string, _points: f.points });
+      const { error } = await supabase.rpc("create_task_v2", { _title: f.title, _description: (f.description + group).slice(0, 3000), _assignee: id, _priority: f.priority, _due_on: (f.due || null) as string, _points: f.points, _assigned_note: note });
       if (error) fails.push(`${nameOf(id)}: ${error.message}`);
     }
     setBusy(false); refresh();
@@ -62,7 +70,7 @@ function TasksPage() {
     if (error) setErr(error.message); else refresh();
   };
 
-  const rows = (tasks.data ?? []).filter((t) => (filter === "all" || t.status === filter) && (!person || t.assignee_id === person));
+  const rows = (tasks.data ?? []).filter((t) => (filter === "all" || t.status === filter) && (!person || t.assignee_id === person) && (!giver || t.assigned_by_name === giver));
   const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -101,6 +109,8 @@ function TasksPage() {
           </div>
           <p className="text-xs text-muted-foreground">Đã chọn {picked.length} thành viên.</p>
         </div>
+        <label className="text-xs text-muted-foreground sm:col-span-2">Người giao nhiệm vụ: <b className="text-foreground">{me.data || "Tài khoản đang đăng nhập"}</b> (tự động)
+          <input maxLength={200} className={`${inp} mt-1`} placeholder="Ghi chú người giao (tùy chọn), vd: Giao theo chỉ đạo của Ban Điều Hành – anh A" value={note} onChange={(e) => setNote(e.target.value)} /></label>
         <textarea maxLength={3000} className={`${inp} sm:col-span-2`} rows={3} placeholder="Mô tả / yêu cầu" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
         <div className="grid grid-cols-3 gap-3 sm:col-span-2">
           <label className="text-xs text-muted-foreground">Ưu tiên
@@ -124,6 +134,10 @@ function TasksPage() {
         ))}
       </div>
 
+      <select className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm" value={giver} onChange={(e) => setGiver(e.target.value)}>
+        <option value="">Tất cả người giao</option>
+        {givers.map((g) => <option key={g} value={g}>{g}</option>)}
+      </select>
       {person && <p className="text-sm">Đang xem nhiệm vụ của <b>{nameOf(person)}</b> · <button onClick={() => setPerson("")} className="text-primary underline">Xem tất cả</button></p>}
       <div className="space-y-3">
         {tasks.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
@@ -134,6 +148,7 @@ function TasksPage() {
               <div>
                 <h3 className="font-semibold">{t.title}</h3>
                 <p className="text-xs text-muted-foreground"><button type="button" title="Xem các nhiệm vụ của người này" onClick={() => setPerson(t.assignee_id)} className="font-medium text-primary hover:underline">{nameOf(t.assignee_id)}</button> · {deptName(t.department)} · Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
+                <p className="text-xs text-muted-foreground">Giao bởi: <button type="button" onClick={() => setGiver(t.assigned_by_name)} className="font-medium text-foreground hover:underline">{t.assigned_by_name || "—"}</button>{t.assigned_by_note && ` — ${t.assigned_by_note}`}</p>
               </div>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS[t.status]?.className}`}>{TASK_STATUS[t.status]?.label}</span>
             </div>

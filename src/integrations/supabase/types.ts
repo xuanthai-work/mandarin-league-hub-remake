@@ -624,6 +624,7 @@ export type Database = {
       }
       point_transactions: {
         Row: {
+          actor_name: string
           balance_after: number
           created_at: string
           created_by: string | null
@@ -635,6 +636,7 @@ export type Database = {
           task_id: string | null
         }
         Insert: {
+          actor_name?: string
           balance_after: number
           created_at?: string
           created_by?: string | null
@@ -646,6 +648,7 @@ export type Database = {
           task_id?: string | null
         }
         Update: {
+          actor_name?: string
           balance_after?: number
           created_at?: string
           created_by?: string | null
@@ -822,6 +825,8 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assigned_by_name: string
+          assigned_by_note: string
           assignee_id: string
           completed_at: string | null
           created_at: string
@@ -841,6 +846,8 @@ export type Database = {
           title: string
         }
         Insert: {
+          assigned_by_name?: string
+          assigned_by_note?: string
           assignee_id: string
           completed_at?: string | null
           created_at?: string
@@ -860,6 +867,8 @@ export type Database = {
           title: string
         }
         Update: {
+          assigned_by_name?: string
+          assigned_by_note?: string
           assignee_id?: string
           completed_at?: string | null
           created_at?: string
@@ -958,6 +967,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _actor_label: { Args: { _uid: string }; Returns: string }
       _apply_points: {
         Args: {
           _delta: number
@@ -982,6 +992,18 @@ export type Database = {
       claim_invited_role: { Args: never; Returns: undefined }
       create_task: {
         Args: {
+          _assignee: string
+          _description: string
+          _due_on: string
+          _points: number
+          _priority: string
+          _title: string
+        }
+        Returns: string
+      }
+      create_task_v2: {
+        Args: {
+          _assigned_note: string
           _assignee: string
           _description: string
           _due_on: string
