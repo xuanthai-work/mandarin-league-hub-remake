@@ -34,4 +34,4 @@
 - Certificate AI extraction only pre-fills the admin form via an admin-checked server function; nothing is saved until the admin confirms, so AI mistakes never reach public verification.
 - HSK results live in `hsk_results` (admin-only RLS); triggers compute totals/pass and append `hsk_score_audits`; public reads only via security-definer `verify_hsk()` (code+name or token), so scores can't be faked or enumerated.
 - Admin menu comes from role+department (src/lib/admin-permissions.ts) mirroring RLS helpers; a news trigger lets only comms heads/admin publish, so UI and DB agree and members can't self-publish.
-- Public forms (application submit, application lookup, manual certificate/HSK lookup) require a reCAPTCHA v2 token verified server-side in src/lib/recaptcha.server.ts; QR-token lookups skip it, so bots are blocked without breaking QR links.
+- Public submit/lookup forms need a server-verified reCAPTCHA token; QR-token lookups skip it so QR links keep working.
