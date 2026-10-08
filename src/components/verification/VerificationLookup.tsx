@@ -112,7 +112,7 @@ export function VerificationLookup({ kind, initialCode = "" }: VerificationLooku
               <Input
                 id={`${kind}-code`}
                 value={code}
-                onChange={(event) => setCode(event.target.value)}
+                onChange={(event) => setCode(event.target.value.replace(/\s+/g, "").toUpperCase())}
                 placeholder={demoCode}
                 maxLength={50}
                 autoComplete="off"
@@ -121,8 +121,8 @@ export function VerificationLookup({ kind, initialCode = "" }: VerificationLooku
                 className="h-13 pl-12 font-mono uppercase"
               />
             </div>
-            <Button type="submit" size="lg" className="h-13 px-7">
-              <ShieldCheck /> {isHsk ? "Xác minh kết quả" : "Xác minh chứng nhận"}
+            <Button type="submit" size="lg" className="h-13 px-7" disabled={loading}>
+              <ShieldCheck /> {loading ? "Đang kiểm tra…" : isHsk ? "Xác minh kết quả" : "Xác minh chứng nhận"}
             </Button>
           </div>
           <div id={`${kind}-hint`} className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
