@@ -14,6 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          auto_status: boolean
+          banner_path: string
+          category: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string
+          end_time: string | null
+          facebook_url: string
+          id: string
+          location_detail: string
+          location_type: string
+          manual_status: string
+          max_participants: number
+          registration_deadline: string | null
+          registration_url: string
+          require_registration: boolean
+          short_description: string
+          slug: string
+          start_time: string | null
+          title: string
+          updated_at: string
+          website_url: string
+        }
+        Insert: {
+          auto_status?: boolean
+          banner_path?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          end_time?: string | null
+          facebook_url?: string
+          id?: string
+          location_detail?: string
+          location_type?: string
+          manual_status?: string
+          max_participants?: number
+          registration_deadline?: string | null
+          registration_url?: string
+          require_registration?: boolean
+          short_description?: string
+          slug: string
+          start_time?: string | null
+          title: string
+          updated_at?: string
+          website_url?: string
+        }
+        Update: {
+          auto_status?: boolean
+          banner_path?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          end_time?: string | null
+          facebook_url?: string
+          id?: string
+          location_detail?: string
+          location_type?: string
+          manual_status?: string
+          max_participants?: number
+          registration_deadline?: string | null
+          registration_url?: string
+          require_registration?: boolean
+          short_description?: string
+          slug?: string
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          website_url?: string
+        }
+        Relationships: []
+      }
+      activity_audit_logs: {
+        Row: {
+          action: string
+          activity_id: string | null
+          actor_id: string | null
+          actor_name: string
+          created_at: string
+          details: Json
+          id: string
+        }
+        Insert: {
+          action: string
+          activity_id?: string | null
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          details?: Json
+          id?: string
+        }
+        Update: {
+          action?: string
+          activity_id?: string | null
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          details?: Json
+          id?: string
+        }
+        Relationships: []
+      }
       activity_photos: {
         Row: {
           alt_text: string
@@ -43,6 +151,62 @@ export type Database = {
           visible?: boolean
         }
         Relationships: []
+      }
+      activity_registrations: {
+        Row: {
+          activity_id: string
+          admin_note: string
+          code: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          message: string
+          organization: string
+          phone: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          activity_id: string
+          admin_note?: string
+          code?: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          message?: string
+          organization?: string
+          phone: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          activity_id?: string
+          admin_note?: string
+          code?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string
+          organization?: string
+          phone?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_registrations_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_invites: {
         Row: {
