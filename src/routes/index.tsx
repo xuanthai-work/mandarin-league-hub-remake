@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BookOpen, Users, CalendarDays, Mail, Facebook, Youtube, Clock, Video } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { CONTACT } from "@/components/site/SiteLayout";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({ staticData: { sitemap: true },
   head: () => ({
@@ -33,6 +34,7 @@ const ACTIVITIES = [
 ];
 
 function Home() {
+  const { t } = useT();
   return (
     <>
       {/* Hero */}
@@ -50,14 +52,14 @@ function Home() {
               <span className="font-han">普通话联盟</span>
             </div>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Cộng đồng học tiếng Trung trực tuyến dành cho người Việt – nơi học HSK bài bản, giao lưu văn hóa và cùng nhau phát triển.
+              {t("home.lead")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/join" className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90">
-                Tham gia TML <ArrowRight className="h-4 w-4" />
+                {t("cta.join")} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link to="/courses/hsk" className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-background px-6 py-3 font-semibold text-primary-deep transition hover:bg-accent">
-                Xem khóa học HSK
+                {t("cta.hsk")}
               </Link>
             </div>
           </div>
