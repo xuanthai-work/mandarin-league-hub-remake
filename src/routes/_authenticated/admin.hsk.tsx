@@ -92,7 +92,7 @@ function HskAdminPage() {
     for (const line of lines.slice(1)) {
       const c = line.split(",").map((x) => x.trim().replace(/^"|"$/g, ""));
       const lv = (c[2] ?? "").toUpperCase().replace(/\s+/g, "");
-      if (!HSK_LEVELS[lv] || !c[1]) { toast.error(`Dòng lỗi: ${line}`); return; } return; }
+      if (!HSK_LEVELS[lv] || !c[1]) { toast.error(`Dòng lỗi: ${line}`); return; }
       const n = (v?: string) => (v ? Number(v) : null);
       let code = (c[0] ?? "").replace(/\s+/g, "").toUpperCase();
       if (!code) code = ((await supabase.rpc("suggest_hsk_code")).data as string) ?? "";
