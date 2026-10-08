@@ -88,8 +88,8 @@ export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: str
       {k === "bronze" && detail && <g style={{ stroke: trimHi }} strokeWidth="1.2" fill="none" strokeLinecap="round"><path d="M38 66 H62 M40 69 H60" /><path d="M50 64 V30 M50 40 Q43 37 42 31 Q49 33 50 40 M50 36 Q57 33 58 27 Q51 29 50 36" /></g>}
       {k === "silver" && detail && <path d="M30 66 Q36 62 42 66 T54 66 T66 66 T72 66" fill="none" style={{ stroke: trimHi }} strokeWidth="1" />}
 
-      <text x="50" y={k === "platinum" ? 58 : k === "bronze" ? 57 : 59} textAnchor="middle" fontSize={k === "bronze" ? 17 : 22} fontWeight="800" fontFamily="'Noto Serif SC', 'Songti SC', serif"
-        style={{ fill: k === "platinum" ? "var(--metal-gold-hi)" : trimHi, stroke: trimLo }} strokeWidth="0.6" paintOrder="stroke">{GLYPH[k]}</text>
+      {!(k === "bronze" && detail) && <text x="50" y={k === "platinum" ? 58 : k === "bronze" ? 57 : 59} textAnchor="middle" fontSize={k === "bronze" ? 17 : 22} fontWeight="800" fontFamily="'Noto Serif SC', 'Songti SC', serif"
+        style={{ fill: k === "platinum" ? "var(--metal-gold-hi)" : trimHi, stroke: trimLo }} strokeWidth="0.6" paintOrder="stroke">{GLYPH[k]}</text>}
       {k === "platinum" && <path d="M44 66 Q50 60 56 66 Q50 70 44 66 Z" style={{ fill: "var(--metal-gold)" }} />}
 
       {!locked && <g clipPath={`url(#c${id})`}><rect className="badge-sheen" x="20" y="-10" width="18" height="120" fill={`url(#s${id})`} /></g>}
