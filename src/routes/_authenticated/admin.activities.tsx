@@ -9,6 +9,8 @@ import {
   type ActivityCategory, type ActivityRow, type LocationType, type ManualStatus,
 } from "@/lib/activities";
 
+import { useAdminAccess } from "./admin";
+import { canReviewNews } from "@/lib/admin-permissions";
 export const Route = createFileRoute("/_authenticated/admin/activities")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Hoạt động | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: ActivitiesAdmin,
