@@ -2,6 +2,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Award,
+  BookOpen,
+  GraduationCap,
+  Mic,
+  PenLine,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -201,59 +205,114 @@ function ResultHeader({ title, subtitle, danger = false, demo = true }: { title:
   );
 }
 
+function skillBand(score: number) {
+  if (score >= 90) return { vi: "Xuất sắc", zh: "卓越" };
+  if (score >= 80) return { vi: "Giỏi", zh: "优秀" };
+  if (score >= 70) return { vi: "Khá", zh: "良好" };
+  if (score >= 60) return { vi: "Đạt", zh: "合格" };
+  return { vi: "Cần cố gắng", zh: "待提高" };
+}
+
 function HskResult({ record }: { record: HskRecord }) {
   const scores = [
-    { label: "Nghe", chinese: "听力", score: record.listeningScore },
-    { label: "Đọc", chinese: "阅读", score: record.readingScore },
-    { label: "Viết", chinese: "书写", score: record.writingScore },
-    { label: "Khẩu ngữ", chinese: "口语", score: record.speakingScore },
-  ].filter((s) => typeof s.score === "number");
-  const [qr, setQr] = useState("");
+    { label: "Nghe", chinese: "听力", icon: Headphones, score: record.listeningScore },
+    { label: "Đọc", chinese: "阅读", icon: BookOpen, score: record.readingScore },
+    { label: "Viết", chinese: "书写", icon: PenLine, score: record.writingScore },
+    { label: "Nói", chinese: "口语", icon: Mic, score: record.speakingScore },
+  ].filter((s): s is typeof s & { score: number } => typeof s.score === "number");
   const link = typeof window !== "undefined" && record.verifyToken ? `${window.location.origin}/verify/hsk/${record.verificationId}?t=${record.verifyToken}` : "";
-  useEffect(() => { if (link) QRCode.toDataURL(link, { margin: 0, width: 180 }).then(setQr); }, [link]);
   const copy = async () => { await navigator.clipboard.writeText(link); toast.success("Đã sao chép liên kết xác thực"); };
-  const pct = record.maximumScore ? Math.round(((record.totalScore ?? 0) / record.maximumScore) * 100) : 0;
+  const pct = record.maximumScore ? Math.round(((record.totalScore ?? 0) / record.maximumScore) * 1000) / 10 : 0;
+  const period = record.studyStart || record.studyEnd ? `${record.studyStart ? formatVerificationDate(record.studyStart) : "…"} – ${record.studyEnd ? formatVerificationDate(record.studyEnd) : "…"}` : "";
+  const cols = scores.length >= 4 ? "md:grid-cols-4" : scores.length === 3 ? "md:grid-cols-3" : scores.length === 2 ? "md:grid-cols-2" : "";
 
   return (
     <div className="print-certificate">
-      <ResultShell>
-        <ResultHeader title="Kết quả HSK hợp lệ" subtitle="HSK RESULT VERIFIED" demo={record.isDemo !== false} />
-        <div className="p-5 md:p-8">
-          <div className="grid gap-4 border-b border-border pb-7 sm:grid-cols-2">
-            <Detail icon={UserRound} label="Họ và tên" value={(record.candidateName ?? "Không công khai") + (record.candidateNameZh ? ` · ${record.candidateNameZh}` : "")} />
-            <Detail icon={Award} label="Cấp độ" value={record.examLevel} />
-            <Detail icon={CalendarDays} label="Ngày thi" value={formatVerificationDate(record.examDate) + (record.examSession ? ` · ${record.examSession}` : "")} />
-            <Detail icon={ShieldCheck} label="Mã xác minh" value={record.verificationId} mono />
+      <div className="relative overflow-hidden border-[3px] border-primary-deep bg-card p-2 shadow-xl">
+        <div className="relative border border-gold/70 px-5 py-8 md:px-10 md:py-10">
+          {record.isDemo !== false && <span className="absolute right-3 top-3 rounded-sm bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-foreground">DEMO DATA</span>}
+          <div className="text-center">
+            <div className="text-xs font-bold uppercase tracking-[0.3em] text-primary">The Mandarin League · 汉语联盟</div>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-wide text-primary-deep md:text-3xl">KẾT QUẢ HSK ĐƯỢC XÁC MINH</h2>
+            <p className="mt-1 font-han text-primary">成绩验证</p>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Kết quả được ghi nhận và xác minh trong hệ thống của THE MANDARIN LEAGUE.</p>
           </div>
+
+          <div className="mt-8 grid gap-6 border-y border-border py-6 md:grid-cols-[1fr_auto] md:items-center">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Detail icon={UserRound} label="Họ và tên" value={(record.candidateName ?? "Không công khai") + (record.candidateNameZh ? ` · ${record.candidateNameZh}` : "")} />
+              <Detail icon={Award} label="Cấp độ" value={record.examLevel} />
+              {(record.courseName || record.className) && <Detail icon={BookOpen} label="Khóa học / Lớp" value={[record.courseName, record.className].filter(Boolean).join(" · ")} />}
+              {record.teacherName && <Detail icon={GraduationCap} label="Giáo viên giảng dạy" value={record.teacherName} />}
+              {period && <Detail icon={CalendarDays} label="Thời gian học" value={period} />}
+              <Detail icon={CalendarDays} label="Ngày đánh giá" value={formatVerificationDate(record.examDate) + (record.examSession ? ` · ${record.examSession}` : "")} />
+              <Detail icon={ShieldCheck} label="Mã kết quả" value={record.verificationId} mono />
+            </div>
+            <VerifiedSeal />
+          </div>
+
           <div className="py-7">
-            <h3 className="font-bold">Kết quả thành phần</h3>
-            <div className={`mt-5 grid gap-5 ${scores.length >= 3 ? "md:grid-cols-3" : scores.length === 2 ? "md:grid-cols-2" : ""}`}>
-              {scores.map((item) => (
-                <div key={item.label} className="border border-border bg-secondary/60 p-4">
-                  <div className="flex items-center justify-between text-sm"><span className="font-semibold">{item.label} · {item.chinese}</span><span className="font-bold text-primary-deep">{item.score} / 100</span></div>
-                  <Progress value={item.score} className="mt-3" />
-                </div>
-              ))}
+            <div className="text-center">
+              <h3 className="text-sm font-extrabold uppercase tracking-[0.25em] text-primary-deep">Điểm kỹ năng</h3>
+              <p className="text-xs text-muted-foreground">SKILL PERFORMANCE · 技能成绩</p>
+            </div>
+            <div className={`mt-5 grid gap-3 sm:grid-cols-2 ${cols}`}>
+              {scores.map((item) => {
+                const band = skillBand(item.score);
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="border border-border bg-secondary/50 p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-deep text-primary-foreground"><Icon className="h-4 w-4" /></span>
+                      <div className="leading-tight"><div className="text-sm font-bold">{item.label}</div><div className="font-han text-xs text-muted-foreground">{item.chinese}</div></div>
+                    </div>
+                    <div className="mt-4 text-center"><span className="text-4xl font-extrabold text-primary-deep">{item.score}</span><span className="text-sm text-muted-foreground"> / 100</span></div>
+                    <div className="relative mt-3 h-2 rounded-full bg-muted">
+                      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.min(100, item.score)}%` }} />
+                      <div className="absolute -top-1 h-4 w-0.5 bg-gold" style={{ left: "60%" }} title="Mốc đạt 60" />
+                    </div>
+                    <div className="mt-3 text-center"><span className="inline-flex rounded-full border border-gold/60 px-2 py-0.5 text-[11px] font-bold text-primary-deep">{band.vi} · {band.zh}</span></div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div className="grid gap-4 border-t border-border pt-7 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+
+          <div className="grid gap-4 border-t border-border pt-6 sm:grid-cols-[1fr_auto] sm:items-end">
             <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Đơn vị ghi nhận / tổ chức</div>
-              <div className="mt-2 font-semibold">{record.issuer}</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Đơn vị ghi nhận</div>
+              <div className="mt-1 font-semibold">{record.issuer}</div>
               {typeof record.passed === "boolean" && (
                 <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${record.passed ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                   {record.passed ? "ĐẠT · 合格" : "CHƯA ĐẠT · 不合格"}{record.passScore ? ` (ngưỡng ${record.passScore})` : ""}
                 </div>
               )}
             </div>
-            {qr && <img src={qr} alt="Mã QR xác thực" className="mx-auto h-24 w-24" />}
-            <div className="bg-primary-deep px-6 py-4 text-primary-foreground"><div className="text-xs font-semibold opacity-80">Tổng điểm · {pct}%</div><div className="mt-1 text-3xl font-extrabold">{record.totalScore} <span className="text-base opacity-75">/ {record.maximumScore}</span></div></div>
+            <div className="border-2 border-gold bg-primary-deep px-7 py-4 text-center text-primary-foreground">
+              <div className="text-xs font-semibold uppercase tracking-widest opacity-80">Tổng điểm · 总分</div>
+              <div className="mt-1 text-4xl font-extrabold">{record.totalScore} <span className="text-base opacity-75">/ {record.maximumScore}</span></div>
+              <div className="text-xs opacity-80">{pct}%</div>
+            </div>
           </div>
         </div>
-      </ResultShell>
+      </div>
+      <p className="mt-3 text-center text-xs text-muted-foreground">Kết quả học tập trong phạm vi khóa học/chương trình của TML, không phải chứng chỉ HSK quốc tế.</p>
       <div className="mt-4 flex flex-wrap justify-center gap-2 print:hidden">
         {link && <Button variant="outline" onClick={copy}><Copy /> Sao chép liên kết</Button>}
         <Button variant="outline" onClick={() => window.print()}><Printer /> In / Xuất PDF</Button>
+      </div>
+    </div>
+  );
+}
+
+function VerifiedSeal() {
+  return (
+    <div className="mx-auto flex h-36 w-36 -rotate-6 items-center justify-center rounded-full border-[3px] border-destructive p-1 text-destructive">
+      <div className="flex h-full w-full flex-col items-center justify-center rounded-full border border-dashed border-destructive/70 text-center">
+        <span className="text-[8px] font-bold tracking-[0.2em]">★ THE MANDARIN LEAGUE ★</span>
+        <Check className="mt-1 h-8 w-8" strokeWidth={3} />
+        <span className="text-sm font-extrabold tracking-wide">ĐÃ XÁC THỰC</span>
+        <span className="font-han text-[11px] font-bold">官方认证 · VERIFIED</span>
       </div>
     </div>
   );
