@@ -89,3 +89,20 @@ export const QUESTION_BANK: BankEntry[] = [
     { title: "Mức độ phù hợp & cam kết", description: "Áp dụng cho mọi ứng viên.", questions: [opt("Bạn biết đến THE MANDARIN LEAGUE từ đâu?", "short"), { prompt: "Bạn có thể dành khoảng bao nhiêu thời gian mỗi tuần cho TML?", kind: "dropdown", options: ["Dưới 3 giờ", "3–5 giờ", "5–10 giờ", "Trên 10 giờ"], required: true }, opt("Bạn mong muốn đạt được điều gì khi tham gia TML?")] },
   ] },
 ];
+
+/** Auto-format typed digits as DD/MM/YYYY. */
+export function formatDobInput(raw: string) {
+  const d = raw.replace(/\D/g, "").slice(0, 8);
+  return [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("/");
+}
+
+/** "15/08/2003" → "2003-08-15"; null if not a real past date from 1940 on. */
+export function parseDob(v: string, now = new Date()): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v.trim());
+  if (!m) return null;
+  const [, dd, mm, yy] = m;
+  const iso = `${yy}-${mm}-${dd}`;
+  const dt = new Date(iso + "T00:00:00Z");
+  if (isNaN(+dt) || dt.toISOString().slice(0, 10) !== iso || +yy < 1940 || dt >= now) return null;
+  return iso;
+}
