@@ -141,6 +141,13 @@
       "when": 1791433197562,
       "tag": "0019_certificates_module",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791438090069,
+      "tag": "0020_certificate_secure_lookup",
+      "breakpoints": true
     }
   ]
 }
