@@ -176,6 +176,20 @@
       "when": 1791444637694,
       "tag": "0024_news_partners_dynamic_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791445871293,
+      "tag": "0025_trash_and_site_content",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791445984559,
+      "tag": "0026_site_content_anon_columns",
+      "breakpoints": true
     }
   ]
 }

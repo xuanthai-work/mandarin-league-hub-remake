@@ -4,6 +4,7 @@ import { BookOpen, Copy, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-rea
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { COURSE_BUCKET, STATUS_LABEL, type ProgramStatus } from "@/lib/programs";
+import { useConfirm } from "@/components/admin/Trash";
 import { classFee, decorateClasses, fmtDate, HSK_LEVELS, type HskClass } from "@/lib/hsk-classes";
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
@@ -14,6 +15,12 @@ export function HskClassesAdmin({ pendingCounts, onFilter }: { pendingCounts: Ma
   const qc = useQueryClient();
   const [edit, setEdit] = useState<Partial<HskClass> | null>(null);
   const [pickLevel, setPickLevel] = useState(false);
+  const { confirm, dialog } = useConfirm();
+  const remove = async (c: HskClass) => {
+    const n = pendingCounts.get(c.id) ?? 0;
+    if (!(await confirm({ title: "Chuyển lớp vào Thùng rác?", description: `"${c.name}" sẽ bị ẩn khỏi website.${n ? `\nLớp đang có ${n} đơn chờ duyệt — các đơn vẫn được giữ lại.` : " Đơn đăng ký vẫn được giữ lại."}\nBạn có thể khôi phục trong tab Thùng rác.`, confirmLabel: "Chuyển vào Thùng rác", destructive: true }))) return;
+    patch(c, { deleted_at: new Date().toISOString(), is_published: false }, "Đã chuyển vào Thùng rác");
+  };
   const { data: list } = useQuery({
     queryKey: ["admin-hsk-classes"],
     queryFn: async () => decorateClasses(((await supabase.from("hsk_classes").select("*").is("deleted_at", null).order("start_date", { ascending: false })).data ?? []) as HskClass[]),
@@ -27,6 +34,7 @@ export function HskClassesAdmin({ pendingCounts, onFilter }: { pendingCounts: Ma
 
   return (
     <section className="space-y-4">
+      {dialog}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 className="text-lg font-bold">Khóa học HSK</h2><p className="text-sm text-muted-foreground">Cấp độ HSK 1–6 có sẵn. Tạo lớp cụ thể cho từng cấp, ví dụ “HSK 3 – Lớp tháng 11/2026”.</p></div>
         <button onClick={() => setPickLevel(true)} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo lớp HSK</button>
@@ -54,7 +62,7 @@ export function HskClassesAdmin({ pendingCounts, onFilter }: { pendingCounts: Ma
                       <button title={c.is_published ? "Ẩn" : "Hiện"} onClick={() => patch(c, { is_published: !c.is_published }, c.is_published ? "Đã ẩn" : "Đã hiển thị")} className="rounded p-1.5 hover:bg-muted">{c.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</button>
                       <button title="Sao chép" onClick={() => setEdit({ ...(({ id: _i, ...r }) => r)(c), name: `${c.name} (bản sao)`, is_published: false })} className="rounded p-1.5 hover:bg-muted"><Copy className="h-4 w-4" /></button>
                       <button title="Sửa" onClick={() => setEdit(c)} className="rounded p-1.5 hover:bg-muted"><Pencil className="h-4 w-4" /></button>
-                      <button title="Xóa" onClick={() => confirm(`Xóa lớp "${c.name}"? Đơn đăng ký vẫn được giữ lại.`) && patch(c, { deleted_at: new Date().toISOString(), is_published: false }, "Đã xóa lớp")} className="rounded p-1.5 text-destructive hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
+                      <button title="Xóa" onClick={() => remove(c)} className="rounded p-1.5 text-destructive hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}

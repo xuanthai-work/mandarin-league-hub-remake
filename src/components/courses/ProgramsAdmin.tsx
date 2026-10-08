@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, CalendarCheck, Copy, ExternalLink, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/admin/Trash";
 import { COURSE_BUCKET, programFee, slugify, STATUS_LABEL, TYPE_LABEL, withThumbs, type CourseType, type Program, type ProgramStatus } from "@/lib/programs";
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
@@ -23,14 +24,16 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
     const { error } = await supabase.from("courses").update({ ...v, updated_at: new Date().toISOString() }).eq("id", p.id);
     if (error) toast.error("Không lưu được (cần quyền Admin/Ban Chuyên môn)"); else { toast.success(msg); refresh(); }
   };
-  const remove = (p: Program) => {
+  const { confirm, dialog } = useConfirm();
+  const remove = async (p: Program) => {
     const n = enrollCounts.get(p.id) ?? 0;
-    if (!confirm(`Xóa "${p.title}"?${n ? `\nChương trình có ${n} đơn đăng ký — đơn vẫn được giữ lại.` : ""}`)) return;
-    patch(p, { deleted_at: new Date().toISOString(), is_published: false }, "Đã xóa chương trình");
+    if (!(await confirm({ title: "Chuyển chương trình vào Thùng rác?", description: `"${p.title}" sẽ bị ẩn khỏi website.${n ? `\nChương trình có ${n} đơn đăng ký — đơn vẫn được giữ lại.` : ""}\nBạn có thể khôi phục trong tab Thùng rác.`, confirmLabel: "Chuyển vào Thùng rác", destructive: true }))) return;
+    patch(p, { deleted_at: new Date().toISOString(), is_published: false }, "Đã chuyển vào Thùng rác");
   };
 
   return (
     <section className="space-y-4">
+      {dialog}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 className="text-lg font-bold">Chương trình học</h2><p className="text-sm text-muted-foreground">Chương trình cộng đồng, giao tiếp, phát âm, chuyên đề… Một bản ghi có thể hiện ở cả Khóa học và Hoạt động.</p></div>
         <button onClick={() => setEdit({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo chương trình học</button>

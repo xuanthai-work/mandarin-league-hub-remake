@@ -9,6 +9,8 @@ import { ProgramsAdmin } from "@/components/courses/ProgramsAdmin";
 import { HskClassesAdmin } from "@/components/courses/HskClassesAdmin";
 import { classFee, type HskClass } from "@/lib/hsk-classes";
 import { reviewEnrollment } from "@/lib/courses.functions";
+import { TrashList } from "@/components/admin/Trash";
+import { useAdminAccess } from "./admin";
 import { ENROLL_STATUS, formatFee, useCourseSettings, type CourseSetting } from "@/lib/course-settings";
 
 export const Route = createFileRoute("/_authenticated/admin/courses")({ staticData: { sitemap: false },
@@ -28,7 +30,8 @@ function CoursesAdmin() {
   const [q, setQ] = useState("");
   const [cid, setCid] = useState("");
   const [sel, setSel] = useState<Enrollment | null>(null);
-  const [tab, setTab] = useState<"hsk" | "programs" | "enroll">("hsk");
+  const [tab, setTab] = useState<"hsk" | "programs" | "enroll" | "trash">("hsk");
+  const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const [kid, setKid] = useState("");
   const { data: classes } = useQuery({ queryKey: ["admin-class-names"], queryFn: async () => ((await supabase.from("hsk_classes").select("id, name, level, fee_type, fee_amount").is("deleted_at", null)).data ?? []) as Pick<HskClass, "id" | "name" | "level" | "fee_type" | "fee_amount">[] });
   const { data: rows, isLoading } = useQuery({
@@ -47,7 +50,7 @@ function CoursesAdmin() {
     <div className="space-y-8">
       <div><h1 className="text-2xl font-bold">Khóa học & Đơn đăng ký</h1><p className="text-sm text-muted-foreground">Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên.</p></div>
       <div className="flex flex-wrap gap-2">
-        {([["hsk", "Khóa học HSK"], ["programs", "Chương trình học"], ["enroll", "Đơn đăng ký"]] as const).map(([k, l]) => (
+        {([["hsk", "Khóa học HSK"], ["programs", "Chương trình học"], ["enroll", "Đơn đăng ký"], ["trash", "Thùng rác"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>
         ))}
       </div>
@@ -61,6 +64,10 @@ function CoursesAdmin() {
       </>}
       {tab === "programs" && <ProgramsAdmin enrollCounts={(rows ?? []).reduce((m, r) => (r.course_id ? m.set(r.course_id, (m.get(r.course_id) ?? 0) + 1) : m), new Map<string, number>())} onFilter={(id) => { setCid(id); setKid(""); setStF(""); setLv(0); setTab("enroll"); }} />}
 
+      {tab === "trash" && <div className="space-y-6">
+        <div><h3 className="mb-2 font-bold">Lớp HSK đã xóa</h3><TrashList table="hsk_classes" canHardDelete={isAdmin} invalidate={["admin-hsk-classes", "public-hsk-classes"]} /></div>
+        <div><h3 className="mb-2 font-bold">Chương trình học đã xóa</h3><TrashList table="courses" canHardDelete={isAdmin} invalidate={["admin-programs", "public-programs"]} /></div>
+      </div>}
       {tab === "enroll" &&       <section className="rounded-2xl border border-border bg-card p-4">
         <div className="flex flex-wrap gap-2">
           <input placeholder="Tìm mã, tên, email, SĐT…" className={`${inp} max-w-xs`} value={q} onChange={(e) => setQ(e.target.value)} />

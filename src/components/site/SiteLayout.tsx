@@ -1,11 +1,12 @@
 import { useTr as useTrHero } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { Menu, X, Mail, Facebook, Youtube, MapPin, Lock } from "lucide-react";
+import { Menu, X, Mail, Facebook, Youtube, MapPin, Lock, Music2, Linkedin } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useSiteContent } from "@/lib/site-content";
 
 export const NAV = [
   { to: "/", label: "Trang chủ" },
@@ -95,6 +96,7 @@ function Header() {
 
 function Footer() {
   const { t } = useT();
+  const site = useSiteContent("site").data;
   return (
     <footer className="mt-24 bg-primary-deep text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
@@ -108,7 +110,7 @@ function Footer() {
             </div>
           </div>
           <p className="mt-5 max-w-md text-sm leading-relaxed opacity-80">
-            {t("tagline")}
+            {site.tagline || t("tagline")}
           </p>
         </div>
         <div>
@@ -122,15 +124,17 @@ function Footer() {
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{t("footer.contact")}</div>
           <ul className="space-y-3 text-sm opacity-90">
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${CONTACT.email}`} className="hover:underline">{CONTACT.email}</a></li>
-            <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={CONTACT.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
-            <li className="flex items-center gap-2"><Youtube className="h-4 w-4" /><a href={CONTACT.youtube} target="_blank" rel="noreferrer" className="hover:underline">YouTube</a></li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${site.email}`} className="hover:underline">{site.email}</a></li>
+            <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={site.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
+            <li className="flex items-center gap-2"><Youtube className="h-4 w-4" /><a href={site.youtube} target="_blank" rel="noreferrer" className="hover:underline">YouTube</a></li>
+            {site.tiktok && <li className="flex items-center gap-2"><Music2 className="h-4 w-4" /><a href={site.tiktok} target="_blank" rel="noreferrer" className="hover:underline">TikTok</a></li>}
+            {site.linkedin && <li className="flex items-center gap-2"><Linkedin className="h-4 w-4" /><a href={site.linkedin} target="_blank" rel="noreferrer" className="hover:underline">LinkedIn</a></li>}
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" />{t("footer.online")}</li>
           </ul>
         </div>
       </div>
       <div className="border-t border-primary-foreground/15 py-5 text-center text-xs">
-        <span className="opacity-70">© {new Date().getFullYear()} {t("footer.rights")}</span>
+        <span className="opacity-70">© {new Date().getFullYear()} {site.footer_note || t("footer.rights")}</span>
         <span className="mx-2 opacity-40">·</span>
         <Link to="/login" className="inline-flex items-center gap-1 opacity-60 transition hover:opacity-100 hover:underline"><Lock className="h-3 w-3" />{t("footer.portal")}</Link>
       </div>

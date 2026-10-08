@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BookOpen, Users, CalendarDays, Mail, Facebook, Youtube, Clock, Video } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
-import { CONTACT } from "@/components/site/SiteLayout";
 import { useT, useTr } from "@/lib/i18n";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/")({ staticData: { sitemap: true },
   head: () => ({
@@ -36,32 +36,35 @@ const ACTIVITIES = [
 function Home() {
   const { t } = useT();
   const tr = useTr();
+  const { data: h, preview } = useSiteContent("home");
+  const site = useSiteContent("site").data;
   return (
     <>
+      {preview && <div className="bg-gold/20 py-2 text-center text-sm font-semibold text-primary-deep">Đang xem trước bản nháp — khách truy cập chưa thấy nội dung này.</div>}
       {/* Hero */}
       <section className="grid-lines relative overflow-hidden bg-secondary">
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 md:grid-cols-[1.2fr_1fr] md:px-6 md:py-24">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-              Online Chinese Learning Community
+              {h.hero_badge || "Online Chinese Learning Community"}
             </div>
             <h1 className="mt-6 text-4xl font-extrabold leading-tight text-primary-deep md:text-6xl">
-              The Mandarin League
+              {h.hero_title || "The Mandarin League"}
             </h1>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-4 text-2xl font-semibold text-primary md:text-3xl">
               <span>{tr("Liên Đoàn Hán Ngữ")}</span>
               <span className="font-han">普通话联盟</span>
             </div>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              {t("home.lead")}
+              {h.hero_lead || t("home.lead")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/join" className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90">
-                {t("cta.join")} <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link to="/courses/hsk" className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-background px-6 py-3 font-semibold text-primary-deep transition hover:bg-accent">
-                {t("cta.hsk")}
-              </Link>
+              <a href={h.btn1_url || "/join"} className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90">
+                {h.btn1_label || t("cta.join")} <ArrowRight className="h-4 w-4" />
+              </a>
+              <a href={h.btn2_url || "/courses/hsk"} className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-background px-6 py-3 font-semibold text-primary-deep transition hover:bg-accent">
+                {h.btn2_label || t("cta.hsk")}
+              </a>
             </div>
           </div>
           <div className="relative mx-auto w-full max-w-sm">
@@ -72,15 +75,15 @@ function Home() {
       </section>
 
       {/* About */}
-      <section className="mx-auto max-w-7xl px-4 py-20 md:px-6">
+      {h.show.about && <section className="mx-auto max-w-7xl px-4 py-20 md:px-6">
         <div className="grid gap-10 md:grid-cols-2">
           <div>
             <SectionLabel>{tr("Về TML")}</SectionLabel>
-            <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">{tr("Học tiếng Trung cùng một cộng đồng thực thụ")}</h2>
+            <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">{h.about_title || tr("Học tiếng Trung cùng một cộng đồng thực thụ")}</h2>
           </div>
           <div className="space-y-4 text-muted-foreground">
-            <p>{tr("The Mandarin League (TML) là tổ chức cộng đồng phi lợi nhuận, quy tụ các bạn trẻ yêu thích tiếng Trung và văn hóa Trung Hoa, hoạt động hoàn toàn trực tuyến.")}</p>
-            <p>{tr("Chúng tôi tổ chức khóa học HSK, workshop, cuộc thi và các dự án sáng tạo nội dung, giúp mỗi thành viên vừa học vừa trải nghiệm.")}</p>
+            <p>{h.about_p1 || tr("The Mandarin League (TML) là tổ chức cộng đồng phi lợi nhuận, quy tụ các bạn trẻ yêu thích tiếng Trung và văn hóa Trung Hoa, hoạt động hoàn toàn trực tuyến.")}</p>
+            <p>{h.about_p2 || tr("Chúng tôi tổ chức khóa học HSK, workshop, cuộc thi và các dự án sáng tạo nội dung, giúp mỗi thành viên vừa học vừa trải nghiệm.")}</p>
             <Link to="/about" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">{tr("Tìm hiểu thêm")} <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </div>
@@ -97,12 +100,12 @@ function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section>}
 
-      <ActivityCarousel />
+      {h.show.carousel && <ActivityCarousel />}
 
       {/* Courses */}
-      <section className="mx-auto max-w-7xl px-4 py-20 md:px-6">
+      {h.show.courses && <section className="mx-auto max-w-7xl px-4 py-20 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <SectionLabel>{tr("Khóa học HSK")}</SectionLabel>
@@ -125,10 +128,10 @@ function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section>}
 
       {/* Activities */}
-      <section className="bg-secondary py-20">
+      {h.show.activities && <section className="bg-secondary py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -154,26 +157,26 @@ function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* CTA + contact */}
-      <section className="mx-auto max-w-7xl px-4 pt-20 md:px-6">
+      {h.show.cta && <section className="mx-auto max-w-7xl px-4 pt-20 md:px-6">
         <div className="grid overflow-hidden rounded-3xl bg-brand-gradient text-primary-foreground md:grid-cols-[1.4fr_1fr]">
           <div className="p-10 md:p-14">
-            <h2 className="text-3xl font-bold md:text-4xl">{tr("Sẵn sàng trở thành một phần của TML?")}</h2>
-            <p className="mt-4 max-w-lg opacity-90">{tr("Ứng tuyển vào một trong 8 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.")}</p>
+            <h2 className="text-3xl font-bold md:text-4xl">{h.cta_title || tr("Sẵn sàng trở thành một phần của TML?")}</h2>
+            <p className="mt-4 max-w-lg opacity-90">{h.cta_body || tr("Ứng tuyển vào một trong 8 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.")}</p>
             <Link to="/join" className="mt-8 inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 font-semibold text-primary-deep transition hover:opacity-90">
               {t("cta.join")} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="space-y-4 border-t border-primary-foreground/20 p-10 md:border-l md:border-t-0 md:p-14">
             <div className="text-sm font-semibold uppercase tracking-wider opacity-80">{tr("Liên hệ")}</div>
-            <a href={`mailto:${CONTACT.email}`} className="flex items-center gap-3 hover:underline"><Mail className="h-5 w-5" />{CONTACT.email}</a>
-            <a href={CONTACT.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><Facebook className="h-5 w-5" />Facebook TML</a>
-            <a href={CONTACT.youtube} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><Youtube className="h-5 w-5" />YouTube TML</a>
+            <a href={`mailto:${site.email}`} className="flex items-center gap-3 hover:underline"><Mail className="h-5 w-5" />{site.email}</a>
+            <a href={site.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><Facebook className="h-5 w-5" />Facebook TML</a>
+            <a href={site.youtube} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><Youtube className="h-5 w-5" />YouTube TML</a>
           </div>
         </div>
-      </section>
+      </section>}
     </>
   );
 }

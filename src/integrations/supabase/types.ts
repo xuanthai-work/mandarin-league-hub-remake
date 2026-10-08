@@ -424,6 +424,39 @@ export type Database = {
           },
         ]
       }
+      content_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string
+          content_key: string
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string
+          content_key: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string
+          content_key?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Relationships: []
+      }
       course_enrollments: {
         Row: {
           admin_note: string
@@ -1337,6 +1370,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_content: {
+        Row: {
+          draft: Json
+          key: string
+          published: Json
+          published_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          draft?: Json
+          key: string
+          published?: Json
+          published_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          draft?: Json
+          key?: string
+          published?: Json
+          published_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       tasks: {
         Row: {

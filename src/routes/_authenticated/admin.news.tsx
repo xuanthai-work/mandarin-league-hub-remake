@@ -9,6 +9,7 @@ import { NEWS_CATEGORIES } from "@/lib/data/news";
 import { NEWS_BUCKET, NEWS_STATUS_LABEL, fmtDate, withCovers, type NewsRow, type NewsStatus } from "@/lib/news-db";
 import { canReviewNews } from "@/lib/admin-permissions";
 import { useAdminAccess } from "./admin";
+import { TrashList, useConfirm } from "@/components/admin/Trash";
 
 export const Route = createFileRoute("/_authenticated/admin/news")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Tin tức | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -28,7 +29,9 @@ function NewsAdmin() {
   const access = useAdminAccess().data;
   const reviewer = !!access && canReviewNews(access.roles, access.department);
   const [f, setF] = useState<Form | null>(null);
-  const [filter, setFilter] = useState<NewsStatus | "">("");
+  const [filter, setFilter] = useState<NewsStatus | "" | "trash">("");
+  const { confirm, dialog } = useConfirm();
+  const isAdmin = !!access?.roles.includes("admin");
   const [busy, setBusy] = useState(false);
 
   const list = useQuery({ queryKey: ["admin-news"], queryFn: async () => {
@@ -73,11 +76,16 @@ function NewsAdmin() {
   };
 
   const rows = (list.data ?? []).filter((a) => !filter || a.status === filter);
+  const remove = async (a: NewsRow) => {
+    if (!(await confirm({ title: "Chuyển vào Thùng rác?", description: `Bài "${a.title}" sẽ bị ẩn khỏi website. Bạn có thể khôi phục lại trong mục Thùng rác.`, confirmLabel: "Chuyển vào Thùng rác", destructive: true }))) return;
+    patch(a.id, { deleted_at: new Date().toISOString() }, "Đã chuyển vào Thùng rác");
+  };
   const pending = (list.data ?? []).filter((a) => a.status === "pending_review").length;
   const editable = (a: NewsRow) => reviewer || ["draft", "pending_review", "needs_revision"].includes(a.status);
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
+      {dialog}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary-deep">Tin tức</h1>
@@ -114,9 +122,10 @@ function NewsAdmin() {
         {(["", ...Object.keys(NEWS_STATUS_LABEL)] as (NewsStatus | "")[]).map((k) => (
           <button key={k || "all"} onClick={() => setFilter(k)} className={`rounded-full border px-3 py-1 text-xs ${filter === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{k ? NEWS_STATUS_LABEL[k] : "Tất cả"}</button>
         ))}
+        {(reviewer || isAdmin) && <button onClick={() => setFilter("trash")} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${filter === "trash" ? "border-destructive bg-destructive text-destructive-foreground" : "border-border bg-card"}`}><Trash2 className="h-3 w-3" /> Thùng rác</button>}
       </div>
 
-      <div className="space-y-3">
+      {filter === "trash" ? <TrashList table="news_articles" canHardDelete={isAdmin} invalidate={["admin-news", "public-news"]} /> : <div className="space-y-3">
         {list.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
         {!list.isLoading && rows.length === 0 && <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Chưa có bài viết.</p>}
         {rows.map((a) => (
@@ -137,11 +146,11 @@ function NewsAdmin() {
               {reviewer && a.status === "pending_review" && <button title="Yêu cầu chỉnh sửa" onClick={() => requestRevision(a)} className="rounded-lg border border-border p-2"><Undo2 className="h-4 w-4" /></button>}
               {reviewer && a.status === "published" && <button title={a.is_featured ? "Bỏ nổi bật" : "Ghim nổi bật"} onClick={() => patch(a.id, { is_featured: !a.is_featured }, "Đã cập nhật")} className="rounded-lg border border-border p-2"><Star className="h-4 w-4" /></button>}
               {reviewer && a.status === "published" && <button title="Gỡ xuống (lưu trữ)" onClick={() => patch(a.id, { status: "archived" }, "Đã gỡ bài")} className="rounded-lg border border-border p-2 text-xs">Gỡ</button>}
-              {(reviewer || a.status === "draft") && <button title="Xóa" onClick={() => window.confirm("Xóa bài viết này?") && patch(a.id, { deleted_at: new Date().toISOString() }, "Đã xóa")} className="rounded-lg border border-border p-2 text-destructive"><Trash2 className="h-4 w-4" /></button>}
+              {(reviewer || a.status === "draft") && <button title="Xóa" onClick={() => remove(a)} className="rounded-lg border border-border p-2 text-destructive"><Trash2 className="h-4 w-4" /></button>}
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }

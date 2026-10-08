@@ -5,6 +5,10 @@ describe("admin permissions", () => {
   it("comms member sees news, activities, partners only", () => {
     expect(allowedSections(["member"], "comms")).toEqual(["news", "activities", "partners"]);
   });
+  it("only comms heads (not members) get page content", () => {
+    expect(allowedSections(["deputy_head"], "comms")).toContain("content");
+    expect(allowedSections(["member"], "comms")).not.toContain("content");
+  });
   it("finance member sees partners only", () => {
     expect(allowedSections(["member"], "finance")).toEqual(["partners"]);
   });
