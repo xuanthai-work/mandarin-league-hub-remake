@@ -105,14 +105,13 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
   const next = () => {
     setError(null);
     if (step === 1) {
-      const { full_name, email, phone, dob, organization, intro } = info;
+      const { full_name, email, phone, dob, organization } = info;
       const e: Record<string, string> = {};
       if (full_name.trim().length < 2) e["full_name"] = "Vui lòng nhập họ và tên.";
       if (!dob.trim()) e["dob"] = "Vui lòng nhập ngày sinh."; else if (!parseDob(dob)) e["dob"] = "Ngày sinh không hợp lệ (DD/MM/YYYY).";
       if (!email.trim()) e["email"] = "Vui lòng nhập email."; else if (!/^\S+@\S+\.\S+$/.test(email)) e["email"] = "Email không hợp lệ.";
       if (phone.trim().length < 8) e["phone"] = "Vui lòng nhập số điện thoại.";
       if (organization.trim().length < 2) e["organization"] = "Vui lòng nhập trường / đơn vị.";
-      if (intro.trim().length < 10) e["intro"] = "Phần giới thiệu cần ít nhất 10 ký tự.";
       if (!chosen.length) e["choice0"] = "Vui lòng chọn Nguyện vọng 1.";
       if (flag(e)) return;
     }
@@ -204,7 +203,7 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
               </label>
             ))}
           </div>
-          <label data-field="intro" className="block"><Label required>Giới thiệu ngắn</Label><textarea className={input + errCls("intro")} rows={3} value={info.intro} onChange={(e) => { clearErr("intro"); setInfo({ ...info, intro: e.target.value }); }} maxLength={3000} /><ErrMsg k="intro" /></label>
+          <label data-field="intro" className="block"><Label required={false}>Giới thiệu ngắn (không bắt buộc)</Label><textarea className={input + errCls("intro")} rows={3} value={info.intro} onChange={(e) => { clearErr("intro"); setInfo({ ...info, intro: e.target.value }); }} maxLength={3000} /><ErrMsg k="intro" /></label>
           <div className="grid gap-4 md:grid-cols-2">
             {[0, 1].map((i) => (
               <label key={i} data-field={`choice${i}`} className="block"><Label required={i === 0}>{i === 0 ? "Nguyện vọng 1 (ưu tiên)" : "Nguyện vọng 2 (không bắt buộc)"}</Label>
