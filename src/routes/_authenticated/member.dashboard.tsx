@@ -14,6 +14,7 @@ import { SubmitReportDialog } from "@/components/portal/SubmitReportDialog";
 import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import { POINT_KIND, PRIORITY, TASK_STATUS, fmtDate, tierOf } from "@/lib/points";
+import { TierBadge, TierProgress } from "@/components/TierBadge";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -140,7 +141,7 @@ function MemberDashboard() {
                 <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="font-semibold">{deptName(m.department)}</dd></div>
                 <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="font-semibold">{m.position}</dd></div>
                 <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
-                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
+                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><TierBadge tierKey={tier.key} size={22} /><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
               </dl>
               <div className="flex flex-col items-center">
                 <label className="group relative h-[120px] w-[92px] cursor-pointer overflow-hidden rounded-md border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60">
@@ -159,6 +160,7 @@ function MemberDashboard() {
             <p className="text-xs portal-ink-muted">Điểm cống hiến · Credits</p>
             <p className="text-3xl font-bold text-gold">{m.contribution_points.toLocaleString("vi-VN")} <span className="text-base font-medium portal-ink-muted">điểm</span></p>
           </div>
+          <TierProgress points={m.contribution_points} />
           <button onClick={downloadCard} className="portal-ink mt-3 inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><Download className="h-4 w-4" />Tải thẻ ảnh</button>
           </div>
 
