@@ -355,6 +355,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           expiry_date: string | null
+          file_name: string
+          file_path: string
           holder_name: string
           id: string
           issue_date: string
@@ -366,6 +368,7 @@ export type Database = {
           revoked_reason: string
           status: string
           updated_at: string
+          verify_token: string
         }
         Insert: {
           certificate_code: string
@@ -374,6 +377,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           expiry_date?: string | null
+          file_name?: string
+          file_path?: string
           holder_name: string
           id?: string
           issue_date?: string
@@ -385,6 +390,7 @@ export type Database = {
           revoked_reason?: string
           status?: string
           updated_at?: string
+          verify_token?: string
         }
         Update: {
           certificate_code?: string
@@ -393,6 +399,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           expiry_date?: string | null
+          file_name?: string
+          file_path?: string
           holder_name?: string
           id?: string
           issue_date?: string
@@ -404,6 +412,7 @@ export type Database = {
           revoked_reason?: string
           status?: string
           updated_at?: string
+          verify_token?: string
         }
         Relationships: [
           {
@@ -1210,6 +1219,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      _fold_vi: { Args: { _t: string }; Returns: string }
       adjust_points: {
         Args: {
           _delta: number
@@ -1313,6 +1323,23 @@ export type Database = {
           program_name: string
           revoked_at: string
           status: string
+        }[]
+      }
+      verify_certificate_v2: {
+        Args: { _code: string; _name?: string; _token?: string }
+        Returns: {
+          certificate_code: string
+          certificate_type: string
+          classification: string
+          expiry_date: string
+          has_file: boolean
+          holder_name: string
+          issue_date: string
+          issuer: string
+          program_name: string
+          revoked_at: string
+          status: string
+          verify_token: string
         }[]
       }
     }
