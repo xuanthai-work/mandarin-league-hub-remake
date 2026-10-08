@@ -118,14 +118,21 @@ function CreateDrawer({ onClose, presetMemberId }: { onClose: () => void; preset
   const [v, setV] = useState({ memberId: presetMemberId ?? "", full_name: "", phone: "", email: "", password: randomPassword(), department: "executive", position: "Co-founder", access: "member" as AccessLevel, permissions: PERMISSION_TEMPLATES.member as string[], status: "active" as AccountStatus, mustChange: true });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [done, setDone] = useState(false);
   const set = (p: Partial<typeof v>) => setV((s) => ({ ...s, ...p }));
-  const pick = (id: string) => { const m = members?.find((x) => x.id === id); set({ memberId: id, ...(m ? { email: m.email, department: m.department, position: m.position } : {}) }); };
+  const pick = (id: string) => { const m = members?.find((x) => x.id === id); set({ memberId: id, ...(m ? { email: m.email || v.email, department: m.department, position: m.position } : {}) }); };
 
   const submit = async () => {
     setBusy(true); setErr("");
+    const email = (v.email ?? "").replace(/[\s\u200B-\u200D\uFEFF]/g, "").toLowerCase();
+    if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { setErr("Email đăng nhập không hợp lệ. Vui lòng nhập dạng ten@gmail.com."); setBusy(false); return; }
+    if (!v.memberId && v.full_name.trim().length < 2) { setErr("Vui lòng nhập Họ và tên (ít nhất 2 ký tự)."); setBusy(false); return; }
+    if (v.password.length < 8) { setErr("Mật khẩu tạm thời cần ít nhất 8 ký tự."); setBusy(false); return; }
     try {
-      await create({ data: { memberId: v.memberId || undefined, newMember: v.memberId ? undefined : { full_name: v.full_name, phone: v.phone }, email: v.email, password: v.password, department: v.department, position: v.position, access: v.access, permissions: v.permissions, status: v.status, mustChange: v.mustChange } });
-      qc.invalidateQueries({ queryKey: ["admin-accounts"] }); qc.invalidateQueries({ queryKey: ["admin-members"] }); setDone(true);
-    } catch (e) { setErr((e as Error).message); }
+      await create({ data: { memberId: v.memberId || undefined, newMember: v.memberId ? undefined : { full_name: v.full_name, phone: v.phone }, email, password: v.password, department: v.department, position: v.position, access: v.access, permissions: v.permissions, status: v.status, mustChange: v.mustChange } });
+      set({ email }); qc.invalidateQueries({ queryKey: ["admin-accounts"] }); qc.invalidateQueries({ queryKey: ["admin-members"] }); setDone(true);
+    } catch (e) {
+      const msg = (e as Error).message;
+      setErr(msg.trim().startsWith("[") ? "Thông tin chưa hợp lệ, vui lòng kiểm tra Email, Họ tên và Mật khẩu." : msg);
+    }
     setBusy(false);
   };
 
