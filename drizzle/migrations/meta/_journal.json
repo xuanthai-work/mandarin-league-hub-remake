@@ -127,6 +127,13 @@
       "when": 1791423566856,
       "tag": "0017_task_assigner_point_actor",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791424714416,
+      "tag": "0018_activities_module",
+      "breakpoints": true
     }
   ]
 }

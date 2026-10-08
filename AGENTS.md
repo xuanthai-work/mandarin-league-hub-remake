@@ -28,3 +28,4 @@
 - Programs (`courses` table) carry show_in_courses / show_in_activities flags so one record feeds both /courses and /activities without duplicates.
 - Deputy heads use their own `deputy_head` role that `my_head_department()` treats like a head, so department-scoped rules cover both without granting admin rights.
 - AI onboarding plans are generated once by an authenticated server function and stored in `onboarding_plans` (read-only to managers and the member), so reopening a plan never spends AI calls again.
+- Activities live in `activities` (soft delete, public reads published/cancelled rows) with registrations coded TML-ACT-YYMM-NNNN by sequence default; public submits only via a server function, managers are admin or Comms heads, and a trigger writes an append-only `activity_audit_logs` row so history cannot be spoofed. Education programs are never copied in — /activities reads `courses.show_in_activities` directly.
