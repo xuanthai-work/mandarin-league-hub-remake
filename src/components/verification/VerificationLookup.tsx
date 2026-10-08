@@ -222,18 +222,40 @@ function HskResult({ record }: { record: HskRecord }) {
 }
 
 function CertificateResult({ record }: { record: CertificateRecord }) {
+  const [qr, setQr] = useState("");
+  const link = typeof window !== "undefined" ? `${window.location.origin}/verify/certificate/${record.verificationId}` : "";
+  useEffect(() => { if (link) QRCode.toDataURL(link, { margin: 0, width: 180 }).then(setQr); }, [link]);
+  const copy = async () => { await navigator.clipboard.writeText(link); toast.success("Đã sao chép liên kết xác thực"); };
   return (
-    <ResultShell>
-      <ResultHeader title="Chứng nhận hợp lệ" subtitle="CERTIFICATE VERIFIED" />
-      <div className="grid gap-5 p-5 sm:grid-cols-2 md:p-8">
-        <Detail icon={UserRound} label="Người được chứng nhận" value={record.holderName} />
-        <Detail icon={Award} label="Chương trình" value={record.courseName} />
-        <Detail icon={Check} label="Kết quả" value={record.level} />
-        <Detail icon={CalendarDays} label="Ngày phát hành" value={formatVerificationDate(record.issueDate)} />
-        <Detail icon={ShieldCheck} label="Mã chứng nhận" value={record.verificationId} mono />
-        <Detail icon={ShieldCheck} label="Đơn vị phát hành" value={record.issuer} />
+    <div className="print-certificate">
+      <div className="relative overflow-hidden border-[3px] border-primary-deep bg-card p-2 shadow-xl">
+        <div className="relative border-2 border-gold/70 px-5 py-8 text-center md:px-12 md:py-12">
+          {record.isDemo !== false && <span className="absolute right-3 top-3 rounded-sm bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-foreground">DEMO DATA</span>}
+          <div className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><CheckCircle2 className="h-4 w-4" /> CHỨNG NHẬN HỢP LỆ · VERIFIED</div>
+          <div className="mt-5 text-xs font-bold uppercase tracking-[0.3em] text-primary">The Mandarin League · 汉语联盟</div>
+          <h2 className="mt-2 text-2xl font-extrabold text-primary-deep md:text-3xl">{record.typeLabel ?? "Chứng nhận"}</h2>
+          <p className="mt-6 text-sm text-muted-foreground">Trân trọng chứng nhận</p>
+          <p className="mt-2 font-serif text-3xl font-bold text-primary-deep md:text-4xl">{record.holderName || "Không công khai"}</p>
+          <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground">đã {record.level ? <b className="text-foreground">{record.level.toLowerCase()}</b> : "tham gia"} chương trình</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{record.courseName}</p>
+          <div className="mt-8 grid items-end gap-6 border-t border-border pt-6 text-left sm:grid-cols-[1fr_auto_auto]">
+            <div className="space-y-3">
+              <Detail icon={ShieldCheck} label="Mã chứng nhận" value={record.verificationId} mono />
+              <Detail icon={CalendarDays} label="Ngày cấp" value={formatVerificationDate(record.issueDate) + (record.expiryDate ? ` · Hiệu lực đến ${formatVerificationDate(record.expiryDate)}` : " · Vĩnh viễn")} />
+              <Detail icon={Award} label="Đơn vị cấp" value={record.issuer} />
+            </div>
+            <div className="mx-auto flex h-24 w-24 flex-col items-center justify-center rounded-full border-4 border-double border-destructive/70 text-center text-destructive/80 -rotate-12">
+              <span className="text-[9px] font-bold tracking-widest">TML</span><ShieldCheck className="h-6 w-6" /><span className="text-[8px] font-bold">VERIFIED</span>
+            </div>
+            {qr && <img src={qr} alt="Mã QR xác thực" className="mx-auto h-24 w-24" />}
+          </div>
+        </div>
       </div>
-    </ResultShell>
+      <div className="mt-4 flex flex-wrap justify-center gap-2 print:hidden">
+        <Button variant="outline" onClick={copy}><Copy /> Sao chép liên kết</Button>
+        <Button variant="outline" onClick={() => window.print()}><Printer /> In / Xuất PDF</Button>
+      </div>
+    </div>
   );
 }
 
