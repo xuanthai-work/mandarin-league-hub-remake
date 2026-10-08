@@ -2,6 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { Menu, X, Mail, Facebook, Youtube, MapPin, Lock } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
+import { useT } from "@/lib/i18n";
+import type { DictKey } from "@/lib/i18n/dict";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export const NAV = [
   { to: "/", label: "Trang chủ" },
@@ -30,6 +33,7 @@ export const CONTACT = {
 
 function Header() {
   const [open, setOpen] = useState(false);
+  const { t } = useT();
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
@@ -37,7 +41,7 @@ function Header() {
           <img src={logo.url} alt="The Mandarin League" className="h-10 w-10 rounded-full border border-gold/60 bg-background object-cover shadow-sm md:h-12 md:w-12" />
           <div className="leading-tight">
             <div className="text-sm font-bold tracking-wide text-primary-deep md:text-base">THE MANDARIN LEAGUE</div>
-            <div className="text-[11px] text-muted-foreground md:text-xs">Liên Đoàn Hán Ngữ · 普通话联盟</div>
+            <div className="text-[11px] text-muted-foreground md:text-xs">{t("brand.sub")}</div>
           </div>
         </Link>
         <nav className="hidden items-center gap-1 lg:flex">
@@ -49,19 +53,21 @@ function Header() {
               className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground"
               activeProps={{ className: "text-primary bg-accent" }}
             >
-              {n.label}
+              {t(`nav.${n.to}` as DictKey)}
             </Link>
           ))}
         </nav>
+        <LanguageSwitcher className="hidden lg:inline-flex" />
         <Link
           to="/join"
           className="hidden rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 lg:inline-flex"
         >
-          Tham gia TML
+          {t("cta.join")}
         </Link>
-        <button className="rounded-md p-2 lg:hidden" onClick={() => setOpen(!open)} aria-label="Mở menu">
+        <div className="flex items-center gap-2 lg:hidden"><LanguageSwitcher />
+        <button className="rounded-md p-2" onClick={() => setOpen(!open)} aria-label={t("menu.open")}>
           {open ? <X /> : <Menu />}
-        </button>
+        </button></div>
       </div>
       {open && (
         <nav className="border-t border-border bg-background px-4 py-3 lg:hidden">
@@ -74,11 +80,11 @@ function Header() {
               className="block rounded-md px-3 py-2.5 text-sm font-medium"
               activeProps={{ className: "text-primary bg-accent" }}
             >
-              {n.label}
+              {t(`nav.${n.to}` as DictKey)}
             </Link>
           ))}
           <Link to="/join" onClick={() => setOpen(false)} className="mt-2 block rounded-full bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground">
-            Tham gia TML
+            {t("cta.join")}
           </Link>
         </nav>
       )}
@@ -87,6 +93,7 @@ function Header() {
 }
 
 function Footer() {
+  const { t } = useT();
   return (
     <footer className="mt-24 bg-primary-deep text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
@@ -100,31 +107,31 @@ function Footer() {
             </div>
           </div>
           <p className="mt-5 max-w-md text-sm leading-relaxed opacity-80">
-            {TAGLINE}
+            {t("tagline")}
           </p>
         </div>
         <div>
-          <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">Khám phá</div>
+          <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{t("footer.explore")}</div>
           <ul className="space-y-2 text-sm">
             {[...NAV.slice(1), ...FOOTER_EXTRA].map((n) => (
-              <li key={n.to}><Link to={n.to} className="opacity-85 hover:opacity-100 hover:underline">{n.label}</Link></li>
+              <li key={n.to}><Link to={n.to} className="opacity-85 hover:opacity-100 hover:underline">{t(`nav.${n.to}` as DictKey)}</Link></li>
             ))}
           </ul>
         </div>
         <div>
-          <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">Liên hệ</div>
+          <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{t("footer.contact")}</div>
           <ul className="space-y-3 text-sm opacity-90">
             <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${CONTACT.email}`} className="hover:underline">{CONTACT.email}</a></li>
             <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={CONTACT.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
             <li className="flex items-center gap-2"><Youtube className="h-4 w-4" /><a href={CONTACT.youtube} target="_blank" rel="noreferrer" className="hover:underline">YouTube</a></li>
-            <li className="flex items-center gap-2"><MapPin className="h-4 w-4" />Hoạt động trực tuyến</li>
+            <li className="flex items-center gap-2"><MapPin className="h-4 w-4" />{t("footer.online")}</li>
           </ul>
         </div>
       </div>
       <div className="border-t border-primary-foreground/15 py-5 text-center text-xs">
-        <span className="opacity-70">© {new Date().getFullYear()} The Mandarin League – Liên Đoàn Hán Ngữ</span>
+        <span className="opacity-70">© {new Date().getFullYear()} {t("footer.rights")}</span>
         <span className="mx-2 opacity-40">·</span>
-        <Link to="/login" className="inline-flex items-center gap-1 opacity-60 transition hover:opacity-100 hover:underline"><Lock className="h-3 w-3" />Cổng nội bộ</Link>
+        <Link to="/login" className="inline-flex items-center gap-1 opacity-60 transition hover:opacity-100 hover:underline"><Lock className="h-3 w-3" />{t("footer.portal")}</Link>
       </div>
     </footer>
   );
@@ -153,13 +160,14 @@ export function PageHero({ eyebrow, title, desc }: { eyebrow: string; title: str
 }
 
 export function ComingSoon({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
+  const { t } = useT();
   return (
     <>
       <PageHero eyebrow={eyebrow} title={title} desc={desc} />
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-6">
         <div className="rounded-2xl border border-dashed border-primary/40 bg-accent/40 p-10 text-center">
           <div className="font-han text-3xl text-primary">敬请期待</div>
-          <p className="mt-2 text-muted-foreground">Trang này đang được xây dựng và sẽ ra mắt trong giai đoạn tiếp theo.</p>
+          <p className="mt-2 text-muted-foreground">{t("soon.text")}</p>
         </div>
       </div>
     </>

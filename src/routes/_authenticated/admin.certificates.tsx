@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ban, Download, ExternalLink, Paperclip, Pencil, Plus, RotateCcw, Sparkles } from "lucide-react";
+import { Ban, Download, ExternalLink, Paperclip, Pencil, Plus, RotateCcw, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { CERT_TYPES, normalizeCode } from "@/lib/certificates";
+import { extractCertificate } from "@/lib/certificate-extract.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/certificates")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Chứng nhận | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -30,6 +32,33 @@ function CertificatesPage() {
   const [edit, setEdit] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [extracting, setExtracting] = useState(false);
+  const [aiNote, setAiNote] = useState("");
+  const extractFn = useServerFn(extractCertificate);
+  const runExtract = async () => {
+    if (!file || !edit) return;
+    setExtracting(true); setAiNote("");
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer());
+      let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      const r = await extractFn({ data: { base64: btoa(bin), mediaType: file.type as "application/pdf", allowedTypes: Object.keys(CERT_TYPES) } });
+      const code = r.certificate_code && /^[A-Z0-9_-]{3,50}$/.test(r.certificate_code) ? r.certificate_code : "";
+      setEdit((e) => e && ({
+        ...e,
+        holder_name: r.holder_name || e.holder_name,
+        program_name: r.program_name || e.program_name,
+        certificate_type: r.certificate_type || e.certificate_type,
+        classification: r.classification || e.classification,
+        issue_date: r.issue_date || e.issue_date,
+        issuer: r.issuer || e.issuer,
+        certificate_code: code || e.certificate_code,
+        notes: r.holder_name_zh && !e.notes.includes(r.holder_name_zh) ? `${e.notes ? e.notes + "\n" : ""}Tên chữ Hán: ${r.holder_name_zh}` : e.notes,
+      }));
+      setAiNote(`AI đã điền sẵn${r.language ? ` (ngôn ngữ: ${r.language})` : ""}${r.holder_name_zh ? ` · tên chữ Hán: ${r.holder_name_zh}` : ""}. Vui lòng kiểm tra lại trước khi lưu.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI không đọc được tệp");
+    } finally { setExtracting(false); }
+  };
   const pickFile = (f: File | undefined) => {
     if (!f) return;
     if (!["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(f.type)) { toast.error("Chỉ nhận PDF, PNG, JPG hoặc WEBP"); return; }
@@ -166,7 +195,11 @@ function CertificatesPage() {
                   <span className="flex-1 truncate text-xs text-muted-foreground">{file ? `${file.name} · ${(file.size / 1024).toFixed(0)}KB` : edit.file_path ? `Đã đính kèm: ${edit.file_name} — chọn tệp khác để thay` : "Kéo thả hoặc bấm để chọn tệp"}</span>
                   <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => pickFile(e.target.files?.[0])} />
                 </label>
-                {(file || edit.file_path) && <button type="button" onClick={() => { setFile(null); setEdit({ ...edit, file_path: "", file_name: "" }); }} className="mt-1 text-xs text-destructive hover:underline">Gỡ tệp đính kèm</button>}
+                <div className="mt-1 flex flex-wrap items-center gap-3">
+                  {file && <button type="button" disabled={extracting} onClick={runExtract} className="inline-flex items-center gap-1.5 rounded-lg bg-gold/20 px-3 py-1.5 text-xs font-semibold text-primary-deep hover:bg-gold/30 disabled:opacity-60"><Wand2 className="h-3.5 w-3.5" />{extracting ? "AI đang đọc…" : "AI đọc & điền sẵn"}</button>}
+                  {(file || edit.file_path) && <button type="button" onClick={() => { setFile(null); setEdit({ ...edit, file_path: "", file_name: "" }); }} className="text-xs text-destructive hover:underline">Gỡ tệp đính kèm</button>}
+                </div>
+                {aiNote && <p className="mt-1 rounded-md bg-accent px-2 py-1 text-xs text-accent-foreground">{aiNote}</p>}
               </div>
               <label className="text-sm sm:col-span-2">Ghi chú nội bộ (không công khai)<textarea rows={2} className={inp} value={edit.notes} onChange={(e) => setEdit({ ...edit, notes: e.target.value })} /></label>
             </div>
