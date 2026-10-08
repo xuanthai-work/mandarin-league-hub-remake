@@ -725,10 +725,12 @@ export type Database = {
           candidate_name: string
           candidate_name_zh: string
           change_reason: string
+          course_name: string
           created_at: string
           created_by: string | null
           exam_date: string
           exam_session: string
+          hsk_class_id: string | null
           id: string
           issuer: string
           level: string
@@ -743,6 +745,9 @@ export type Database = {
           revoked_reason: string
           speaking_score: number | null
           status: string
+          study_end: string | null
+          study_start: string | null
+          teacher_id: string | null
           total_score: number
           updated_at: string
           verify_token: string
@@ -753,10 +758,12 @@ export type Database = {
           candidate_name: string
           candidate_name_zh?: string
           change_reason?: string
+          course_name?: string
           created_at?: string
           created_by?: string | null
           exam_date?: string
           exam_session?: string
+          hsk_class_id?: string | null
           id?: string
           issuer?: string
           level: string
@@ -771,6 +778,9 @@ export type Database = {
           revoked_reason?: string
           speaking_score?: number | null
           status?: string
+          study_end?: string | null
+          study_start?: string | null
+          teacher_id?: string | null
           total_score?: number
           updated_at?: string
           verify_token?: string
@@ -781,10 +791,12 @@ export type Database = {
           candidate_name?: string
           candidate_name_zh?: string
           change_reason?: string
+          course_name?: string
           created_at?: string
           created_by?: string | null
           exam_date?: string
           exam_session?: string
+          hsk_class_id?: string | null
           id?: string
           issuer?: string
           level?: string
@@ -799,6 +811,9 @@ export type Database = {
           revoked_reason?: string
           speaking_score?: number | null
           status?: string
+          study_end?: string | null
+          study_start?: string | null
+          teacher_id?: string | null
           total_score?: number
           updated_at?: string
           verify_token?: string
@@ -806,10 +821,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "hsk_results_hsk_class_id_fkey"
+            columns: ["hsk_class_id"]
+            isOneToOne: false
+            referencedRelation: "hsk_classes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "hsk_results_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hsk_results_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -1441,6 +1470,7 @@ export type Database = {
       set_my_visibility: { Args: { _public: boolean }; Returns: undefined }
       suggest_certificate_code: { Args: never; Returns: string }
       suggest_hsk_code: { Args: never; Returns: string }
+      suggest_hsk_code_v2: { Args: { _prefix?: string }; Returns: string }
       update_my_profile: {
         Args: { _avatar_path: string; _full_name: string }
         Returns: undefined
@@ -1495,6 +1525,34 @@ export type Database = {
           revoked_at: string
           speaking_score: number
           status: string
+          total_score: number
+          verify_token: string
+          writing_score: number
+        }[]
+      }
+      verify_hsk_v2: {
+        Args: { _code: string; _name?: string; _token?: string }
+        Returns: {
+          candidate_code: string
+          candidate_name: string
+          candidate_name_zh: string
+          class_name: string
+          course_name: string
+          exam_date: string
+          exam_session: string
+          issuer: string
+          level: string
+          listening_score: number
+          max_score: number
+          pass_score: number
+          passed: boolean
+          reading_score: number
+          revoked_at: string
+          speaking_score: number
+          status: string
+          study_end: string
+          study_start: string
+          teacher_name: string
           total_score: number
           verify_token: string
           writing_score: number

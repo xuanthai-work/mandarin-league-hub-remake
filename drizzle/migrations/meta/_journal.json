@@ -162,6 +162,13 @@
       "when": 1791440802647,
       "tag": "0022_hsk_results",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791442767394,
+      "tag": "0023_hsk_upgrade_codes_course_teacher",
+      "breakpoints": true
     }
   ]
 }
