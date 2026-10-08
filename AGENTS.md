@@ -12,7 +12,7 @@
 ## Architecture decisions
 
 - Keep public verification domain types, demo records, and Zod validation in one client-safe module so Lovable Cloud can replace the data source later without rebuilding the UI.
-- Store each public content group (departments, courses, activities, news, partners, members) as typed accessors in src/lib/data/* so Lovable Cloud can replace demo data without UI changes.
+- Public content groups use typed accessors in src/lib/data/* so data sources can change without UI changes.
 - Recruitment (periods, positions, topics, questions, applications) lives in Lovable Cloud tables; public submissions go through a server function that re-validates every rule with the admin client, so the browser is never trusted.
 - Applicant files upload via server-issued signed URLs into a private bucket; only admins can read them.
 - Internal accounts are created only by admins through server functions using the admin auth API; there is no public sign-up, and suspended/disabled status is enforced with an auth ban so blocked users cannot sign in.
@@ -35,4 +35,4 @@
 - HSK results live in `hsk_results` (admin-only RLS); triggers compute totals/pass and append `hsk_score_audits`; public reads only via security-definer `verify_hsk()` (code+name or token), so scores can't be faked or enumerated.
 - Admin menu comes from role+department (src/lib/admin-permissions.ts) mirroring RLS helpers; a news trigger lets only comms heads/admin publish, so UI and DB agree and members can't self-publish.
 - Public submit/lookup forms need a server-verified reCAPTCHA token; QR-token lookups skip it so QR links keep working.
-- Member benefits (shared Premium accounts) live in `benefits`/`member_benefits` (admin-only RLS); members read only via security-definer `my_benefits()`/`benefit_access()`, so credentials never leak to ineligible users.
+- Member benefits (shared Premium accounts) live in `benefits`/`member_benefits` (admin-only RLS); members read via definer RPCs only, so credentials never leak.
