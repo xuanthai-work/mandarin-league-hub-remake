@@ -16,12 +16,13 @@ type Row = {
   exam_date: string; exam_session: string; listening_score: number | null; reading_score: number | null;
   writing_score: number | null; speaking_score: number | null; total_score: number; max_score: number;
   passed: boolean; issuer: string; status: string; revoked_reason: string; verify_token: string; notes: string; member_id: string | null;
+  hsk_class_id: string | null; teacher_id: string | null; course_name: string; study_start: string | null; study_end: string | null;
 };
-type Draft = Pick<Row, "candidate_code" | "candidate_name" | "candidate_name_zh" | "level" | "exam_date" | "exam_session" | "listening_score" | "reading_score" | "writing_score" | "speaking_score" | "issuer" | "notes" | "member_id"> & { id?: string; change_reason: string };
+type Draft = Pick<Row, "candidate_code" | "candidate_name" | "candidate_name_zh" | "level" | "exam_date" | "exam_session" | "listening_score" | "reading_score" | "writing_score" | "speaking_score" | "issuer" | "notes" | "member_id" | "hsk_class_id" | "teacher_id" | "course_name" | "study_start" | "study_end"> & { id?: string; change_reason: string };
 const today = () => new Date().toISOString().slice(0, 10);
-const EMPTY: Draft = { candidate_code: "", candidate_name: "", candidate_name_zh: "", level: "HSK3", exam_date: today(), exam_session: "", listening_score: null, reading_score: null, writing_score: null, speaking_score: null, issuer: "The Mandarin League", notes: "", member_id: null, change_reason: "" };
+const EMPTY: Draft = { candidate_code: "", candidate_name: "", candidate_name_zh: "", level: "HSK3", exam_date: today(), exam_session: "", listening_score: null, reading_score: null, writing_score: null, speaking_score: null, issuer: "The Mandarin League", notes: "", member_id: null, hsk_class_id: null, teacher_id: null, course_name: "", study_start: null, study_end: null, change_reason: "" };
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-const SKILL_LABEL = { listening: "Nghe 听力", reading: "Đọc 阅读", writing: "Viết 书写", speaking: "Khẩu ngữ 口语" } as const;
+const SKILL_LABEL = { listening: "Nghe 听力", reading: "Đọc 阅读", writing: "Viết 书写", speaking: "Nói 口语" } as const;
 const scoreKey = (s: keyof typeof SKILL_LABEL) => `${s}_score` as const;
 
 function HskAdminPage() {
@@ -32,8 +33,12 @@ function HskAdminPage() {
   const [edit, setEdit] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [historyOf, setHistoryOf] = useState<Row | null>(null);
+  const [prefix, setPrefix] = useState<string>("TMLHSK");
+  const [customCode, setCustomCode] = useState(false);
 
   const { data, isLoading } = useQuery({ queryKey: ["admin-hsk"], queryFn: async () => ((await supabase.from("hsk_results").select("*").order("created_at", { ascending: false })).data ?? []) as Row[] });
+  const { data: classes } = useQuery({ queryKey: ["admin-hsk-classes-pick"], queryFn: async () => (await supabase.from("hsk_classes").select("id, name, level, teacher_id, start_date, end_date").is("deleted_at", null).order("level")).data ?? [] });
+  const { data: teachers } = useQuery({ queryKey: ["admin-hsk-teachers-pick"], queryFn: async () => (await supabase.from("teachers").select("id, full_name").order("sort_order")).data ?? [] });
   const { data: audits } = useQuery({
     queryKey: ["admin-hsk-audit", historyOf?.id], enabled: !!historyOf,
     queryFn: async () => (await supabase.from("hsk_score_audits").select("*").eq("result_id", historyOf!.id).order("created_at", { ascending: false })).data ?? [],
@@ -42,11 +47,21 @@ function HskAdminPage() {
 
   const rows = (data ?? []).filter((r) => (!q || `${r.candidate_code} ${r.candidate_name} ${r.exam_session}`.toLowerCase().includes(q.toLowerCase())) && (!level || r.level === level) && (!status || r.status === status));
 
+  const genCode = async (p: string) => ((await supabase.rpc("suggest_hsk_code_v2", { _prefix: p })).data as string) ?? "";
   const openNew = async () => {
-    const { data: code } = await supabase.rpc("suggest_hsk_code");
-    setEdit({ ...EMPTY, exam_date: today(), candidate_code: code ?? "" });
+    setCustomCode(false);
+    setEdit({ ...EMPTY, exam_date: today(), candidate_code: await genCode(prefix) });
   };
-  const openEdit = (r: Row) => setEdit({ id: r.id, candidate_code: r.candidate_code, candidate_name: r.candidate_name, candidate_name_zh: r.candidate_name_zh, level: r.level, exam_date: r.exam_date, exam_session: r.exam_session, listening_score: r.listening_score, reading_score: r.reading_score, writing_score: r.writing_score, speaking_score: r.speaking_score, issuer: r.issuer, notes: r.notes, member_id: r.member_id, change_reason: "" });
+  const pickClass = (id: string) => {
+    const c = (classes ?? []).find((x) => x.id === id);
+    if (!edit) return;
+    setEdit({ ...edit, hsk_class_id: id || null, ...(c ? { level: `HSK${c.level}`, teacher_id: c.teacher_id ?? edit.teacher_id, study_start: c.start_date ?? edit.study_start, study_end: c.end_date ?? edit.study_end, course_name: edit.course_name || `HSK ${c.level}` } : {}) });
+  };
+  const downloadQr = async (r: Row) => {
+    const url = await QRCode.toDataURL(link(r), { margin: 2, width: 800, errorCorrectionLevel: "M" });
+    const a = document.createElement("a"); a.href = url; a.download = `QR-${r.candidate_code}.png`; a.click();
+  };
+  const openEdit = (r: Row) => { setCustomCode(false); setEdit({ id: r.id, candidate_code: r.candidate_code, candidate_name: r.candidate_name, candidate_name_zh: r.candidate_name_zh, level: r.level, exam_date: r.exam_date, exam_session: r.exam_session, listening_score: r.listening_score, reading_score: r.reading_score, writing_score: r.writing_score, speaking_score: r.speaking_score, issuer: r.issuer, notes: r.notes, member_id: r.member_id, hsk_class_id: r.hsk_class_id, teacher_id: r.teacher_id, course_name: r.course_name, study_start: r.study_start, study_end: r.study_end, change_reason: "" }); };
 
   const save = async (): Promise<void> => {
     if (!edit) return;
