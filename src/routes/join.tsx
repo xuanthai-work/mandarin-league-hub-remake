@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTr } from "@/lib/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, Award, BookOpen, Briefcase, CalendarDays, FileText, HeartHandshake, Network, Rocket, School, Search } from "lucide-react";
@@ -11,6 +11,7 @@ import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/join")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Tuyển thành viên", "Ứng tuyển vào một trong 8 Ban của The Mandarin League.") }),
+  validateSearch: (s: Record<string, unknown>): { ban?: string } => (typeof s["ban"] === "string" && /^[a-z_-]{2,30}$/.test(s["ban"]) ? { ban: s["ban"] } : {}),
   component: PJoin,
 });
 
@@ -22,6 +23,8 @@ const BENEFITS = [
 
 function PJoin() {
   const tr = useTr();
+  const { ban } = Route.useSearch();
+  useEffect(() => { if (ban) requestAnimationFrame(() => document.getElementById("apply-form")?.scrollIntoView({ behavior: "smooth", block: "start" })); }, [ban]);
   const [tab, setTab] = useState<"apply" | "lookup">("apply");
   const [code, setCode] = useState("");
   return (
@@ -53,7 +56,7 @@ function PJoin() {
               </button>
             ))}
           </div>
-          <div className="mt-6">{tab === "apply" ? <ApplicationForm onLookup={(c) => { setCode(c); setTab("lookup"); }} /> : <ApplicationLookup initial={code} />}</div>
+          <div id="apply-form" className="mt-6 scroll-mt-24">{tab === "apply" ? <ApplicationForm department={ban} onLookup={(c) => { setCode(c); setTab("lookup"); }} /> : <ApplicationLookup initial={code} />}</div>
         </section>
       </div>
     </>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -31,7 +31,7 @@ const Label = ({ children, required }: { children: React.ReactNode; required?: b
   <span className="text-sm font-medium">{children}{required && <span className="text-destructive"> *</span>}</span>
 );
 
-export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => void } = {}) {
+export function ApplicationForm({ onLookup, department }: { onLookup?: (code: string) => void; department?: string | undefined } = {}) {
   const { data, isLoading } = useQuery({ queryKey: ["open-recruitment"], queryFn: loadOpen });
   const upload = useServerFn(createApplicationUpload);
   const submit = useServerFn(submitApplication);
@@ -65,6 +65,11 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
   const ErrMsg = ({ k }: { k: string }) => errs[k] ? <span className="mt-1 block text-xs text-destructive">{errs[k]}</span> : null;
 
   const chosen = useMemo(() => choiceIds.filter(Boolean).map((id) => data?.positions.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p), [choiceIds, data]);
+  useEffect(() => {
+    if (!department || !data) return;
+    const first = data.positions.find((p) => p.department === department);
+    if (first) setChoiceIds((c) => (c[0] ? c : [first.id, c[1] ?? ""]));
+  }, [department, data]);
   const qsFor = (topicId: string) => (data?.questions ?? []).filter((q) => q.topic_id === topicId);
   const choiceTopics = (c: { department: string; position: string }) => (data?.topics ?? []).filter((t) => topicApplies(t, c));
   const commonTopics = (data?.topics ?? []).filter((t) => t.department == null);

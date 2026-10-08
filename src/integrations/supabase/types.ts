@@ -279,6 +279,63 @@ export type Database = {
           },
         ]
       }
+      benefits: {
+        Row: {
+          access_type: string
+          access_url: string
+          created_at: string
+          description: string
+          ends_on: string | null
+          grant_all: boolean
+          icon_key: string
+          id: string
+          is_enabled: boolean
+          login: string
+          min_points: number | null
+          name: string
+          secret: string
+          sort_order: number
+          updated_at: string
+          usage_note: string
+        }
+        Insert: {
+          access_type?: string
+          access_url?: string
+          created_at?: string
+          description?: string
+          ends_on?: string | null
+          grant_all?: boolean
+          icon_key?: string
+          id?: string
+          is_enabled?: boolean
+          login?: string
+          min_points?: number | null
+          name: string
+          secret?: string
+          sort_order?: number
+          updated_at?: string
+          usage_note?: string
+        }
+        Update: {
+          access_type?: string
+          access_url?: string
+          created_at?: string
+          description?: string
+          ends_on?: string | null
+          grant_all?: boolean
+          icon_key?: string
+          id?: string
+          is_enabled?: boolean
+          login?: string
+          min_points?: number | null
+          name?: string
+          secret?: string
+          sort_order?: number
+          updated_at?: string
+          usage_note?: string
+        }
+        Relationships: []
+      }
       candidate_applications: {
         Row: {
           admin_note: string
@@ -959,6 +1016,51 @@ export type Database = {
           },
         ]
       }
+      member_benefits: {
+        Row: {
+          benefit_id: string
+          created_at: string
+          ends_on: string | null
+          id: string
+          member_id: string
+          note: string
+          status: string
+        }
+        Insert: {
+          benefit_id: string
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          member_id: string
+          note?: string
+          status?: string
+        }
+        Update: {
+          benefit_id?: string
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          member_id?: string
+          note?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_benefits_benefit_id_fkey"
+            columns: ["benefit_id"]
+            isOneToOne: false
+            referencedRelation: "benefits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_benefits_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           application_id: string | null
@@ -1566,6 +1668,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      benefit_access: {
+        Args: { _benefit: string }
+        Returns: {
+          access_url: string
+          login: string
+          secret: string
+          usage_note: string
+        }[]
+      }
       can_manage_department: { Args: { _dept: string }; Returns: boolean }
       can_manage_partners: { Args: never; Returns: boolean }
       can_review_application: { Args: { _app: string }; Returns: boolean }
@@ -1614,6 +1725,19 @@ export type Database = {
         Returns: undefined
       }
       my_account: { Args: never; Returns: Json }
+      my_benefits: {
+        Args: never
+        Returns: {
+          access_type: string
+          description: string
+          ends_on: string
+          has_access: boolean
+          icon_key: string
+          id: string
+          name: string
+          status: string
+        }[]
+      }
       my_department: { Args: never; Returns: Json }
       my_head_department: { Args: never; Returns: string }
       my_member_department: { Args: never; Returns: string }

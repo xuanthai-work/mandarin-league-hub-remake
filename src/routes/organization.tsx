@@ -152,7 +152,7 @@ function POrganization() {
                   <Users className="h-4 w-4 text-primary" />{tr("Thành viên")}: {count(open.id) || tr("Đang cập nhật")}
                 </div>
               </div>
-              <Link to="/join" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+              <Link to="/join" search={{ ban: open.id }} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
                 {tr("Ứng tuyển vào Ban này")}<ArrowRight className="h-4 w-4" />
               </Link>
             </>

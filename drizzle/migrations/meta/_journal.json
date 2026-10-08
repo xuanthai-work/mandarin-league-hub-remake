@@ -197,6 +197,13 @@
       "when": 1791455261047,
       "tag": "0027_candidate_date_of_birth",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791457153860,
+      "tag": "0028_member_benefits",
+      "breakpoints": true
     }
   ]
 }

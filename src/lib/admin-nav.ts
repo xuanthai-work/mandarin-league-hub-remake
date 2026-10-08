@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, UserPlus, Users, ListChecks, Award, Image, Building2, GraduationCap,
-  BookOpen, CalendarDays, Newspaper, Handshake, BadgeCheck, FileCheck2, FileText, Settings, Megaphone, KeyRound,
+  BookOpen, CalendarDays, Newspaper, Handshake, BadgeCheck, FileCheck2, FileText, Settings, Megaphone, KeyRound, Gift,
 } from "lucide-react";
 
 export type AdminRole = "admin" | "department_head" | "deputy_head" | "member";
@@ -26,6 +26,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { slug: "accounts", label: "Tài khoản nội bộ", icon: KeyRound },
   { slug: "tasks", label: "Nhiệm vụ", icon: ListChecks },
   { slug: "contributions", label: "Điểm đóng góp", icon: Award },
+  { slug: "benefits", label: "Quyền lợi thành viên", icon: Gift },
   { slug: "photos", label: "Hình ảnh", icon: Image },
   { slug: "departments", label: "Ban", icon: Building2 },
   { slug: "teachers", label: "Giáo viên", icon: GraduationCap },
