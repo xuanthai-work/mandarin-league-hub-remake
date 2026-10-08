@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Upload } from "lucide-react";
@@ -43,6 +44,8 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [captcha, setCaptcha] = useState("");
+  const captchaRef = useRef<RecaptchaHandle>(null);
 
   const chosen = useMemo(() => choiceIds.filter(Boolean).map((id) => data?.positions.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p), [choiceIds, data]);
   const qsFor = (topicId: string) => (data?.questions ?? []).filter((q) => q.topic_id === topicId);
@@ -96,10 +99,11 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
     setError(null);
     if (missing(commonTopics)) return setError("Vui lòng trả lời các câu hỏi bắt buộc.");
     if (!consent) return setError("Vui lòng xác nhận thông tin cung cấp là chính xác.");
+    if (!captcha) return setError("Vui lòng tick ô \"Tôi không phải là người máy\" trước khi gửi.");
     setBusy("send");
     try {
-      const r = await submit({ data: { periodId: data.period.id, ...info, positionIds: chosen.map((c) => c.id), answers, cvPath, consent: true } });
-      if (r.ok) setDone(r.code); else setError(r.error);
+      const r = await submit({ data: { periodId: data.period.id, ...info, positionIds: chosen.map((c) => c.id), answers, cvPath, consent: true, captcha } });
+      if (r.ok) setDone(r.code); else { setError(r.error); captchaRef.current?.reset(); }
     } catch (e) { console.error(e); setError("Không gửi được hồ sơ, vui lòng thử lại sau ít phút."); }
     setBusy(null);
   };
@@ -207,6 +211,7 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
             </div>
           </div>
           <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span>Tôi xác nhận thông tin cung cấp là chính xác.<span className="text-destructive"> *</span></span></label>
+          <Recaptcha ref={captchaRef} onChange={setCaptcha} />
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Award,
@@ -31,6 +31,7 @@ import {
   type VerificationRecord,
 } from "@/lib/verification";
 import { lookupCertificate } from "@/lib/certificates";
+import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { lookupHsk } from "@/lib/hsk";
 import QRCode from "qrcode";
 import { Copy, Download, Printer } from "lucide-react";
@@ -56,6 +57,8 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
   const [state, setState] = useState<LookupState>({ type: "idle" });
 
   const [loading, setLoading] = useState(false);
+  const [captcha, setCaptcha] = useState("");
+  const captchaRef = useRef<RecaptchaHandle>(null);
   const verify = async (rawCode: string, token = "") => {
     const parsed = verificationCodeSchema.safeParse(rawCode);
     if (!parsed.success) {
@@ -70,9 +73,17 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
         setState({ type: "invalid", message: isHsk ? "Vui lòng nhập Họ và tên thí sinh để đối chiếu cùng mã." : "Vui lòng nhập Họ và tên người nhận để đối chiếu cùng mã chứng nhận." });
         return;
       }
+      if (!token && !captcha) {
+        setState({ type: "invalid", message: "Vui lòng tick ô \"Tôi không phải là người máy\" trước khi tra cứu." });
+        return;
+      }
       setLoading(true);
-      record = await (isHsk ? lookupHsk(parsed.data, name, token) : lookupCertificate(parsed.data, name, token)).catch(() => null);
+      let failed = "";
+      record = await (isHsk ? lookupHsk(parsed.data, name, token, token ? "" : captcha) : lookupCertificate(parsed.data, name, token, token ? "" : captcha))
+        .catch((e: Error) => { failed = e.message; return null; });
       setLoading(false);
+      if (!token) captchaRef.current?.reset();
+      if (failed) { setState({ type: "invalid", message: failed }); return; }
       if (record && record.kind === "certificate") record = { ...record, lookupName: name };
     }
     record = record ?? demo;
@@ -137,6 +148,7 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
               <ShieldCheck /> {loading ? "Đang kiểm tra…" : isHsk ? "Xác minh kết quả" : "Xác minh chứng nhận"}
             </Button>
           </div>
+          <div className="mt-4"><Recaptcha ref={captchaRef} onChange={setCaptcha} /></div>
           {(
             <div className="mt-4">
               <label htmlFor="cert-name" className="text-sm font-bold text-foreground">{isHsk ? "Họ và tên thí sinh" : "Họ và tên người nhận"}</label>
