@@ -33,6 +33,7 @@ function useCanPublish() {
 
 function ActivitiesAdmin() {
   const [tab, setTab] = useState<"list" | "regs" | "audit">("list");
+  const canPublish = useCanPublish();
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div>

@@ -1,36 +1,31 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { DemoBadge, EmptyState } from "@/components/site/ui";
-import { getArticle } from "@/lib/data/news";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { EmptyState } from "@/components/site/ui";
+import { fmtDate, usePublishedArticle } from "@/lib/news-db";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/news/$slug")({ staticData: { sitemap: true },
-  loader: ({ params }) => {
-    const article = getArticle(params.slug);
-    if (!article) throw notFound();
-    return { article };
-  },
-  head: ({ loaderData }) => ({
-    meta: loaderData ? [...pageMeta(loaderData.article.title, loaderData.article.summary).filter((m) => !("property" in m && m.property === "og:type")), { property: "og:type", content: "article" }] : [{ title: "Không tìm thấy bài viết" }, { name: "robots", content: "noindex" }],
-  }),
-  notFoundComponent: ArticleNotFound,
+export const Route = createFileRoute("/news/$slug")({ staticData: { sitemap: false },
+  head: () => ({ meta: [...pageMeta("Bài viết", "Bài viết chính thức của The Mandarin League.").filter((m) => !("property" in m && m.property === "og:type")), { property: "og:type", content: "article" }] }),
   component: PArticle,
 });
 
-function ArticleNotFound() {
-  return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy bài viết" /><div className="mt-6 text-center"><Link to="/news" className="font-semibold text-primary">← Tin tức</Link></div></div>;
-}
-
 function PArticle() {
-  const { article: a } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const q = usePublishedArticle(slug);
+  if (q.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang tải…</p>;
+  const a = q.data;
+  if (!a) return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy bài viết" /><div className="mt-6 text-center"><Link to="/news" className="font-semibold text-primary">← Tin tức</Link></div></div>;
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+      <title>{`${a.title} | The Mandarin League`}</title>
       <Link to="/news" className="text-sm font-medium text-primary">← Tin tức</Link>
-      <div className="mt-4 flex items-center gap-2 text-sm"><span className="font-semibold text-primary">{a.category}</span>{a.demo && <DemoBadge />}</div>
+      <div className="mt-4 text-sm font-semibold text-primary">{a.category}</div>
       <h1 className="mt-2 text-3xl font-bold text-primary-deep md:text-4xl">{a.title}</h1>
-      <div className="mt-2 text-sm text-muted-foreground">{a.author} · {a.date}</div>
-      <div className="grid-lines mt-6 flex h-56 items-center justify-center rounded-3xl bg-accent"><span className="font-han text-7xl text-primary/70">{a.glyph}</span></div>
-      <p className="mt-6 text-lg font-medium">{a.summary}</p>
-      <div className="mt-4 space-y-4 leading-relaxed text-muted-foreground">{a.body.map((p) => <p key={p}>{p}</p>)}</div>
+      <div className="mt-2 text-sm text-muted-foreground">{a.author_name} · {fmtDate(a.published_at)}</div>
+      {a.cover && <img src={a.cover} alt={a.title} className="mt-6 max-h-96 w-full rounded-3xl object-cover" />}
+      {a.summary && <p className="mt-6 text-lg font-medium">{a.summary}</p>}
+      <div className="mt-4 space-y-4 whitespace-pre-line leading-relaxed text-muted-foreground">
+        {a.content.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}
+      </div>
     </article>
   );
 }
