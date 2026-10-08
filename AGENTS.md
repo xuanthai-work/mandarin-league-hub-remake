@@ -35,3 +35,4 @@
 - HSK results live in `hsk_results` (admin-only RLS); triggers compute totals/pass and append `hsk_score_audits`; public reads only via security-definer `verify_hsk()` (code+name or token), so scores can't be faked or enumerated.
 - Admin menu comes from role+department (src/lib/admin-permissions.ts) mirroring RLS helpers; a news trigger lets only comms heads/admin publish, so UI and DB agree and members can't self-publish.
 - Public submit/lookup forms need a server-verified reCAPTCHA token; QR-token lookups skip it so QR links keep working.
+- Member benefits (shared Premium accounts) live in `benefits`/`member_benefits` (admin-only RLS); members read only via security-definer `my_benefits()`/`benefit_access()`, so credentials never leak to ineligible users.

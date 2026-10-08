@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Download, ExternalLink, Lock, LogOut, ShieldCheck } from "lucide-react";
 import { MyDepartment } from "@/components/portal/MyDepartment";
+import { MyBenefits } from "@/components/portal/MyBenefits";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
@@ -39,7 +40,7 @@ function MemberDashboard() {
   const avatar = useQuery({ queryKey: ["my-avatar", me.data?.member?.avatar_path], enabled: !!me.data?.member?.avatar_path,
     queryFn: async () => (await supabase.storage.from("avatars").createSignedUrl(me.data!.member!.avatar_path!, 3600)).data?.signedUrl ?? null });
   const canAdmin = !!me.data?.roles?.some((r) => r === "admin" || r === "department_head" || r === "deputy_head");
-  const [tab, setTab] = useState<"card" | "tasks" | "points" | "dept">("card");
+  const [tab, setTab] = useState<"card" | "tasks" | "points" | "dept" | "benefits">("card");
   const [qr, setQr] = useState("");
   const [barcode, setBarcode] = useState("");
   useEffect(() => { const c = me.data?.member?.member_code; if (!c) return;
@@ -107,7 +108,7 @@ function MemberDashboard() {
         </div>
       </div>
       <div className="mt-4 flex gap-2 overflow-x-auto border-b border-primary/30">
-        {([["card", "Thẻ & Hồ sơ"], ["tasks", "Nhiệm vụ"], ["points", "Lịch sử điểm"], ["dept", "Ban của tôi"]] as const).map(([k, l]) => (
+        {([["card", "Thẻ & Hồ sơ"], ["tasks", "Nhiệm vụ"], ["points", "Lịch sử điểm"], ["dept", "Ban của tôi"], ["benefits", "Quyền lợi"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-medium ${tab === k ? "border-gold text-gold" : "border-transparent portal-ink-muted"}`}>{l}</button>
         ))}
       </div>
@@ -230,6 +231,7 @@ function MemberDashboard() {
         </div>
       )}
       {tab === "dept" && <MyDepartment canManage={canAdmin} />}
+      {tab === "benefits" && <MyBenefits />}
       {reporting && <SubmitReportDialog title={reporting.title} onClose={() => setReporting(null)} onSubmit={(ev, n) => act(reporting.id, "submit", ev, n)} />}
     </div></div>
   );
