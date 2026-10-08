@@ -41,10 +41,10 @@ function Candidates() {
   }), [data, f]);
 
   const exportCsv = () => {
-    const head = ["Mã hồ sơ", "Họ tên", "Email", "Điện thoại", "Đơn vị", "Tiếng Trung", "HSK", "NV1", "NV2", "Trạng thái", "Ngày gửi"];
+    const head = ["Mã hồ sơ", "Họ tên", "Email", "Điện thoại", "Ngày sinh", "Đơn vị", "Tiếng Trung", "HSK", "NV1", "NV2", "Trạng thái", "Ngày gửi"];
     const rows = list.map((a) => {
       const ch = (a.choices ?? []) as Choice[];
-      return [a.code, a.full_name, a.email, a.phone, a.organization, a.chinese_level, a.hsk_level, ...[0, 1].map((i) => ch[i] ? `${deptName(ch[i].department)} — ${ch[i].position}` : ""), APP_STATUS[a.status], new Date(a.created_at).toLocaleString("vi-VN")];
+      return [a.code, a.full_name, a.email, a.phone, a.date_of_birth ? a.date_of_birth.split("-").reverse().join("/") : "", a.organization, a.chinese_level, a.hsk_level, ...[0, 1].map((i) => ch[i] ? `${deptName(ch[i].department)} — ${ch[i].position}` : ""), APP_STATUS[a.status], new Date(a.created_at).toLocaleString("vi-VN")];
     });
     const blob = new Blob(["\uFEFF" + [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
