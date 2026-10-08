@@ -169,6 +169,13 @@
       "when": 1791442767394,
       "tag": "0023_hsk_upgrade_codes_course_teacher",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791444637694,
+      "tag": "0024_news_partners_dynamic_permissions",
+      "breakpoints": true
     }
   ]
 }

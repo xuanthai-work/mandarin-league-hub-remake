@@ -982,6 +982,69 @@ export type Database = {
           },
         ]
       }
+      news_articles: {
+        Row: {
+          author_id: string | null
+          author_name: string
+          category: string
+          content: string
+          cover_path: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_featured: boolean
+          published_at: string | null
+          review_note: string
+          reviewer_id: string | null
+          reviewer_name: string
+          slug: string
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string
+          category?: string
+          content?: string
+          cover_path?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_featured?: boolean
+          published_at?: string | null
+          review_note?: string
+          reviewer_id?: string | null
+          reviewer_name?: string
+          slug: string
+          status?: string
+          summary?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string
+          category?: string
+          content?: string
+          cover_path?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_featured?: boolean
+          published_at?: string | null
+          review_note?: string
+          reviewer_id?: string | null
+          reviewer_name?: string
+          slug?: string
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       onboarding_plans: {
         Row: {
           created_at: string
@@ -1025,6 +1088,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partners: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string
+          field: string
+          id: string
+          is_active: boolean
+          logo_path: string
+          name: string
+          sort_order: number
+          updated_at: string
+          website_url: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          field?: string
+          id?: string
+          is_active?: boolean
+          logo_path?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+          website_url?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          field?: string
+          id?: string
+          is_active?: boolean
+          logo_path?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          website_url?: string
+        }
+        Relationships: []
       }
       point_transactions: {
         Row: {
@@ -1393,6 +1504,7 @@ export type Database = {
         Returns: undefined
       }
       can_manage_department: { Args: { _dept: string }; Returns: boolean }
+      can_manage_partners: { Args: never; Returns: boolean }
       can_review_application: { Args: { _app: string }; Returns: boolean }
       claim_invited_role: { Args: never; Returns: undefined }
       create_task: {
@@ -1427,6 +1539,7 @@ export type Database = {
         Returns: boolean
       }
       hsk_class_seats: { Args: { _class: string }; Returns: number }
+      is_dept_member: { Args: { _dept: string }; Returns: boolean }
       mark_password_changed: { Args: never; Returns: undefined }
       member_update_task: {
         Args: {
@@ -1440,6 +1553,7 @@ export type Database = {
       my_account: { Args: never; Returns: Json }
       my_department: { Args: never; Returns: Json }
       my_head_department: { Args: never; Returns: string }
+      my_member_department: { Args: never; Returns: string }
       my_member_id: { Args: never; Returns: string }
       public_org_chart: {
         Args: never
