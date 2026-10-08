@@ -20,6 +20,13 @@ function PointsPage() {
   const history = useQuery({ queryKey: ["points-history"], queryFn: async () =>
     (await supabase.from("point_transactions").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [] });
   const nameOf = (id: string) => members.data?.find((m) => m.id === id);
+  const [hf, setHf] = useState({ dept: "", member: "", kind: "", actor: "" });
+  const rowsH = (history.data ?? []).filter((t) => (!hf.member || t.member_id === hf.member) && (!hf.kind || t.kind === hf.kind) && (!hf.actor || t.actor_name === hf.actor) && (!hf.dept || nameOf(t.member_id)?.department === hf.dept));
+  const ym = new Date().toISOString().slice(0, 7);
+  const monthRows = rowsH.filter((t) => t.created_at.startsWith(ym));
+  const monthPlus = monthRows.filter((t) => t.delta > 0).reduce((s, t) => s + t.delta, 0);
+  const monthMinus = monthRows.filter((t) => t.delta < 0).reduce((s, t) => s + t.delta, 0);
+  const monthTasks = monthRows.filter((t) => t.kind === "task").length;
 
   const [f, setF] = useState({ member: "", kind: "attendance", amount: 5, reason: "" });
   const [err, setErr] = useState(""); const [msg, setMsg] = useState("");
@@ -77,11 +84,26 @@ function PointsPage() {
       </div>
 
       <section className="overflow-x-auto rounded-xl border border-border bg-card">
-        <h2 className="p-4 font-semibold">Lịch sử điểm</h2>
-        <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-secondary text-left text-xs text-muted-foreground"><tr>{["Thời gian", "Thành viên", "Loại", "Nội dung", "Điểm", "Số dư"].map((h) => <th key={h} className="p-3">{h}</th>)}</tr></thead>
+        <div className="flex flex-wrap items-center gap-2 p-4">
+          <h2 className="mr-auto font-semibold">Lịch sử điểm</h2>
+          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.dept} onChange={(e) => setHf({ ...hf, dept: e.target.value })}>
+            <option value="">Tất cả Ban</option>{[...new Set((members.data ?? []).map((m) => m.department))].map((d) => <option key={d} value={d}>{deptName(d)}</option>)}
+          </select>
+          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.member} onChange={(e) => setHf({ ...hf, member: e.target.value })}>
+            <option value="">Tất cả thành viên</option>{(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
+          </select>
+          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.kind} onChange={(e) => setHf({ ...hf, kind: e.target.value })}>
+            <option value="">Tất cả loại</option>{Object.entries(POINT_KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.actor} onChange={(e) => setHf({ ...hf, actor: e.target.value })}>
+            <option value="">Tất cả người duyệt</option>{[...new Set((history.data ?? []).map((t) => t.actor_name).filter(Boolean))].map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </div>
+        <p className="px-4 pb-2 text-xs text-muted-foreground">Tháng này: <b className="text-success">+{monthPlus}</b> · <b className="text-destructive">{monthMinus}</b> điểm · {monthTasks} nhiệm vụ được duyệt</p>
+        <table className="w-full min-w-[860px] text-sm">
+          <thead className="bg-secondary text-left text-xs text-muted-foreground"><tr>{["Thời gian", "Thành viên", "Loại", "Nội dung", "Điểm", "Số dư", "Người duyệt / Ghi nhận"].map((h) => <th key={h} className="p-3">{h}</th>)}</tr></thead>
           <tbody>
-            {(history.data ?? []).map((t) => (
+            {rowsH.map((t) => (
               <tr key={t.id} className="border-t border-border">
                 <td className="p-3 text-xs">{new Date(t.created_at).toLocaleString("vi-VN")}</td>
                 <td className="p-3">{nameOf(t.member_id)?.full_name ?? "—"}</td>
@@ -89,9 +111,10 @@ function PointsPage() {
                 <td className="p-3">{t.reason}</td>
                 <td className={`p-3 font-bold ${t.delta >= 0 ? "text-success" : "text-destructive"}`}>{t.delta > 0 ? `+${t.delta}` : t.delta}</td>
                 <td className="p-3">{t.balance_after}</td>
+                <td className="p-3 text-xs">{t.actor_name || "—"}</td>
               </tr>
             ))}
-            {history.data?.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Chưa có lịch sử.</td></tr>}
+            {rowsH.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Chưa có lịch sử.</td></tr>}
           </tbody>
         </table>
       </section>
