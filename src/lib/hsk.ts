@@ -1,3 +1,5 @@
+import type { Database } from "@/integrations/supabase/types";
+import { verifyLookup } from "@/lib/verify-lookup.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { HskRecord } from "@/lib/verification";
 
@@ -26,9 +28,18 @@ export function hskRule(level: string) {
 
 const num = (v: number | null) => (typeof v === "number" ? v : undefined);
 
-export async function lookupHsk(code: string, name = "", token = ""): Promise<HskRecord | null> {
-  const { data, error } = await supabase.rpc("verify_hsk_v2", { _code: code, _name: name, _token: token });
-  if (error || !data?.length) return null;
+export async function lookupHsk(code: string, name = "", token = "", captcha = ""): Promise<HskRecord | null> {
+  let data: Database["public"]["Functions"]["verify_hsk_v2"]["Returns"] | null;
+  if (captcha) {
+    const r = await verifyLookup({ data: { kind: "hsk", code, name, captcha } });
+    if (!r.ok) throw new Error(r.error);
+    data = r.rows as typeof data;
+  } else {
+    const res = await supabase.rpc("verify_hsk_v2", { _code: code, _name: name, _token: token });
+    if (res.error) return null;
+    data = res.data;
+  }
+  if (!data?.length) return null;
   const r = data[0]!;
   const rec: HskRecord = {
     kind: "hsk",
