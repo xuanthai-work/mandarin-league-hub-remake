@@ -3,7 +3,6 @@ import type { AnyRoute } from "@tanstack/react-router";
 import { getRouterInstance } from "@tanstack/react-start";
 import { getCourses } from "@/lib/data/courses";
 import { getNews } from "@/lib/data/news";
-import { getActivities } from "@/lib/data/activities";
 import { isSitemapRouteIncluded, sitemapPathForLocation, sitemapStaticPaths, sitemapXML, type SitemapEntry } from "@/lib/sitemap";
 
 const BASE_URL = "https://themandarinleague.bond";
@@ -18,7 +17,6 @@ export const Route = createFileRoute("/sitemap.xml")({
         const dynamic: Array<[string, string, string, string[]]> = [
           ["/courses/hsk/$courseId", "/courses/hsk/$courseId", "courseId", getCourses().map((c) => c.id)],
           ["/news/$slug", "/news/$slug", "slug", getNews().map((n) => n.slug)],
-          ["/activities/$activityId", "/activities/$activityId", "activityId", getActivities().map((a) => a.id)],
         ];
         for (const [routeId, to, param, values] of dynamic) {
           if (!isSitemapRouteIncluded((router.routesById as unknown as Record<string, AnyRoute>)[routeId])) continue;
