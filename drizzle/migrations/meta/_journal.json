@@ -155,6 +155,13 @@
       "when": 1791438118522,
       "tag": "0021_certificate_files_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791440802647,
+      "tag": "0022_hsk_results",
+      "breakpoints": true
     }
   ]
 }

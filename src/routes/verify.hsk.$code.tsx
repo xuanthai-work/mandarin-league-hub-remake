@@ -12,10 +12,12 @@ export const Route = createFileRoute("/verify/hsk/$code")({ staticData: { sitema
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({ t: typeof s["t"] === "string" ? (s["t"] as string) : "" }),
   component: HskDirectResult,
 });
 
 function HskDirectResult() {
   const { code } = Route.useParams();
-  return <VerificationLookup kind="hsk" initialCode={code} />;
+  const { t } = Route.useSearch();
+  return <VerificationLookup kind="hsk" initialCode={code} initialToken={t ?? ""} />;
 }

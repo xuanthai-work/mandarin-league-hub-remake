@@ -43,6 +43,7 @@ import { Route as AuthenticatedAdminCertificatesRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminContributionsRouteImport } from './routes/_authenticated/admin.contributions'
 import { Route as AuthenticatedAdminCoursesRouteImport } from './routes/_authenticated/admin.courses'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin.departments'
+import { Route as AuthenticatedAdminHskRouteImport } from './routes/_authenticated/admin.hsk'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
 import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
 import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_authenticated/admin.recruitment'
@@ -237,6 +238,11 @@ const AuthenticatedAdminDepartmentsRoute =
     path: '/departments',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminHskRoute = AuthenticatedAdminHskRouteImport.update({
+  id: '/hsk',
+  path: '/hsk',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminMembersRoute =
   AuthenticatedAdminMembersRouteImport.update({
     id: '/members',
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/hsk': typeof AuthenticatedAdminHskRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
@@ -399,6 +406,7 @@ export interface FileRoutesByTo {
   '/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/hsk': typeof AuthenticatedAdminHskRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
@@ -451,6 +459,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/_authenticated/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/_authenticated/admin/hsk': typeof AuthenticatedAdminHskRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/_authenticated/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
@@ -503,6 +512,7 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/courses'
     | '/admin/departments'
+    | '/admin/hsk'
     | '/admin/members'
     | '/admin/photos'
     | '/admin/recruitment'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/courses'
     | '/admin/departments'
+    | '/admin/hsk'
     | '/admin/members'
     | '/admin/photos'
     | '/admin/recruitment'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/contributions'
     | '/_authenticated/admin/courses'
     | '/_authenticated/admin/departments'
+    | '/_authenticated/admin/hsk'
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/photos'
     | '/_authenticated/admin/recruitment'
@@ -890,6 +902,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDepartmentsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/hsk': {
+      id: '/_authenticated/admin/hsk'
+      path: '/hsk'
+      fullPath: '/admin/hsk'
+      preLoaderRoute: typeof AuthenticatedAdminHskRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/members': {
       id: '/_authenticated/admin/members'
       path: '/members'
@@ -1007,6 +1026,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminContributionsRoute: typeof AuthenticatedAdminContributionsRoute
   AuthenticatedAdminCoursesRoute: typeof AuthenticatedAdminCoursesRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
+  AuthenticatedAdminHskRoute: typeof AuthenticatedAdminHskRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
   AuthenticatedAdminRecruitmentRoute: typeof AuthenticatedAdminRecruitmentRoute
@@ -1024,6 +1044,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminContributionsRoute: AuthenticatedAdminContributionsRoute,
   AuthenticatedAdminCoursesRoute: AuthenticatedAdminCoursesRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
+  AuthenticatedAdminHskRoute: AuthenticatedAdminHskRoute,
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
   AuthenticatedAdminRecruitmentRoute: AuthenticatedAdminRecruitmentRoute,

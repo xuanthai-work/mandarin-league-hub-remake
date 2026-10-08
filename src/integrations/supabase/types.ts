@@ -719,6 +719,140 @@ export type Database = {
           },
         ]
       }
+      hsk_results: {
+        Row: {
+          candidate_code: string
+          candidate_name: string
+          candidate_name_zh: string
+          change_reason: string
+          created_at: string
+          created_by: string | null
+          exam_date: string
+          exam_session: string
+          id: string
+          issuer: string
+          level: string
+          listening_score: number | null
+          max_score: number
+          member_id: string | null
+          notes: string
+          pass_score: number
+          passed: boolean
+          reading_score: number | null
+          revoked_at: string | null
+          revoked_reason: string
+          speaking_score: number | null
+          status: string
+          total_score: number
+          updated_at: string
+          verify_token: string
+          writing_score: number | null
+        }
+        Insert: {
+          candidate_code: string
+          candidate_name: string
+          candidate_name_zh?: string
+          change_reason?: string
+          created_at?: string
+          created_by?: string | null
+          exam_date?: string
+          exam_session?: string
+          id?: string
+          issuer?: string
+          level: string
+          listening_score?: number | null
+          max_score?: number
+          member_id?: string | null
+          notes?: string
+          pass_score?: number
+          passed?: boolean
+          reading_score?: number | null
+          revoked_at?: string | null
+          revoked_reason?: string
+          speaking_score?: number | null
+          status?: string
+          total_score?: number
+          updated_at?: string
+          verify_token?: string
+          writing_score?: number | null
+        }
+        Update: {
+          candidate_code?: string
+          candidate_name?: string
+          candidate_name_zh?: string
+          change_reason?: string
+          created_at?: string
+          created_by?: string | null
+          exam_date?: string
+          exam_session?: string
+          id?: string
+          issuer?: string
+          level?: string
+          listening_score?: number | null
+          max_score?: number
+          member_id?: string | null
+          notes?: string
+          pass_score?: number
+          passed?: boolean
+          reading_score?: number | null
+          revoked_at?: string | null
+          revoked_reason?: string
+          speaking_score?: number | null
+          status?: string
+          total_score?: number
+          updated_at?: string
+          verify_token?: string
+          writing_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hsk_results_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hsk_score_audits: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string
+          candidate_code: string
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          reason: string
+          result_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string
+          candidate_code?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          reason?: string
+          result_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string
+          candidate_code?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          reason?: string
+          result_id?: string | null
+        }
+        Relationships: []
+      }
       member_accounts: {
         Row: {
           account_status: string
@@ -1306,6 +1440,7 @@ export type Database = {
       }
       set_my_visibility: { Args: { _public: boolean }; Returns: undefined }
       suggest_certificate_code: { Args: never; Returns: string }
+      suggest_hsk_code: { Args: never; Returns: string }
       update_my_profile: {
         Args: { _avatar_path: string; _full_name: string }
         Returns: undefined
@@ -1340,6 +1475,29 @@ export type Database = {
           revoked_at: string
           status: string
           verify_token: string
+        }[]
+      }
+      verify_hsk: {
+        Args: { _code: string; _name: string; _token: string }
+        Returns: {
+          candidate_code: string
+          candidate_name: string
+          candidate_name_zh: string
+          exam_date: string
+          exam_session: string
+          issuer: string
+          level: string
+          listening_score: number
+          max_score: number
+          pass_score: number
+          passed: boolean
+          reading_score: number
+          revoked_at: string
+          speaking_score: number
+          status: string
+          total_score: number
+          verify_token: string
+          writing_score: number
         }[]
       }
     }
