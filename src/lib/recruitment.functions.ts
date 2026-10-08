@@ -28,7 +28,7 @@ const submitSchema = z.object({
   organization: z.string().trim().min(2).max(200),
   chinese_level: z.string().trim().max(100).default(""),
   hsk_level: z.string().trim().max(20).default(""),
-  intro: z.string().trim().min(10).max(3000),
+  intro: z.string().trim().max(3000).default(""),
   positionIds: z.array(z.string().uuid()).min(1).max(2),
   answers: z.record(z.union([z.string().max(5000), z.array(z.string().max(1000)).max(50)])),
   cvPath: z.string().regex(/^pending\/[\w-]+\.\w+$/).nullable(),
