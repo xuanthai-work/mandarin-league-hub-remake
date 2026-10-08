@@ -32,4 +32,5 @@
 - Certificates live in `certificates` (admin-only RLS); public lookup only via security-definer `verify_certificate()` returning safe columns, and a trigger strips whitespace/uppercases codes so every insert path stores lookup-ready codes.
 - Site UI text uses the typed dictionary in src/lib/i18n (vi/zh/en, Vietnamese on SSR then the stored choice after hydration), so new languages or strings need no library and never cause hydration mismatches.
 - Certificate AI extraction only pre-fills the admin form via an admin-checked server function; nothing is saved until the admin confirms, so AI mistakes never reach public verification.
-- HSK results live in `hsk_results` (admin-only RLS); a trigger computes totals/max/pass by level and an append-only `hsk_score_audits` trigger logs every change, and the public reads only via security-definer `verify_hsk()` (code + name or QR token), so scores can't be faked in the UI or enumerated.
+- HSK results live in `hsk_results` (admin-only RLS); triggers compute totals/pass and append `hsk_score_audits`; public reads only via security-definer `verify_hsk()` (code+name or token), so scores can't be faked or enumerated.
+- Admin menu comes from role+department (src/lib/admin-permissions.ts) mirroring RLS helpers; a news trigger lets only comms heads/admin publish, so UI and DB agree and members can't self-publish.

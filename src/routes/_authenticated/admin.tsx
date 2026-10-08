@@ -1,10 +1,11 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { LogOut, Menu, X, ShieldAlert, IdCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/tml-logo.png.asset.json";
-import { ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, type AdminRole } from "@/lib/admin-nav";
+import { ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY } from "@/lib/admin-nav";
+import { allowedSections } from "@/lib/admin-permissions";
 
 export const Route = createFileRoute("/_authenticated/admin")({ staticData: { sitemap: false },
   head: () => ({
@@ -26,10 +27,12 @@ export function useAdminAccess() {
     queryKey: ["admin-access"],
     queryFn: async () => {
       const { data } = await supabase.rpc("my_account");
-      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null };
+      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null; member: { department: string } | null };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
-      return { email: me.email ?? "", roles, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
+      const department = blocked ? null : me.member?.department ?? null;
+      const allowed = allowedSections(roles, department);
+      return { email: me.email ?? "", roles, department, allowed, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
     },
   });
 }
@@ -39,6 +42,7 @@ function AdminLayout() {
   const navigate = useNavigate();
   const access = useAdminAccess();
   const [open, setOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const signOut = async () => {
     await qc.cancelQueries();
@@ -47,19 +51,23 @@ function AdminLayout() {
     navigate({ to: "/login", replace: true });
   };
 
+  const allowed = access.data?.allowed ?? [];
+  const hasAny = allowed === "all" || allowed.length > 0;
+
   useEffect(() => {
     const d = access.data;
     if (!d) return;
     if (d.mustChange) navigate({ to: "/change-password", replace: true });
-    else if (d.hasAccount && !d.roles.includes("admin") && !d.roles.includes("department_head") && !d.roles.includes("deputy_head")) navigate({ to: "/member/dashboard", replace: true });
-  }, [access.data, navigate]);
+    else if (d.hasAccount && !hasAny) navigate({ to: "/member/dashboard", replace: true });
+  }, [access.data, hasAny, navigate]);
 
   if (access.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
 
   const roles = access.data?.roles ?? [];
-  const isAdmin = roles.includes("admin");
-  const sections = isAdmin ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => ["members", "tasks", "contributions"].includes(s.slug));
-  if (!isAdmin && !roles.includes("department_head") && !roles.includes("deputy_head")) {
+  const sections = allowed === "all" ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => allowed.includes(s.slug));
+  const current = pathname.replace(/^\/admin\/?/, "").split("/")[0];
+  const blockedHere = !!current && allowed !== "all" && !allowed.includes(current);
+  if (!hasAny) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
@@ -123,7 +131,15 @@ function AdminLayout() {
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto"><Outlet /></main>
+        <main className="flex-1 overflow-y-auto">
+          {blockedHere ? (
+            <div className="mx-auto max-w-md px-4 py-20 text-center">
+              <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
+              <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
+              <p className="mt-2 text-sm text-muted-foreground">Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.</p>
+            </div>
+          ) : <Outlet />}
+        </main>
       </div>
     </div>
   );
