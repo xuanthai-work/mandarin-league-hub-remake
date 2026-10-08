@@ -11,12 +11,12 @@ export const verifyLookup = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const { verifyRecaptcha, CAPTCHA_ERROR } = await import("./recaptcha.server");
-    if (!(await verifyRecaptcha(data.captcha))) return { ok: false as const, error: CAPTCHA_ERROR, rows: [] as unknown[] };
+    if (!(await verifyRecaptcha(data.captcha))) return { ok: false as const, error: CAPTCHA_ERROR, rows: "[]" };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const args = { _code: data.code, _name: data.name, _token: "" };
     const { data: rows, error } = data.kind === "hsk"
       ? await supabaseAdmin.rpc("verify_hsk_v2", args)
       : await supabaseAdmin.rpc("verify_certificate_v2", args);
-    if (error) return { ok: false as const, error: "Không thể tra cứu lúc này. Vui lòng thử lại sau.", rows: [] as unknown[] };
-    return { ok: true as const, error: "", rows: (rows ?? []) as unknown[] };
+    if (error) return { ok: false as const, error: "Không thể tra cứu lúc này. Vui lòng thử lại sau.", rows: "[]" };
+    return { ok: true as const, error: "", rows: JSON.stringify(rows ?? []) };
   });

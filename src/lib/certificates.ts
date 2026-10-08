@@ -20,7 +20,7 @@ export async function lookupCertificate(code: string, name = "", token = "", cap
   if (captcha) {
     const r = await verifyLookup({ data: { kind: "certificate", code: normalizeCode(code), name, captcha } });
     if (!r.ok) throw new Error(r.error);
-    data = r.rows as typeof data;
+    data = JSON.parse(r.rows) as NonNullable<typeof data>;
   } else {
     const res = await supabase.rpc("verify_certificate_v2", { _code: normalizeCode(code), _name: name, _token: token });
     if (res.error) return null;

@@ -33,7 +33,7 @@ export async function lookupHsk(code: string, name = "", token = "", captcha = "
   if (captcha) {
     const r = await verifyLookup({ data: { kind: "hsk", code, name, captcha } });
     if (!r.ok) throw new Error(r.error);
-    data = r.rows as typeof data;
+    data = JSON.parse(r.rows) as NonNullable<typeof data>;
   } else {
     const res = await supabase.rpc("verify_hsk_v2", { _code: code, _name: name, _token: token });
     if (res.error) return null;
