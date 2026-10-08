@@ -22,16 +22,32 @@ function TasksPage() {
     ((await supabase.from("tasks").select("*").order("created_at", { ascending: false })).data ?? []) as Task[] });
   const nameOf = (id: string) => members.data?.find((m) => m.id === id)?.full_name ?? "—";
 
-  const [f, setF] = useState({ title: "", description: "", assignee: "", priority: "medium", due: "", points: 10 });
+  const [f, setF] = useState({ title: "", description: "", priority: "medium", due: "", points: 10 });
+  const [picked, setPicked] = useState<string[]>([]);
+  const [dept, setDept] = useState(""); const [q, setQ] = useState("");
+  const [person, setPerson] = useState("");
   const [filter, setFilter] = useState("all");
-  const [err, setErr] = useState(""); const [msg, setMsg] = useState("");
+  const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-tasks"] });
+  const depts = [...new Set((members.data ?? []).map((m) => m.department))];
+  const term = q.trim().toLowerCase();
+  const pool = (members.data ?? []).filter((m) => (!dept || m.department === dept) && (!term || m.full_name.toLowerCase().includes(term) || m.member_code.toLowerCase().includes(term)));
+  const toggle = (id: string) => setPicked((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(""); setMsg("");
-    const { error } = await supabase.rpc("create_task", { _title: f.title, _description: f.description, _assignee: f.assignee, _priority: f.priority, _due_on: (f.due || null) as string, _points: f.points });
-    if (error) return setErr(error.message);
-    setMsg("Đã giao nhiệm vụ."); setF({ ...f, title: "", description: "" }); refresh();
+    if (picked.length === 0) return setErr("Vui lòng chọn ít nhất 1 người thực hiện.");
+    setBusy(true);
+    const group = picked.length > 1 ? `\n\n[Nhiệm vụ nhóm cùng: ${picked.map(nameOf).join(", ")}]` : "";
+    const fails: string[] = [];
+    for (const id of picked) {
+      const { error } = await supabase.rpc("create_task", { _title: f.title, _description: (f.description + group).slice(0, 3000), _assignee: id, _priority: f.priority, _due_on: (f.due || null) as string, _points: f.points });
+      if (error) fails.push(`${nameOf(id)}: ${error.message}`);
+    }
+    setBusy(false); refresh();
+    if (fails.length) setErr(fails.join(" · "));
+    const ok = picked.length - fails.length;
+    if (ok) { setMsg(`Đã giao nhiệm vụ cho ${ok} người.`); setF({ ...f, title: "", description: "" }); setPicked([]); }
   };
   const review = async (t: Task, approve: boolean) => {
     const note = approve ? "" : window.prompt("Lý do yêu cầu làm lại:") ?? "";
@@ -46,7 +62,7 @@ function TasksPage() {
     if (error) setErr(error.message); else refresh();
   };
 
-  const rows = (tasks.data ?? []).filter((t) => filter === "all" || t.status === filter);
+  const rows = (tasks.data ?? []).filter((t) => (filter === "all" || t.status === filter) && (!person || t.assignee_id === person));
   const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -57,11 +73,34 @@ function TasksPage() {
 
       <form onSubmit={create} className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
         <h2 className="font-semibold sm:col-span-2">Giao nhiệm vụ mới</h2>
-        <input required minLength={3} maxLength={200} className={inp} placeholder="Tên nhiệm vụ" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
-        <select required className={inp} value={f.assignee} onChange={(e) => setF({ ...f, assignee: e.target.value })}>
-          <option value="">— Chọn người thực hiện —</option>
-          {(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name} · {deptName(m.department)}</option>)}
-        </select>
+        <input required minLength={3} maxLength={200} className={`${inp} sm:col-span-2`} placeholder="Tên nhiệm vụ" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
+        <div className="space-y-2 rounded-lg border border-border p-3 sm:col-span-2">
+          <p className="text-sm font-medium">Người thực hiện <span className="text-xs text-muted-foreground">(chọn được nhiều người — mỗi người nhận 1 nhiệm vụ riêng để nộp & cộng điểm)</span></p>
+          <div className="grid gap-2 sm:grid-cols-[200px_1fr_auto]">
+            <select className={inp} value={dept} onChange={(e) => setDept(e.target.value)}>
+              <option value="">Tất cả các Ban</option>
+              {depts.map((d) => <option key={d} value={d}>{deptName(d)}</option>)}
+            </select>
+            <input className={inp} placeholder="Tìm theo tên hoặc mã thành viên…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <button type="button" onClick={() => setPicked((p) => [...new Set([...p, ...pool.map((m) => m.id)])])} className="rounded-lg border border-border px-3 text-xs">Chọn tất cả ({pool.length})</button>
+          </div>
+          {picked.length > 0 && <div className="flex flex-wrap gap-1.5">
+            {picked.map((id) => <button type="button" key={id} onClick={() => toggle(id)} className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">{nameOf(id)} ✕</button>)}
+            <button type="button" onClick={() => setPicked([])} className="text-xs text-muted-foreground underline">Bỏ chọn hết</button>
+          </div>}
+          <div className="max-h-48 overflow-y-auto rounded-md border border-border">
+            {pool.length === 0 && <p className="p-3 text-xs text-muted-foreground">Không có thành viên phù hợp.</p>}
+            {pool.map((m) => (
+              <label key={m.id} className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 text-sm last:border-0 hover:bg-accent">
+                <input type="checkbox" checked={picked.includes(m.id)} onChange={() => toggle(m.id)} />
+                <span className="font-medium">{m.full_name}</span>
+                <span className="font-mono text-xs text-muted-foreground">{m.member_code}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{deptName(m.department)}</span>
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Đã chọn {picked.length} thành viên.</p>
+        </div>
         <textarea maxLength={3000} className={`${inp} sm:col-span-2`} rows={3} placeholder="Mô tả / yêu cầu" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
         <div className="grid grid-cols-3 gap-3 sm:col-span-2">
           <label className="text-xs text-muted-foreground">Ưu tiên
@@ -76,7 +115,7 @@ function TasksPage() {
         <p className="text-xs text-muted-foreground sm:col-span-2">Gợi ý: việc nhỏ 5–10 · việc vừa 15–25 · dự án lớn 30–50 điểm.</p>
         {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
         {msg && <p className="text-sm text-success sm:col-span-2">{msg}</p>}
-        <button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground sm:w-fit">Giao nhiệm vụ</button>
+        <button disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60 sm:w-fit">{busy ? "Đang giao…" : picked.length > 1 ? `Giao cho ${picked.length} người` : "Giao nhiệm vụ"}</button>
       </form>
 
       <div className="flex flex-wrap gap-2">
@@ -85,6 +124,7 @@ function TasksPage() {
         ))}
       </div>
 
+      {person && <p className="text-sm">Đang xem nhiệm vụ của <b>{nameOf(person)}</b> · <button onClick={() => setPerson("")} className="text-primary underline">Xem tất cả</button></p>}
       <div className="space-y-3">
         {tasks.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
         {!tasks.isLoading && rows.length === 0 && <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">Chưa có nhiệm vụ.</p>}
@@ -93,7 +133,7 @@ function TasksPage() {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h3 className="font-semibold">{t.title}</h3>
-                <p className="text-xs text-muted-foreground">{nameOf(t.assignee_id)} · {deptName(t.department)} · Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
+                <p className="text-xs text-muted-foreground"><button type="button" title="Xem các nhiệm vụ của người này" onClick={() => setPerson(t.assignee_id)} className="font-medium text-primary hover:underline">{nameOf(t.assignee_id)}</button> · {deptName(t.department)} · Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
               </div>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS[t.status]?.className}`}>{TASK_STATUS[t.status]?.label}</span>
             </div>
