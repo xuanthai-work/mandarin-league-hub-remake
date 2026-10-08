@@ -27,6 +27,10 @@ import {
   type HskRecord,
   type VerificationRecord,
 } from "@/lib/verification";
+import { lookupCertificate } from "@/lib/certificates";
+import QRCode from "qrcode";
+import { Copy, Printer } from "lucide-react";
+import { toast } from "sonner";
 
 interface VerificationLookupProps {
   kind: VerificationRecord["kind"];
@@ -45,15 +49,21 @@ export function VerificationLookup({ kind, initialCode = "" }: VerificationLooku
   const [code, setCode] = useState(initialCode);
   const [state, setState] = useState<LookupState>({ type: "idle" });
 
-  const verify = (rawCode: string) => {
+  const [loading, setLoading] = useState(false);
+  const verify = async (rawCode: string) => {
     const parsed = verificationCodeSchema.safeParse(rawCode);
     if (!parsed.success) {
       setState({ type: "invalid", message: parsed.error.issues[0]?.message ?? "Mã xác minh không hợp lệ." });
       return;
     }
-
-    const record = findVerificationRecord(kind, parsed.data);
     setCode(parsed.data);
+    let record: VerificationRecord | null | undefined = null;
+    if (kind === "certificate") {
+      setLoading(true);
+      record = await lookupCertificate(parsed.data).catch(() => null);
+      setLoading(false);
+    }
+    record = record ?? findVerificationRecord(kind, parsed.data);
     setState(record ? { type: "found", record } : { type: "not-found", code: parsed.data });
   };
 
