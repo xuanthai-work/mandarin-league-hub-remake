@@ -7,6 +7,7 @@ export function allowedSections(roles: AdminRole[], department: string | null): 
   const s = new Set<string>();
   if (isHead) ["members", "tasks", "contributions"].forEach((x) => s.add(x));
   if (department === "comms") ["news", "activities", "partners"].forEach((x) => s.add(x));
+  if (department === "comms" && isHead) s.add("content");
   if (department === "finance") s.add("partners");
   return [...s];
 }
