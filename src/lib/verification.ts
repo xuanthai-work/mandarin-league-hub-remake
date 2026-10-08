@@ -2,10 +2,14 @@ import { z } from "zod";
 
 export const verificationCodeSchema = z
   .string()
-  .trim()
-  .min(1, "Vui lòng nhập mã xác minh.")
-  .max(50, "Mã xác minh không được vượt quá 50 ký tự.")
-  .regex(/^[A-Za-z0-9-]+$/, "Mã chỉ được gồm chữ cái, chữ số và dấu gạch ngang.")
+  .transform((value) => value.replace(/\s+/g, ""))
+  .pipe(
+    z
+      .string()
+      .min(1, "Vui lòng nhập mã xác minh.")
+      .max(50, "Mã xác minh không được vượt quá 50 ký tự.")
+      .regex(/^[A-Za-z0-9_-]+$/, "Mã chỉ được gồm chữ cái, chữ số, dấu gạch ngang hoặc gạch dưới."),
+  )
   .transform((value) => value.toUpperCase());
 
 export type VerificationStatus = "VALID" | "REVOKED";
@@ -19,6 +23,10 @@ export interface CertificateRecord {
   issueDate: string;
   status: VerificationStatus;
   issuer: string;
+  typeLabel?: string;
+  expiryDate?: string;
+  revokedAt?: string;
+  isDemo?: boolean;
 }
 
 export interface HskRecord {

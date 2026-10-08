@@ -347,6 +347,74 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          certificate_code: string
+          certificate_type: string
+          classification: string
+          created_at: string
+          created_by: string | null
+          expiry_date: string | null
+          holder_name: string
+          id: string
+          issue_date: string
+          issuer: string
+          member_id: string | null
+          notes: string
+          program_name: string
+          revoked_at: string | null
+          revoked_reason: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          certificate_code: string
+          certificate_type?: string
+          classification?: string
+          created_at?: string
+          created_by?: string | null
+          expiry_date?: string | null
+          holder_name: string
+          id?: string
+          issue_date?: string
+          issuer?: string
+          member_id?: string | null
+          notes?: string
+          program_name: string
+          revoked_at?: string | null
+          revoked_reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          certificate_code?: string
+          certificate_type?: string
+          classification?: string
+          created_at?: string
+          created_by?: string | null
+          expiry_date?: string | null
+          holder_name?: string
+          id?: string
+          issue_date?: string
+          issuer?: string
+          member_id?: string | null
+          notes?: string
+          program_name?: string
+          revoked_at?: string | null
+          revoked_reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_enrollments: {
         Row: {
           admin_note: string
@@ -1227,9 +1295,25 @@ export type Database = {
         Returns: undefined
       }
       set_my_visibility: { Args: { _public: boolean }; Returns: undefined }
+      suggest_certificate_code: { Args: never; Returns: string }
       update_my_profile: {
         Args: { _avatar_path: string; _full_name: string }
         Returns: undefined
+      }
+      verify_certificate: {
+        Args: { _code: string }
+        Returns: {
+          certificate_code: string
+          certificate_type: string
+          classification: string
+          expiry_date: string
+          holder_name: string
+          issue_date: string
+          issuer: string
+          program_name: string
+          revoked_at: string
+          status: string
+        }[]
       }
     }
     Enums: {

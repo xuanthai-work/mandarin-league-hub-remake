@@ -134,6 +134,13 @@
       "when": 1791424714416,
       "tag": "0018_activities_module",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791433197562,
+      "tag": "0019_certificates_module",
+      "breakpoints": true
     }
   ]
 }

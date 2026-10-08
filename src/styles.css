@@ -205,3 +205,9 @@
 .tml-pass { background: linear-gradient(160deg, var(--background), color-mix(in oklab, var(--gold) 8%, var(--background))); box-shadow: 0 30px 60px -24px color-mix(in oklab, var(--primary-deep) 70%, transparent), 0 0 0 1px color-mix(in oklab, var(--gold) 45%, transparent); }
 .tml-microprint { opacity: .07; color: var(--primary); font: 700 9px/12px ui-sans-serif, system-ui; letter-spacing: .12em; background-image: repeating-linear-gradient(0deg, transparent 0 11px, currentColor 11px 12px), repeating-radial-gradient(circle at 70% 60%, transparent 0 12px, var(--gold) 12px 13px); }
 .tml-banner { background: linear-gradient(90deg, transparent, var(--primary) 30%, var(--primary-deep)); border-bottom: 2px solid var(--gold); clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%); }
+
+@media print {
+  body:has(.print-certificate) * { visibility: hidden; }
+  .print-certificate, .print-certificate * { visibility: visible; }
+  .print-certificate { position: absolute; inset: 0; margin: 1.5cm; }
+}
