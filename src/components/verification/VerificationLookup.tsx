@@ -310,7 +310,7 @@ function CertificateResult({ record }: { record: CertificateRecord }) {
 function RevokedResult({ record }: { record: VerificationRecord }) {
   return (
     <ResultShell tone="danger">
-      <ResultHeader title={record.kind === "hsk" ? "Kết quả đã thu hồi" : "Chứng nhận đã thu hồi"} subtitle="REVOKED" danger />
+      <ResultHeader title={record.kind === "hsk" ? "Kết quả đã thu hồi" : "Chứng nhận đã thu hồi"} subtitle="REVOKED" danger demo={(record as { isDemo?: boolean }).isDemo !== false} />
       <div className="grid gap-5 p-5 sm:grid-cols-2 md:p-8">
         <Detail icon={ShieldAlert} label="Mã xác minh" value={record.verificationId} mono />
         <Detail icon={Award} label={record.kind === "hsk" ? "Cấp độ HSK" : "Chương trình"} value={record.kind === "hsk" ? record.examLevel : record.courseName} />
