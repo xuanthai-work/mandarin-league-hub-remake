@@ -51,6 +51,11 @@ export interface HskRecord {
   revokedAt?: string;
   isDemo?: boolean;
   verifyToken?: string;
+  courseName?: string;
+  className?: string;
+  teacherName?: string;
+  studyStart?: string;
+  studyEnd?: string;
   status: VerificationStatus;
   issuer: string;
 }
