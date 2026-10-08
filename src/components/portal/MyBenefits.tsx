@@ -22,7 +22,7 @@ export function MyBenefits() {
       {!list.isLoading && rows.length === 0 && <p className="portal-glass rounded-2xl p-8 text-center text-sm text-muted-foreground">Đang cập nhật quyền lợi.</p>}
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map((r) => {
-          const st = BENEFIT_STATUS[r.status] ?? BENEFIT_STATUS.locked!;
+          const st = BENEFIT_STATUS[r.status] ?? BENEFIT_STATUS["locked"]!;
           const left = daysLeft(r.ends_on);
           return (
             <article key={r.id} className={`portal-glass flex flex-col rounded-2xl p-4 transition ${r.has_access ? "hover:ring-1 hover:ring-gold/50" : "opacity-70"}`}>

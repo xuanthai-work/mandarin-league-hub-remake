@@ -22,7 +22,7 @@ export const BENEFIT_STATUS: Record<string, { label: string; className: string }
 };
 
 export function BenefitIcon({ iconKey, size = "md" }: { iconKey: string; size?: "sm" | "md" }) {
-  const b = BENEFIT_ICONS[iconKey] ?? BENEFIT_ICONS.gift!;
+  const b = BENEFIT_ICONS[iconKey] ?? BENEFIT_ICONS["gift"]!;
   const I = b.icon;
   const box = size === "sm" ? "h-9 w-9 rounded-lg" : "h-14 w-14 rounded-2xl";
   return (
