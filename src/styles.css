@@ -247,8 +247,7 @@
 .dark .tml-logo { background-color: oklch(0.2 0.05 255); border-color: var(--gold); box-shadow: 0 0 16px color-mix(in oklab, var(--gold) 40%, transparent); }
 
 /* Floating crystals */
-.crystal-field { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.crystal-field ~ * , .crystal-field + * { position: relative; }
+.crystal-field { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
 .crystal { position: absolute; bottom: -12px; transform: rotate(45deg); border-radius: 2px; opacity: 0; animation-name: crystal-rise; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform, opacity; }
 .crystal-gold { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
 .crystal-blue { background: var(--primary); box-shadow: 0 0 8px var(--primary); }

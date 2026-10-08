@@ -10,7 +10,7 @@ const OPTIONS: { code: Lang; flag: string; name: string; short: string }[] = [
 
 export function LanguageSwitcher({ className = "" }: { className?: string }) {
   const lang = useLang();
-  const cur = OPTIONS.find((o) => o.code === lang) ?? OPTIONS[0];
+  const cur = OPTIONS.find((o) => o.code === lang) ?? OPTIONS[0]!;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
