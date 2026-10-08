@@ -2,15 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Check, Copy, ExternalLink, Eye, EyeOff, KeyRound, Lock, ShieldAlert, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { BENEFIT_STATUS, BenefitIcon, daysLeft } from "@/lib/benefits";
+import { BENEFIT_STATUS, BenefitIcon, daysLeft, useBenefitLogoUrls } from "@/lib/benefits";
 
-type Row = { id: string; name: string; description: string; icon_key: string; status: string; ends_on: string | null; has_access: boolean };
+type Row = { id: string; name: string; description: string; icon_key: string; status: string; ends_on: string | null; has_access: boolean; logo_path?: string; logoUrl?: string | null };
 type Access = { login: string; secret: string; access_url: string; usage_note: string };
 
 export function MyBenefits() {
-  const list = useQuery({ queryKey: ["my-benefits"], queryFn: async () => ((await supabase.rpc("my_benefits")).data ?? []) as Row[] });
+  const list = useQuery({ queryKey: ["my-benefits"], queryFn: async () => {
+    const [b, l] = await Promise.all([supabase.rpc("my_benefits"), supabase.rpc("benefit_logos")]);
+    const logos = new Map((l.data ?? []).map((x: { id: string; logo_path: string }) => [x.id, x.logo_path]));
+    return ((b.data ?? []) as Row[]).map((r) => ({ ...r, logo_path: logos.get(r.id) ?? "" }));
+  } });
   const [open, setOpen] = useState<Row | null>(null);
   const rows = list.data ?? [];
+  const urls = useBenefitLogoUrls(rows.map((r) => r.logo_path ?? ""));
+  const logo = (r: Row) => (r.logo_path ? urls.data?.[r.logo_path] : null);
   const active = rows.filter((r) => r.has_access).length;
   return (
     <div className="mt-6 space-y-4">
