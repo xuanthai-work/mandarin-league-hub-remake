@@ -69,7 +69,7 @@ function ListTab() {
     if (f.start_time && f.end_time && f.end_time < f.start_time) return setErr("Thời gian kết thúc phải sau thời gian bắt đầu.");
     for (const u of [f.registration_url, f.facebook_url, f.website_url]) if (u && !/^https?:\/\//i.test(u)) return setErr("Các liên kết phải bắt đầu bằng http(s)://");
     setBusy(true);
-    const { id, ...row } = { ...f, slug: slugify(f.slug || f.title) };
+    const { id, banner: _b, ...row } = { ...f, slug: slugify(f.slug || f.title) } as Form & { banner?: string };
     const { error } = id ? await supabase.from("activities").update(row).eq("id", id) : await supabase.from("activities").insert(row);
     setBusy(false);
     if (error) return setErr(error.message.includes("slug") || error.code === "23505" ? "Slug đã tồn tại, hãy đổi slug khác." : error.message);
@@ -85,7 +85,7 @@ function ListTab() {
     if (error) return setErr(error.message);
     setF({ ...f, banner_path: path });
   };
-  const patch = async (a: ActivityRow, p: Partial<ActivityRow>) => {
+  const patch = async (a: ActivityRow, p: Partial<Omit<ActivityRow, "banner">>) => {
     const { error } = await supabase.from("activities").update(p).eq("id", a.id);
     if (error) setErr(error.message); else refresh();
   };
@@ -95,7 +95,7 @@ function ListTab() {
   };
   const remove = async (a: ActivityRow) => {
     if (!window.confirm(`Xóa hoạt động "${a.title}"? Dữ liệu đăng ký vẫn được lưu.`)) return;
-    patch(a, { deleted_at: new Date().toISOString() } as Partial<ActivityRow>);
+    patch(a, { deleted_at: new Date().toISOString() } as Partial<Omit<ActivityRow, "banner">>);
   };
 
   const term = q.trim().toLowerCase();
@@ -183,7 +183,7 @@ function RegsTab() {
   const setStatus = async (r: Reg, status: string) => {
     const note = window.prompt("Ghi chú (tùy chọn):", r.admin_note) ?? r.admin_note;
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("activity_registrations").update({ status, admin_note: note, reviewed_by: u.user?.id, reviewed_at: new Date().toISOString() }).eq("id", r.id);
+    const { error } = await supabase.from("activity_registrations").update({ status, admin_note: note, reviewed_by: u.user?.id ?? null, reviewed_at: new Date().toISOString() }).eq("id", r.id);
     if (error) setErr(error.message); else qc.invalidateQueries({ queryKey: ["admin-activity-regs"] });
   };
   const term = q.trim().toLowerCase();
@@ -236,8 +236,8 @@ function AuditTab() {
   const acts = useQuery({ queryKey: ["admin-activity-titles"], queryFn: async () => (await supabase.from("activities").select("id, title")).data ?? [] });
   const title = (id: string | null) => acts.data?.find((a) => a.id === id)?.title ?? "—";
   const summary = (l: { action: string; details: unknown }) => {
-    const d = l.details as Record<string, any>;
-    if (l.action === "review_registration") return `${d.code}: ${REG_STATUS[d.before] ?? d.before} → ${REG_STATUS[d.after] ?? d.after}${d.note ? ` (${d.note})` : ""}`;
+    const d = l.details as { code?: string; before?: any; after?: any; note?: string };
+    if (l.action === "review_registration") return `${d.code}: ${REG_STATUS[d.before as string] ?? d.before} → ${REG_STATUS[d.after as string] ?? d.after}${d.note ? ` (${d.note})` : ""}`;
     if (l.action === "status") return `${MANUAL_LABEL[d.before?.manual_status as ManualStatus] ?? ""} → ${MANUAL_LABEL[d.after?.manual_status as ManualStatus] ?? ""}`;
     if (l.action === "update" && d.before && d.after) return Object.keys(d.after).filter((k) => k !== "updated_at" && JSON.stringify(d.after[k]) !== JSON.stringify(d.before[k])).join(", ") || "—";
     return "";
