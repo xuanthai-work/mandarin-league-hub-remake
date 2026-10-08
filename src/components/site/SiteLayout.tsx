@@ -6,6 +6,8 @@ import logo from "@/assets/tml-logo.png.asset.json";
 import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ThemeToggle } from "./ThemeToggle";
+import { CrystalParticles } from "./CrystalParticles";
 import { useSiteContent } from "@/lib/site-content";
 
 export const NAV = [
@@ -39,11 +41,11 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={logo.url} alt="The Mandarin League" className="h-10 w-10 rounded-full border border-gold/60 bg-background object-cover shadow-sm md:h-12 md:w-12" />
-          <div className="leading-tight">
-            <div className="text-sm font-bold tracking-wide text-primary-deep md:text-base">THE MANDARIN LEAGUE</div>
-            <div className="text-[11px] text-muted-foreground md:text-xs">{t("brand.sub")}</div>
+        <Link to="/" className="flex min-w-0 items-center gap-3">
+          <img src={logo.url} alt="The Mandarin League" className="tml-logo h-10 w-10 shrink-0 rounded-full border border-gold/60 bg-background object-cover shadow-sm md:h-12 md:w-12" />
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-sm font-bold tracking-wide text-primary-deep dark:text-foreground md:text-base">THE MANDARIN LEAGUE</div>
+            <div className="truncate text-[11px] text-muted-foreground dark:text-gold/80 md:text-xs">{t("brand.sub")}</div>
           </div>
         </Link>
         <nav className="hidden items-center gap-1 lg:flex">
@@ -59,14 +61,14 @@ function Header() {
             </Link>
           ))}
         </nav>
-        <LanguageSwitcher className="hidden lg:inline-flex" />
+        <div className="hidden items-center gap-2 lg:flex"><LanguageSwitcher /><ThemeToggle /></div>
         <Link
           to="/join"
           className="hidden rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 lg:inline-flex"
         >
           {t("cta.join")}
         </Link>
-        <div className="flex items-center gap-2 lg:hidden"><LanguageSwitcher />
+        <div className="flex shrink-0 items-center gap-1.5 lg:hidden"><LanguageSwitcher /><ThemeToggle />
         <button className="rounded-md p-2" onClick={() => setOpen(!open)} aria-label={t("menu.open")}>
           {open ? <X /> : <Menu />}
         </button></div>
@@ -145,7 +147,8 @@ function Footer() {
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col">
+      <CrystalParticles />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

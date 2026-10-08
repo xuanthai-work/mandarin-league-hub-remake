@@ -230,3 +230,41 @@
 .org-line-on { stroke: var(--color-gold, var(--color-primary)); stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 6 6; animation: org-flow 1.6s linear infinite; }
 @keyframes org-flow { to { stroke-dashoffset: -24; } }
 @media (prefers-reduced-motion: reduce) { .org-line-on { animation: none; stroke-dasharray: none; } }
+
+/* Dark theme: keep TML blue/gold identity instead of the neutral default */
+.dark {
+  --primary: oklch(0.72 0.14 235);
+  --primary-foreground: oklch(0.15 0.04 255);
+  --primary-deep: oklch(0.86 0.06 235);
+  --ring: oklch(0.72 0.14 235);
+  --background: oklch(0.16 0.035 258);
+  --card: oklch(0.21 0.04 258);
+  --popover: oklch(0.21 0.04 258);
+  --gold: oklch(0.8 0.13 85);
+  --gold-soft: oklch(0.3 0.06 80);
+  --gradient-brand: linear-gradient(135deg, oklch(0.3 0.09 250), oklch(0.5 0.13 240));
+}
+.dark .tml-logo { background-color: oklch(0.2 0.05 255); border-color: var(--gold); box-shadow: 0 0 16px color-mix(in oklab, var(--gold) 40%, transparent); }
+
+/* Floating crystals */
+.crystal-field { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.crystal-field ~ * , .crystal-field + * { position: relative; }
+.crystal { position: absolute; bottom: -12px; transform: rotate(45deg); border-radius: 2px; opacity: 0; animation-name: crystal-rise; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform, opacity; }
+.crystal-gold { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.crystal-blue { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+@keyframes crystal-rise {
+  0% { transform: translate3d(0, 0, 0) rotate(45deg); opacity: 0; }
+  10% { opacity: .35; }
+  50% { transform: translate3d(24px, -55vh, 0) rotate(225deg); }
+  90% { opacity: .25; }
+  100% { transform: translate3d(-12px, -110vh, 0) rotate(405deg); opacity: 0; }
+}
+.dark .crystal { animation-name: crystal-rise-dark; }
+@keyframes crystal-rise-dark {
+  0% { transform: translate3d(0, 0, 0) rotate(45deg); opacity: 0; }
+  10% { opacity: .7; }
+  50% { transform: translate3d(24px, -55vh, 0) rotate(225deg); }
+  90% { opacity: .5; }
+  100% { transform: translate3d(-12px, -110vh, 0) rotate(405deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .crystal-field { display: none; } }
