@@ -103,6 +103,6 @@ export function parseDob(v: string, now = new Date()): string | null {
   const [, dd, mm, yy] = m;
   const iso = `${yy}-${mm}-${dd}`;
   const dt = new Date(iso + "T00:00:00Z");
-  if (isNaN(+dt) || dt.toISOString().slice(0, 10) !== iso || +yy < 1940 || dt >= now) return null;
+  if (isNaN(+dt) || dt.toISOString().slice(0, 10) !== iso || Number(yy) < 1940 || dt >= now) return null;
   return iso;
 }

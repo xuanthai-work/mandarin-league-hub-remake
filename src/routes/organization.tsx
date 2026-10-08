@@ -158,7 +158,7 @@ function POrganization() {
   );
 }
 
-function Leader({ role, name, loading, tr }: { role: string; name?: string; loading: boolean; tr: (s: string) => string }) {
+function Leader({ role, name, loading, tr }: { role: string; name?: string | undefined; loading: boolean; tr: (s: string) => string }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-primary">{initials(name) || "—"}</div>
