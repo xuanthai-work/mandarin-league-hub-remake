@@ -24,6 +24,10 @@ const EMPTY: Form = {
 };
 const toLocal = (iso: string | null) => iso ? new Date(new Date(iso).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
 const fromLocal = (v: string) => v ? new Date(v).toISOString() : null;
+function useCanPublish() {
+  const a = useAdminAccess().data;
+  return !!a && canReviewNews(a.roles, a.department);
+}
 
 function ActivitiesAdmin() {
   const [tab, setTab] = useState<"list" | "regs" | "audit">("list");
@@ -34,7 +38,7 @@ function ActivitiesAdmin() {
         <p className="text-sm text-muted-foreground">Quản lý workshop, cuộc thi, trại, sự kiện. Chương trình học bật "Hiện ở Hoạt động" tự xuất hiện trên trang công khai.</p>
       </div>
       <div className="flex gap-2">
-        {([["list", "Danh sách hoạt động"], ["regs", "Đơn đăng ký"], ["audit", "Nhật ký thay đổi"]] as const).map(([k, l]) => (
+        {([["list", "Danh sách hoạt động"], ["regs", "Đơn đăng ký"], ["audit", "Nhật ký thay đổi"]] as const).filter(([k]) => canPublish || k === "list").map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>
         ))}
       </div>
@@ -55,6 +59,7 @@ function useAllActivities() {
 function ListTab() {
   const qc = useQueryClient();
   const acts = useAllActivities();
+  const canPublish = useCanPublish();
   const counts = useQuery({ queryKey: ["admin-activity-counts"], queryFn: async () => {
     const { data } = await supabase.from("activity_registrations").select("activity_id");
     const m = new Map<string, number>(); (data ?? []).forEach((r) => m.set(r.activity_id, (m.get(r.activity_id) ?? 0) + 1)); return m;
@@ -129,8 +134,10 @@ function ListTab() {
       </>}
       <label className="text-xs text-muted-foreground">Link Facebook<input className={`${inp} mt-1`} value={f.facebook_url} onChange={(e) => setF({ ...f, facebook_url: e.target.value })} /></label>
       <label className="text-xs text-muted-foreground">Link Website<input className={`${inp} mt-1`} value={f.website_url} onChange={(e) => setF({ ...f, website_url: e.target.value })} /></label>
-      <label className="text-xs text-muted-foreground">Trạng thái hiển thị
-        <select className={`${inp} mt-1`} value={f.manual_status} onChange={(e) => setF({ ...f, manual_status: e.target.value as ManualStatus })}>{Object.entries(MANUAL_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+      {canPublish ? (
+        <label className="text-xs text-muted-foreground">Trạng thái hiển thị
+          <select className={`${inp} mt-1`} value={f.manual_status} onChange={(e) => setF({ ...f, manual_status: e.target.value as ManualStatus })}>{Object.entries(MANUAL_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+      ) : <p className="text-xs text-muted-foreground">Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.</p>}
       <p className="self-end text-xs text-muted-foreground">Khi "Đã đăng", trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời gian.</p>
       {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
       <div className="flex gap-2 sm:col-span-2">
@@ -161,10 +168,10 @@ function ListTab() {
             <div className="mt-1 flex gap-1.5 text-xs"><span className="rounded-full bg-secondary px-2 py-0.5">{MANUAL_LABEL[a.manual_status]}</span>{a.manual_status === "published" && <span className={`rounded-full px-2 py-0.5 ${live.tone}`}>{live.label}</span>}</div>
           </div>
           <div className="flex flex-wrap gap-1">
-            <button title="Sửa" onClick={() => setF({ ...a })} className="rounded-lg border border-border p-2"><Pencil className="h-4 w-4" /></button>
+            {(canPublish || a.manual_status === "draft") && <button title="Sửa" onClick={() => setF({ ...a })} className="rounded-lg border border-border p-2"><Pencil className="h-4 w-4" /></button>}
             <button title="Sao chép" onClick={() => duplicate(a)} className="rounded-lg border border-border p-2"><Copy className="h-4 w-4" /></button>
-            <button title={a.manual_status === "published" ? "Tạm ẩn" : "Đăng"} onClick={() => patch(a, { manual_status: a.manual_status === "published" ? "hidden" : "published" })} className="rounded-lg border border-border p-2">{a.manual_status === "published" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
-            <button title="Xóa" onClick={() => remove(a)} className="rounded-lg border border-border p-2 text-destructive"><Trash2 className="h-4 w-4" /></button>
+            {canPublish && <button title={a.manual_status === "published" ? "Tạm ẩn" : "Duyệt & Đăng"} onClick={() => patch(a, { manual_status: a.manual_status === "published" ? "hidden" : "published" })} className="rounded-lg border border-border p-2">{a.manual_status === "published" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>}
+            {(canPublish || a.manual_status === "draft") && <button title="Xóa" onClick={() => remove(a)} className="rounded-lg border border-border p-2 text-destructive"><Trash2 className="h-4 w-4" /></button>}
           </div>
         </article>); })}
     </div>
