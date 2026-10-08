@@ -193,6 +193,7 @@ function MemberDashboard() {
                 <div>
                   <h3 className="font-semibold">{t.title}</h3>
                   <p className="text-xs text-muted-foreground">Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
+                  {t.assigned_by_name && <p className="text-xs text-muted-foreground">Người giao: <b className="text-foreground">{t.assigned_by_name}</b>{t.assigned_by_note && ` — ${t.assigned_by_note}`}</p>}
                 </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS[t.status]?.className}`}>{TASK_STATUS[t.status]?.label}</span>
               </div>
