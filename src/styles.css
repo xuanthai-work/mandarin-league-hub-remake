@@ -267,3 +267,21 @@
   100% { transform: translate3d(-12px, -110vh, 0) rotate(405deg); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .crystal-field { display: none; } }
+
+:root {
+  --metal-purple-hi: oklch(0.85 0.12 315);
+  --metal-purple: oklch(0.55 0.22 305);
+  --metal-purple-lo: oklch(0.32 0.16 300);
+  --enamel-azure: oklch(0.55 0.12 230);
+  --enamel-amber: oklch(0.45 0.1 55);
+  --amethyst-glow: oklch(0.65 0.25 310);
+}
+.tier-purple { background: linear-gradient(135deg, var(--metal-purple), var(--metal-purple-lo)); color: var(--metal-gold-hi); border-color: var(--metal-gold); }
+.badge-sheen { animation: badge-sheen 4.5s ease-in-out infinite; }
+@keyframes badge-sheen {
+  0% { transform: translateX(-120px) skewX(-25deg); }
+  27%, 100% { transform: translateX(120px) skewX(-25deg); }
+}
+.badge-aura { transform-origin: 50px 50px; animation: badge-aura 3s ease-in-out infinite; }
+@keyframes badge-aura { 0%, 100% { opacity: 0.35; transform: scale(0.94); } 50% { opacity: 0.7; transform: scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .badge-sheen, .badge-aura { animation: none; opacity: 0; } }
