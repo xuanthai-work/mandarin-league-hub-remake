@@ -12,12 +12,12 @@ export const Route = createFileRoute("/verify/certificate/$code")({ staticData: 
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({ t: typeof s.t === "string" ? s.t : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ t: typeof s["t"] === "string" ? (s["t"] as string) : "" }),
   component: CertificateDirectResult,
 });
 
 function CertificateDirectResult() {
   const { code } = Route.useParams();
   const { t } = Route.useSearch();
-  return <VerificationLookup kind="certificate" initialCode={code} initialToken={t} />;
+  return <VerificationLookup kind="certificate" initialCode={code} initialToken={t ?? ""} />;
 }
