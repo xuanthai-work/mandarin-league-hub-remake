@@ -40,7 +40,7 @@ export async function lookupHsk(code: string, name = "", token = ""): Promise<Hs
     verifyToken: r.verify_token,
   };
   const opt = { listeningScore: num(r.listening_score), readingScore: num(r.reading_score), writingScore: num(r.writing_score), speakingScore: num(r.speaking_score) };
-  for (const [k, v] of Object.entries(opt)) if (v !== undefined) (rec as Record<string, unknown>)[k] = v;
+  for (const [k, v] of Object.entries(opt)) if (v !== undefined) (rec as unknown as Record<string, unknown>)[k] = v;
   if (r.candidate_name_zh) rec.candidateNameZh = r.candidate_name_zh;
   if (r.exam_session) rec.examSession = r.exam_session;
   if (r.revoked_at) rec.revokedAt = r.revoked_at;

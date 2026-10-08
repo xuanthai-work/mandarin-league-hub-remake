@@ -48,22 +48,22 @@ function HskAdminPage() {
   };
   const openEdit = (r: Row) => setEdit({ id: r.id, candidate_code: r.candidate_code, candidate_name: r.candidate_name, candidate_name_zh: r.candidate_name_zh, level: r.level, exam_date: r.exam_date, exam_session: r.exam_session, listening_score: r.listening_score, reading_score: r.reading_score, writing_score: r.writing_score, speaking_score: r.speaking_score, issuer: r.issuer, notes: r.notes, member_id: r.member_id, change_reason: "" });
 
-  const save = async () => {
+  const save = async (): Promise<void> => {
     if (!edit) return;
     const code = edit.candidate_code.replace(/\s+/g, "").toUpperCase();
-    if (!/^[A-Z0-9_-]{3,50}$/.test(code)) return toast.error("Mã chỉ gồm chữ, số, gạch ngang (3–50 ký tự, không khoảng trắng)");
-    if (edit.candidate_name.trim().length < 2) return toast.error("Vui lòng nhập họ tên thí sinh");
+    if (!/^[A-Z0-9_-]{3,50}$/.test(code)) { toast.error("Mã chỉ gồm chữ, số, gạch ngang (3–50 ký tự, không khoảng trắng)"); return; }
+    if (edit.candidate_name.trim().length < 2) { toast.error("Vui lòng nhập họ tên thí sinh"); return; }
     for (const s of hskSkills(edit.level)) {
       const v = edit[scoreKey(s)];
-      if (v === null || v < 0 || v > 100 || !Number.isInteger(v)) return toast.error(`Điểm ${SKILL_LABEL[s]} phải là số nguyên 0–100`);
+      if (v === null || v < 0 || v > 100 || !Number.isInteger(v)) { toast.error(`Điểm ${SKILL_LABEL[s]} phải là số nguyên 0–100`); return; }
     }
-    if (edit.id && !edit.change_reason.trim()) return toast.error("Vui lòng ghi lý do chỉnh sửa (lưu vào nhật ký)");
+    if (edit.id && !edit.change_reason.trim()) { toast.error("Vui lòng ghi lý do chỉnh sửa (lưu vào nhật ký)"); return; }
     setSaving(true);
     const { id, ...rest } = edit;
     const payload = { ...rest, candidate_code: code, change_reason: edit.change_reason.trim() || "Tạo mới" };
     const { error } = id ? await supabase.from("hsk_results").update(payload).eq("id", id) : await supabase.from("hsk_results").insert(payload);
     setSaving(false);
-    if (error) return toast.error(error.message.includes("duplicate") ? "Mã này đã tồn tại" : error.message);
+    if (error) { toast.error(error.message.includes("duplicate") ? "Mã này đã tồn tại" : error.message); return; }
     toast.success(id ? "Đã cập nhật kết quả" : "Đã ghi nhận kết quả");
     setEdit(null); refresh();
   };
@@ -88,11 +88,11 @@ function HskAdminPage() {
   const importCsv = async (f: File | undefined) => {
     if (!f) return;
     const lines = (await f.text()).replace(/^\ufeff/, "").split(/\r?\n/).filter((l) => l.trim());
-    const out: Record<string, unknown>[] = [];
+    const out: { candidate_code: string; candidate_name: string; level: string; exam_date: string; listening_score: number | null; reading_score: number | null; writing_score: number | null; speaking_score: number | null; exam_session: string; change_reason: string }[] = [];
     for (const line of lines.slice(1)) {
       const c = line.split(",").map((x) => x.trim().replace(/^"|"$/g, ""));
       const lv = (c[2] ?? "").toUpperCase().replace(/\s+/g, "");
-      if (!HSK_LEVELS[lv] || !c[1]) { toast.error(`Dòng lỗi: ${line}`); return; }
+      if (!HSK_LEVELS[lv] || !c[1]) { toast.error(`Dòng lỗi: ${line}`); return; } return; }
       const n = (v?: string) => (v ? Number(v) : null);
       let code = (c[0] ?? "").replace(/\s+/g, "").toUpperCase();
       if (!code) code = ((await supabase.rpc("suggest_hsk_code")).data as string) ?? "";
