@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, Users, CalendarDays, Mail, Facebook, Youtube, Clock, Video } from "lucide-react";
+import { ArrowRight, BookOpen, Users, CalendarDays, Mail, Facebook, Instagram, AtSign, Video } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { useT, useTr } from "@/lib/i18n";
 import { useSiteContent } from "@/lib/site-content";
+import { usePublishedClasses, classFee } from "@/lib/hsk-classes";
+import { usePublicActivities, CATEGORY_LABEL, fmtDateTime } from "@/lib/activities";
+import { EmptyState } from "@/components/site/ui";
 
 export const Route = createFileRoute("/")({ staticData: { sitemap: true },
   head: () => ({
@@ -20,24 +23,13 @@ export const Route = createFileRoute("/")({ staticData: { sitemap: true },
 
 import { ActivityCarousel } from "@/components/site/ActivityCarousel";
 
-const COURSES = [
-  { level: "HSK 1", name: "Nhập môn tiếng Trung", sessions: 24, mode: "Online qua Zoom", status: "Đang tuyển sinh" },
-  { level: "HSK 2", name: "Giao tiếp cơ bản", sessions: 24, mode: "Online qua Zoom", status: "Đang tuyển sinh" },
-  { level: "HSK 3", name: "Tiếng Trung trung cấp", sessions: 30, mode: "Online qua Zoom", status: "Sắp khai giảng" },
-  { level: "HSK 4", name: "Luyện thi HSK 4", sessions: 36, mode: "Online qua Zoom", status: "Sắp khai giảng" },
-];
-
-const ACTIVITIES = [
-  { tag: "Workshop", title: "Viết chữ Hán thư pháp cho người mới", date: "Tháng 11/2026" },
-  { tag: "Cuộc thi", title: "Hùng biện tiếng Trung TML Speak Up", date: "Tháng 12/2026" },
-  { tag: "Webinar", title: "Chiến lược ôn thi HSK hiệu quả", date: "Tháng 10/2026" },
-];
-
 function Home() {
   const { t } = useT();
   const tr = useTr();
   const { data: h, preview } = useSiteContent("home");
   const site = useSiteContent("site").data;
+  const classes = (usePublishedClasses().data ?? []).slice(0, 4);
+  const acts = (usePublicActivities().data ?? []).slice(0, 3);
   return (
     <>
       {preview && <div className="bg-gold/20 py-2 text-center text-sm font-semibold text-primary-deep">Đang xem trước bản nháp — khách truy cập chưa thấy nội dung này.</div>}
@@ -114,18 +106,16 @@ function Home() {
           <Link to="/courses/hsk" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">{tr("Tất cả khóa học")} <ArrowRight className="h-4 w-4" /></Link>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {COURSES.map((c) => (
-            <div key={c.level} className="group flex flex-col rounded-2xl border border-border bg-card p-6 transition hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
-              <div className="flex items-center justify-between">
-                <span className="rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">{c.level}</span>
-                <span className="text-xs font-medium text-primary">{tr(c.status)}</span>
-              </div>
-              <h3 className="mt-5 text-lg font-semibold">{tr(c.name)}</h3>
+          {classes.length === 0 && <div className="sm:col-span-2 lg:col-span-4"><EmptyState title={tr("Đang cập nhật")} desc={tr("TML sẽ sớm mở lớp mới.")} /></div>}
+          {classes.map((c) => (
+            <Link key={c.id} to="/courses" className="flex flex-col rounded-2xl border border-border bg-card p-6 transition hover:-translate-y-1 hover:border-primary/50">
+              <span className="w-fit rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">HSK {c.level}</span>
+              <h3 className="mt-5 text-lg font-semibold">{c.name}</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2"><Clock className="h-4 w-4" />{c.sessions} {tr("buổi")}</div>
-                <div className="flex items-center gap-2"><Video className="h-4 w-4" />{tr(c.mode)}</div>
+                <div className="flex items-center gap-2"><Video className="h-4 w-4" />{c.format}</div>
+                <div className="font-semibold text-primary-deep">{classFee(c)}</div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>}
@@ -141,19 +131,18 @@ function Home() {
             <Link to="/activities" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">{tr("Xem tất cả")} <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {ACTIVITIES.map((a, i) => (
-              <article key={a.title} className="overflow-hidden rounded-2xl border border-border bg-card">
-                <div className="grid-lines flex h-40 items-center justify-center bg-accent">
-                  <span className="font-han text-5xl text-primary/70">{["写", "说", "学"][i]}</span>
-                </div>
+            {acts.length === 0 && <div className="md:col-span-3"><EmptyState title={tr("Đang cập nhật")} desc={tr("Hoạt động mới sẽ sớm được công bố.")} /></div>}
+            {acts.map((a) => (
+              <Link key={a.id} to="/activities/$activityId" params={{ activityId: a.slug }} className="overflow-hidden rounded-2xl border border-border bg-card">
+                {a.banner ? <img src={a.banner} alt={a.title} loading="lazy" className="h-40 w-full object-cover" /> : <div className="grid-lines flex h-40 items-center justify-center bg-accent"><CalendarDays className="h-10 w-10 text-primary/60" /></div>}
                 <div className="p-6">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold uppercase tracking-wider text-primary">{tr(a.tag)}</span>
-                    <span className="text-muted-foreground">{tr(a.date)}</span>
+                    <span className="font-semibold uppercase tracking-wider text-primary">{CATEGORY_LABEL[a.category]}</span>
+                    <span className="text-muted-foreground">{fmtDateTime(a.start_time)}</span>
                   </div>
-                  <h3 className="mt-3 font-semibold">{tr(a.title)}</h3>
+                  <h3 className="mt-3 font-semibold">{a.title}</h3>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </div>
@@ -173,7 +162,8 @@ function Home() {
             <div className="text-sm font-semibold uppercase tracking-wider opacity-80">{tr("Liên hệ")}</div>
             <a href={`mailto:${site.email}`} className="flex items-center gap-3 hover:underline"><Mail className="h-5 w-5" />{site.email}</a>
             <a href={site.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><Facebook className="h-5 w-5" />Facebook TML</a>
-            <a href={site.youtube} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><Youtube className="h-5 w-5" />YouTube TML</a>
+            <a href={site.instagram} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><Instagram className="h-5 w-5" />Instagram TML</a>
+            {site.threads && <a href={site.threads} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:underline"><AtSign className="h-5 w-5" />Threads TML</a>}
           </div>
         </div>
       </section>}
