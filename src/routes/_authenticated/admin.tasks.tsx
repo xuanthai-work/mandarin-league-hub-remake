@@ -22,16 +22,32 @@ function TasksPage() {
     ((await supabase.from("tasks").select("*").order("created_at", { ascending: false })).data ?? []) as Task[] });
   const nameOf = (id: string) => members.data?.find((m) => m.id === id)?.full_name ?? "—";
 
-  const [f, setF] = useState({ title: "", description: "", assignee: "", priority: "medium", due: "", points: 10 });
+  const [f, setF] = useState({ title: "", description: "", priority: "medium", due: "", points: 10 });
+  const [picked, setPicked] = useState<string[]>([]);
+  const [dept, setDept] = useState(""); const [q, setQ] = useState("");
+  const [person, setPerson] = useState("");
   const [filter, setFilter] = useState("all");
-  const [err, setErr] = useState(""); const [msg, setMsg] = useState("");
+  const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-tasks"] });
+  const depts = [...new Set((members.data ?? []).map((m) => m.department))];
+  const term = q.trim().toLowerCase();
+  const pool = (members.data ?? []).filter((m) => (!dept || m.department === dept) && (!term || m.full_name.toLowerCase().includes(term) || m.member_code.toLowerCase().includes(term)));
+  const toggle = (id: string) => setPicked((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(""); setMsg("");
-    const { error } = await supabase.rpc("create_task", { _title: f.title, _description: f.description, _assignee: f.assignee, _priority: f.priority, _due_on: (f.due || null) as string, _points: f.points });
-    if (error) return setErr(error.message);
-    setMsg("Đã giao nhiệm vụ."); setF({ ...f, title: "", description: "" }); refresh();
+    if (picked.length === 0) return setErr("Vui lòng chọn ít nhất 1 người thực hiện.");
+    setBusy(true);
+    const group = picked.length > 1 ? `\n\n[Nhiệm vụ nhóm cùng: ${picked.map(nameOf).join(", ")}]` : "";
+    const fails: string[] = [];
+    for (const id of picked) {
+      const { error } = await supabase.rpc("create_task", { _title: f.title, _description: (f.description + group).slice(0, 3000), _assignee: id, _priority: f.priority, _due_on: (f.due || null) as string, _points: f.points });
+      if (error) fails.push(`${nameOf(id)}: ${error.message}`);
+    }
+    setBusy(false); refresh();
+    if (fails.length) setErr(fails.join(" · "));
+    const ok = picked.length - fails.length;
+    if (ok) { setMsg(`Đã giao nhiệm vụ cho ${ok} người.`); setF({ ...f, title: "", description: "" }); setPicked([]); }
   };
   const review = async (t: Task, approve: boolean) => {
     const note = approve ? "" : window.prompt("Lý do yêu cầu làm lại:") ?? "";
