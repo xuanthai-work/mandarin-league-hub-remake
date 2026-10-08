@@ -29,7 +29,7 @@ function ActivityRegistrationEmail({ fullName = 'Bạn', code = '—', activityT
 
 export const template = {
   component: ActivityRegistrationEmail,
-  subject: (d: Record<string, any>) => `[The Mandarin League] Xác nhận đăng ký tham gia sự kiện: ${d.activityTitle ?? ''}`,
+  subject: (d: Record<string, any>) => `[The Mandarin League] Xác nhận đăng ký tham gia sự kiện: ${d['activityTitle'] ?? ''}`,
   displayName: 'Xác nhận đăng ký hoạt động',
   previewData: { fullName: 'Nguyễn Văn A', code: 'TML-ACT-2610-0001', activityTitle: 'Workshop thư pháp', startTime: '19:00, 20/10/2026', location: 'Google Meet', phone: '0901234567', submittedAt: '18:30, 07/10/2026' },
 } satisfies TemplateEntry
