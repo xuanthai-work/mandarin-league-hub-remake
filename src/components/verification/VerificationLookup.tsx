@@ -29,12 +29,14 @@ import {
 } from "@/lib/verification";
 import { lookupCertificate } from "@/lib/certificates";
 import QRCode from "qrcode";
-import { Copy, Printer } from "lucide-react";
+import { Copy, Download, Printer } from "lucide-react";
+import { getCertificateFileUrl } from "@/lib/certificate-files.functions";
 import { toast } from "sonner";
 
 interface VerificationLookupProps {
   kind: VerificationRecord["kind"];
   initialCode?: string;
+  initialToken?: string;
 }
 
 type LookupState =
@@ -43,14 +45,15 @@ type LookupState =
   | { type: "not-found"; code: string }
   | { type: "found"; record: VerificationRecord };
 
-export function VerificationLookup({ kind, initialCode = "" }: VerificationLookupProps) {
+export function VerificationLookup({ kind, initialCode = "", initialToken = "" }: VerificationLookupProps) {
   const isHsk = kind === "hsk";
   const demoCode = DEMO_CODES[kind];
   const [code, setCode] = useState(initialCode);
+  const [name, setName] = useState("");
   const [state, setState] = useState<LookupState>({ type: "idle" });
 
   const [loading, setLoading] = useState(false);
-  const verify = async (rawCode: string) => {
+  const verify = async (rawCode: string, token = "") => {
     const parsed = verificationCodeSchema.safeParse(rawCode);
     if (!parsed.success) {
       setState({ type: "invalid", message: parsed.error.issues[0]?.message ?? "Mã xác minh không hợp lệ." });
@@ -58,17 +61,23 @@ export function VerificationLookup({ kind, initialCode = "" }: VerificationLooku
     }
     setCode(parsed.data);
     let record: VerificationRecord | null | undefined = null;
-    if (kind === "certificate") {
+    const demo = findVerificationRecord(kind, parsed.data);
+    if (kind === "certificate" && !demo) {
+      if (!token && name.trim().length < 2) {
+        setState({ type: "invalid", message: "Vui lòng nhập Họ và tên người nhận để đối chiếu cùng mã chứng nhận." });
+        return;
+      }
       setLoading(true);
-      record = await lookupCertificate(parsed.data).catch(() => null);
+      record = await lookupCertificate(parsed.data, name, token).catch(() => null);
       setLoading(false);
+      if (record && record.kind === "certificate") record = { ...record, lookupName: name };
     }
-    record = record ?? findVerificationRecord(kind, parsed.data);
+    record = record ?? demo;
     setState(record ? { type: "found", record } : { type: "not-found", code: parsed.data });
   };
 
   useEffect(() => {
-    if (initialCode) verify(initialCode);
+    if (initialCode && (initialToken || kind !== "certificate")) verify(initialCode, initialToken);
     // Only verify again when the direct-link code changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCode]);
@@ -125,6 +134,13 @@ export function VerificationLookup({ kind, initialCode = "" }: VerificationLooku
               <ShieldCheck /> {loading ? "Đang kiểm tra…" : isHsk ? "Xác minh kết quả" : "Xác minh chứng nhận"}
             </Button>
           </div>
+          {!isHsk && (
+            <div className="mt-4">
+              <label htmlFor="cert-name" className="text-sm font-bold text-foreground">Họ và tên người nhận</label>
+              <Input id="cert-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A (có dấu hoặc không dấu đều được)" maxLength={120} autoComplete="off" className="mt-2 h-12" />
+              <p className="mt-1 text-xs text-muted-foreground">Để bảo vệ người nhận, cần nhập đúng họ tên. Quét mã QR trên chứng nhận sẽ mở kết quả trực tiếp.</p>
+            </div>
+          )}
           <div id={`${kind}-hint`} className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             <span className="flex flex-wrap items-center gap-1">Dữ liệu mẫu: <Button type="button" variant="link" onClick={() => { setCode(demoCode); verify(demoCode); }} className="h-auto p-0 font-mono text-xs font-semibold">{demoCode}</Button></span>
             <span className="rounded-sm bg-warning-soft px-2 py-1 font-bold text-warning-foreground">DEMO DATA</span>
@@ -223,7 +239,16 @@ function HskResult({ record }: { record: HskRecord }) {
 
 function CertificateResult({ record }: { record: CertificateRecord }) {
   const [qr, setQr] = useState("");
-  const link = typeof window !== "undefined" ? `${window.location.origin}/verify/certificate/${record.verificationId}` : "";
+  const link = typeof window !== "undefined" ? `${window.location.origin}/verify/certificate/${record.verificationId}${record.verifyToken ? `?t=${record.verifyToken}` : ""}` : "";
+  const [downloading, setDownloading] = useState(false);
+  const download = async () => {
+    setDownloading(true);
+    try {
+      const { url } = await getCertificateFileUrl({ data: { code: record.verificationId, name: record.lookupName ?? "", token: record.verifyToken ?? "" } });
+      if (url) window.location.href = url; else toast.error("Không tải được tệp gốc");
+    } catch { toast.error("Không tải được tệp gốc"); }
+    setDownloading(false);
+  };
   useEffect(() => { if (link) QRCode.toDataURL(link, { margin: 0, width: 180 }).then(setQr); }, [link]);
   const copy = async () => { await navigator.clipboard.writeText(link); toast.success("Đã sao chép liên kết xác thực"); };
   return (
@@ -254,6 +279,7 @@ function CertificateResult({ record }: { record: CertificateRecord }) {
       <div className="mt-4 flex flex-wrap justify-center gap-2 print:hidden">
         <Button variant="outline" onClick={copy}><Copy /> Sao chép liên kết</Button>
         <Button variant="outline" onClick={() => window.print()}><Printer /> In / Xuất PDF</Button>
+        {record.hasFile && <Button onClick={download} disabled={downloading}><Download /> {downloading ? "Đang chuẩn bị…" : "Tải tệp chứng nhận gốc"}</Button>}
       </div>
     </div>
   );

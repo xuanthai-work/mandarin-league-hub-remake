@@ -13,8 +13,8 @@ export const CERT_TYPES: Record<string, string> = {
 /** Remove every whitespace and upper-case — codes never contain spaces. */
 export const normalizeCode = (v: string) => v.replace(/\s+/g, "").toUpperCase();
 
-export async function lookupCertificate(code: string): Promise<CertificateRecord | null> {
-  const { data, error } = await supabase.rpc("verify_certificate", { _code: normalizeCode(code) });
+export async function lookupCertificate(code: string, name = "", token = ""): Promise<CertificateRecord | null> {
+  const { data, error } = await supabase.rpc("verify_certificate_v2", { _code: normalizeCode(code), _name: name, _token: token });
   if (error || !data?.length) return null;
   const r = data[0]!;
   return {
@@ -30,5 +30,7 @@ export async function lookupCertificate(code: string): Promise<CertificateRecord
     ...(r.expiry_date ? { expiryDate: r.expiry_date } : {}),
     ...(r.revoked_at ? { revokedAt: r.revoked_at } : {}),
     isDemo: false,
+    verifyToken: r.verify_token,
+    hasFile: r.has_file,
   };
 }

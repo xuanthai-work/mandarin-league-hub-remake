@@ -27,6 +27,9 @@ export interface CertificateRecord {
   expiryDate?: string;
   revokedAt?: string;
   isDemo?: boolean;
+  verifyToken?: string;
+  hasFile?: boolean;
+  lookupName?: string;
 }
 
 export interface HskRecord {
