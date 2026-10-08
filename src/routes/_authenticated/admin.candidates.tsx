@@ -140,7 +140,7 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
     <Drawer title={app.full_name} onClose={onClose}>
       <div className="font-mono text-sm text-primary">{app.code}</div>
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        {[["Email", app.email], ["Điện thoại", app.phone], ["Đơn vị", app.organization], ["Tiếng Trung", app.chinese_level || "—"], ["HSK", app.hsk_level || "—"], ["Ngày gửi", new Date(app.created_at).toLocaleString("vi-VN")]].map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="break-words">{v}</dd></div>)}
+        {[["Email", app.email], ["Điện thoại", app.phone], ["Ngày sinh", app.date_of_birth ? app.date_of_birth.split("-").reverse().join("/") : "—"], ["Đơn vị", app.organization], ["Tiếng Trung", app.chinese_level || "—"], ["HSK", app.hsk_level || "—"], ["Ngày gửi", new Date(app.created_at).toLocaleString("vi-VN")]].map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="break-words">{v}</dd></div>)}
       </dl>
       <div className="mt-4 text-sm">{((app.choices ?? []) as Choice[]).map((c, i) => <div key={i} className="font-medium">NV{i + 1}: {deptName(c.department)} — {c.position}</div>)}</div>
       <p className="mt-4 rounded-lg bg-secondary p-3 text-sm">{app.intro}</p>
