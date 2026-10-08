@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
-  DEMO_CODES,
   findVerificationRecord,
   formatVerificationDate,
   verificationCodeSchema,
@@ -52,7 +51,6 @@ type LookupState =
 
 export function VerificationLookup({ kind, initialCode = "", initialToken = "" }: VerificationLookupProps) {
   const isHsk = kind === "hsk";
-  const demoCode = DEMO_CODES[kind];
   const [code, setCode] = useState(initialCode);
   const [name, setName] = useState("");
   const [state, setState] = useState<LookupState>({ type: "idle" });
@@ -127,7 +125,7 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
                 id={`${kind}-code`}
                 value={code}
                 onChange={(event) => setCode(event.target.value.replace(/\s+/g, "").toUpperCase())}
-                placeholder={demoCode}
+                placeholder={isHsk ? "TMLHSK2026..." : "Nhập mã chứng nhận"}
                 maxLength={50}
                 autoComplete="off"
                 spellCheck={false}
@@ -147,7 +145,6 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
             </div>
           )}
           <div id={`${kind}-hint`} className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span className="flex flex-wrap items-center gap-1">Dữ liệu mẫu: <Button type="button" variant="link" onClick={() => { setCode(demoCode); verify(demoCode); }} className="h-auto p-0 font-mono text-xs font-semibold">{demoCode}</Button></span>
           </div>
         </form>
 
