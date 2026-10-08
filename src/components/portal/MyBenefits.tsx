@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Check, Copy, ExternalLink, Eye, EyeOff, KeyRound, Lock, ShieldAlert, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { BENEFIT_STATUS, BenefitIcon, daysLeft } from "@/lib/benefits";
+import { BENEFIT_STATUS, BenefitIcon, daysLeft, useBenefitLogoUrls } from "@/lib/benefits";
 
-type Row = { id: string; name: string; description: string; icon_key: string; status: string; ends_on: string | null; has_access: boolean };
+type Row = { id: string; name: string; description: string; icon_key: string; status: string; ends_on: string | null; has_access: boolean; logo_path?: string; logoUrl?: string | null };
 type Access = { login: string; secret: string; access_url: string; usage_note: string };
 
 export function MyBenefits() {
