@@ -33,5 +33,4 @@
 - Site UI text uses the typed dictionary in src/lib/i18n (vi/zh/en, Vietnamese on SSR then the stored choice after hydration), so new languages or strings need no library and never cause hydration mismatches.
 - Certificate AI extraction only pre-fills the admin form via an admin-checked server function; nothing is saved until the admin confirms, so AI mistakes never reach public verification.
 - HSK results live in `hsk_results` (admin-only RLS); a trigger computes totals/max/pass by level and an append-only `hsk_score_audits` trigger logs every change, and the public reads only via security-definer `verify_hsk()` (code + name or QR token), so scores can't be faked in the UI or enumerated.
-- Admin menu visibility is derived from role + department in src/lib/admin-permissions.ts and mirrors RLS helpers (is_dept_member, can_manage_department, can_manage_partners), so the UI never shows sections the database would reject.
-- News articles go draft → pending_review → published; a trigger lets only comms heads/deputies/admin set reviewer, featured and publish fields, so members cannot self-publish.
+- Admin menu comes from role+department (src/lib/admin-permissions.ts) mirroring RLS helpers; a news trigger lets only comms heads/admin publish, so UI and DB agree and members can't self-publish.
