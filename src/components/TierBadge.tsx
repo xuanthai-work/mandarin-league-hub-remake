@@ -3,6 +3,13 @@ import { Lock, X } from "lucide-react";
 import { TIERS, tierOf } from "@/lib/points";
 
 const METAL: Record<string, string> = { bronze: "bronze", silver: "silver", gold: "gold", platinum: "purple" };
+
+export const TIER_INFO: Record<string, { zh: string; motto: string; perks: string[] }> = {
+  bronze: { zh: "见习", motto: "Khởi đầu hành trình học hỏi và hòa nhập cùng Liên Đoàn.", perks: ["Thẻ thành viên chính thức", "Tham gia nhiệm vụ & dự án Ban"] },
+  silver: { zh: "积极", motto: "Năng nổ, luôn có mặt trong sinh hoạt và nhiệm vụ Ban.", perks: ["Ưu tiên cấp quyền lợi học tập", "Được ghi nhận trong báo cáo Ban"] },
+  gold: { zh: "骨干", motto: "Trụ cột chuyên môn, hoàn thành xuất sắc dự án lớn.", perks: ["Ưu tiên quyền lợi Premium", "Ưu tiên xét đề bạt Phó/Trưởng Ban"] },
+  platinum: { zh: "精英", motto: "Vinh danh tối cao cho cống hiến bền bỉ và tầm ảnh hưởng.", perks: ["Vinh danh thường niên", "Đặc quyền cao nhất của TML"] },
+};
 const ENAMEL: Record<string, string> = { bronze: "var(--enamel-amber)", silver: "var(--enamel-azure)", gold: "var(--sapphire)", platinum: "var(--metal-purple-lo)" };
 const GLYPH: Record<string, string> = { bronze: "习", silver: "积", gold: "骨", platinum: "精" };
 
