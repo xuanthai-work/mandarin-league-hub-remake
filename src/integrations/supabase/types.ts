@@ -291,6 +291,7 @@ export type Database = {
           id: string
           is_enabled: boolean
           login: string
+          logo_path: string
           min_points: number | null
           name: string
           secret: string
@@ -309,6 +310,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           login?: string
+          logo_path?: string
           min_points?: number | null
           name: string
           secret?: string
@@ -327,6 +329,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           login?: string
+          logo_path?: string
           min_points?: number | null
           name?: string
           secret?: string
@@ -1675,6 +1678,13 @@ export type Database = {
           login: string
           secret: string
           usage_note: string
+        }[]
+      }
+      benefit_logos: {
+        Args: never
+        Returns: {
+          id: string
+          logo_path: string
         }[]
       }
       can_manage_department: { Args: { _dept: string }; Returns: boolean }
