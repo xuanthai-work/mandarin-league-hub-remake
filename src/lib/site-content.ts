@@ -34,7 +34,7 @@ export function mergeContent<K extends ContentKey>(key: K, raw: unknown): (typeo
   const src = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const out: Record<string, unknown> = { ...base };
   for (const k of Object.keys(base)) {
-    if (k === "show") out.show = { ...(base.show as object), ...((src.show as object) ?? {}) };
+    if (k === "show") out["show"] = { ...(base["show"] as object), ...((src["show"] as object) ?? {}) };
     else if (typeof src[k] === "string" && (src[k] as string).trim()) out[k] = (src[k] as string).trim();
   }
   return out as (typeof DEFAULTS)[K];

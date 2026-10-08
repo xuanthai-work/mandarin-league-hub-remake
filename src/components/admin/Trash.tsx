@@ -77,7 +77,7 @@ export function TrashList({ table, canHardDelete, invalidate }: { table: TrashTa
             <p className="text-xs text-muted-foreground">Đã xóa lúc {new Date(r.deleted_at).toLocaleString("vi-VN")}</p>
           </div>
           <button onClick={() => restore(r.id)} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-primary"><RotateCcw className="h-4 w-4" /> Khôi phục</button>
-          {canHardDelete && <button onClick={() => purge(r.id, r[titleCol])} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-destructive"><Trash2 className="h-4 w-4" /> Xóa vĩnh viễn</button>}
+          {canHardDelete && <button onClick={() => purge(r.id, r[titleCol] ?? "")} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-destructive"><Trash2 className="h-4 w-4" /> Xóa vĩnh viễn</button>}
         </div>
       ))}
     </div>
