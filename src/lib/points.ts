@@ -2,7 +2,7 @@ export type Tier = { key: string; label: string; min: number; className: string 
 
 /** Contribution tiers shown on the member card. */
 export const TIERS: Tier[] = [
-  { key: "platinum", label: "Tinh hoa", min: 500, className: "bg-primary-deep text-primary-foreground border-gold" },
+  { key: "platinum", label: "Tinh hoa", min: 500, className: "tier-purple" },
   { key: "gold", label: "Nòng cốt", min: 200, className: "bg-gold text-foreground border-gold" },
   { key: "silver", label: "Tích cực", min: 50, className: "bg-secondary text-foreground border-border" },
   { key: "bronze", label: "Tập sự", min: 0, className: "bg-gold-soft text-foreground border-gold" },
