@@ -73,11 +73,34 @@ function TasksPage() {
 
       <form onSubmit={create} className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
         <h2 className="font-semibold sm:col-span-2">Giao nhiệm vụ mới</h2>
-        <input required minLength={3} maxLength={200} className={inp} placeholder="Tên nhiệm vụ" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
-        <select required className={inp} value={f.assignee} onChange={(e) => setF({ ...f, assignee: e.target.value })}>
-          <option value="">— Chọn người thực hiện —</option>
-          {(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name} · {deptName(m.department)}</option>)}
-        </select>
+        <input required minLength={3} maxLength={200} className={`${inp} sm:col-span-2`} placeholder="Tên nhiệm vụ" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
+        <div className="space-y-2 rounded-lg border border-border p-3 sm:col-span-2">
+          <p className="text-sm font-medium">Người thực hiện <span className="text-xs text-muted-foreground">(chọn được nhiều người — mỗi người nhận 1 nhiệm vụ riêng để nộp & cộng điểm)</span></p>
+          <div className="grid gap-2 sm:grid-cols-[200px_1fr_auto]">
+            <select className={inp} value={dept} onChange={(e) => setDept(e.target.value)}>
+              <option value="">Tất cả các Ban</option>
+              {depts.map((d) => <option key={d} value={d}>{deptName(d)}</option>)}
+            </select>
+            <input className={inp} placeholder="Tìm theo tên hoặc mã thành viên…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <button type="button" onClick={() => setPicked((p) => [...new Set([...p, ...pool.map((m) => m.id)])])} className="rounded-lg border border-border px-3 text-xs">Chọn tất cả ({pool.length})</button>
+          </div>
+          {picked.length > 0 && <div className="flex flex-wrap gap-1.5">
+            {picked.map((id) => <button type="button" key={id} onClick={() => toggle(id)} className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">{nameOf(id)} ✕</button>)}
+            <button type="button" onClick={() => setPicked([])} className="text-xs text-muted-foreground underline">Bỏ chọn hết</button>
+          </div>}
+          <div className="max-h-48 overflow-y-auto rounded-md border border-border">
+            {pool.length === 0 && <p className="p-3 text-xs text-muted-foreground">Không có thành viên phù hợp.</p>}
+            {pool.map((m) => (
+              <label key={m.id} className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 text-sm last:border-0 hover:bg-accent">
+                <input type="checkbox" checked={picked.includes(m.id)} onChange={() => toggle(m.id)} />
+                <span className="font-medium">{m.full_name}</span>
+                <span className="font-mono text-xs text-muted-foreground">{m.member_code}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{deptName(m.department)}</span>
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Đã chọn {picked.length} thành viên.</p>
+        </div>
         <textarea maxLength={3000} className={`${inp} sm:col-span-2`} rows={3} placeholder="Mô tả / yêu cầu" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
         <div className="grid grid-cols-3 gap-3 sm:col-span-2">
           <label className="text-xs text-muted-foreground">Ưu tiên
