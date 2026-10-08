@@ -62,7 +62,7 @@ function TasksPage() {
     if (error) setErr(error.message); else refresh();
   };
 
-  const rows = (tasks.data ?? []).filter((t) => filter === "all" || t.status === filter);
+  const rows = (tasks.data ?? []).filter((t) => (filter === "all" || t.status === filter) && (!person || t.assignee_id === person));
   const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -115,7 +115,7 @@ function TasksPage() {
         <p className="text-xs text-muted-foreground sm:col-span-2">Gợi ý: việc nhỏ 5–10 · việc vừa 15–25 · dự án lớn 30–50 điểm.</p>
         {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
         {msg && <p className="text-sm text-success sm:col-span-2">{msg}</p>}
-        <button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground sm:w-fit">Giao nhiệm vụ</button>
+        <button disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60 sm:w-fit">{busy ? "Đang giao…" : picked.length > 1 ? `Giao cho ${picked.length} người` : "Giao nhiệm vụ"}</button>
       </form>
 
       <div className="flex flex-wrap gap-2">
@@ -124,6 +124,7 @@ function TasksPage() {
         ))}
       </div>
 
+      {person && <p className="text-sm">Đang xem nhiệm vụ của <b>{nameOf(person)}</b> · <button onClick={() => setPerson("")} className="text-primary underline">Xem tất cả</button></p>}
       <div className="space-y-3">
         {tasks.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
         {!tasks.isLoading && rows.length === 0 && <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">Chưa có nhiệm vụ.</p>}
@@ -132,7 +133,7 @@ function TasksPage() {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h3 className="font-semibold">{t.title}</h3>
-                <p className="text-xs text-muted-foreground">{nameOf(t.assignee_id)} · {deptName(t.department)} · Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
+                <p className="text-xs text-muted-foreground"><button type="button" title="Xem các nhiệm vụ của người này" onClick={() => setPerson(t.assignee_id)} className="font-medium text-primary hover:underline">{nameOf(t.assignee_id)}</button> · {deptName(t.department)} · Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
               </div>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS[t.status]?.className}`}>{TASK_STATUS[t.status]?.label}</span>
             </div>
