@@ -1,9 +1,5 @@
 # Roadmap
-
-- [x] Add shared verification data, validation, and UI components
-- [x] Add verification center, certificate, HSK, and direct QR routes
-- [x] Add verification navigation and supporting design tokens
-- [x] Validate build and desktop/mobile behavior
-- [x] Phase 2A: public pages (about, organization, HSK courses + detail, activities + detail, community, join, member, partners, news, contact)
-- [ ] Phase 2B: Lovable Cloud data + /admin dashboard (waiting for user approval of 2A)
-- [x] Homepage: replace org chart with admin-managed activity photo carousel
+- [x] AI đọc ảnh/PDF chứng nhận và điền sẵn form Admin
+- [x] Đa ngôn ngữ bước 1: nút VI/中/EN, menu, chân trang, phần đầu trang chủ
+- [ ] Đa ngôn ngữ bước 2: nội dung Trang chủ, Cơ cấu tổ chức, Xác minh
+- [ ] Đa ngôn ngữ bước 3: Khóa học, Hoạt động, Tuyển thành viên, Liên hệ
