@@ -54,7 +54,7 @@ export const createAccount = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({
     memberId: z.string().uuid().optional(),
     newMember: z.object({ full_name: z.string().trim().min(2).max(120), phone: z.string().max(30).default("") }).optional(),
-    email: z.string().trim().toLowerCase().email().max(200),
+    email: z.preprocess((v) => String(v ?? "").replace(/[\s\u200B-\u200D\uFEFF]/g, "").toLowerCase(), z.string().email("Email đăng nhập không hợp lệ.").max(200)),
     password: z.string().min(8).max(72),
     department: z.string().min(2).max(40),
     position: z.string().min(2).max(40),
