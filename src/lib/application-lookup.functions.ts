@@ -14,8 +14,10 @@ const WINDOW = 10 * 60_000, LIMIT = 8;
 
 /** Public, minimal-field lookup by application code or email. Never returns contact data, answers, files or notes. */
 export const lookupApplication = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ query: z.string().trim().min(3).max(200) }).parse(d))
+  .inputValidator((d) => z.object({ query: z.string().trim().min(3).max(200), captcha: z.string().max(4000) }).parse(d))
   .handler(async ({ data }): Promise<{ ok: true; results: LookupResult[] } | { ok: false; error: string }> => {
+    const { verifyRecaptcha, CAPTCHA_ERROR } = await import("./recaptcha.server");
+    if (!(await verifyRecaptcha(data.captcha))) return { ok: false, error: CAPTCHA_ERROR };
     const ip = getRequestHeader("cf-connecting-ip") ?? getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const now = Date.now();
     const list = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW);

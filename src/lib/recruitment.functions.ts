@@ -38,6 +38,8 @@ const submitSchema = z.object({
 export const submitApplication = createServerFn({ method: "POST" })
   .inputValidator((d) => d as unknown)
   .handler(async ({ data: raw }) => {
+    const { verifyRecaptcha, CAPTCHA_ERROR } = await import("./recaptcha.server");
+    if (!(await verifyRecaptcha((raw as { captcha?: unknown } | null)?.captcha))) return { ok: false as const, error: CAPTCHA_ERROR };
     const parsed = submitSchema.safeParse(raw);
     if (!parsed.success) {
       const LABEL: Record<string, string> = { full_name: "Họ và tên (ít nhất 2 ký tự)", email: "Email", phone: "Số điện thoại (8–30 ký tự)", organization: "Trường / Đơn vị (ít nhất 2 ký tự)", chinese_level: "Trình độ tiếng Trung", hsk_level: "HSK", intro: "Giới thiệu ngắn (10–3000 ký tự)", positionIds: "Nguyện vọng", answers: "Câu trả lời (quá dài)", cvPath: "Tệp CV", consent: "Xác nhận thông tin" };

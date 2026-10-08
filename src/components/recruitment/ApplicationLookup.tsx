@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, Loader2, Search } from "lucide-react";
 import { lookupApplication, type LookupResult } from "@/lib/application-lookup.functions";
@@ -15,17 +16,20 @@ export function ApplicationLookup({ initial = "" }: { initial?: string }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [res, setRes] = useState<LookupResult[] | null>(null);
+  const [captcha, setCaptcha] = useState("");
+  const captchaRef = useRef<RecaptchaHandle>(null);
 
   const run = async (value = q) => {
     if (value.trim().length < 3) { setErr("Vui lòng nhập email hoặc mã hồ sơ."); return; }
+    if (!captcha) { setErr("Vui lòng tick ô \"Tôi không phải là người máy\" trước khi tra cứu."); return; }
     setBusy(true); setErr(null); setRes(null);
     try {
-      const r = await lookup({ data: { query: value } });
+      const r = await lookup({ data: { query: value, captcha } });
       if (r.ok) setRes(r.results); else setErr(r.error);
     } catch { setErr("Không thể tra cứu lúc này. Vui lòng thử lại sau."); }
-    finally { setBusy(false); }
+    finally { setBusy(false); captchaRef.current?.reset(); }
   };
-  useEffect(() => { if (initial) { setQ(initial); void run(initial); } }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (initial) setQ(initial); }, [initial]);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
@@ -38,6 +42,7 @@ export function ApplicationLookup({ initial = "" }: { initial?: string }) {
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Tra cứu hồ sơ
         </button>
       </form>
+      <div className="mt-3"><Recaptcha ref={captchaRef} onChange={setCaptcha} /></div>
       {err && <p className="mt-4 text-sm text-destructive">{err}</p>}
       {res && res.length === 0 && <p className="mt-5 rounded-xl bg-secondary p-4 text-sm text-muted-foreground">Không tìm thấy hồ sơ phù hợp.</p>}
       {res?.map((r) => (
