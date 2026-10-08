@@ -96,6 +96,7 @@ function Header() {
 
 function Footer() {
   const { t } = useT();
+  const site = useSiteContent("site").data;
   return (
     <footer className="mt-24 bg-primary-deep text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
