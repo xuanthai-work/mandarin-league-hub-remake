@@ -39,7 +39,7 @@ export function useBenefitLogoUrls(paths: string[]) {
   });
 }
 
-export function BenefitIcon({ iconKey, size = "md", logoUrl }: { iconKey: string; size?: "sm" | "md"; logoUrl?: string | null }) {
+export function BenefitIcon({ iconKey, size = "md", logoUrl }: { iconKey: string; size?: "sm" | "md"; logoUrl?: string | null | undefined }) {
   const b = BENEFIT_ICONS[iconKey] ?? BENEFIT_ICONS["gift"]!;
   const I = b.icon;
   const box = size === "sm" ? "h-9 w-9 rounded-lg" : "h-14 w-14 rounded-2xl";
