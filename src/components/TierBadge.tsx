@@ -2,49 +2,90 @@ import { useId, useState } from "react";
 import { Lock, X } from "lucide-react";
 import { TIERS, tierOf } from "@/lib/points";
 
-const METAL: Record<string, string> = { bronze: "bronze", silver: "silver", gold: "gold", platinum: "plat" };
+const METAL: Record<string, string> = { bronze: "bronze", silver: "silver", gold: "gold", platinum: "purple" };
+const ENAMEL: Record<string, string> = { bronze: "var(--enamel-amber)", silver: "var(--enamel-azure)", gold: "var(--sapphire)", platinum: "var(--metal-purple-lo)" };
+const GLYPH: Record<string, string> = { bronze: "习", silver: "积", gold: "骨", platinum: "精" };
 
-export const TIER_INFO: Record<string, { zh: string; motto: string; perks: string[] }> = {
-  bronze: { zh: "见习", motto: "Khởi đầu hành trình học hỏi và hòa nhập cùng Liên Đoàn.", perks: ["Thẻ thành viên chính thức", "Tham gia nhiệm vụ & dự án Ban"] },
-  silver: { zh: "积极", motto: "Năng nổ, luôn có mặt trong sinh hoạt và nhiệm vụ Ban.", perks: ["Ưu tiên cấp quyền lợi học tập", "Được ghi nhận trong báo cáo Ban"] },
-  gold: { zh: "骨干", motto: "Trụ cột chuyên môn, hoàn thành xuất sắc dự án lớn.", perks: ["Ưu tiên quyền lợi Premium", "Ưu tiên xét đề bạt Phó/Trưởng Ban"] },
-  platinum: { zh: "精英", motto: "Vinh danh tối cao cho cống hiến bền bỉ và tầm ảnh hưởng.", perks: ["Vinh danh thường niên", "Đặc quyền cao nhất của TML"] },
-};
+const star = (n: number, ro: number, ri: number, rot = -Math.PI / 2) =>
+  Array.from({ length: n * 2 }).map((_, i) => { const r = i % 2 ? ri : ro; const a = rot + (i * Math.PI) / n; return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`; }).join(" ");
 
-function Emblem({ k }: { k: string }) {
-  const s = { fill: "var(--sapphire)" };
-  if (k === "bronze") return <g style={s}><rect x="38" y="58" width="24" height="6" rx="1" /><rect x="40" y="65" width="20" height="4" rx="1" /><path d="M50 56 C50 46 50 40 50 34 M50 44 C44 42 40 37 40 31 C46 32 50 37 50 44 M50 40 C56 38 60 33 60 27 C54 28 50 33 50 40" stroke="var(--sapphire)" strokeWidth="2.5" fill="none" strokeLinecap="round" /></g>;
-  if (k === "silver") return <g style={s}><path d="M58 26 L62 30 L46 54 L41 56 L42 51 Z" /><path d="M32 62 Q41 56 50 62 T68 62" stroke="var(--sapphire)" strokeWidth="2.5" fill="none" strokeLinecap="round" /></g>;
-  if (k === "gold") return <g style={s}><path d="M50 28 L64 33 V46 C64 55 58 61 50 65 C42 61 36 55 36 46 V33 Z" /><text x="50" y="52" textAnchor="middle" fontSize="16" fontWeight="700" style={{ fill: "var(--metal-gold-hi)" }}>骨</text></g>;
-  return <g><path d="M34 40 L40 30 L45 38 L50 26 L55 38 L60 30 L66 40 L63 48 H37 Z" style={s} /><polygon points="50,50 57,57 50,68 43,57" style={{ fill: "var(--sapphire)", stroke: "var(--metal-plat-hi)", strokeWidth: 1.5 }} /></g>;
+const SHIELD = "M50 6 L86 17 V47 C86 70 70 85 50 94 C30 85 14 70 14 47 V17 Z";
+
+function Outer({ k, fill }: { k: string; fill: string }) {
+  if (k === "bronze") return <path d={SHIELD} fill={fill} />;
+  if (k === "silver") return <polygon points={star(6, 48, 38)} fill={fill} />;
+  if (k === "gold") return <polygon points={star(16, 48, 40, -Math.PI / 2)} fill={fill} />;
+  return <polygon points={star(8, 49, 33)} fill={fill} />;
+}
+
+function Laurel({ color }: { color: string }) {
+  return <>{[0, 1].map((side) => (
+    <g key={side} transform={side ? "translate(100,0) scale(-1,1)" : undefined}>
+      <path d="M30 74 Q20 60 24 40" fill="none" style={{ stroke: color }} strokeWidth="1.2" />
+      {[0, 1, 2, 3, 4].map((j) => { const y = 72 - j * 7.5, x = 27 - Math.sin(j / 2) * 3.5; return <ellipse key={j} cx={x - 3} cy={y} rx="1.6" ry="4" transform={`rotate(${-55 + j * 9} ${x - 3} ${y})`} style={{ fill: color }} />; })}
+    </g>
+  ))}</>;
 }
 
 export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: string; size?: number; locked?: boolean }) {
   const id = useId().replace(/:/g, "");
-  const m = METAL[tierKey] ?? "bronze";
+  const k = METAL[tierKey] ? tierKey : "bronze";
+  const m = METAL[k]!;
   const v = (x: string) => `var(--metal-${m}${x})`;
+  const trim = k === "platinum" ? "var(--metal-gold)" : v("");
+  const trimHi = k === "platinum" ? "var(--metal-gold-hi)" : v("-hi");
+  const trimLo = k === "platinum" ? "var(--metal-gold-lo)" : v("-lo");
+  const detail = size >= 40;
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-label={`Huy hiệu ${tierKey}`} className={locked ? "opacity-40 grayscale" : "drop-shadow-lg"}>
       <defs>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" style={{ stopColor: v("-hi") }} /><stop offset="0.5" style={{ stopColor: v("") }} /><stop offset="1" style={{ stopColor: v("-lo") }} />
+        <linearGradient id={`m${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" style={{ stopColor: trimHi }} /><stop offset="0.45" style={{ stopColor: trim }} /><stop offset="0.55" style={{ stopColor: trimHi }} /><stop offset="1" style={{ stopColor: trimLo }} />
         </linearGradient>
-        <radialGradient id={`r${id}`} cx="0.35" cy="0.3" r="0.8">
-          <stop offset="0" style={{ stopColor: v("-hi") }} /><stop offset="1" style={{ stopColor: v("") }} />
+        <radialGradient id={`e${id}`} cx="0.35" cy="0.3" r="0.85">
+          <stop offset="0" style={{ stopColor: v("-hi") }} /><stop offset="0.35" style={{ stopColor: v("") }} /><stop offset="1" style={{ stopColor: ENAMEL[k] }} />
         </radialGradient>
+        <radialGradient id={`a${id}`}>
+          <stop offset="0.5" style={{ stopColor: k === "platinum" ? "var(--amethyst-glow)" : trimHi, stopOpacity: 0.8 }} /><stop offset="1" style={{ stopColor: trim, stopOpacity: 0 }} />
+        </radialGradient>
+        <linearGradient id={`s${id}`} x1="0" x2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset="0.5" stopColor="#fff" stopOpacity="0.75" /><stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <clipPath id={`c${id}`}><Outer k={k} fill="#000" /></clipPath>
       </defs>
-      {tierKey === "platinum" && Array.from({ length: 16 }).map((_, i) => (
-        <line key={i} x1="50" y1="50" x2={50 + 49 * Math.cos((i * Math.PI) / 8)} y2={50 + 49 * Math.sin((i * Math.PI) / 8)} style={{ stroke: v("-hi") }} strokeWidth="1" opacity="0.6" />
+
+      {!locked && (k === "gold" || k === "platinum") && <circle className="badge-aura" cx="50" cy="50" r="50" fill={`url(#a${id})`} />}
+      {k === "platinum" && detail && Array.from({ length: 16 }).map((_, i) => (
+        <line key={i} x1="50" y1="50" x2={50 + 50 * Math.cos((i * Math.PI) / 8 + Math.PI / 16)} y2={50 + 50 * Math.sin((i * Math.PI) / 8 + Math.PI / 16)} style={{ stroke: "var(--amethyst-glow)" }} strokeWidth="0.6" opacity="0.5" />
       ))}
-      <polygon points={Array.from({ length: 8 }).map((_, i) => { const a = (i * Math.PI) / 4 + Math.PI / 8; return `${50 + 44 * Math.cos(a)},${50 + 44 * Math.sin(a)}`; }).join(" ")} fill={`url(#g${id})`} />
-      <circle cx="50" cy="50" r="34" fill={`url(#r${id})`} style={{ stroke: v("-lo") }} strokeWidth="2" />
-      <circle cx="50" cy="50" r="30" fill="none" style={{ stroke: v("-hi") }} strokeWidth="0.8" strokeDasharray="2 2" />
-      {(tierKey === "gold" || tierKey === "platinum") && [0, 1].map((side) => (
-        <g key={side} transform={side ? "translate(100,0) scale(-1,1)" : undefined}>
-          {[0, 1, 2, 3].map((j) => <ellipse key={j} cx={20 + j * 2} cy={68 - j * 10} rx="3" ry="6" transform={`rotate(${-30 + j * 12} ${20 + j * 2} ${68 - j * 10})`} style={{ fill: v("-lo") }} />)}
-        </g>
-      ))}
-      <Emblem k={tierKey} />
+
+      <Outer k={k} fill={`url(#m${id})`} />
+      <g transform="translate(50 50) scale(0.9) translate(-50 -50)"><Outer k={k} fill="none" /></g>
+      <g transform="translate(50 50) scale(0.88) translate(-50 -50)" style={{ stroke: trimLo }} strokeWidth="0.8" fill="none"><Outer k={k} fill="none" /></g>
+
+      {k === "bronze" && detail && [[24, 22], [76, 22], [24, 58], [76, 58], [50, 86]].map(([x, y]) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.8" style={{ fill: trimHi, stroke: trimLo }} strokeWidth="0.5" />)}
+      {k === "platinum" && Array.from({ length: 8 }).map((_, i) => { const a = -Math.PI / 2 + (i * Math.PI) / 4; return <circle key={i} cx={50 + 42 * Math.cos(a)} cy={50 + 42 * Math.sin(a)} r="3" style={{ fill: "var(--metal-purple)", stroke: "var(--metal-gold-hi)" }} strokeWidth="0.8" />; })}
+
+      {/* medallion */}
+      <circle cx="50" cy="50" r="29" style={{ fill: trimLo }} />
+      <circle cx="50" cy="50" r="27" fill={`url(#e${id})`} />
+      {detail && <g fill="none" style={{ stroke: v("-hi") }} opacity="0.35" strokeWidth="0.4">
+        {[24, 21, 18].map((r) => <circle key={r} cx="50" cy="50" r={r} strokeDasharray="1.2 1.2" />)}
+        {Array.from({ length: 24 }).map((_, i) => <ellipse key={i} cx="50" cy="50" rx="25" ry="9" transform={`rotate(${i * 7.5} 50 50)`} />)}
+      </g>}
+      <circle cx="50" cy="50" r="27" fill="none" style={{ stroke: trimHi }} strokeWidth="0.8" />
+
+      {(k === "gold" || k === "platinum") && detail && <Laurel color={trimHi} />}
+
+      {k === "platinum" && <path d="M38 33 L41 25 L45 31 L50 22 L55 31 L59 25 L62 33 Z" style={{ fill: "var(--metal-gold-hi)", stroke: "var(--metal-gold-lo)" }} strokeWidth="0.6" />}
+      {k === "bronze" && detail && <g style={{ stroke: trimHi }} strokeWidth="1.2" fill="none" strokeLinecap="round"><path d="M38 66 H62 M40 69 H60" /><path d="M50 64 V30 M50 40 Q43 37 42 31 Q49 33 50 40 M50 36 Q57 33 58 27 Q51 29 50 36" /></g>}
+      {k === "silver" && detail && <path d="M30 66 Q36 62 42 66 T54 66 T66 66 T72 66" fill="none" style={{ stroke: trimHi }} strokeWidth="1" />}
+
+      <text x="50" y={k === "platinum" ? 58 : k === "bronze" ? 57 : 59} textAnchor="middle" fontSize={k === "bronze" ? 17 : 22} fontWeight="800" fontFamily="'Noto Serif SC', 'Songti SC', serif"
+        style={{ fill: k === "platinum" ? "var(--metal-gold-hi)" : trimHi, stroke: trimLo }} strokeWidth="0.6" paintOrder="stroke">{GLYPH[k]}</text>
+      {k === "platinum" && <path d="M44 66 Q50 60 56 66 Q50 70 44 66 Z" style={{ fill: "var(--metal-gold)" }} />}
+
+      {!locked && <g clipPath={`url(#c${id})`}><rect className="badge-sheen" x="20" y="-10" width="18" height="120" fill={`url(#s${id})`} /></g>}
       {locked && <g><circle cx="78" cy="78" r="12" style={{ fill: "var(--primary-deep)" }} /><foreignObject x="70" y="70" width="16" height="16"><Lock className="h-4 w-4 text-primary-foreground" /></foreignObject></g>}
     </svg>
   );
