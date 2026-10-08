@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { Menu, X, Mail, Facebook, Instagram, AtSign, MapPin, Lock, Music2, Linkedin } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
+import logoClear from "@/assets/tml-logo-transparent.png";
 import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -42,7 +43,7 @@ function Header() {
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-3">
-          <img src={logo.url} alt="The Mandarin League" className="tml-logo h-10 w-10 shrink-0 rounded-full border border-gold/60 bg-background object-cover shadow-sm md:h-12 md:w-12" />
+          <img src={logoClear} alt="The Mandarin League" className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
           <div className="min-w-0 leading-tight">
             <div className="truncate text-sm font-bold tracking-wide text-primary-deep dark:text-foreground md:text-base">THE MANDARIN LEAGUE</div>
             <div className="truncate text-[11px] text-muted-foreground dark:text-gold/80 md:text-xs">{t("brand.sub")}</div>
@@ -68,13 +69,16 @@ function Header() {
         >
           {t("cta.join")}
         </Link>
-        <div className="flex shrink-0 items-center gap-1.5 lg:hidden"><LanguageSwitcher /><ThemeToggle />
-        <button className="rounded-md p-2" onClick={() => setOpen(!open)} aria-label={t("menu.open")}>
+        <button className="shrink-0 rounded-md p-2 lg:hidden" onClick={() => setOpen(!open)} aria-label={t("menu.open")}>
           {open ? <X /> : <Menu />}
-        </button></div>
+        </button>
       </div>
       {open && (
         <nav className="border-t border-border bg-background px-4 py-3 lg:hidden">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
           {NAV.map((n) => (
             <Link
               key={n.to}
