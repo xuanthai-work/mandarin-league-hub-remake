@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/admin/news")({ staticData:
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 type Form = { id?: string; title: string; slug: string; summary: string; content: string; category: string; cover_path: string; review_note?: string; status?: NewsStatus };
-const EMPTY: Form = { title: "", slug: "", summary: "", content: "", category: NEWS_CATEGORIES[0], cover_path: "" };
+const EMPTY: Form = { title: "", slug: "", summary: "", content: "", category: NEWS_CATEGORIES[0]!, cover_path: "" };
 const TONE: Record<NewsStatus, string> = {
   draft: "bg-secondary", pending_review: "bg-gold/20 text-primary-deep", needs_revision: "bg-destructive/15 text-destructive",
   published: "bg-primary/15 text-primary", archived: "bg-muted text-muted-foreground",
@@ -38,31 +38,31 @@ function NewsAdmin() {
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-news"] }); qc.invalidateQueries({ queryKey: ["public-news"] }); };
 
   const patch = async (id: string, p: Record<string, unknown>, msg: string) => {
-    const { error } = await supabase.from("news_articles").update(p).eq("id", id);
-    if (error) return toast.error("Không có quyền hoặc lỗi: " + error.message);
+    const { error } = await supabase.from("news_articles").update(p as never).eq("id", id);
+    if (error) return void toast.error("Không có quyền hoặc lỗi: " + error.message);
     toast.success(msg); refresh();
   };
 
   const save = async (status: NewsStatus) => {
     if (!f) return;
-    if (f.title.trim().length < 5) return toast.error("Tiêu đề tối thiểu 5 ký tự");
-    if (f.content.trim().length < 20) return toast.error("Nội dung quá ngắn");
+    if (f.title.trim().length < 5) return void toast.error("Tiêu đề tối thiểu 5 ký tự");
+    if (f.content.trim().length < 20) return void toast.error("Nội dung quá ngắn");
     setBusy(true);
     const row = { title: f.title.trim(), slug: f.slug || slugify(f.title), summary: f.summary.trim(), content: f.content, category: f.category, cover_path: f.cover_path, status };
     const { error } = f.id
       ? await supabase.from("news_articles").update(row).eq("id", f.id)
-      : await supabase.from("news_articles").insert({ ...row, author_id: (await supabase.auth.getUser()).data.user?.id });
+      : await supabase.from("news_articles").insert({ ...row, author_id: (await supabase.auth.getUser()).data.user?.id ?? null });
     setBusy(false);
-    if (error) return toast.error(error.message.includes("duplicate") ? "Đường dẫn (slug) đã tồn tại" : "Không lưu được: " + error.message);
+    if (error) return void toast.error(error.message.includes("duplicate") ? "Đường dẫn (slug) đã tồn tại" : "Không lưu được: " + error.message);
     toast.success(status === "pending_review" ? "Đã gửi bài chờ duyệt" : status === "published" ? "Đã xuất bản" : "Đã lưu nháp");
     setF(null); refresh();
   };
 
   const upload = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) return toast.error("Ảnh tối đa 5MB");
+    if (file.size > 5 * 1024 * 1024) return void toast.error("Ảnh tối đa 5MB");
     const path = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
     const { error } = await supabase.storage.from(NEWS_BUCKET).upload(path, file, { contentType: file.type });
-    if (error) return toast.error("Tải ảnh thất bại: " + error.message);
+    if (error) return void toast.error("Tải ảnh thất bại: " + error.message);
     setF((x) => x && { ...x, cover_path: path }); toast.success("Đã tải ảnh bìa");
   };
 

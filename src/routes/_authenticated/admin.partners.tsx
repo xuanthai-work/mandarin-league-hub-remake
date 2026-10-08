@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/admin/partners")({ staticD
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 type Form = Omit<PartnerRow, "id" | "logo"> & { id?: string };
-const EMPTY: Form = { name: "", category: PARTNER_CATEGORIES[0], field: "", description: "", logo_path: "", website_url: "", sort_order: 0, is_active: true };
+const EMPTY: Form = { name: "", category: PARTNER_CATEGORIES[0]!, field: "", description: "", logo_path: "", website_url: "", sort_order: 0, is_active: true };
 
 function PartnersAdmin() {
   const qc = useQueryClient();
@@ -31,26 +31,26 @@ function PartnersAdmin() {
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-partners"] }); qc.invalidateQueries({ queryKey: ["public-partners"] }); };
 
   const patch = async (id: string, p: Record<string, unknown>, msg: string) => {
-    const { error } = await supabase.from("partners").update({ ...p, updated_at: new Date().toISOString() }).eq("id", id);
-    if (error) return toast.error("Không có quyền hoặc lỗi: " + error.message);
+    const { error } = await supabase.from("partners").update({ ...p, updated_at: new Date().toISOString() } as never).eq("id", id);
+    if (error) return void toast.error("Không có quyền hoặc lỗi: " + error.message);
     toast.success(msg); refresh();
   };
 
   const save = async () => {
     if (!f) return;
-    if (f.name.trim().length < 2) return toast.error("Tên đối tác không hợp lệ");
-    if (f.website_url && !/^https?:\/\//.test(f.website_url)) return toast.error("Website phải bắt đầu bằng http(s)://");
+    if (f.name.trim().length < 2) return void toast.error("Tên đối tác không hợp lệ");
+    if (f.website_url && !/^https?:\/\//.test(f.website_url)) return void toast.error("Website phải bắt đầu bằng http(s)://");
     const { id, ...row } = { ...f, name: f.name.trim() };
     const { error } = id ? await supabase.from("partners").update({ ...row, updated_at: new Date().toISOString() }).eq("id", id) : await supabase.from("partners").insert(row);
-    if (error) return toast.error("Không lưu được: " + error.message);
+    if (error) return void toast.error("Không lưu được: " + error.message);
     toast.success("Đã lưu đối tác"); setF(null); refresh();
   };
 
   const upload = async (file: File) => {
-    if (file.size > 2 * 1024 * 1024) return toast.error("Logo tối đa 2MB");
+    if (file.size > 2 * 1024 * 1024) return void toast.error("Logo tối đa 2MB");
     const path = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
     const { error } = await supabase.storage.from(PARTNER_BUCKET).upload(path, file, { contentType: file.type });
-    if (error) return toast.error("Tải logo thất bại: " + error.message);
+    if (error) return void toast.error("Tải logo thất bại: " + error.message);
     setF((x) => x && { ...x, logo_path: path }); toast.success("Đã tải logo");
   };
 
