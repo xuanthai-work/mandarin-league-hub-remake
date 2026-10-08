@@ -28,6 +28,7 @@ import {
   type VerificationRecord,
 } from "@/lib/verification";
 import { lookupCertificate } from "@/lib/certificates";
+import { lookupHsk } from "@/lib/hsk";
 import QRCode from "qrcode";
 import { Copy, Download, Printer } from "lucide-react";
 import { getCertificateFileUrl } from "@/lib/certificate-files.functions";
@@ -62,13 +63,13 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
     setCode(parsed.data);
     let record: VerificationRecord | null | undefined = null;
     const demo = findVerificationRecord(kind, parsed.data);
-    if (kind === "certificate" && !demo) {
+    if (!demo) {
       if (!token && name.trim().length < 2) {
-        setState({ type: "invalid", message: "Vui lòng nhập Họ và tên người nhận để đối chiếu cùng mã chứng nhận." });
+        setState({ type: "invalid", message: isHsk ? "Vui lòng nhập Họ và tên thí sinh để đối chiếu cùng mã." : "Vui lòng nhập Họ và tên người nhận để đối chiếu cùng mã chứng nhận." });
         return;
       }
       setLoading(true);
-      record = await lookupCertificate(parsed.data, name, token).catch(() => null);
+      record = await (isHsk ? lookupHsk(parsed.data, name, token) : lookupCertificate(parsed.data, name, token)).catch(() => null);
       setLoading(false);
       if (record && record.kind === "certificate") record = { ...record, lookupName: name };
     }
@@ -77,7 +78,7 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
   };
 
   useEffect(() => {
-    if (initialCode && (initialToken || kind !== "certificate")) verify(initialCode, initialToken);
+    if (initialCode && initialToken) verify(initialCode, initialToken);
     // Only verify again when the direct-link code changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCode]);
@@ -134,11 +135,11 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
               <ShieldCheck /> {loading ? "Đang kiểm tra…" : isHsk ? "Xác minh kết quả" : "Xác minh chứng nhận"}
             </Button>
           </div>
-          {!isHsk && (
+          {(
             <div className="mt-4">
-              <label htmlFor="cert-name" className="text-sm font-bold text-foreground">Họ và tên người nhận</label>
+              <label htmlFor="cert-name" className="text-sm font-bold text-foreground">{isHsk ? "Họ và tên thí sinh" : "Họ và tên người nhận"}</label>
               <Input id="cert-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A (có dấu hoặc không dấu đều được)" maxLength={120} autoComplete="off" className="mt-2 h-12" />
-              <p className="mt-1 text-xs text-muted-foreground">Để bảo vệ người nhận, cần nhập đúng họ tên. Quét mã QR trên chứng nhận sẽ mở kết quả trực tiếp.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Để bảo vệ {isHsk ? "thí sinh" : "người nhận"}, cần nhập đúng họ tên. Quét mã QR trên chứng nhận sẽ mở kết quả trực tiếp.</p>
             </div>
           )}
           <div id={`${kind}-hint`} className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -185,7 +186,7 @@ function ResultShell({ children, tone = "valid" }: { children: React.ReactNode; 
   return <div className={`overflow-hidden border-2 bg-card shadow-lg ${classes}`}>{children}</div>;
 }
 
-function ResultHeader({ title, subtitle, danger = false }: { title: string; subtitle: string; danger?: boolean }) {
+function ResultHeader({ title, subtitle, danger = false, demo = true }: { title: string; subtitle: string; danger?: boolean; demo?: boolean }) {
   return (
     <div className={`flex items-start gap-4 border-b p-5 md:p-6 ${danger ? "border-destructive/20 bg-destructive/5" : "border-success/20 bg-success/5"}`}>
       <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${danger ? "bg-destructive text-destructive-foreground" : "bg-success text-success-foreground"}`}>
@@ -195,7 +196,7 @@ function ResultHeader({ title, subtitle, danger = false }: { title: string; subt
         <h2 className="text-lg font-extrabold md:text-xl">{title}</h2>
         <p className="mt-1 text-sm font-semibold text-muted-foreground">{subtitle}</p>
       </div>
-      <span className="ml-auto hidden rounded-sm bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-foreground sm:block">DEMO DATA</span>
+      {demo && <span className="ml-auto hidden rounded-sm bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-foreground sm:block">DEMO DATA</span>}
     </div>
   );
 }
@@ -205,35 +206,56 @@ function HskResult({ record }: { record: HskRecord }) {
     { label: "Nghe", chinese: "听力", score: record.listeningScore },
     { label: "Đọc", chinese: "阅读", score: record.readingScore },
     { label: "Viết", chinese: "书写", score: record.writingScore },
-  ];
+    { label: "Khẩu ngữ", chinese: "口语", score: record.speakingScore },
+  ].filter((s) => typeof s.score === "number");
+  const [qr, setQr] = useState("");
+  const link = typeof window !== "undefined" && record.verifyToken ? `${window.location.origin}/verify/hsk/${record.verificationId}?t=${record.verifyToken}` : "";
+  useEffect(() => { if (link) QRCode.toDataURL(link, { margin: 0, width: 180 }).then(setQr); }, [link]);
+  const copy = async () => { await navigator.clipboard.writeText(link); toast.success("Đã sao chép liên kết xác thực"); };
+  const pct = record.maximumScore ? Math.round(((record.totalScore ?? 0) / record.maximumScore) * 100) : 0;
 
   return (
-    <ResultShell>
-      <ResultHeader title="Kết quả HSK hợp lệ" subtitle="HSK RESULT VERIFIED" />
-      <div className="p-5 md:p-8">
-        <div className="grid gap-4 border-b border-border pb-7 sm:grid-cols-2">
-          <Detail icon={UserRound} label="Họ và tên" value={record.candidateName ?? "Không công khai"} />
-          <Detail icon={Award} label="Cấp độ HSK" value={record.examLevel} />
-          <Detail icon={CalendarDays} label="Ngày thi" value={formatVerificationDate(record.examDate)} />
-          <Detail icon={ShieldCheck} label="Mã xác minh" value={record.verificationId} mono />
-        </div>
-        <div className="py-7">
-          <h3 className="font-bold">Kết quả thành phần</h3>
-          <div className="mt-5 grid gap-5 md:grid-cols-3">
-            {scores.map((item) => (
-              <div key={item.label} className="border border-border bg-secondary/60 p-4">
-                <div className="flex items-center justify-between text-sm"><span className="font-semibold">{item.label} · {item.chinese}</span><span className="font-bold text-primary-deep">{item.score} / 100</span></div>
-                <Progress value={item.score} className="mt-3" />
-              </div>
-            ))}
+    <div className="print-certificate">
+      <ResultShell>
+        <ResultHeader title="Kết quả HSK hợp lệ" subtitle="HSK RESULT VERIFIED" demo={record.isDemo !== false} />
+        <div className="p-5 md:p-8">
+          <div className="grid gap-4 border-b border-border pb-7 sm:grid-cols-2">
+            <Detail icon={UserRound} label="Họ và tên" value={(record.candidateName ?? "Không công khai") + (record.candidateNameZh ? ` · ${record.candidateNameZh}` : "")} />
+            <Detail icon={Award} label="Cấp độ" value={record.examLevel} />
+            <Detail icon={CalendarDays} label="Ngày thi" value={formatVerificationDate(record.examDate) + (record.examSession ? ` · ${record.examSession}` : "")} />
+            <Detail icon={ShieldCheck} label="Mã xác minh" value={record.verificationId} mono />
+          </div>
+          <div className="py-7">
+            <h3 className="font-bold">Kết quả thành phần</h3>
+            <div className={`mt-5 grid gap-5 ${scores.length >= 3 ? "md:grid-cols-3" : scores.length === 2 ? "md:grid-cols-2" : ""}`}>
+              {scores.map((item) => (
+                <div key={item.label} className="border border-border bg-secondary/60 p-4">
+                  <div className="flex items-center justify-between text-sm"><span className="font-semibold">{item.label} · {item.chinese}</span><span className="font-bold text-primary-deep">{item.score} / 100</span></div>
+                  <Progress value={item.score} className="mt-3" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-4 border-t border-border pt-7 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Đơn vị ghi nhận / tổ chức</div>
+              <div className="mt-2 font-semibold">{record.issuer}</div>
+              {typeof record.passed === "boolean" && (
+                <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${record.passed ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+                  {record.passed ? "ĐẠT · 合格" : "CHƯA ĐẠT · 不合格"}{record.passScore ? ` (ngưỡng ${record.passScore})` : ""}
+                </div>
+              )}
+            </div>
+            {qr && <img src={qr} alt="Mã QR xác thực" className="mx-auto h-24 w-24" />}
+            <div className="bg-primary-deep px-6 py-4 text-primary-foreground"><div className="text-xs font-semibold opacity-80">Tổng điểm · {pct}%</div><div className="mt-1 text-3xl font-extrabold">{record.totalScore} <span className="text-base opacity-75">/ {record.maximumScore}</span></div></div>
           </div>
         </div>
-        <div className="grid gap-4 border-t border-border pt-7 sm:grid-cols-[1fr_auto] sm:items-end">
-          <div><div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Đơn vị phát hành / tổ chức</div><div className="mt-2 font-semibold">{record.issuer}</div></div>
-          <div className="bg-primary-deep px-6 py-4 text-primary-foreground"><div className="text-xs font-semibold opacity-80">Tổng điểm</div><div className="mt-1 text-3xl font-extrabold">{record.totalScore} <span className="text-base opacity-75">/ {record.maximumScore}</span></div></div>
-        </div>
+      </ResultShell>
+      <div className="mt-4 flex flex-wrap justify-center gap-2 print:hidden">
+        {link && <Button variant="outline" onClick={copy}><Copy /> Sao chép liên kết</Button>}
+        <Button variant="outline" onClick={() => window.print()}><Printer /> In / Xuất PDF</Button>
       </div>
-    </ResultShell>
+    </div>
   );
 }
 

@@ -42,7 +42,15 @@ export interface HskRecord {
   readingScore?: number;
   writingScore?: number;
   totalScore?: number;
+  speakingScore?: number;
   maximumScore: number;
+  passScore?: number;
+  passed?: boolean;
+  candidateNameZh?: string;
+  examSession?: string;
+  revokedAt?: string;
+  isDemo?: boolean;
+  verifyToken?: string;
   status: VerificationStatus;
   issuer: string;
 }
