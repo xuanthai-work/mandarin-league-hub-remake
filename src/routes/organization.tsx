@@ -32,6 +32,7 @@ function POrganization() {
   const [open, setOpen] = useState<Department | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const execRef = useRef<HTMLDivElement>(null);
+  const tmlRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
   const [paths, setPaths] = useState<{ size: [number, number]; trunk: string; items: Path[] }>({ size: [0, 0], trunk: "", items: [] });
 
@@ -54,7 +55,11 @@ function POrganization() {
         const r = 10, dir = edge > spineX ? 1 : -1;
         return { id: d.id, d: `M ${spineX} ${y0} V ${cy - r} Q ${spineX} ${cy} ${spineX + dir * r} ${cy} H ${edge}` };
       });
-      setPaths({ size: [b.width, b.height], trunk: `M ${spineX} ${y0} V ${maxY}`, items });
+      const t = tmlRef.current?.getBoundingClientRect();
+      const top = t ? t.bottom - b.top : y0;
+      const tx = t ? (wide ? spineX : t.left - b.left + 24) : spineX;
+      const head = wide ? `M ${spineX} ${top} V ${e.top - b.top}` : `M ${tx} ${top} V ${e.top - b.top}`;
+      setPaths({ size: [b.width, b.height], trunk: `${head} M ${spineX} ${y0} V ${maxY}`, items });
     };
     calc();
     const ro = new ResizeObserver(calc);
@@ -77,7 +82,7 @@ function POrganization() {
           </svg>
 
           <div className="relative z-10 flex flex-col items-start gap-8 pl-8 md:items-center md:pl-0">
-            <div className="rounded-xl bg-primary px-8 py-3 text-center font-bold tracking-wide text-primary-foreground shadow-md">
+            <div ref={tmlRef} className="rounded-xl bg-primary px-8 py-3 text-center font-bold tracking-wide text-primary-foreground shadow-md">
               THE MANDARIN LEAGUE
               <div className="font-han text-xs font-normal opacity-80">汉语联盟</div>
             </div>
