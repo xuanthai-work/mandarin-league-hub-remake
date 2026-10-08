@@ -131,7 +131,8 @@ function SiteFields({ f, set }: { f: SiteSettings; set: (p: Partial<SiteSettings
       <Card title="Liên hệ & Mạng xã hội">
         <Field label="Email liên hệ" hint={SITE_DEFAULTS.email} {...s("email")} />
         <Field label="Facebook" hint="https://facebook.com/..." {...s("facebook")} />
-        <Field label="YouTube" hint="https://youtube.com/..." {...s("youtube")} />
+        <Field label="Instagram" hint="https://instagram.com/..." {...s("instagram")} />
+        <Field label="Threads (để trống = ẩn)" hint="https://threads.net/@..." {...s("threads")} />
         <Field label="TikTok (để trống = ẩn)" hint="https://tiktok.com/@..." {...s("tiktok")} />
         <Field label="LinkedIn (để trống = ẩn)" hint="https://linkedin.com/..." {...s("linkedin")} />
       </Card>

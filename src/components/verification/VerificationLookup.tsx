@@ -148,7 +148,6 @@ export function VerificationLookup({ kind, initialCode = "", initialToken = "" }
           )}
           <div id={`${kind}-hint`} className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             <span className="flex flex-wrap items-center gap-1">Dữ liệu mẫu: <Button type="button" variant="link" onClick={() => { setCode(demoCode); verify(demoCode); }} className="h-auto p-0 font-mono text-xs font-semibold">{demoCode}</Button></span>
-            <span className="rounded-sm bg-warning-soft px-2 py-1 font-bold text-warning-foreground">DEMO DATA</span>
           </div>
         </form>
 
@@ -200,7 +199,7 @@ function ResultHeader({ title, subtitle, danger = false, demo = true }: { title:
         <h2 className="text-lg font-extrabold md:text-xl">{title}</h2>
         <p className="mt-1 text-sm font-semibold text-muted-foreground">{subtitle}</p>
       </div>
-      {demo && <span className="ml-auto hidden rounded-sm bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-foreground sm:block">DEMO DATA</span>}
+      {demo &&}
     </div>
   );
 }
@@ -230,7 +229,7 @@ function HskResult({ record }: { record: HskRecord }) {
     <div className="print-certificate">
       <div className="relative overflow-hidden border-[3px] border-primary-deep bg-card p-2 shadow-xl">
         <div className="relative border border-gold/70 px-5 py-8 md:px-10 md:py-10">
-          {record.isDemo !== false && <span className="absolute right-3 top-3 rounded-sm bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-foreground">DEMO DATA</span>}
+          {record.isDemo !== false &&}
           <div className="text-center">
             <div className="text-xs font-bold uppercase tracking-[0.3em] text-primary">The Mandarin League · 汉语联盟</div>
             <h2 className="mt-2 text-2xl font-extrabold tracking-wide text-primary-deep md:text-3xl">KẾT QUẢ HSK ĐƯỢC XÁC MINH</h2>
@@ -336,7 +335,7 @@ function CertificateResult({ record }: { record: CertificateRecord }) {
     <div className="print-certificate">
       <div className="relative overflow-hidden border-[3px] border-primary-deep bg-card p-2 shadow-xl">
         <div className="relative border-2 border-gold/70 px-5 py-8 text-center md:px-12 md:py-12">
-          {record.isDemo !== false && <span className="absolute right-3 top-3 rounded-sm bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-foreground">DEMO DATA</span>}
+          {record.isDemo !== false &&}
           <div className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><CheckCircle2 className="h-4 w-4" /> CHỨNG NHẬN HỢP LỆ · VERIFIED</div>
           <div className="mt-5 text-xs font-bold uppercase tracking-[0.3em] text-primary">The Mandarin League · 汉语联盟</div>
           <h2 className="mt-2 text-2xl font-extrabold text-primary-deep md:text-3xl">{record.typeLabel ?? "Chứng nhận"}</h2>

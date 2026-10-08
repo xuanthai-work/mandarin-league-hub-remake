@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /** Site-wide settings (footer, contact, social). Empty string = use built-in default. */
-export type SiteSettings = { email: string; facebook: string; youtube: string; tiktok: string; linkedin: string; tagline: string; footer_note: string };
+export type SiteSettings = { email: string; facebook: string; instagram: string; threads: string; tiktok: string; linkedin: string; tagline: string; footer_note: string };
 export const SITE_DEFAULTS: SiteSettings = {
-  email: "community@themandarinleague.bond", facebook: "https://facebook.com", youtube: "https://youtube.com",
+  email: "community@themandarinleague.bond", facebook: "https://facebook.com", instagram: "https://www.instagram.com/liendoanhanngu?stkn=MXJzbXhkY3kyNDc2aw==", threads: "",
   tiktok: "", linkedin: "", tagline: "", footer_note: "",
 };
 

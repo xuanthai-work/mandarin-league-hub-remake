@@ -1,7 +1,7 @@
 import { useTr as useTrHero } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { Menu, X, Mail, Facebook, Youtube, MapPin, Lock, Music2, Linkedin } from "lucide-react";
+import { Menu, X, Mail, Facebook, Instagram, AtSign, MapPin, Lock, Music2, Linkedin } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
 import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
@@ -30,7 +30,7 @@ const FOOTER_EXTRA = [
 export const CONTACT = {
   email: "community@themandarinleague.bond",
   facebook: "https://facebook.com",
-  youtube: "https://youtube.com",
+  instagram: "https://www.instagram.com/liendoanhanngu?stkn=MXJzbXhkY3kyNDc2aw==",
 };
 
 function Header() {
@@ -126,7 +126,8 @@ function Footer() {
           <ul className="space-y-3 text-sm opacity-90">
             <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${site.email}`} className="hover:underline">{site.email}</a></li>
             <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={site.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
-            <li className="flex items-center gap-2"><Youtube className="h-4 w-4" /><a href={site.youtube} target="_blank" rel="noreferrer" className="hover:underline">YouTube</a></li>
+            <li className="flex items-center gap-2"><Instagram className="h-4 w-4" /><a href={site.instagram} target="_blank" rel="noreferrer" className="hover:underline">Instagram</a></li>
+            {site.threads && <li className="flex items-center gap-2"><AtSign className="h-4 w-4" /><a href={site.threads} target="_blank" rel="noreferrer" className="hover:underline">Threads</a></li>}
             {site.tiktok && <li className="flex items-center gap-2"><Music2 className="h-4 w-4" /><a href={site.tiktok} target="_blank" rel="noreferrer" className="hover:underline">TikTok</a></li>}
             {site.linkedin && <li className="flex items-center gap-2"><Linkedin className="h-4 w-4" /><a href={site.linkedin} target="_blank" rel="noreferrer" className="hover:underline">LinkedIn</a></li>}
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" />{t("footer.online")}</li>
