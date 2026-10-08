@@ -43,3 +43,15 @@ export function useT() {
   const lang = useLang();
   return { lang, t: (k: DictKey) => DICT[k][lang] ?? DICT[k].vi };
 }
+
+import { PHRASES } from "./phrases";
+/** Translate a Vietnamese source phrase; falls back to the original text. */
+export function trPhrase(lang: Lang, vi: string): string {
+  if (lang === "vi") return vi;
+  const p = PHRASES[vi];
+  return p ? (lang === "zh" ? p[0] : p[1]) : vi;
+}
+export function useTr() {
+  const lang = useLang();
+  return (vi: string) => trPhrase(lang, vi);
+}

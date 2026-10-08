@@ -1,16 +1,18 @@
 import type { ReactNode } from "react";
 import { UserRound } from "lucide-react";
+import { useTr } from "@/lib/i18n";
 
 export function SectionLabel({ children }: { children: ReactNode }) {
   return <div className="text-sm font-semibold uppercase tracking-widest text-primary">{children}</div>;
 }
 
 export function SectionTitle({ label, title, desc }: { label: string; title: string; desc?: string }) {
+  const tr = useTr();
   return (
     <div>
-      <SectionLabel>{label}</SectionLabel>
-      <h2 className="mt-3 text-2xl font-bold text-primary-deep md:text-4xl">{title}</h2>
-      {desc && <p className="mt-3 max-w-2xl text-muted-foreground">{desc}</p>}
+      <SectionLabel>{tr(label)}</SectionLabel>
+      <h2 className="mt-3 text-2xl font-bold text-primary-deep md:text-4xl">{tr(title)}</h2>
+      {desc && <p className="mt-3 max-w-2xl text-muted-foreground">{tr(desc)}</p>}
     </div>
   );
 }
@@ -29,26 +31,29 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[status] ?? "bg-muted text-muted-foreground"}`}>{status}</span>;
+  const tr = useTr();
+  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[status] ?? "bg-muted text-muted-foreground"}`}>{tr(status)}</span>;
 }
 
 export function EmptyState({ title = "Đang cập nhật", desc }: { title?: string; desc?: string }) {
+  const tr = useTr();
   return (
     <div className="rounded-2xl border border-dashed border-primary/40 bg-accent/40 p-10 text-center">
       <div className="font-han text-3xl text-primary">敬请期待</div>
-      <div className="mt-2 font-semibold text-primary-deep">{title}</div>
-      {desc && <p className="mt-1 text-sm text-muted-foreground">{desc}</p>}
+      <div className="mt-2 font-semibold text-primary-deep">{tr(title)}</div>
+      {desc && <p className="mt-1 text-sm text-muted-foreground">{tr(desc)}</p>}
     </div>
   );
 }
 
 export function PersonSlot({ role, name }: { role: string; name?: string | undefined }) {
+  const tr = useTr();
   return (
     <div className="flex items-center gap-3">
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-5 w-5" /></div>
       <div>
-        <div className="text-xs text-muted-foreground">{role}</div>
-        <div className="text-sm font-medium">{name ?? "Đang cập nhật"}</div>
+        <div className="text-xs text-muted-foreground">{tr(role)}</div>
+        <div className="text-sm font-medium">{name ?? tr("Đang cập nhật")}</div>
       </div>
     </div>
   );
