@@ -289,6 +289,7 @@ export type Database = {
           code: string
           created_at: string
           cv_path: string | null
+          date_of_birth: string | null
           email: string
           full_name: string
           hsk_level: string
@@ -308,6 +309,7 @@ export type Database = {
           code?: string
           created_at?: string
           cv_path?: string | null
+          date_of_birth?: string | null
           email: string
           full_name: string
           hsk_level?: string
@@ -327,6 +329,7 @@ export type Database = {
           code?: string
           created_at?: string
           cv_path?: string | null
+          date_of_birth?: string | null
           email?: string
           full_name?: string
           hsk_level?: string

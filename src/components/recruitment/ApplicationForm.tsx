@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createApplicationUpload, submitApplication } from "@/lib/recruitment.functions";
-import { CV_EXT, FILE_EXT, MAX_FILE_MB, deptName, topicApplies, type Answers } from "@/lib/recruitment";
+import { CV_EXT, FILE_EXT, MAX_FILE_MB, deptName, formatDobInput, parseDob, topicApplies, type Answers } from "@/lib/recruitment";
 
 type Topic = { id: string; department: string | null; position: string | null; period_id: string | null; title: string; description: string; sort_order: number };
 type Question = { id: string; topic_id: string; prompt: string; kind: string; options: string[]; required: boolean; sort_order: number };
@@ -36,7 +36,7 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
   const upload = useServerFn(createApplicationUpload);
   const submit = useServerFn(submitApplication);
   const [step, setStep] = useState(1);
-  const [info, setInfo] = useState({ full_name: "", email: "", phone: "", organization: "", chinese_level: "", hsk_level: "", intro: "" });
+  const [info, setInfo] = useState({ full_name: "", email: "", phone: "", dob: "", organization: "", chinese_level: "", hsk_level: "", intro: "" });
   const [choiceIds, setChoiceIds] = useState<string[]>(["", ""]);
   const [answers, setAnswers] = useState<Answers>({});
   const [cvPath, setCvPath] = useState<string | null>(null);
@@ -46,6 +46,23 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
   const [done, setDone] = useState<string | null>(null);
   const [captcha, setCaptcha] = useState("");
   const captchaRef = useRef<RecaptchaHandle>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [errs, setErrs] = useState<Record<string, string>>({});
+  const clearErr = (k: string) => setErrs((e) => { if (!e[k]) return e; const n = { ...e }; delete n[k]; return n; });
+  const flag = (e: Record<string, string>) => {
+    setErrs(e);
+    const first = Object.keys(e)[0];
+    if (!first) return false;
+    setError("Vui lòng bổ sung các ô được đánh dấu đỏ.");
+    requestAnimationFrame(() => {
+      const el = rootRef.current?.querySelector<HTMLElement>(`[data-field="${first}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.querySelector<HTMLElement>("input,textarea,select,button")?.focus({ preventScroll: true });
+    });
+    return true;
+  };
+  const errCls = (k: string) => errs[k] ? " border-destructive ring-2 ring-destructive/30 bg-destructive/5" : "";
+  const ErrMsg = ({ k }: { k: string }) => errs[k] ? <span className="mt-1 block text-xs text-destructive">{errs[k]}</span> : null;
 
   const chosen = useMemo(() => choiceIds.filter(Boolean).map((id) => data?.positions.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p), [choiceIds, data]);
   const qsFor = (topicId: string) => (data?.questions ?? []).filter((q) => q.topic_id === topicId);
@@ -63,7 +80,7 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
       </div></div>;
 
   const allPositions = data.positions.slice().sort((a, b) => (a.department + a.position).localeCompare(b.department + b.position));
-  const setAns = (id: string, v: string | string[]) => setAnswers((a) => ({ ...a, [id]: v }));
+  const setAns = (id: string, v: string | string[]) => { clearErr(id); setAnswers((a) => ({ ...a, [id]: v })); };
 
   const uploadFile = async (file: File, kind: "cv" | "file") => {
     const allowed = kind === "cv" ? CV_EXT : FILE_EXT;
@@ -76,33 +93,47 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
     return slot.path;
   };
 
-  const missing = (topics: Topic[]) => topics.flatMap((t) => qsFor(t.id)).some((q) => {
-    const v = answers[q.id];
-    return q.required && (!v || (Array.isArray(v) ? v.length === 0 : !v.trim()));
-  });
+  const missingQs = (topics: Topic[]) => {
+    const e: Record<string, string> = {};
+    for (const q of topics.flatMap((t) => qsFor(t.id))) {
+      const v = answers[q.id];
+      if (q.required && (!v || (Array.isArray(v) ? v.length === 0 : !v.trim()))) e[q.id] = "Câu hỏi bắt buộc.";
+    }
+    return e;
+  };
 
   const next = () => {
     setError(null);
     if (step === 1) {
-      const { full_name, email, phone, organization, intro } = info;
-      if (!full_name.trim() || !email.trim() || !phone.trim() || !organization.trim() || !intro.trim()) return setError("Vui lòng điền đầy đủ các trường có dấu *.");
-      if (!/^\S+@\S+\.\S+$/.test(email)) return setError("Email không hợp lệ.");
-      if (intro.trim().length < 10) return setError("Phần giới thiệu cần ít nhất 10 ký tự.");
-      if (!chosen.length) return setError("Vui lòng chọn Nguyện vọng 1.");
+      const { full_name, email, phone, dob, organization, intro } = info;
+      const e: Record<string, string> = {};
+      if (full_name.trim().length < 2) e["full_name"] = "Vui lòng nhập họ và tên.";
+      if (!dob.trim()) e["dob"] = "Vui lòng nhập ngày sinh."; else if (!parseDob(dob)) e["dob"] = "Ngày sinh không hợp lệ (DD/MM/YYYY).";
+      if (!email.trim()) e["email"] = "Vui lòng nhập email."; else if (!/^\S+@\S+\.\S+$/.test(email)) e["email"] = "Email không hợp lệ.";
+      if (phone.trim().length < 8) e["phone"] = "Vui lòng nhập số điện thoại.";
+      if (organization.trim().length < 2) e["organization"] = "Vui lòng nhập trường / đơn vị.";
+      if (intro.trim().length < 10) e["intro"] = "Phần giới thiệu cần ít nhất 10 ký tự.";
+      if (!chosen.length) e["choice0"] = "Vui lòng chọn Nguyện vọng 1.";
+      if (flag(e)) return;
     }
-    if (step === 2 && chosen.some((c) => missing(choiceTopics(c)))) return setError("Vui lòng trả lời các câu hỏi bắt buộc.");
+    if (step === 2 && flag(Object.assign({}, ...chosen.map((c) => missingQs(choiceTopics(c)))))) return;
+    setErrs({});
     setStep(step + 1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    requestAnimationFrame(() => {
+      const el = rootRef.current;
+      if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const send = async () => {
     setError(null);
-    if (missing(commonTopics)) return setError("Vui lòng trả lời các câu hỏi bắt buộc.");
-    if (!consent) return setError("Vui lòng xác nhận thông tin cung cấp là chính xác.");
+    const e = missingQs(commonTopics);
+    if (!consent) e["consent"] = "Vui lòng xác nhận.";
+    if (flag(e)) return;
     if (!captcha) return setError("Vui lòng tick ô \"Tôi không phải là người máy\" trước khi gửi.");
     setBusy("send");
     try {
-      const r = await submit({ data: { periodId: data.period.id, ...info, positionIds: chosen.map((c) => c.id), answers, cvPath, consent: true, captcha } });
+      const r = await submit({ data: { periodId: data.period.id, ...info, date_of_birth: parseDob(info.dob) ?? "", positionIds: chosen.map((c) => c.id), answers, cvPath, consent: true, captcha } });
       if (r.ok) setDone(r.code); else { setError(r.error); captchaRef.current?.reset(); }
     } catch (e) { console.error(e); setError("Không gửi được hồ sơ, vui lòng thử lại sau ít phút."); }
     setBusy(null);
@@ -116,8 +147,8 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
         {qsFor(t.id).map((q) => {
           const v = answers[q.id];
           return (
-            <label key={q.id} className="block">
-              <Label required={q.required}>{q.prompt}</Label>
+            <label key={q.id} data-field={q.id} className={`block rounded-lg ${errs[q.id] ? "p-2 ring-2 ring-destructive/40 bg-destructive/5" : ""}`}>
+              <Label required={q.required}>{q.prompt}</Label><ErrMsg k={q.id} />
               {q.kind === "short" && <input className={input} value={(v as string) ?? ""} onChange={(e) => setAns(q.id, e.target.value)} maxLength={500} />}
               {q.kind === "long" && <textarea className={input} rows={3} value={(v as string) ?? ""} onChange={(e) => setAns(q.id, e.target.value)} maxLength={5000} />}
               {q.kind === "dropdown" && <select className={input} value={(v as string) ?? ""} onChange={(e) => setAns(q.id, e.target.value)}><option value="">— Chọn —</option>{q.options.map((o) => <option key={o}>{o}</option>)}</select>}
@@ -148,7 +179,7 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
   );
 
   return (
-    <div className="rounded-3xl border border-border bg-card p-5 shadow-sm md:p-8">
+    <div ref={rootRef} className="scroll-mt-24 rounded-3xl border border-border bg-card p-5 shadow-sm md:p-8">
       <div className="mb-6">
         <div className="text-xs font-semibold uppercase tracking-widest text-gold">{data.period.name}</div>
         {data.period.description && <p className="mt-1 text-sm text-muted-foreground">{data.period.description}</p>}
@@ -162,22 +193,26 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
       {step === 1 && (
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            {([["full_name", "Họ và tên", true], ["email", "Email", true], ["phone", "Số điện thoại", true], ["organization", "Trường / Đơn vị / Công việc hiện tại", true], ["chinese_level", "Trình độ tiếng Trung", false], ["hsk_level", "HSK hiện tại", false]] as const).map(([k, l, r]) => (
-              <label key={k} className="block"><Label required={r}>{l}</Label>
+            {([["full_name", "Họ và tên", true], ["dob", "Ngày tháng năm sinh", true], ["email", "Email", true], ["phone", "Số điện thoại", true], ["organization", "Trường / Đơn vị / Công việc hiện tại", true], ["chinese_level", "Trình độ tiếng Trung", false], ["hsk_level", "HSK hiện tại", false]] as const).map(([k, l, r]) => (
+              <label key={k} data-field={k} className="block"><Label required={r}>{l}</Label>
                 {k === "hsk_level"
                   ? <select className={input} value={info.hsk_level} onChange={(e) => setInfo({ ...info, hsk_level: e.target.value })}><option value="">Chưa có</option>{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => <option key={n}>HSK {n}</option>)}</select>
-                  : <input className={input} type={k === "email" ? "email" : k === "phone" ? "tel" : "text"} value={info[k]} onChange={(e) => setInfo({ ...info, [k]: e.target.value })} maxLength={200} />}
+                  : k === "dob"
+                    ? <input className={input + errCls(k)} inputMode="numeric" placeholder="DD/MM/YYYY (ví dụ 15/08/2003)" value={info.dob} onChange={(e) => { clearErr(k); setInfo({ ...info, dob: formatDobInput(e.target.value) }); }} maxLength={10} />
+                    : <input className={input + errCls(k)} type={k === "email" ? "email" : k === "phone" ? "tel" : "text"} value={info[k]} onChange={(e) => { clearErr(k); setInfo({ ...info, [k]: e.target.value }); }} maxLength={200} />}
+                <ErrMsg k={k} />
               </label>
             ))}
           </div>
-          <label className="block"><Label required>Giới thiệu ngắn</Label><textarea className={input} rows={3} value={info.intro} onChange={(e) => setInfo({ ...info, intro: e.target.value })} maxLength={3000} /></label>
+          <label data-field="intro" className="block"><Label required>Giới thiệu ngắn</Label><textarea className={input + errCls("intro")} rows={3} value={info.intro} onChange={(e) => { clearErr("intro"); setInfo({ ...info, intro: e.target.value }); }} maxLength={3000} /><ErrMsg k="intro" /></label>
           <div className="grid gap-4 md:grid-cols-2">
             {[0, 1].map((i) => (
-              <label key={i} className="block"><Label required={i === 0}>{i === 0 ? "Nguyện vọng 1 (ưu tiên)" : "Nguyện vọng 2 (không bắt buộc)"}</Label>
-                <select className={input} value={choiceIds[i]} disabled={i === 1 && !choiceIds[0]} onChange={(e) => { const c = [...choiceIds]; c[i] = e.target.value; if (i === 0 && c[1] === c[0]) c[1] = ""; setChoiceIds(c); }}>
+              <label key={i} data-field={`choice${i}`} className="block"><Label required={i === 0}>{i === 0 ? "Nguyện vọng 1 (ưu tiên)" : "Nguyện vọng 2 (không bắt buộc)"}</Label>
+                <select className={input + errCls(`choice${i}`)} value={choiceIds[i]} disabled={i === 1 && !choiceIds[0]} onChange={(e) => { clearErr(`choice${i}`); const c = [...choiceIds]; c[i] = e.target.value; if (i === 0 && c[1] === c[0]) c[1] = ""; setChoiceIds(c); }}>
                   <option value="">— Chọn Ban / Vị trí —</option>
                   {allPositions.filter((p) => i === 0 || p.id !== choiceIds[0]).map((p) => <option key={p.id} value={p.id}>{deptName(p.department)} — {p.position}</option>)}
                 </select>
+                <ErrMsg k={`choice${i}`} />
               </label>
             ))}
           </div>
@@ -210,14 +245,14 @@ export function ApplicationForm({ onLookup }: { onLookup?: (code: string) => voi
               {busy === "cv" && <Loader2 className="h-4 w-4 animate-spin" />}{cvPath && <span className="text-success">Đã tải lên</span>}
             </div>
           </div>
-          <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span>Tôi xác nhận thông tin cung cấp là chính xác.<span className="text-destructive"> *</span></span></label>
+          <label data-field="consent" className={`flex items-start gap-3 rounded-lg text-sm ${errs["consent"] ? "p-2 ring-2 ring-destructive/40 bg-destructive/5" : ""}`}><input type="checkbox" className="mt-1" checked={consent} onChange={(e) => { clearErr("consent"); setConsent(e.target.checked); }} /><span>Tôi xác nhận thông tin cung cấp là chính xác.<span className="text-destructive"> *</span></span></label>
           <Recaptcha ref={captchaRef} onChange={setCaptcha} />
         </div>
       )}
 
       {error && <p className="mt-5 rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">{error}</p>}
       <div className="mt-6 flex justify-between gap-3">
-        {step > 1 ? <button type="button" onClick={() => { setError(null); setStep(step - 1); }} className="rounded-full border border-border px-5 py-2.5 text-sm font-medium hover:bg-accent">Quay lại</button> : <span />}
+        {step > 1 ? <button type="button" onClick={() => { setError(null); setErrs({}); setStep(step - 1); }} className="rounded-full border border-border px-5 py-2.5 text-sm font-medium hover:bg-accent">Quay lại</button> : <span />}
         {step < 3
           ? <button type="button" onClick={next} className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">Tiếp tục</button>
           : <button type="button" onClick={send} disabled={!!busy} className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60">{busy === "send" && <Loader2 className="h-4 w-4 animate-spin" />}Gửi hồ sơ</button>}

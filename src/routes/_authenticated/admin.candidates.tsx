@@ -41,10 +41,10 @@ function Candidates() {
   }), [data, f]);
 
   const exportCsv = () => {
-    const head = ["Mã hồ sơ", "Họ tên", "Email", "Điện thoại", "Đơn vị", "Tiếng Trung", "HSK", "NV1", "NV2", "Trạng thái", "Ngày gửi"];
+    const head = ["Mã hồ sơ", "Họ tên", "Email", "Điện thoại", "Ngày sinh", "Đơn vị", "Tiếng Trung", "HSK", "NV1", "NV2", "Trạng thái", "Ngày gửi"];
     const rows = list.map((a) => {
       const ch = (a.choices ?? []) as Choice[];
-      return [a.code, a.full_name, a.email, a.phone, a.organization, a.chinese_level, a.hsk_level, ...[0, 1].map((i) => ch[i] ? `${deptName(ch[i].department)} — ${ch[i].position}` : ""), APP_STATUS[a.status], new Date(a.created_at).toLocaleString("vi-VN")];
+      return [a.code, a.full_name, a.email, a.phone, a.date_of_birth ? a.date_of_birth.split("-").reverse().join("/") : "", a.organization, a.chinese_level, a.hsk_level, ...[0, 1].map((i) => ch[i] ? `${deptName(ch[i].department)} — ${ch[i].position}` : ""), APP_STATUS[a.status], new Date(a.created_at).toLocaleString("vi-VN")];
     });
     const blob = new Blob(["\uFEFF" + [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -140,7 +140,7 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
     <Drawer title={app.full_name} onClose={onClose}>
       <div className="font-mono text-sm text-primary">{app.code}</div>
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        {[["Email", app.email], ["Điện thoại", app.phone], ["Đơn vị", app.organization], ["Tiếng Trung", app.chinese_level || "—"], ["HSK", app.hsk_level || "—"], ["Ngày gửi", new Date(app.created_at).toLocaleString("vi-VN")]].map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="break-words">{v}</dd></div>)}
+        {[["Email", app.email], ["Điện thoại", app.phone], ["Ngày sinh", app.date_of_birth ? app.date_of_birth.split("-").reverse().join("/") : "—"], ["Đơn vị", app.organization], ["Tiếng Trung", app.chinese_level || "—"], ["HSK", app.hsk_level || "—"], ["Ngày gửi", new Date(app.created_at).toLocaleString("vi-VN")]].map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="break-words">{v}</dd></div>)}
       </dl>
       <div className="mt-4 text-sm">{((app.choices ?? []) as Choice[]).map((c, i) => <div key={i} className="font-medium">NV{i + 1}: {deptName(c.department)} — {c.position}</div>)}</div>
       <p className="mt-4 rounded-lg bg-secondary p-3 text-sm">{app.intro}</p>

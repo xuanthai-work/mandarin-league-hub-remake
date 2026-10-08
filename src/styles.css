@@ -211,3 +211,9 @@
   .print-certificate, .print-certificate * { visibility: visible; }
   .print-certificate { position: absolute; inset: 0; margin: 1.5cm; }
 }
+
+/* Org chart connectors: static by default, a slow light runs only on the highlighted branch. */
+.org-line { fill: none; stroke: var(--color-primary); stroke-opacity: 0.35; stroke-width: 1.5; transition: stroke-opacity 0.3s, opacity 0.3s, stroke 0.3s; }
+.org-line-on { stroke: var(--color-gold, var(--color-primary)); stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 6 6; animation: org-flow 1.6s linear infinite; }
+@keyframes org-flow { to { stroke-dashoffset: -24; } }
+@media (prefers-reduced-motion: reduce) { .org-line-on { animation: none; stroke-dasharray: none; } }

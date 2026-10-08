@@ -190,6 +190,13 @@
       "when": 1791445984559,
       "tag": "0026_site_content_anon_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791455261047,
+      "tag": "0027_candidate_date_of_birth",
+      "breakpoints": true
     }
   ]
 }
