@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { Pencil, Plus, Trash2, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { BENEFIT_ICONS, BENEFIT_STATUS, BenefitIcon } from "@/lib/benefits";
+import { BENEFIT_ICONS, BENEFIT_LOGO_BUCKET, BENEFIT_STATUS, BenefitIcon, useBenefitLogoUrls } from "@/lib/benefits";
 
 export const Route = createFileRoute("/_authenticated/admin/benefits")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Quyền lợi thành viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -12,18 +12,37 @@ export const Route = createFileRoute("/_authenticated/admin/benefits")({ staticD
 });
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-type B = { id?: string; name: string; description: string; icon_key: string; login: string; secret: string; access_url: string; usage_note: string; is_enabled: boolean; grant_all: boolean; min_points: number | null; ends_on: string | null; sort_order: number };
-const EMPTY: B = { name: "", description: "", icon_key: "gift", login: "", secret: "", access_url: "", usage_note: "", is_enabled: true, grant_all: false, min_points: null, ends_on: null, sort_order: 0 };
+type B = { id?: string; name: string; description: string; icon_key: string; logo_path: string; login: string; secret: string; access_url: string; usage_note: string; is_enabled: boolean; grant_all: boolean; min_points: number | null; ends_on: string | null; sort_order: number };
+const EMPTY: B = { name: "", description: "", icon_key: "gift", logo_path: "", login: "", secret: "", access_url: "", usage_note: "", is_enabled: true, grant_all: false, min_points: null, ends_on: null, sort_order: 0 };
 
 function BenefitsAdmin() {
   const qc = useQueryClient();
-  const [f, setF] = useState<B | null>(null);
+  const [f, setF0] = useState<B | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const setF = (v: B | null) => { if (!v) setPreview(null); setF0(v); };
   const [grantFor, setGrantFor] = useState<B | null>(null);
   const list = useQuery({ queryKey: ["admin-benefits"], queryFn: async () => {
     const [b, g] = await Promise.all([supabase.from("benefits").select("*").order("sort_order"), supabase.from("member_benefits").select("benefit_id,status")]);
     return { items: (b.data ?? []) as (B & { id: string })[], grants: g.data ?? [] };
   } });
+  const urls = useBenefitLogoUrls([...(list.data?.items ?? []).map((b) => b.logo_path), f?.logo_path ?? ""]);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-benefits"] });
+
+  const uploadLogo = async (file: File) => {
+    if (!f) return;
+    if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(file.type)) return void toast.error("Chỉ nhận ảnh PNG, JPG, WebP hoặc SVG");
+    if (file.size > 2 * 1024 * 1024) return void toast.error("Logo tối đa 2MB");
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from(BENEFIT_LOGO_BUCKET).upload(path, file, { contentType: file.type });
+    setUploading(false);
+    if (error) return void toast.error("Không tải được logo: " + error.message);
+    setPreview(URL.createObjectURL(file));
+    setF0({ ...f, logo_path: path });
+    toast.success("Đã tải logo — bấm Lưu để áp dụng");
+  };
 
   const save = async () => {
     if (!f || f.name.trim().length < 2) return void toast.error("Tên quyền lợi không hợp lệ");
@@ -31,7 +50,7 @@ function BenefitsAdmin() {
     const { id, ...row } = { ...f, name: f.name.trim(), updated_at: new Date().toISOString() };
     const { error } = id ? await supabase.from("benefits").update(row).eq("id", id) : await supabase.from("benefits").insert(row);
     if (error) return void toast.error("Không lưu được: " + error.message);
-    toast.success("Đã lưu quyền lợi"); setF(null); refresh();
+    toast.success("Đã lưu quyền lợi"); setF(null); refresh(); qc.invalidateQueries({ queryKey: ["benefit-logo-urls"] });
   };
   const toggle = async (b: B & { id: string }) => { await supabase.from("benefits").update({ is_enabled: !b.is_enabled }).eq("id", b.id); refresh(); };
   const remove = async (b: B & { id: string }) => {
@@ -53,7 +72,7 @@ function BenefitsAdmin() {
           <tbody>
             {(list.data?.items ?? []).map((b) => (
               <tr key={b.id} className="border-t border-border">
-                <td className="p-3"><div className="flex items-center gap-2"><BenefitIcon iconKey={b.icon_key} size="sm" /><span className="font-medium">{b.name}</span></div></td>
+                <td className="p-3"><div className="flex items-center gap-2"><BenefitIcon iconKey={b.icon_key} size="sm" logoUrl={b.logo_path ? urls.data?.[b.logo_path] : null} /><span className="font-medium">{b.name}</span></div></td>
                 <td className="p-3 text-xs">{b.grant_all ? "Tất cả thành viên" : b.min_points != null ? `Từ ${b.min_points} điểm` : "Chỉ cấp riêng"}</td>
                 <td className="p-3">{list.data?.grants.filter((g) => g.benefit_id === b.id && g.status === "active").length}</td>
                 <td className="p-3 text-xs">{b.ends_on ? new Date(b.ends_on).toLocaleDateString("vi-VN") : "—"}</td>
@@ -75,7 +94,14 @@ function BenefitsAdmin() {
             <h2 className="font-semibold">{f.id ? "Sửa quyền lợi" : "Tạo quyền lợi"}</h2>
             <input className={inp} placeholder="Tên (vd: Hanzii Premium)" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
             <textarea className={inp} rows={2} placeholder="Mô tả ngắn" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
-            <div><p className="mb-1 text-xs text-muted-foreground">Biểu tượng</p><div className="flex flex-wrap gap-2">
+            <div className="rounded-xl border border-border p-3"><p className="mb-2 text-xs font-medium text-muted-foreground">Logo ứng dụng (PNG/JPG/WebP/SVG, ≤ 2MB)</p>
+              <div className="flex items-center gap-3">
+                <BenefitIcon iconKey={f.icon_key} logoUrl={preview ?? (f.logo_path ? urls.data?.[f.logo_path] : null)} />
+                <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-secondary"><Upload className="h-4 w-4" />{uploading ? "Đang tải…" : f.logo_path ? "Đổi logo" : "Tải logo lên"}
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" disabled={uploading} onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void uploadLogo(file); }} /></label>
+                {f.logo_path && <button type="button" onClick={() => { setF({ ...f, logo_path: "" }); setPreview(null); }} className="text-xs text-destructive hover:underline">Gỡ logo</button>}
+              </div></div>
+            <div><p className="mb-1 text-xs text-muted-foreground">Biểu tượng dự phòng (dùng khi chưa có logo)</p><div className="flex flex-wrap gap-2">
               {Object.entries(BENEFIT_ICONS).map(([k, v]) => (
                 <button key={k} type="button" title={v.label} onClick={() => setF({ ...f, icon_key: k })} className={`rounded-xl p-0.5 ${f.icon_key === k ? "ring-2 ring-gold" : ""}`}><BenefitIcon iconKey={k} size="sm" /></button>
               ))}</div></div>
