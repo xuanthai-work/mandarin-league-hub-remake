@@ -17,6 +17,7 @@ import type React from "react";
 import { POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
 const TONE: Record<string, string> = { bronze: "blue", silver: "green", gold: "wine", platinum: "purple" };
 import { TierBadge, TierProgress } from "@/components/TierBadge";
+import { DongSonDrum as DongSon, Crane } from "@/components/portal/PassOrnaments";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -64,6 +65,7 @@ function MemberDashboard() {
   useEffect(() => { if (me.data?.account?.must_change_password) navigate({ to: "/change-password", replace: true }); }, [me.data, navigate]);
   const [congrats, setCongrats] = useState<string | null>(null);
   const [previewTone, setPreviewTone] = useState<string | null>(null);
+  const [layout, setLayout] = useState<"h" | "v">("h");
   useEffect(() => { const mm = me.data?.member; if (!mm) return;
     const t = tierOf(mm.contribution_points); const idx = TIERS.length - TIERS.indexOf(t);
     const key = `tml_tier_seen_${mm.member_code}`; const prev = Number(localStorage.getItem(key) ?? 0);
@@ -104,10 +106,24 @@ function MemberDashboard() {
   const previewTier = previewTone && previewTone !== "black" ? TIERS.find((t) => TONE[t.key] === previewTone) : undefined;
   const tier = previewTier ?? realTier;
   const tone = previewTone ?? (special ? "black" : TONE[realTier.key] ?? "blue");
+  const advNames = (advisor.data ?? []).map((a) => deptName(a.dept).replace(/^Ban\s+/, "").split(/\s*&\s*/)[0]);
+  const mainAdvisor = m.position === "Cố vấn chuyên môn";
+  const deptLabel = mainAdvisor && advNames.length ? (advNames.length === 1 ? deptName((advisor.data ?? [])[0]?.dept ?? "") : advNames.join(" · ")) : deptName(m.department);
+  const posLabel = mainAdvisor ? <span className="text-gold">Cố vấn chuyên môn</span>
+    : advNames.length ? <>{m.position} · <span className="text-gold">Cố vấn {advNames.join(" · ")}</span></> : m.position;
+  const joined = new Date(m.joined_on).toLocaleDateString("vi-VN");
+  const tierEl = <><span key={tier.key} className="tml-pass-pop inline-flex"><TierBadge tierKey={tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></>;
+  const avatarEl = (size: string) => (
+    <label className={`group relative ${size} cursor-pointer overflow-hidden rounded-md border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60`}>
+      {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-3xl font-bold text-primary">{m.full_name.charAt(0)}</span>}
+      <span className="absolute inset-0 flex items-center justify-center bg-foreground/50 text-background opacity-0 transition group-hover:opacity-100"><Camera className="h-5 w-5" /></span>
+      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
+    </label>
+  );
   const downloadCard = async () => {
     if (!cardRef.current) return;
     const el = cardRef.current; el.classList.add("is-exporting");
-    try { const url = await toPng(el, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
+    try { const url = await toPng(el, { pixelRatio: 3, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}-${layout === "v" ? "vertical" : "horizontal"}.png`; a.click(); }
     catch { setErr("Không tải được thẻ, vui lòng thử lại."); } finally { el.classList.remove("is-exporting"); }
   };
   const act = async (id: string, action: "start" | "submit", evidence = "", note = "") => {
