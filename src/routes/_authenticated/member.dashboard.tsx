@@ -17,7 +17,7 @@ import type React from "react";
 import { POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
 const TONE: Record<string, string> = { bronze: "blue", silver: "green", gold: "wine", platinum: "purple" };
 import { TierBadge, TierProgress } from "@/components/TierBadge";
-import { DongSonDrum as DongSon, LacBirds } from "@/components/portal/PassOrnaments";
+import { DongSonDrum as DongSon, LacBirds, FLOCK_H, FLOCK_V } from "@/components/portal/PassOrnaments";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -184,8 +184,8 @@ function MemberDashboard() {
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {layout === "h" ? <>
-            <DongSon className="-bottom-24 -left-16 h-72 w-72" />
-            <LacBirds className="-bottom-16 left-[30%] h-56 w-56" />
+            <DongSon className="-bottom-20 -left-14 h-60 w-60" />
+            <LacBirds flock={FLOCK_H} />
             <div className="relative flex items-center gap-2 pl-4 pt-4">
               <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
               <div className="min-w-0 leading-tight">
@@ -214,8 +214,8 @@ function MemberDashboard() {
             </div>
             <div className="tml-pass-foot flex items-center justify-between px-4 py-1.5 text-[8px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
             </> : <>
-            <DongSon className="-bottom-20 left-1/2 h-[300px] w-[300px] -translate-x-1/2" />
-            <LacBirds className="-bottom-12 left-1/2 h-[250px] w-[250px] -translate-x-1/2" />
+            <DongSon className="-bottom-24 left-1/2 h-[280px] w-[280px] -translate-x-1/2" />
+            <LacBirds flock={FLOCK_V} />
             <div aria-hidden className="tml-pass-vframe" />
             <div className="tml-vhead relative flex items-center gap-2 px-4 pb-6 pt-4">
               <div className="min-w-0 flex-1 leading-tight">
