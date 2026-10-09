@@ -714,6 +714,62 @@ export type Database = {
           },
         ]
       }
+      department_advisor_settings: {
+        Row: {
+          department: string
+          enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          department: string
+          enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          department?: string
+          enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      department_advisors: {
+        Row: {
+          created_at: string
+          department: string
+          display_order: number
+          id: string
+          is_active: boolean
+          member_id: string
+          specialty_area: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          member_id: string
+          specialty_area?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          member_id?: string
+          specialty_area?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_advisors_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       department_channels: {
         Row: {
           department: string
@@ -1755,6 +1811,15 @@ export type Database = {
       my_head_department: { Args: never; Returns: string }
       my_member_department: { Args: never; Returns: string }
       my_member_id: { Args: never; Returns: string }
+      public_dept_advisors: {
+        Args: never
+        Returns: {
+          dept: string
+          display_name: string
+          display_order: number
+          specialty_area: string
+        }[]
+      }
       public_org_chart: {
         Args: never
         Returns: {
