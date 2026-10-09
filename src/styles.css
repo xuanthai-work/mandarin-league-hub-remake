@@ -324,3 +324,17 @@
 .tml-pass.is-exporting, .tml-pass.is-exporting * { animation: none !important; transform: none !important; transition: none !important; }
 .tml-pass.is-exporting::after { display: none; }
 @media (prefers-reduced-motion: reduce) { .tml-pass, .tml-pass *, .tml-pass::after { animation: none !important; transition: none !important; } .tml-pass { transform: none; } .tml-pass::after { display: none; } }
+
+/* Full-color pass: whole card body, banner, footer and text follow the tier tone */
+.tml-pass { --pass-ink: oklch(0.98 0.005 90); --pass-deep: color-mix(in oklab, var(--pass-c) 62%, oklch(0.12 0.02 260));
+  background: radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, var(--pass-c) 70%, var(--gold) 12%), transparent 60%), linear-gradient(155deg, var(--pass-deep), var(--pass-c) 55%, var(--pass-deep));
+  color: var(--pass-ink) !important; }
+.tml-pass .text-primary, .tml-pass .text-primary-deep { color: var(--gold) !important; }
+.tml-pass dd, .tml-pass .font-bold.uppercase { color: var(--pass-ink); }
+.tml-pass .font-bold.uppercase { color: var(--pass-ink) !important; text-shadow: 0 1px 2px color-mix(in oklab, var(--pass-deep) 80%, transparent); }
+.tml-pass dt { color: color-mix(in oklab, var(--pass-ink) 75%, transparent); opacity: 1 !important; }
+.tml-pass .text-gold { color: var(--gold) !important; }
+.tml-pass .tml-banner { background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--pass-c) 80%, var(--gold) 20%) 30%, var(--pass-deep)); }
+.tml-pass .bg-primary-deep { background: var(--pass-deep) !important; border-top: 1px solid color-mix(in oklab, var(--gold) 50%, transparent); }
+.tml-pass .tml-microprint { color: var(--gold); opacity: .06; }
+.tml-pass .tml-pass-pattern { opacity: .1; filter: invert(1); }
