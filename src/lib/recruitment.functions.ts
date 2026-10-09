@@ -44,7 +44,7 @@ export const submitApplication = createServerFn({ method: "POST" })
     if (!(await verifyRecaptcha((raw as { captcha?: unknown } | null)?.captcha))) return { ok: false as const, error: CAPTCHA_ERROR };
     const parsed = submitSchema.safeParse(raw);
     if (!parsed.success) {
-      const LABEL: Record<string, string> = { full_name: "Họ và tên (ít nhất 2 ký tự)", email: "Email", phone: "Số điện thoại (8–30 ký tự)", date_of_birth: "Ngày sinh", organization: "Trường / Đơn vị (ít nhất 2 ký tự)", chinese_level: "Trình độ tiếng Trung", hsk_level: "HSK", intro: "Giới thiệu ngắn (10–3000 ký tự)", positionIds: "Nguyện vọng", answers: "Câu trả lời (quá dài)", cvPath: "Tệp CV", consent: "Xác nhận thông tin" };
+      const LABEL: Record<string, string> = { full_name: "Họ và tên (ít nhất 2 ký tự)", email: "Email", phone: "Số điện thoại (8–30 ký tự)", date_of_birth: "Ngày sinh", organization: "Trường / Đơn vị (ít nhất 2 ký tự)", facebook_url: "Link Facebook", chinese_level: "Trình độ tiếng Trung", hsk_level: "HSK", intro: "Giới thiệu ngắn (10–3000 ký tự)", positionIds: "Nguyện vọng", answers: "Câu trả lời (quá dài)", cvPath: "Tệp CV", consent: "Xác nhận thông tin" };
       const key = String(parsed.error.issues[0]?.path[0] ?? "");
       return { ok: false as const, error: `Vui lòng kiểm tra lại: ${LABEL[key] ?? key}.` };
     }
