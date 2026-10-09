@@ -142,7 +142,7 @@ function MemberDashboard() {
                 {(() => {
                   const adv = (advisor.data ?? []).map((a) => deptName(a.dept).replace(/^Ban\s+/, "").split(/\s*&\s*/)[0]);
                   const mainAdvisor = m.position === "Cố vấn chuyên môn";
-                  const dept = mainAdvisor && adv.length ? (adv.length === 1 ? deptName(advisor.data![0].dept) : adv.join(" · ")) : deptName(m.department);
+                  const dept = mainAdvisor && adv.length ? (adv.length === 1 ? deptName((advisor.data ?? [])[0]?.dept ?? "") : adv.join(" · ")) : deptName(m.department);
                   return <>
                     <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="truncate font-semibold">{dept}</dd></div>
                     <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="truncate font-semibold">
