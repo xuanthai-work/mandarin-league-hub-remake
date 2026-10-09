@@ -348,5 +348,5 @@
 /* Cleaner card: drop busy microprint/geometric fill, keep drum + Lạc birds as the only motifs */
 .tml-pass .tml-microprint, .tml-pass .tml-pass-pattern { display: none; }
 .tml-pass-vframe { position: absolute; inset: 7px; border: 1px solid color-mix(in oklab, var(--gold) 55%, transparent); border-radius: 13px; pointer-events: none; }
-.tml-pass .tml-vhead { background: linear-gradient(180deg, var(--pass-deep), var(--pass-c)); border-bottom: 2px solid var(--gold); clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%); padding-bottom: 1.4rem; }
+.tml-pass .tml-vhead { background: linear-gradient(180deg, var(--pass-deep), var(--pass-c)); border-bottom: 2px solid var(--gold); clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%); padding-bottom: 1.1rem; }
 .tml-pass .tml-vhead .text-gold { color: var(--gold) !important; }

@@ -217,25 +217,25 @@ function MemberDashboard() {
             <DongSon className="-bottom-24 left-1/2 h-[280px] w-[280px] -translate-x-1/2" />
             <LacBirds flock={FLOCK_V} />
             <div aria-hidden className="tml-pass-vframe" />
-            <div className="tml-vhead relative flex items-center gap-2 px-4 pb-6 pt-4">
+            <div className="tml-vhead relative flex items-center gap-2 px-4 pb-3 pt-3">
               <div className="min-w-0 flex-1 leading-tight">
                 <p className="font-serif text-[15px] font-bold tracking-wide text-gold">普通话联盟</p>
                 <p className="text-[10px] font-semibold tracking-wide text-primary-foreground">THE MANDARIN LEAGUE</p>
                 <p className="text-[8px] tracking-[0.25em] text-gold">会员证 · THẺ THÀNH VIÊN</p>
               </div>
-              <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
+              <img src={logo.url} alt="TML" className="h-11 w-11 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
             </div>
-            <div className="relative flex flex-1 flex-col items-center px-4 pt-4 text-center">
-              {avatarEl("h-[125px] w-[100px]")}
-              <p className="mt-3 w-full truncate text-base font-bold uppercase text-primary">{m.full_name}</p>
+            <div className="relative flex min-h-0 flex-1 flex-col items-center px-4 pt-2 text-center">
+              {avatarEl("h-[108px] w-[86px]")}
+              <p className="mt-2 w-full truncate text-base font-bold uppercase text-primary">{m.full_name}</p>
               <p className="font-mono text-[10px] font-bold tracking-wider text-primary">{m.member_code}</p>
-              <dl className="mt-2 w-full space-y-1 text-[11px]">
+              <dl className="mt-1.5 w-full space-y-1 text-[11px]">
                 <div><dt className="text-[9px]">部门 · Ban</dt><dd className="truncate font-semibold">{deptLabel}</dd></div>
                 <div><dt className="text-[9px]">职务 · Chức vụ</dt><dd className="truncate font-semibold">{posLabel}</dd></div>
                 <div className="flex justify-center gap-4"><div><dt className="text-[9px]">入会</dt><dd className="font-mono">{joined}</dd></div>
                   <div><dt className="text-[9px]">等级 · Hạng</dt><dd className="flex items-center justify-center gap-1">{tierEl}</dd></div></div>
               </dl>
-              {qr && <img src={qr} alt={`QR ${m.member_code}`} className="mb-3 mt-auto h-16 w-16 rounded bg-background p-0.5" />}
+              {qr && <img src={qr} alt={`QR ${m.member_code}`} className="mb-2 mt-auto h-11 w-11 rounded bg-background p-0.5" />}
             </div>
             <div className="tml-pass-foot flex flex-col items-center py-1.5 text-[7px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
             </>}
