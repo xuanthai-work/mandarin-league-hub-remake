@@ -58,12 +58,7 @@ export function ApplicationLookup({ initial = "" }: { initial?: string }) {
               <dd className="font-medium">{r.choices.map((c, i) => <div key={i}>NV{i + 1}: {c.department} — {c.position}</div>)}</dd></div>
             <div><dt className="text-muted-foreground">Ngày gửi</dt><dd className="font-medium">{new Date(r.created_at).toLocaleDateString("vi-VN")}</dd></div>
           </dl>
-          {r.status === "needs_info" && (
-            <div className="mt-4 flex gap-2 rounded-xl bg-gold/15 p-4 text-sm text-primary-deep">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-gold" />
-              <p>Hồ sơ của bạn cần được bổ sung thông tin. Vui lòng liên hệ THE MANDARIN LEAGUE để biết thêm chi tiết: <a className="font-semibold underline" href="mailto:community@themandarinleague.bond">community@themandarinleague.bond</a></p>
-            </div>
-          )}
+          <StatusNotice status={r.status} message={r.message} />
         </div>
       ))}
     </div>
