@@ -128,8 +128,23 @@ function RootComponent() {
   useEffect(() => {
     const to = domainRedirect(window.location.host, pathname, searchStr);
     if (to) window.location.replace(to);
-    if (portalOf(window.location.host) === "member" && !document.querySelector('meta[name="robots"]')) {
-      const m = document.createElement("meta"); m.name = "robots"; m.content = "noindex, nofollow"; document.head.appendChild(m);
+    if (portalOf(window.location.host) === "member") {
+      if (!document.querySelector('meta[name="robots"]')) {
+        const m = document.createElement("meta"); m.name = "robots"; m.content = "noindex, nofollow"; document.head.appendChild(m);
+      }
+      // PWA: manifest-only home-screen install for the member portal (no service worker).
+      const addHead = (tag: string, attrs: Record<string, string>, key: string) => {
+        if (document.head.querySelector(`${tag}[data-pwa="${key}"]`)) return;
+        const el = document.createElement(tag);
+        Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+        el.setAttribute("data-pwa", key);
+        document.head.appendChild(el);
+      };
+      addHead("link", { rel: "manifest", href: "/manifest.webmanifest" }, "manifest");
+      addHead("link", { rel: "apple-touch-icon", href: "/apple-touch-icon.png" }, "apple-icon");
+      addHead("meta", { name: "theme-color", content: "#0F172A" }, "theme-color");
+      addHead("meta", { name: "apple-mobile-web-app-capable", content: "yes" }, "apple-capable");
+      addHead("meta", { name: "apple-mobile-web-app-title", content: "TML Member" }, "apple-title");
     }
   }, [pathname, searchStr]);
 
