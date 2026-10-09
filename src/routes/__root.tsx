@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalLoadingScreen } from "@/components/site/GlobalLoadingScreen";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { domainRedirect, portalOf } from "@/lib/domain";
 
@@ -161,6 +162,7 @@ function RootComponent() {
           <Outlet />
         </SiteLayout>
       )}
+      <GlobalLoadingScreen />
       <Toaster richColors />
     </QueryClientProvider>
   );
