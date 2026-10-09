@@ -2,7 +2,7 @@ import { useTr } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useLayoutEffect, useRef, useState } from "react";
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight, GraduationCap, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHero } from "@/components/site/SiteLayout";
 import { PersonSlot } from "@/components/site/ui";
@@ -26,6 +26,8 @@ function POrganization() {
   const deps = getDepartments();
   const { data: org, isLoading } = useQuery({ queryKey: ["public-org"], queryFn: async () => ((await supabase.rpc("public_org_chart")).data ?? []) as OrgRow[] });
   const pick = (dept: string, role: string) => org?.find((r) => r.dept === dept && r.role_title === role)?.display_name ?? undefined;
+  const { data: advisors } = useQuery({ queryKey: ["public-advisors"], queryFn: async () => ((await supabase.rpc("public_dept_advisors")).data ?? []) as { dept: string; display_name: string; specialty_area: string }[] });
+  const advOf = (dept: string) => (advisors ?? []).filter((a) => a.dept === dept);
   const count = (dept: string) => org?.find((r) => r.dept === dept)?.member_count ?? 0;
 
   const [hover, setHover] = useState<string | null>(null);
@@ -120,6 +122,13 @@ function POrganization() {
                     <Leader role={tr("Trưởng Ban")} name={head} loading={isLoading} tr={tr} />
                     <Leader role={tr("Phó Ban")} name={dep} loading={isLoading} tr={tr} />
                   </div>
+                  {advOf(d.id).length > 0 && (
+                    <div className="mt-3 space-y-1 rounded-lg border border-dashed border-gold/70 bg-gold-soft/30 px-3 py-2 text-xs">
+                      {advOf(d.id).map((a) => (
+                        <div key={a.display_name} className="flex items-center gap-1.5"><GraduationCap className="h-3.5 w-3.5 shrink-0 text-gold" /><span className="text-muted-foreground">{tr("Cố vấn chuyên môn")}:</span><span className="truncate font-medium text-foreground">{a.display_name}</span></div>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />{n ? `${n} ${tr("thành viên")}` : tr("Đang cập nhật")}</span>
                     <span className={`inline-flex items-center gap-1 font-medium text-primary transition ${on ? "opacity-100" : "opacity-0"}`}>{tr("Xem chi tiết")}<ArrowRight className="h-3.5 w-3.5" /></span>
@@ -148,6 +157,12 @@ function POrganization() {
               <div className="mt-6 space-y-4 rounded-xl border border-border p-4">
                 <PersonSlot role="Trưởng ban" name={pick(open.id, "Trưởng Ban")} />
                 <PersonSlot role="Phó ban" name={pick(open.id, "Phó Ban")} />
+                {advOf(open.id).map((a) => (
+                  <div key={a.display_name} className="ml-3 flex items-start gap-2 border-l-2 border-dashed border-gold pl-3 text-sm">
+                    <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                    <div><div className="text-xs text-muted-foreground">{tr("Cố vấn chuyên môn")}</div><div className="font-medium">{a.display_name}</div>{a.specialty_area && <div className="text-xs text-muted-foreground">{a.specialty_area}</div>}</div>
+                  </div>
+                ))}
                 <div className="flex items-center gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
                   <Users className="h-4 w-4 text-primary" />{tr("Thành viên")}: {count(open.id) || tr("Đang cập nhật")}
                 </div>
