@@ -3,12 +3,12 @@ import { useRouterState } from "@tanstack/react-router";
 import logoClear from "@/assets/tml-logo-transparent.png";
 import { useLang } from "@/lib/i18n";
 
-const MSG: Record<string, string[]> = {
+const MSG: Record<"vi" | "zh" | "en", string[]> = {
   vi: ["Đang kết nối tri thức…", "Đang chuẩn bị hành trình Hán ngữ…", "Kết nối người học – mở rộng cơ hội…", "Welcome to The Mandarin League."],
   zh: ["正在连结知识…", "正在准备您的中文之旅…", "汇聚学子，拓展机遇…", "Welcome to The Mandarin League."],
   en: ["Connecting knowledge…", "Preparing your Mandarin journey…", "Connecting learners, expanding opportunities…", "Welcome to The Mandarin League."],
 };
-const TAG: Record<string, string> = { vi: "Kết nối tri thức – Mở rộng cơ hội", zh: "连结知识 · 拓展机遇", en: "Connecting knowledge – Expanding opportunities" };
+const TAG: Record<"vi" | "zh" | "en", string> = { vi: "Kết nối tri thức – Mở rộng cơ hội", zh: "连结知识 · 拓展机遇", en: "Connecting knowledge – Expanding opportunities" };
 
 /** Shows a thin top bar immediately during route loads, and the branded overlay only if loading exceeds 250ms. */
 export function GlobalLoadingScreen() {
@@ -30,7 +30,7 @@ export function GlobalLoadingScreen() {
     return () => clearInterval(t);
   }, [overlay]);
 
-  const msgs = MSG[lang] ?? MSG.vi;
+  const msgs = MSG[lang as "vi"] ?? MSG.vi;
 
   return (
     <>
@@ -45,7 +45,7 @@ export function GlobalLoadingScreen() {
           </div>
           <p className="mt-6 text-lg font-extrabold tracking-[0.2em] text-gold sm:text-xl">THE MANDARIN LEAGUE</p>
           <p className="mt-1 text-sm font-semibold tracking-[0.3em] text-primary-foreground/90">LIÊN ĐOÀN HÁN NGỮ</p>
-          <p className="mt-2 text-xs italic text-primary-foreground/70">{TAG[lang] ?? TAG.vi}</p>
+          <p className="mt-2 text-xs italic text-primary-foreground/70">{TAG[lang as "vi"] ?? TAG.vi}</p>
           <div className="mt-6 h-1 w-56 overflow-hidden rounded-full bg-primary-foreground/10"><div className="tml-progress h-full w-1/3 rounded-full bg-gold" /></div>
           <p key={i} className="tml-msg mt-4 h-5 text-sm text-primary-foreground/80">{msgs[i % msgs.length]}</p>
         </div>
