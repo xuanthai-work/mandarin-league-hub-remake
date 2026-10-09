@@ -90,9 +90,15 @@ function MemberDashboard() {
   };
 
   const tier = tierOf(m.contribution_points);
+  const special = isLeader(m, me.data?.roles ?? [], (advisor.data ?? []).length > 0) && m.position !== "Thành viên";
+  const tone = special ? "black" : TONE[tier.key] ?? "blue";
   const downloadCard = async () => {
     if (!cardRef.current) return;
-    try { const url = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
+    const el = cardRef.current; el.classList.add("is-exporting");
+    try { const url = await toPng(el, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
+    catch { setErr("Không tải được thẻ, vui lòng thử lại."); } finally { el.classList.remove("is-exporting"); }
+  };
+  const _unused = async () => { try {
     catch { setErr("Không tải được thẻ, vui lòng thử lại."); }
   };
   const act = async (id: string, action: "start" | "submit", evidence = "", note = "") => {
@@ -121,8 +127,14 @@ function MemberDashboard() {
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
           <div>
           <div className="[perspective:1200px]">
-          <div ref={cardRef} className="tml-pass relative overflow-hidden rounded-[18px] text-primary-deep">
+          <div ref={cardRef} data-tone={tone} style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
+            onPointerMove={(e) => { if (e.pointerType !== "mouse") return; const r = e.currentTarget.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+              e.currentTarget.style.setProperty("--ry", `${(x * 10).toFixed(2)}deg`); e.currentTarget.style.setProperty("--rx", `${(-y * 8).toFixed(2)}deg`); e.currentTarget.style.setProperty("--lift", "-4px"); }}
+            onPointerLeave={(e) => { ["--rx", "--ry", "--lift"].forEach((p) => e.currentTarget.style.removeProperty(p)); }}
+            className="tml-pass relative overflow-hidden rounded-[18px] text-primary-deep">
             <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
+            <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
+            <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute left-[30%] top-[38%] h-48 w-48 rounded-full opacity-[0.06]" />
             <div className="relative flex items-center gap-2 pl-4 pt-4">
               <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
