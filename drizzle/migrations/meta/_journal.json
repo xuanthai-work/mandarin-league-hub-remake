@@ -225,6 +225,13 @@
       "when": 1791527159645,
       "tag": "0031_department_advisors",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791527912347,
+      "tag": "0032_my_advisor_roles",
+      "breakpoints": true
     }
   ]
 }
