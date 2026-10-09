@@ -51,7 +51,7 @@ export function MyBenefits() {
           );
         })}
       </div>
-      {open && <AccessDialog row={{ ...open, logoUrl: logo(open) }} onClose={() => setOpen(null)} />}
+      {open && <AccessDialog row={{ ...open, logoUrl: logo(open) ?? null }} onClose={() => setOpen(null)} />}
     </div>
   );
 }
