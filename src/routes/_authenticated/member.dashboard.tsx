@@ -129,6 +129,16 @@ function MemberDashboard() {
 
       {msg && <p className="mt-4 rounded-lg bg-success/15 px-3 py-2 text-sm text-success">{msg}</p>}
       {err && <p className="mt-4 rounded-lg bg-destructive/15 px-3 py-2 text-sm text-destructive">{err}</p>}
+      {congrats && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4" onClick={() => setCongrats(null)}>
+          <div className="tml-pass-pop portal-glass max-w-sm rounded-2xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto w-fit"><TierBadge tierKey={tier.key} size={88} /></div>
+            <p className="mt-4 text-lg font-bold text-primary-deep">Chúc mừng bạn đã đạt cấp bậc thành viên mới tại The Mandarin League!</p>
+            <p className="mt-1 text-sm font-semibold text-gold">{congrats}</p>
+            <button onClick={() => setCongrats(null)} className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground">Tuyệt vời</button>
+          </div>
+        </div>
+      )}
       {tab === "card" && (
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
           <div>
@@ -170,7 +180,7 @@ function MemberDashboard() {
                   </>;
                 })()}
                 <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
-                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><TierBadge tierKey={tier.key} size={22} /><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
+                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><span key={tier.key} className="tml-pass-pop inline-flex"><TierBadge tierKey={tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
               </dl>
               <div className="flex flex-col items-center">
                 <label className="group relative h-[120px] w-[92px] cursor-pointer overflow-hidden rounded-md border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60">
