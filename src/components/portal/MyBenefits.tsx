@@ -33,7 +33,7 @@ export function MyBenefits() {
           return (
             <article key={r.id} className={`portal-glass flex flex-col rounded-2xl p-4 transition ${r.has_access ? "hover:ring-1 hover:ring-gold/50" : "opacity-70"}`}>
               <div className="flex items-start gap-3">
-                <BenefitIcon iconKey={r.icon_key} />
+                <BenefitIcon iconKey={r.icon_key} logoUrl={logo(r)} />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold">{r.name}</h3>
                   <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${st.className}`}>{st.label}</span>
@@ -51,7 +51,7 @@ export function MyBenefits() {
           );
         })}
       </div>
-      {open && <AccessDialog row={open} onClose={() => setOpen(null)} />}
+      {open && <AccessDialog row={{ ...open, logoUrl: logo(open) }} onClose={() => setOpen(null)} />}
     </div>
   );
 }
@@ -66,7 +66,7 @@ function AccessDialog({ row, onClose }: { row: Row; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl bg-background p-5 text-foreground shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-3"><BenefitIcon iconKey={row.icon_key} size="sm" /><h2 className="flex-1 font-semibold">{row.name}</h2>
+        <div className="flex items-center gap-3"><BenefitIcon iconKey={row.icon_key} size="sm" logoUrl={row.logoUrl} /><h2 className="flex-1 font-semibold">{row.name}</h2>
           <button onClick={onClose} aria-label="Đóng" className="rounded p-1 hover:bg-secondary"><X className="h-4 w-4" /></button></div>
         {q.isLoading && <p className="py-6 text-center text-sm text-muted-foreground">Đang tải…</p>}
         {!q.isLoading && !a && <p className="py-6 text-center text-sm text-destructive">Bạn chưa được cấp quyền truy cập.</p>}

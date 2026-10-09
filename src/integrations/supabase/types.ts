@@ -344,6 +344,7 @@ export type Database = {
           admin_note: string
           ai_summary: string | null
           answers: Json
+          candidate_message: string
           chinese_level: string
           choices: Json
           code: string
@@ -365,6 +366,7 @@ export type Database = {
           admin_note?: string
           ai_summary?: string | null
           answers?: Json
+          candidate_message?: string
           chinese_level?: string
           choices?: Json
           code?: string
@@ -386,6 +388,7 @@ export type Database = {
           admin_note?: string
           ai_summary?: string | null
           answers?: Json
+          candidate_message?: string
           chinese_level?: string
           choices?: Json
           code?: string
