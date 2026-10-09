@@ -211,6 +211,19 @@ function MemberDashboard() {
           </div>
           <TierProgress points={m.contribution_points} />
           <button onClick={downloadCard} className="portal-ink mt-3 inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><Download className="h-4 w-4" />Tải thẻ ảnh</button>
+          {me.data?.roles?.includes("admin") && (
+            <div className="portal-glass mt-3 rounded-2xl p-4">
+              <p className="text-xs font-semibold text-gold">Xem trước màu thẻ (chỉ Admin thấy, không đổi điểm thật)</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {([["blue", "Tập sự"], ["green", "Tích cực"], ["wine", "Nòng cốt"], ["purple", "Tinh hoa"], ["black", "Lãnh đạo / Cố vấn"]] as const).map(([k, l]) => (
+                  <button key={k} type="button" onClick={() => setPreviewTone(k)} style={{ background: `var(--pass-${k})` }}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold text-primary-foreground ring-2 ${previewTone === k ? "ring-gold" : "ring-transparent"}`}>{l}</button>
+                ))}
+                <button type="button" onClick={() => setPreviewTone(null)} className="portal-ink rounded-full border border-gold/40 px-3 py-1 text-xs">Mặc định</button>
+                <button type="button" onClick={() => setCongrats(tier.label)} className="rounded-full bg-gold px-3 py-1 text-xs font-semibold text-primary-deep">Thử hiệu ứng lên bậc</button>
+              </div>
+            </div>
+          )}
           </div>
 
           <div className="space-y-6">
