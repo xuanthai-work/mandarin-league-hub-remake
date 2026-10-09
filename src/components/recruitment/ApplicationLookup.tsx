@@ -58,14 +58,32 @@ export function ApplicationLookup({ initial = "" }: { initial?: string }) {
               <dd className="font-medium">{r.choices.map((c, i) => <div key={i}>NV{i + 1}: {c.department} — {c.position}</div>)}</dd></div>
             <div><dt className="text-muted-foreground">Ngày gửi</dt><dd className="font-medium">{new Date(r.created_at).toLocaleDateString("vi-VN")}</dd></div>
           </dl>
-          {r.status === "needs_info" && (
-            <div className="mt-4 flex gap-2 rounded-xl bg-gold/15 p-4 text-sm text-primary-deep">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-gold" />
-              <p>Hồ sơ của bạn cần được bổ sung thông tin. Vui lòng liên hệ THE MANDARIN LEAGUE để biết thêm chi tiết: <a className="font-semibold underline" href="mailto:community@themandarinleague.bond">community@themandarinleague.bond</a></p>
-            </div>
-          )}
+          <StatusNotice status={r.status} message={r.message} />
         </div>
       ))}
+    </div>
+  );
+}
+
+const HR = "hr@themandarinleague.bond";
+const NOTICE: Record<string, { tone: string; title: string; body: string }> = {
+  submitted: { tone: "bg-secondary text-foreground", title: "Hồ sơ đã được tiếp nhận", body: "Cảm ơn bạn đã ứng tuyển. Hồ sơ của bạn đã được ghi nhận an toàn và sẽ sớm được Ban Nhân sự xem xét." },
+  reviewing: { tone: "bg-primary/5 text-primary-deep", title: "Hồ sơ đang được thẩm định", body: "Ban Nhân sự đang xem xét kỹ hồ sơ của bạn. Kết quả sẽ được cập nhật tại đây." },
+  needs_info: { tone: "bg-gold/15 text-primary-deep", title: "Cần bổ sung thông tin", body: `Vui lòng gửi thông tin bổ sung về ${HR} (ghi rõ Mã hồ sơ).` },
+  interview: { tone: "bg-primary/10 text-primary-deep", title: "Chúc mừng bạn đã vượt qua vòng hồ sơ", body: `Ban Nhân sự sẽ liên hệ trực tiếp qua email ${HR} hoặc điện thoại để hẹn lịch phỏng vấn. Vui lòng kiểm tra cả hộp thư Spam.` },
+  approved: { tone: "bg-success/10 text-primary-deep", title: "Chúc mừng bạn đã trúng tuyển", body: `Chào mừng bạn đến với THE MANDARIN LEAGUE! Vui lòng theo dõi email chính thức từ ${HR}.` },
+  rejected: { tone: "bg-secondary text-foreground", title: "Cảm ơn bạn đã đồng hành", body: "THE MANDARIN LEAGUE chân thành cảm ơn bạn đã dành thời gian và tâm huyết ứng tuyển. Do chỉ tiêu có hạn, TML rất tiếc chưa thể đồng hành cùng bạn ở đợt này. Hy vọng được gặp lại bạn ở những cơ hội phù hợp tiếp theo." },
+  withdrawn: { tone: "bg-secondary text-muted-foreground", title: "Hồ sơ đã rút", body: "Hồ sơ này đã được rút khỏi đợt tuyển." },
+};
+
+function StatusNotice({ status, message }: { status: string; message: string }) {
+  const n = NOTICE[status];
+  if (!n && !message) return null;
+  return (
+    <div className={`mt-4 rounded-xl p-4 text-sm ${n?.tone ?? "bg-secondary"}`}>
+      {n && <p className="flex items-center gap-2 font-semibold">{status === "needs_info" && <AlertTriangle className="h-4 w-4 text-gold" />}{n.title}</p>}
+      {message && <p className="mt-2 whitespace-pre-line rounded-lg border border-gold/40 bg-background/60 p-3"><span className="block text-xs font-semibold text-muted-foreground">Lời nhắn từ Ban Nhân sự</span>{message}</p>}
+      {n && <p className="mt-2 leading-relaxed">{n.body}</p>}
     </div>
   );
 }

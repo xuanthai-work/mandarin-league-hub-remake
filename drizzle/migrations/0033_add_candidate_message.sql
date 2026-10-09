@@ -1,0 +1,1 @@
+ALTER TABLE public.candidate_applications ADD COLUMN IF NOT EXISTS candidate_message text NOT NULL DEFAULT '';

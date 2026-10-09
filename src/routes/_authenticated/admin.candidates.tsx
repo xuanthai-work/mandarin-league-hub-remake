@@ -121,10 +121,12 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
     if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener");
   };
   const [reason, setReason] = useState("");
+  const [msg, setMsg] = useState(app.candidate_message ?? "");
   const save = async () => {
     setBusy("save"); setErr(null);
     const r1 = await supabase.rpc("set_application_status", { _app: app.id, _status: status, _note: reason });
-    const r2 = note !== app.admin_note ? await supabase.from("candidate_applications").update({ admin_note: note }).eq("id", app.id) : { error: null };
+    const patch = { ...(note !== app.admin_note ? { admin_note: note } : {}), ...(msg !== app.candidate_message ? { candidate_message: msg.slice(0, 1500) } : {}) };
+    const r2 = !r1.error && Object.keys(patch).length ? await supabase.from("candidate_applications").update(patch).eq("id", app.id) : { error: null };
     const error = r1.error ?? r2.error;
     if (error) setErr(error.message); else { setReason(""); qc.invalidateQueries({ queryKey: ["admin-candidates"] }); qc.invalidateQueries({ queryKey: ["app-history", app.id] }); }
     setBusy(null);
@@ -164,7 +166,11 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
       <h3 className="mt-6 font-semibold">Xử lý hồ sơ</h3>
       <p className="text-xs text-muted-foreground">Người xử lý được ghi tự động theo tài khoản đang đăng nhập.</p>
       <div className="mt-2 space-y-2">
+        <label className="block text-xs font-medium text-muted-foreground">Trạng thái (chọn tự do, chuyển thẳng sang bất kỳ bước nào)</label>
         <select className={`${inp} w-full`} value={status} onChange={(e) => setStatus(e.target.value)}>{Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        <label className="block pt-1 text-xs font-medium text-primary">Lời nhắn gửi ứng viên (ứng viên thấy khi tra cứu)</label>
+        <textarea className={`${inp} w-full border-gold/50`} rows={3} maxLength={1500} placeholder="VD: Bạn vui lòng mở quyền xem Google Drive của CV và phản hồi về hr@themandarinleague.bond" value={msg} onChange={(e) => setMsg(e.target.value)} />
+        <label className="block pt-1 text-xs font-medium text-muted-foreground">Chỉ nội bộ (ứng viên không thấy)</label>
         <textarea className={`${inp} w-full`} rows={2} placeholder="Lý do / ghi chú cho lần xử lý này (không bắt buộc)" value={reason} onChange={(e) => setReason(e.target.value)} />
         <textarea className={`${inp} w-full`} rows={2} placeholder="Ghi chú nội bộ chung của hồ sơ" value={note} onChange={(e) => setNote(e.target.value)} />
         <button onClick={save} disabled={!!busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">Lưu</button>

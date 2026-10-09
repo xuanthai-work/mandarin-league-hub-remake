@@ -5,7 +5,7 @@ import { deptName, type Choice } from "./recruitment";
 
 export type LookupResult = {
   code: string; full_name: string; period: string; created_at: string; status: string;
-  choices: { department: string; position: string }[];
+  choices: { department: string; position: string }[]; message: string;
 };
 
 // Best-effort per-IP throttle (per server instance): 8 lookups per 10 minutes.
@@ -29,14 +29,14 @@ export const lookupApplication = createServerFn({ method: "POST" })
     const isEmail = q.includes("@");
     if (!isEmail && !/^TML-APP-\d{4}-\d{6}$/i.test(q)) return { ok: true, results: [] };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let sel = supabaseAdmin.from("candidate_applications").select("code, full_name, choices, status, created_at, recruitment_periods(name)").order("created_at", { ascending: false }).limit(10);
+    let sel = supabaseAdmin.from("candidate_applications").select("code, full_name, choices, status, created_at, candidate_message, recruitment_periods(name)").order("created_at", { ascending: false }).limit(10);
     sel = isEmail ? sel.ilike("email", q.replace(/[%_\\]/g, "\\$&")) : sel.eq("code", q.toUpperCase());
     const { data: rows, error } = await sel;
     if (error) return { ok: false, error: "Không thể tra cứu lúc này. Vui lòng thử lại sau." };
     return {
       ok: true,
       results: (rows ?? []).map((r) => ({
-        code: r.code, full_name: r.full_name, status: r.status, created_at: r.created_at,
+        code: r.code, full_name: r.full_name, status: r.status, created_at: r.created_at, message: r.candidate_message ?? "",
         period: (r.recruitment_periods as { name: string } | null)?.name ?? "",
         choices: ((r.choices ?? []) as Choice[]).map((c) => ({ department: deptName(c.department), position: c.position })),
       })),
