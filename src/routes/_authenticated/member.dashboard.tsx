@@ -152,16 +152,25 @@ function MemberDashboard() {
       {tab === "card" && (
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
           <div>
-          <div className="[perspective:1200px]">
+          <div className="mb-3 inline-flex rounded-full border border-gold/40 p-1 text-xs" role="tablist" aria-label="Kiểu thẻ">
+            {([["h", "Thẻ ngang"], ["v", "Thẻ đứng"]] as const).map(([k, l]) => (
+              <button key={k} type="button" role="tab" aria-selected={layout === k} onClick={() => setLayout(k)}
+                className={`rounded-full px-4 py-1.5 font-semibold ${layout === k ? "bg-gold text-primary-deep" : "portal-ink-muted"}`}>{l}</button>
+            ))}
+          </div>
+          <div className={`[perspective:1200px] ${layout === "v" ? "mx-auto max-w-[300px]" : ""}`}>
           <div ref={cardRef} data-tone={tone} style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
             onPointerMove={(e) => { if (e.pointerType !== "mouse") return; const r = e.currentTarget.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
               e.currentTarget.style.setProperty("--ry", `${(x * 10).toFixed(2)}deg`); e.currentTarget.style.setProperty("--rx", `${(-y * 8).toFixed(2)}deg`); e.currentTarget.style.setProperty("--lift", "-4px"); }}
             onPointerLeave={(e) => { ["--rx", "--ry", "--lift"].forEach((p) => e.currentTarget.style.removeProperty(p)); }}
-            className="tml-pass relative overflow-hidden rounded-[18px] text-primary-deep">
+            className={`tml-pass relative overflow-hidden rounded-[18px] text-primary-deep ${layout === "v" ? "flex aspect-[54/86] flex-col" : ""}`}>
             <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
-            <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute left-[30%] top-[38%] h-48 w-48 rounded-full opacity-[0.06]" />
+            {layout === "h" ? <>
+            <DongSon className="-bottom-16 left-[34%] h-52 w-52" />
+            <Crane className="bottom-9 left-4 h-5 w-14" />
+            <Crane className="bottom-12 left-16 h-3.5 w-10" />
             <div className="relative flex items-center gap-2 pl-4 pt-4">
               <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
               <div className="min-w-0 leading-tight">
@@ -177,32 +186,41 @@ function MemberDashboard() {
               <dl className="space-y-1.5 text-[11px]">
                 <div><dt className="text-[9px] opacity-60">姓名 · Họ và tên</dt><dd className="truncate text-base font-bold uppercase text-primary">{m.full_name}</dd></div>
                 {barcode && <img src={barcode} alt={`Mã vạch ${m.member_code}`} className="h-9 max-w-[190px] bg-background px-1" />}
-                {(() => {
-                  const adv = (advisor.data ?? []).map((a) => deptName(a.dept).replace(/^Ban\s+/, "").split(/\s*&\s*/)[0]);
-                  const mainAdvisor = m.position === "Cố vấn chuyên môn";
-                  const dept = mainAdvisor && adv.length ? (adv.length === 1 ? deptName((advisor.data ?? [])[0]?.dept ?? "") : adv.join(" · ")) : deptName(m.department);
-                  return <>
-                    <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="truncate font-semibold">{dept}</dd></div>
-                    <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="truncate font-semibold">
-                      {mainAdvisor ? <span className="text-gold">Cố vấn chuyên môn</span>
-                        : adv.length ? <>{m.position} · <span className="text-gold">Cố vấn {adv.join(" · ")}</span></> : m.position}
-                    </dd></div>
-                  </>;
-                })()}
-                <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
-                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><span key={tier.key} className="tml-pass-pop inline-flex"><TierBadge tierKey={tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
+                <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="truncate font-semibold">{deptLabel}</dd></div>
+                <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="truncate font-semibold">{posLabel}</dd></div>
+                <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{joined}</dd></div>
+                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1">{tierEl}</dd></div></div>
               </dl>
               <div className="flex flex-col items-center">
-                <label className="group relative h-[120px] w-[92px] cursor-pointer overflow-hidden rounded-md border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60">
-                  {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-3xl font-bold text-primary">{m.full_name.charAt(0)}</span>}
-                  <span className="absolute inset-0 flex items-center justify-center bg-foreground/50 text-background opacity-0 transition group-hover:opacity-100"><Camera className="h-5 w-5" /></span>
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
-                </label>
+                {avatarEl("h-[120px] w-[92px]")}
                 {qr && <img src={qr} alt={`QR ${m.member_code}`} className="mt-2 h-14 w-14 rounded bg-background p-0.5" />}
                 <p className="mt-1 font-mono text-[9px] font-bold tracking-wider text-primary">{m.member_code}</p>
               </div>
             </div>
-            <div className="relative flex items-center justify-between bg-primary-deep px-4 py-1.5 text-[8px] tracking-[0.3em] text-gold"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
+            <div className="tml-pass-foot flex items-center justify-between px-4 py-1.5 text-[8px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
+            </> : <>
+            <DongSon className="-bottom-20 left-1/2 h-64 w-64 -translate-x-1/2" />
+            <Crane className="right-5 top-[42%] h-5 w-14" flip />
+            <Crane className="left-5 top-[46%] h-3.5 w-10" />
+            <div className="tml-banner relative flex flex-col items-center gap-1 px-4 pb-3 pt-4 text-center [clip-path:none]">
+              <img src={logo.url} alt="TML" className="h-12 w-12 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
+              <p className="font-serif text-[15px] font-bold tracking-wide text-gold">普通话联盟</p>
+              <p className="text-[10px] font-semibold tracking-wide text-primary-foreground">THE MANDARIN LEAGUE · 会员证</p>
+            </div>
+            <div className="relative flex flex-1 flex-col items-center px-4 pt-4 text-center">
+              {avatarEl("h-[125px] w-[100px]")}
+              <p className="mt-3 w-full truncate text-base font-bold uppercase text-primary">{m.full_name}</p>
+              <p className="font-mono text-[10px] font-bold tracking-wider text-primary">{m.member_code}</p>
+              <dl className="mt-2 w-full space-y-1 text-[11px]">
+                <div><dt className="text-[9px]">部门 · Ban</dt><dd className="truncate font-semibold">{deptLabel}</dd></div>
+                <div><dt className="text-[9px]">职务 · Chức vụ</dt><dd className="truncate font-semibold">{posLabel}</dd></div>
+                <div className="flex justify-center gap-4"><div><dt className="text-[9px]">入会</dt><dd className="font-mono">{joined}</dd></div>
+                  <div><dt className="text-[9px]">等级 · Hạng</dt><dd className="flex items-center justify-center gap-1">{tierEl}</dd></div></div>
+              </dl>
+              {qr && <img src={qr} alt={`QR ${m.member_code}`} className="mb-3 mt-auto h-16 w-16 rounded bg-background p-0.5" />}
+            </div>
+            <div className="tml-pass-foot flex flex-col items-center py-1.5 text-[7px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
+            </>}
           </div>
           </div>
           <div className="portal-glass mt-3 rounded-2xl px-5 py-4">
