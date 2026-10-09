@@ -1794,6 +1794,13 @@ export type Database = {
         Returns: undefined
       }
       my_account: { Args: never; Returns: Json }
+      my_advisor_roles: {
+        Args: never
+        Returns: {
+          dept: string
+          specialty_area: string
+        }[]
+      }
       my_benefits: {
         Args: never
         Returns: {
