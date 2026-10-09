@@ -36,3 +36,4 @@
 - Admin menu comes from role+department (src/lib/admin-permissions.ts) mirroring RLS helpers; a news trigger lets only comms heads/admin publish, so UI and DB agree and members can't self-publish.
 - Public submit/lookup forms need a server-verified reCAPTCHA token; QR-token lookups skip it so QR links keep working.
 - Member benefits (shared Premium accounts) live in `benefits`/`member_benefits` (admin-only RLS); members read via definer RPCs only, so credentials never leak.
+- Portal hostnames (main/join/member) are mapped in src/lib/domain.ts and enforced both in src/server.ts (first load) and the root route (client navigation), so one codebase serves all three portals and preview hosts never redirect.
