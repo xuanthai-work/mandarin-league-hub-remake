@@ -63,6 +63,7 @@ function MemberDashboard() {
   useEffect(() => { if (me.data?.member) setName(me.data.member.full_name); }, [me.data?.member]);
   useEffect(() => { if (me.data?.account?.must_change_password) navigate({ to: "/change-password", replace: true }); }, [me.data, navigate]);
   const [congrats, setCongrats] = useState<string | null>(null);
+  const [previewTone, setPreviewTone] = useState<string | null>(null);
   useEffect(() => { const mm = me.data?.member; if (!mm) return;
     const t = tierOf(mm.contribution_points); const idx = TIERS.length - TIERS.indexOf(t);
     const key = `tml_tier_seen_${mm.member_code}`; const prev = Number(localStorage.getItem(key) ?? 0);
@@ -98,9 +99,11 @@ function MemberDashboard() {
     if (e2) setErr(e2.message); else { setMsg("Đã cập nhật ảnh đại diện."); qc.invalidateQueries({ queryKey: ["my-account"] }); }
   };
 
-  const tier = tierOf(m.contribution_points);
+  const realTier = tierOf(m.contribution_points);
   const special = isLeader(m, me.data?.roles ?? [], (advisor.data ?? []).length > 0) && m.position !== "Thành viên";
-  const tone = special ? "black" : TONE[tier.key] ?? "blue";
+  const previewTier = previewTone && previewTone !== "black" ? TIERS.find((t) => TONE[t.key] === previewTone) : undefined;
+  const tier = previewTier ?? realTier;
+  const tone = previewTone ?? (special ? "black" : TONE[realTier.key] ?? "blue");
   const downloadCard = async () => {
     if (!cardRef.current) return;
     const el = cardRef.current; el.classList.add("is-exporting");
@@ -115,7 +118,14 @@ function MemberDashboard() {
   return (
     <div className="portal-ai min-h-screen"><div className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="portal-ink flex items-center gap-2 text-2xl font-bold"><img src={logo.url} alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />Cổng thành viên</h1>
+        <h1 className="portal-ink flex items-center gap-2 text-2xl font-bold"><img src={logo.url} alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />Cổng thành viên
+          <button type="button" onClick={() => setTab("card")} title="Mở thẻ thành viên" style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
+            className="tml-pass relative ml-1 inline-flex items-center gap-1.5 overflow-hidden rounded-full py-1 pl-1 pr-3 text-xs font-semibold text-primary-deep">
+            <span aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-gold/50" />
+            <span key={tier.key} className="tml-pass-pop relative inline-flex"><TierBadge tierKey={tier.key} size={24} /></span>
+            <span className="relative">{tier.label}</span>
+          </button>
+        </h1>
         <div className="flex gap-2">
           {canAdmin && <Link to="/admin" className="inline-flex items-center gap-1 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-deep"><ShieldCheck className="h-4 w-4" />Vào Bàn Quản trị</Link>}
           <button onClick={signOut} className="portal-ink inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><LogOut className="h-4 w-4" />Đăng xuất</button>
