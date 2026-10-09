@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
-import { POINT_KIND, tierOf } from "@/lib/points";
+import { POINT_KIND, isLeader, tierOf } from "@/lib/points";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({ staticData: { sitemap: false },
@@ -16,7 +16,16 @@ function PointsPage() {
   const qc = useQueryClient();
   const isAdmin = useAdminAccess().data?.roles.includes("admin") ?? false;
   const members = useQuery({ queryKey: ["points-members"], queryFn: async () =>
-    (await supabase.from("members").select("id, full_name, member_code, department, contribution_points").eq("status", "active").order("contribution_points", { ascending: false })).data ?? [] });
+    (await supabase.from("members").select("id, full_name, member_code, department, position, contribution_points").eq("status", "active").order("contribution_points", { ascending: false })).data ?? [] });
+  const roleMap = useQuery({ queryKey: ["points-roles"], queryFn: async () => {
+    const acc = (await supabase.from("member_accounts").select("member_id, user_id")).data ?? [];
+    const roles = (await supabase.from("user_roles").select("user_id, role")).data ?? [];
+    const map: Record<string, string[]> = {};
+    acc.forEach((a) => { map[a.member_id] = roles.filter((r) => r.user_id === a.user_id).map((r) => String(r.role)); });
+    return map;
+  } });
+  const [showAll, setShowAll] = useState(false);
+  const board = (members.data ?? []).filter((m) => showAll || !isLeader(m, roleMap.data?.[m.id]));
   const history = useQuery({ queryKey: ["points-history"], queryFn: async () =>
     (await supabase.from("point_transactions").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [] });
   const nameOf = (id: string) => members.data?.find((m) => m.id === id);
@@ -50,9 +59,16 @@ function PointsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-4">
-          <h2 className="flex items-center gap-2 font-semibold"><Trophy className="h-4 w-4 text-gold" />Bảng vinh danh</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="mr-auto flex items-center gap-2 font-semibold"><Trophy className="h-4 w-4 text-gold" />Bảng vinh danh</h2>
+            <div className="flex rounded-lg border border-input p-0.5 text-xs">
+              <button type="button" onClick={() => setShowAll(false)} className={`rounded-md px-2 py-1 ${!showAll ? "bg-primary text-primary-foreground" : ""}`}>Chỉ thành viên</button>
+              <button type="button" onClick={() => setShowAll(true)} className={`rounded-md px-2 py-1 ${showAll ? "bg-primary text-primary-foreground" : ""}`}>Tất cả</button>
+            </div>
+          </div>
+          {!showAll && <p className="mt-1 text-xs text-muted-foreground">Không tính Ban Điều hành, Trưởng/Phó Ban và Quản trị viên (điểm cá nhân vẫn được giữ).</p>}
           <ol className="mt-3 divide-y divide-border">
-            {(members.data ?? []).slice(0, 20).map((m, i) => (
+            {board.slice(0, 20).map((m, i) => (
               <li key={m.id} className="flex items-center gap-3 py-2 text-sm">
                 <span className={`w-6 text-center font-bold ${i < 3 ? "text-gold" : "text-muted-foreground"}`}>{i + 1}</span>
                 <div className="min-w-0 flex-1"><p className="truncate font-medium">{m.full_name}</p><p className="text-xs text-muted-foreground">{deptName(m.department)} · {tierOf(m.contribution_points).label}</p></div>
