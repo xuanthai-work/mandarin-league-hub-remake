@@ -184,9 +184,10 @@ function MemberDashboard() {
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {layout === "h" ? <>
-            <DongSon className="-bottom-16 left-[34%] h-52 w-52" />
-            <Crane className="bottom-9 left-4 h-5 w-14" />
-            <Crane className="bottom-12 left-16 h-3.5 w-10" />
+            <DongSon className="-bottom-24 -left-16 h-72 w-72" />
+            <Crane className="bottom-10 left-[40%] h-7 w-[72px]" />
+            <Crane className="bottom-[68px] left-[52%] h-5 w-12" />
+            <Crane className="bottom-[92px] left-[61%] h-4 w-9" />
             <div className="relative flex items-center gap-2 pl-4 pt-4">
               <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
               <div className="min-w-0 leading-tight">
@@ -215,10 +216,13 @@ function MemberDashboard() {
             </div>
             <div className="tml-pass-foot flex items-center justify-between px-4 py-1.5 text-[8px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
             </> : <>
-            <DongSon className="-bottom-20 left-1/2 h-64 w-64 -translate-x-1/2" />
-            <Crane className="right-5 top-[42%] h-5 w-14" flip />
-            <Crane className="left-5 top-[46%] h-3.5 w-10" />
-            <div className="tml-banner relative flex flex-col items-center gap-1 px-4 pb-3 pt-4 text-center [clip-path:none]">
+            <DongSon className="-bottom-28 left-1/2 h-[340px] w-[340px] -translate-x-1/2" />
+            <Crane className="left-3 top-[30%] h-6 w-16" />
+            <Crane className="right-3 top-[34%] h-6 w-16" flip />
+            <Crane className="left-6 top-[40%] h-4 w-10" />
+            <Crane className="right-6 top-[44%] h-4 w-10" flip />
+            <div aria-hidden className="tml-pass-vframe" />
+            <div className="tml-vhead relative flex flex-col items-center gap-1 px-4 pt-4 text-center">
               <img src={logo.url} alt="TML" className="h-12 w-12 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
               <p className="font-serif text-[15px] font-bold tracking-wide text-gold">普通话联盟</p>
               <p className="text-[10px] font-semibold tracking-wide text-primary-foreground">THE MANDARIN LEAGUE · 会员证</p>

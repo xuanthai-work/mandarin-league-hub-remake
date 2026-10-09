@@ -342,6 +342,11 @@
 .tml-pass-foot { position: relative; color: var(--gold); background: linear-gradient(90deg, var(--pass-deep), var(--pass-c) 50%, var(--pass-deep));
   box-shadow: 0 -1px 0 var(--gold), 0 -4px 0 color-mix(in oklab, var(--pass-c) 25%, transparent); }
 .tml-pass-foot::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; height: 9px; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--pass-c) 10%, transparent)); clip-path: polygon(0 100%, 6% 0, 94% 0, 100% 100%); }
-.tml-dongson { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .07; }
-.tml-crane { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .09; }
-.tml-pass[data-tone="black"] .tml-dongson, .tml-pass[data-tone="black"] .tml-crane { color: var(--gold); opacity: .12; }
+.tml-dongson { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .14; }
+.tml-crane { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .2; }
+.tml-pass[data-tone="black"] .tml-dongson, .tml-pass[data-tone="black"] .tml-crane { color: color-mix(in oklab, var(--gold) 70%, oklch(0.35 0.06 70)); opacity: .22; }
+/* Cleaner card: drop busy microprint/geometric fill, keep drum + Lạc birds as the only motifs */
+.tml-pass .tml-microprint, .tml-pass .tml-pass-pattern { display: none; }
+.tml-pass-vframe { position: absolute; inset: 7px; border: 1px solid color-mix(in oklab, var(--gold) 55%, transparent); border-radius: 13px; pointer-events: none; }
+.tml-pass .tml-vhead { background: linear-gradient(180deg, var(--pass-deep), var(--pass-c)); border-bottom: 2px solid var(--gold); clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%); padding-bottom: 1.4rem; }
+.tml-pass .tml-vhead .text-gold { color: var(--gold) !important; }
