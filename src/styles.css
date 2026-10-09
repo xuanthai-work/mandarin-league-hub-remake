@@ -285,3 +285,23 @@
 .badge-aura { transform-origin: 50px 50px; animation: badge-aura 3s ease-in-out infinite; }
 @keyframes badge-aura { 0%, 100% { opacity: 0.35; transform: scale(0.94); } 50% { opacity: 0.7; transform: scale(1.04); } }
 @media (prefers-reduced-motion: reduce) { .badge-sheen, .badge-aura { animation: none; opacity: 0; } }
+
+/* ===== Global loading screen ===== */
+.tml-topbar { position: fixed; top: 0; left: 0; height: 2.5px; width: 100%; z-index: 101; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: tml-bar 1.1s ease-in-out infinite; transform-origin: left; }
+.tml-loader { background: radial-gradient(circle at 50% 40%, oklch(0.3 0.09 255), oklch(0.18 0.05 260) 70%); animation: tml-fade .3s ease-out both; }
+.tml-halo { position: absolute; inset: 8%; border-radius: 9999px; background: radial-gradient(circle, color-mix(in oklab, var(--gold) 45%, transparent), transparent 70%); animation: tml-breathe 2.4s ease-in-out infinite; }
+.tml-ring { position: absolute; inset: 0; border-radius: 9999px; background: conic-gradient(from 0deg, transparent 0 70%, var(--gold) 85%, oklch(0.6 0.2 27) 92%, transparent); -webkit-mask: radial-gradient(circle, transparent 62%, #000 64%); mask: radial-gradient(circle, transparent 62%, #000 64%); animation: tml-spin 1.8s linear infinite; }
+.tml-spark { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; border-radius: 9999px; background: var(--gold-soft); box-shadow: 0 0 8px var(--gold); transform: rotate(calc(var(--k) * 60deg)) translateY(-78px); animation: tml-twinkle 2s ease-in-out infinite; animation-delay: calc(var(--k) * .3s); }
+.tml-logo-in { animation: tml-pop .6s cubic-bezier(.2,.8,.2,1) both; }
+.tml-progress { animation: tml-slide 1.4s ease-in-out infinite; }
+.tml-msg { animation: tml-fade .5s ease-out both; }
+@keyframes tml-bar { 0% { transform: scaleX(0); opacity: 1 } 80% { transform: scaleX(1); opacity: 1 } 100% { transform: scaleX(1); opacity: 0 } }
+@keyframes tml-fade { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+@keyframes tml-breathe { 50% { opacity: .5; transform: scale(1.08) } }
+@keyframes tml-spin { to { transform: rotate(360deg) } }
+@keyframes tml-twinkle { 0%,100% { opacity: .2 } 50% { opacity: 1 } }
+@keyframes tml-pop { from { opacity: 0; transform: scale(.88) } to { opacity: 1; transform: none } }
+@keyframes tml-slide { 0% { transform: translateX(-100%) } 100% { transform: translateX(300%) } }
+@media (prefers-reduced-motion: reduce) {
+  .tml-topbar, .tml-halo, .tml-ring, .tml-spark, .tml-logo-in, .tml-progress, .tml-msg, .tml-loader { animation: none !important; }
+}
