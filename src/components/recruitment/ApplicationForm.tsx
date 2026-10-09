@@ -36,7 +36,7 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
   const upload = useServerFn(createApplicationUpload);
   const submit = useServerFn(submitApplication);
   const [step, setStep] = useState(1);
-  const [info, setInfo] = useState({ full_name: "", email: "", phone: "", dob: "", organization: "", chinese_level: "", hsk_level: "", intro: "" });
+  const [info, setInfo] = useState({ full_name: "", email: "", phone: "", dob: "", organization: "", facebook_url: "", chinese_level: "", hsk_level: "", intro: "" });
   const [choiceIds, setChoiceIds] = useState<string[]>(["", ""]);
   const [answers, setAnswers] = useState<Answers>({});
   const [cvPath, setCvPath] = useState<string | null>(null);
@@ -117,6 +117,8 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
       if (!email.trim()) e["email"] = "Vui lòng nhập email."; else if (!/^\S+@\S+\.\S+$/.test(email)) e["email"] = "Email không hợp lệ.";
       if (phone.trim().length < 8) e["phone"] = "Vui lòng nhập số điện thoại.";
       if (organization.trim().length < 2) e["organization"] = "Vui lòng nhập trường / đơn vị.";
+      const fb = info.facebook_url.trim();
+      if (fb && !/^https?:\/\/([\w-]+\.)*(facebook\.com|fb\.com|fb\.me)(\/|$)/i.test(fb)) e["facebook_url"] = "Link Facebook không hợp lệ (ví dụ https://facebook.com/ten.cua.ban).";
       if (!chosen.length) e["choice0"] = "Vui lòng chọn Nguyện vọng 1.";
       if (flag(e)) return;
     }
