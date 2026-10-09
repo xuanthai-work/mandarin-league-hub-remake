@@ -10,7 +10,7 @@ const MSG: Record<"vi" | "zh" | "en", string[]> = {
 };
 const TAG: Record<"vi" | "zh" | "en", string> = { vi: "Kết nối tri thức – Mở rộng cơ hội", zh: "连结知识 · 拓展机遇", en: "Connecting knowledge – Expanding opportunities" };
 
-/** Shows a thin top bar immediately during route loads, and the branded overlay only if loading exceeds 250ms. */
+/** Shows a thin top bar immediately during route loads, and the branded overlay only if loading exceeds 500ms. */
 export function GlobalLoadingScreen() {
   const loading = useRouterState({ select: (s) => s.status === "pending" || s.isLoading });
   const lang = useLang();
@@ -19,7 +19,7 @@ export function GlobalLoadingScreen() {
 
   useEffect(() => {
     if (!loading) { setOverlay(false); return; }
-    const t = setTimeout(() => setOverlay(true), 250);
+    const t = setTimeout(() => setOverlay(true), 500);
     return () => clearTimeout(t);
   }, [loading]);
 
