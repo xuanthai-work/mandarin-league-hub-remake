@@ -139,9 +139,18 @@ function MemberDashboard() {
               <dl className="space-y-1.5 text-[11px]">
                 <div><dt className="text-[9px] opacity-60">姓名 · Họ và tên</dt><dd className="truncate text-base font-bold uppercase text-primary">{m.full_name}</dd></div>
                 {barcode && <img src={barcode} alt={`Mã vạch ${m.member_code}`} className="h-9 max-w-[190px] bg-background px-1" />}
-                <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="font-semibold">{deptName(m.department)}</dd></div>
-                <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="font-semibold">{m.position}</dd></div>
-                {(advisor.data ?? []).length > 0 && <div><dt className="text-[9px] opacity-60">专业顾问 · Cố vấn chuyên môn</dt><dd className="font-semibold text-gold">🎓 {(advisor.data ?? []).map((a) => deptName(a.dept)).join(", ")}</dd></div>}
+                {(() => {
+                  const adv = (advisor.data ?? []).map((a) => deptName(a.dept).replace(/^Ban\s+/, "").split(/\s*&\s*/)[0]);
+                  const mainAdvisor = m.position === "Cố vấn chuyên môn";
+                  const dept = mainAdvisor && adv.length ? (adv.length === 1 ? deptName((advisor.data ?? [])[0]?.dept ?? "") : adv.join(" · ")) : deptName(m.department);
+                  return <>
+                    <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="truncate font-semibold">{dept}</dd></div>
+                    <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="truncate font-semibold">
+                      {mainAdvisor ? <span className="text-gold">Cố vấn chuyên môn</span>
+                        : adv.length ? <>{m.position} · <span className="text-gold">Cố vấn {adv.join(" · ")}</span></> : m.position}
+                    </dd></div>
+                  </>;
+                })()}
                 <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
                   <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><TierBadge tierKey={tier.key} size={22} /><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
               </dl>
