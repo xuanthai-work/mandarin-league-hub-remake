@@ -26,6 +26,7 @@ const submitSchema = z.object({
   phone: z.string().trim().min(8).max(30),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((v) => { const d = new Date(v); const y = d.getUTCFullYear(); return !isNaN(+d) && d.toISOString().slice(0, 10) === v && y >= 1940 && d < new Date(); }),
   organization: z.string().trim().min(2).max(200),
+  facebook_url: z.string().trim().max(300).refine((v) => v === "" || /^https?:\/\/([\w-]+\.)*(facebook\.com|fb\.com|fb\.me)(\/|$)/i.test(v), "Link Facebook không hợp lệ").default(""),
   chinese_level: z.string().trim().max(100).default(""),
   hsk_level: z.string().trim().max(20).default(""),
   intro: z.string().trim().max(3000).default(""),
@@ -43,7 +44,7 @@ export const submitApplication = createServerFn({ method: "POST" })
     if (!(await verifyRecaptcha((raw as { captcha?: unknown } | null)?.captcha))) return { ok: false as const, error: CAPTCHA_ERROR };
     const parsed = submitSchema.safeParse(raw);
     if (!parsed.success) {
-      const LABEL: Record<string, string> = { full_name: "Họ và tên (ít nhất 2 ký tự)", email: "Email", phone: "Số điện thoại (8–30 ký tự)", date_of_birth: "Ngày sinh", organization: "Trường / Đơn vị (ít nhất 2 ký tự)", chinese_level: "Trình độ tiếng Trung", hsk_level: "HSK", intro: "Giới thiệu ngắn (10–3000 ký tự)", positionIds: "Nguyện vọng", answers: "Câu trả lời (quá dài)", cvPath: "Tệp CV", consent: "Xác nhận thông tin" };
+      const LABEL: Record<string, string> = { full_name: "Họ và tên (ít nhất 2 ký tự)", email: "Email", phone: "Số điện thoại (8–30 ký tự)", date_of_birth: "Ngày sinh", organization: "Trường / Đơn vị (ít nhất 2 ký tự)", facebook_url: "Link Facebook", chinese_level: "Trình độ tiếng Trung", hsk_level: "HSK", intro: "Giới thiệu ngắn (10–3000 ký tự)", positionIds: "Nguyện vọng", answers: "Câu trả lời (quá dài)", cvPath: "Tệp CV", consent: "Xác nhận thông tin" };
       const key = String(parsed.error.issues[0]?.path[0] ?? "");
       return { ok: false as const, error: `Vui lòng kiểm tra lại: ${LABEL[key] ?? key}.` };
     }
@@ -81,7 +82,7 @@ export const submitApplication = createServerFn({ method: "POST" })
 
     const { data: row, error } = await db.from("candidate_applications").insert({
       period_id: period.id, full_name: data.full_name, email: data.email.toLowerCase(), phone: data.phone, date_of_birth: data.date_of_birth,
-      organization: data.organization, chinese_level: data.chinese_level, hsk_level: data.hsk_level, intro: data.intro,
+      organization: data.organization, facebook_url: data.facebook_url, chinese_level: data.chinese_level, hsk_level: data.hsk_level, intro: data.intro,
       choices, answers, cv_path: data.cvPath,
     }).select("code").single();
     if (error) {

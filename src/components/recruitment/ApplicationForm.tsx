@@ -36,7 +36,7 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
   const upload = useServerFn(createApplicationUpload);
   const submit = useServerFn(submitApplication);
   const [step, setStep] = useState(1);
-  const [info, setInfo] = useState({ full_name: "", email: "", phone: "", dob: "", organization: "", chinese_level: "", hsk_level: "", intro: "" });
+  const [info, setInfo] = useState({ full_name: "", email: "", phone: "", dob: "", organization: "", facebook_url: "", chinese_level: "", hsk_level: "", intro: "" });
   const [choiceIds, setChoiceIds] = useState<string[]>(["", ""]);
   const [answers, setAnswers] = useState<Answers>({});
   const [cvPath, setCvPath] = useState<string | null>(null);
@@ -117,6 +117,8 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
       if (!email.trim()) e["email"] = "Vui lòng nhập email."; else if (!/^\S+@\S+\.\S+$/.test(email)) e["email"] = "Email không hợp lệ.";
       if (phone.trim().length < 8) e["phone"] = "Vui lòng nhập số điện thoại.";
       if (organization.trim().length < 2) e["organization"] = "Vui lòng nhập trường / đơn vị.";
+      const fb = info.facebook_url.trim();
+      if (fb && !/^https?:\/\/([\w-]+\.)*(facebook\.com|fb\.com|fb\.me)(\/|$)/i.test(fb)) e["facebook_url"] = "Link Facebook không hợp lệ (ví dụ https://facebook.com/ten.cua.ban).";
       if (!chosen.length) e["choice0"] = "Vui lòng chọn Nguyện vọng 1.";
       if (flag(e)) return;
     }
@@ -208,6 +210,11 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
               </label>
             ))}
           </div>
+          <label data-field="facebook_url" className="block"><Label required={false}>Link trang cá nhân Facebook (không bắt buộc)</Label>
+            <input className={input + errCls("facebook_url")} type="url" placeholder="https://facebook.com/ten.cua.ban" value={info.facebook_url} onChange={(e) => { clearErr("facebook_url"); setInfo({ ...info, facebook_url: e.target.value }); }} maxLength={300} />
+            <p className="mt-1 text-xs text-muted-foreground">(Kênh kết nối bổ sung giúp The Mandarin League hiểu thêm về cá tính, phong cách của bạn và thuận tiện liên hệ khi cần)</p>
+            <ErrMsg k="facebook_url" />
+          </label>
           <label data-field="intro" className="block"><Label required={false}>Giới thiệu ngắn (không bắt buộc)</Label><textarea className={input + errCls("intro")} rows={3} value={info.intro} onChange={(e) => { clearErr("intro"); setInfo({ ...info, intro: e.target.value }); }} maxLength={3000} /><ErrMsg k="intro" /></label>
           <div className="grid gap-4 md:grid-cols-2">
             {[0, 1].map((i) => (
@@ -239,6 +246,7 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
           {commonTopics.map(renderTopic)}
           <div className="rounded-xl border border-border bg-background p-5">
             <Label>Tải lên CV (không bắt buộc — PDF, DOC, DOCX, tối đa {MAX_FILE_MB}MB)</Label>
+            <p className="mt-2 rounded-lg border-l-4 border-gold bg-gold/10 px-3 py-2 text-sm text-foreground">💡 <strong>Điểm cộng cho hồ sơ:</strong> Đính kèm CV giúp Ban Nhân sự hiểu rõ năng lực, kinh nghiệm thực tế và gia tăng đáng kể cơ hội trúng tuyển của bạn.</p>
             <div className="mt-2 flex items-center gap-3 text-sm">
               <Upload className="h-4 w-4 text-primary" />
               <input type="file" accept=".pdf,.doc,.docx" onChange={async (e) => {

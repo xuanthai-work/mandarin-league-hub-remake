@@ -1,0 +1,1 @@
+ALTER TABLE public.candidate_applications ADD COLUMN IF NOT EXISTS facebook_url text NOT NULL DEFAULT '';

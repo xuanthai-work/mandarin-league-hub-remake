@@ -351,6 +351,7 @@ export type Database = {
           cv_path: string | null
           date_of_birth: string | null
           email: string
+          facebook_url: string
           full_name: string
           hsk_level: string
           id: string
@@ -371,6 +372,7 @@ export type Database = {
           cv_path?: string | null
           date_of_birth?: string | null
           email: string
+          facebook_url?: string
           full_name: string
           hsk_level?: string
           id?: string
@@ -391,6 +393,7 @@ export type Database = {
           cv_path?: string | null
           date_of_birth?: string | null
           email?: string
+          facebook_url?: string
           full_name?: string
           hsk_level?: string
           id?: string

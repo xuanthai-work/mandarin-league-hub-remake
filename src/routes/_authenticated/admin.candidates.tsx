@@ -41,10 +41,10 @@ function Candidates() {
   }), [data, f]);
 
   const exportCsv = () => {
-    const head = ["Mã hồ sơ", "Họ tên", "Email", "Điện thoại", "Ngày sinh", "Đơn vị", "Tiếng Trung", "HSK", "NV1", "NV2", "Trạng thái", "Ngày gửi"];
+    const head = ["Mã hồ sơ", "Họ tên", "Email", "Điện thoại", "Ngày sinh", "Đơn vị", "Facebook", "Tiếng Trung", "HSK", "NV1", "NV2", "Trạng thái", "Ngày gửi"];
     const rows = list.map((a) => {
       const ch = (a.choices ?? []) as Choice[];
-      return [a.code, a.full_name, a.email, a.phone, a.date_of_birth ? a.date_of_birth.split("-").reverse().join("/") : "", a.organization, a.chinese_level, a.hsk_level, ...[0, 1].map((i) => ch[i] ? `${deptName(ch[i].department)} — ${ch[i].position}` : ""), APP_STATUS[a.status], new Date(a.created_at).toLocaleString("vi-VN")];
+      return [a.code, a.full_name, a.email, a.phone, a.date_of_birth ? a.date_of_birth.split("-").reverse().join("/") : "", a.organization, a.facebook_url ?? "", a.chinese_level, a.hsk_level, ...[0, 1].map((i) => ch[i] ? `${deptName(ch[i].department)} — ${ch[i].position}` : ""), APP_STATUS[a.status], new Date(a.created_at).toLocaleString("vi-VN")];
     });
     const blob = new Blob(["\uFEFF" + [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -144,6 +144,7 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
       </dl>
       <div className="mt-4 text-sm">{((app.choices ?? []) as Choice[]).map((c, i) => <div key={i} className="font-medium">NV{i + 1}: {deptName(c.department)} — {c.position}</div>)}</div>
       <p className="mt-4 rounded-lg bg-secondary p-3 text-sm">{app.intro}</p>
+      {app.facebook_url && /^https?:\/\//i.test(app.facebook_url) && <a href={app.facebook_url} target="_blank" rel="noopener noreferrer" className="mt-3 mr-4 inline-flex items-center gap-2 text-sm font-medium text-primary underline">Xem Facebook ứng viên ↗</a>}
       {app.cv_path && <button onClick={() => openFile(app.cv_path!)} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary underline"><FileText className="h-4 w-4" />Xem / tải CV</button>}
 
       <h3 className="mt-6 font-semibold">Câu trả lời</h3>
