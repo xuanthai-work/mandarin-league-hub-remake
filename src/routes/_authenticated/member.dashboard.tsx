@@ -13,7 +13,9 @@ import { deptName } from "@/lib/recruitment";
 import { SubmitReportDialog } from "@/components/portal/SubmitReportDialog";
 import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
-import { POINT_KIND, PRIORITY, TASK_STATUS, fmtDate, tierOf } from "@/lib/points";
+import type React from "react";
+import { POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
+const TONE: Record<string, string> = { bronze: "blue", silver: "green", gold: "wine", platinum: "purple" };
 import { TierBadge, TierProgress } from "@/components/TierBadge";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
@@ -60,6 +62,13 @@ function MemberDashboard() {
 
   useEffect(() => { if (me.data?.member) setName(me.data.member.full_name); }, [me.data?.member]);
   useEffect(() => { if (me.data?.account?.must_change_password) navigate({ to: "/change-password", replace: true }); }, [me.data, navigate]);
+  const [congrats, setCongrats] = useState<string | null>(null);
+  useEffect(() => { const mm = me.data?.member; if (!mm) return;
+    const t = tierOf(mm.contribution_points); const idx = TIERS.length - TIERS.indexOf(t);
+    const key = `tml_tier_seen_${mm.member_code}`; const prev = Number(localStorage.getItem(key) ?? 0);
+    if (prev && idx > prev) setCongrats(t.label);
+    if (idx !== prev) localStorage.setItem(key, String(Math.max(idx, prev ? idx : idx)));
+  }, [me.data?.member]);
 
   const signOut = async () => { await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); navigate({ to: "/login", replace: true }); };
 
@@ -90,10 +99,13 @@ function MemberDashboard() {
   };
 
   const tier = tierOf(m.contribution_points);
+  const special = isLeader(m, me.data?.roles ?? [], (advisor.data ?? []).length > 0) && m.position !== "Thành viên";
+  const tone = special ? "black" : TONE[tier.key] ?? "blue";
   const downloadCard = async () => {
     if (!cardRef.current) return;
-    try { const url = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
-    catch { setErr("Không tải được thẻ, vui lòng thử lại."); }
+    const el = cardRef.current; el.classList.add("is-exporting");
+    try { const url = await toPng(el, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
+    catch { setErr("Không tải được thẻ, vui lòng thử lại."); } finally { el.classList.remove("is-exporting"); }
   };
   const act = async (id: string, action: "start" | "submit", evidence = "", note = "") => {
     setErr(""); setMsg("");
@@ -117,12 +129,28 @@ function MemberDashboard() {
 
       {msg && <p className="mt-4 rounded-lg bg-success/15 px-3 py-2 text-sm text-success">{msg}</p>}
       {err && <p className="mt-4 rounded-lg bg-destructive/15 px-3 py-2 text-sm text-destructive">{err}</p>}
+      {congrats && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4" onClick={() => setCongrats(null)}>
+          <div className="tml-pass-pop portal-glass max-w-sm rounded-2xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto w-fit"><TierBadge tierKey={tier.key} size={88} /></div>
+            <p className="mt-4 text-lg font-bold text-primary-deep">Chúc mừng bạn đã đạt cấp bậc thành viên mới tại The Mandarin League!</p>
+            <p className="mt-1 text-sm font-semibold text-gold">{congrats}</p>
+            <button onClick={() => setCongrats(null)} className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground">Tuyệt vời</button>
+          </div>
+        </div>
+      )}
       {tab === "card" && (
         <div className="mt-6 grid gap-6 md:grid-cols-[1.1fr_1fr]">
           <div>
           <div className="[perspective:1200px]">
-          <div ref={cardRef} className="tml-pass relative overflow-hidden rounded-[18px] text-primary-deep">
+          <div ref={cardRef} data-tone={tone} style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
+            onPointerMove={(e) => { if (e.pointerType !== "mouse") return; const r = e.currentTarget.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+              e.currentTarget.style.setProperty("--ry", `${(x * 10).toFixed(2)}deg`); e.currentTarget.style.setProperty("--rx", `${(-y * 8).toFixed(2)}deg`); e.currentTarget.style.setProperty("--lift", "-4px"); }}
+            onPointerLeave={(e) => { ["--rx", "--ry", "--lift"].forEach((p) => e.currentTarget.style.removeProperty(p)); }}
+            className="tml-pass relative overflow-hidden rounded-[18px] text-primary-deep">
             <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
+            <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
+            <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             <img src={logo.url} alt="" aria-hidden className="pointer-events-none absolute left-[30%] top-[38%] h-48 w-48 rounded-full opacity-[0.06]" />
             <div className="relative flex items-center gap-2 pl-4 pt-4">
               <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
@@ -152,7 +180,7 @@ function MemberDashboard() {
                   </>;
                 })()}
                 <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
-                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><TierBadge tierKey={tier.key} size={22} /><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
+                  <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><span key={tier.key} className="tml-pass-pop inline-flex"><TierBadge tierKey={tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
               </dl>
               <div className="flex flex-col items-center">
                 <label className="group relative h-[120px] w-[92px] cursor-pointer overflow-hidden rounded-md border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60">
