@@ -305,3 +305,22 @@
 @media (prefers-reduced-motion: reduce) {
   .tml-topbar, .tml-halo, .tml-ring, .tml-spark, .tml-logo-in, .tml-progress, .tml-msg, .tml-loader { animation: none !important; }
 }
+
+/* Member pass — tier colors (admin tier config maps to these tokens) */
+:root { --pass-blue: #245a91; --pass-green: #23765a; --pass-wine: #7d263a; --pass-purple: #514080; --pass-black: #242832; }
+.tml-pass { --pass-c: var(--pass-blue); --pass-accent: color-mix(in oklab, var(--gold) 60%, var(--pass-c));
+  background: radial-gradient(120% 80% at 100% 0%, color-mix(in oklab, var(--pass-c) 16%, transparent), transparent 60%), linear-gradient(160deg, var(--background), color-mix(in oklab, var(--pass-c) 10%, var(--background)));
+  box-shadow: 0 30px 60px -24px color-mix(in oklab, var(--pass-c) 70%, transparent), 0 0 0 1.5px color-mix(in oklab, var(--pass-accent) 70%, transparent), 0 0 22px -4px color-mix(in oklab, var(--pass-c) 55%, transparent);
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px)); transition: transform .35s ease, box-shadow .6s ease, background .8s ease; will-change: transform; }
+.tml-pass[data-tone="black"] { --pass-accent: var(--gold); }
+.tml-pass::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, color-mix(in oklab, var(--gold-soft) 55%, transparent) 50%, transparent 65%); transform: translateX(-120%); animation: pass-shimmer 7s ease-in-out infinite; mix-blend-mode: soft-light; }
+@keyframes pass-shimmer { 0%, 70% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.tml-pass-glow { animation: pass-breathe 5s ease-in-out infinite; }
+@keyframes pass-breathe { 50% { opacity: .55; } }
+.tml-pass-pattern { opacity: .07; color: var(--pass-c); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' fill='none' stroke='%23000' stroke-width='1.2'%3E%3Cpath d='M4 4h24v24H12V12h8v8'/%3E%3Cpath d='M36 36h24v24H44V44h8v8'/%3E%3Cpath d='M34 18c4-6 12-6 14 0 4-4 10-1 9 4H34z'/%3E%3Cpath d='M2 58l10-14 7 8 6-6 9 12'/%3E%3C/svg%3E"); -webkit-mask: linear-gradient(#000,#000); background-color: transparent; filter: none; }
+.tml-pass-pattern { background-blend-mode: normal; }
+.tml-pass-pop { animation: pass-pop .7s cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes pass-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+.tml-pass.is-exporting, .tml-pass.is-exporting * { animation: none !important; transform: none !important; transition: none !important; }
+.tml-pass.is-exporting::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .tml-pass, .tml-pass *, .tml-pass::after { animation: none !important; transition: none !important; } .tml-pass { transform: none; } .tml-pass::after { display: none; } }
