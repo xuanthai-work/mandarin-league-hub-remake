@@ -13,7 +13,9 @@ import { deptName } from "@/lib/recruitment";
 import { SubmitReportDialog } from "@/components/portal/SubmitReportDialog";
 import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
-import { POINT_KIND, PRIORITY, TASK_STATUS, fmtDate, tierOf } from "@/lib/points";
+import type React from "react";
+import { POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
+const TONE: Record<string, string> = { bronze: "blue", silver: "green", gold: "wine", platinum: "purple" };
 import { TierBadge, TierProgress } from "@/components/TierBadge";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
@@ -60,6 +62,13 @@ function MemberDashboard() {
 
   useEffect(() => { if (me.data?.member) setName(me.data.member.full_name); }, [me.data?.member]);
   useEffect(() => { if (me.data?.account?.must_change_password) navigate({ to: "/change-password", replace: true }); }, [me.data, navigate]);
+  const [congrats, setCongrats] = useState<string | null>(null);
+  useEffect(() => { const mm = me.data?.member; if (!mm) return;
+    const t = tierOf(mm.contribution_points); const idx = TIERS.length - TIERS.indexOf(t);
+    const key = `tml_tier_seen_${mm.member_code}`; const prev = Number(localStorage.getItem(key) ?? 0);
+    if (prev && idx > prev) setCongrats(t.label);
+    if (idx !== prev) localStorage.setItem(key, String(Math.max(idx, prev ? idx : idx)));
+  }, [me.data?.member]);
 
   const signOut = async () => { await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); navigate({ to: "/login", replace: true }); };
 
@@ -97,9 +106,6 @@ function MemberDashboard() {
     const el = cardRef.current; el.classList.add("is-exporting");
     try { const url = await toPng(el, { pixelRatio: 2, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}.png`; a.click(); }
     catch { setErr("Không tải được thẻ, vui lòng thử lại."); } finally { el.classList.remove("is-exporting"); }
-  };
-  const _unused = async () => { try {
-    catch { setErr("Không tải được thẻ, vui lòng thử lại."); }
   };
   const act = async (id: string, action: "start" | "submit", evidence = "", note = "") => {
     setErr(""); setMsg("");
