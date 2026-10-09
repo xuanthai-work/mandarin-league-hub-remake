@@ -5,7 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createApplicationUpload, submitApplication } from "@/lib/recruitment.functions";
-import { CV_EXT, FILE_EXT, MAX_FILE_MB, deptName, formatDobInput, parseDob, topicApplies, type Answers } from "@/lib/recruitment";
+import { CV_EXT, FILE_EXT, MAX_FILE_MB, deptName, parseDob, topicApplies, type Answers } from "@/lib/recruitment";
+import { DobPicker } from "./DobPicker";
 
 type Topic = { id: string; department: string | null; position: string | null; period_id: string | null; title: string; description: string; sort_order: number };
 type Question = { id: string; topic_id: string; prompt: string; kind: string; options: string[]; required: boolean; sort_order: number };
@@ -204,7 +205,7 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
                 {k === "hsk_level"
                   ? <select className={input} value={info.hsk_level} onChange={(e) => setInfo({ ...info, hsk_level: e.target.value })}><option value="">Chưa có</option>{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => <option key={n}>HSK {n}</option>)}</select>
                   : k === "dob"
-                    ? <input className={input + errCls(k)} inputMode="numeric" placeholder="DD/MM/YYYY (ví dụ 15/08/2003)" value={info.dob} onChange={(e) => { clearErr(k); setInfo({ ...info, dob: formatDobInput(e.target.value) }); }} maxLength={10} />
+                    ? <DobPicker className={input + errCls(k)} value={info.dob} onChange={(v) => { clearErr(k); setInfo((s) => ({ ...s, dob: v })); }} />
                     : <input className={input + errCls(k)} type={k === "email" ? "email" : k === "phone" ? "tel" : "text"} value={info[k]} onChange={(e) => { clearErr(k); setInfo({ ...info, [k]: e.target.value }); }} maxLength={200} />}
                 <ErrMsg k={k} />
               </label>
