@@ -14,3 +14,10 @@ describe("leaderboard exclusion", () => {
     expect(isLeader({ department: "hr", position: "Thành viên" }, ["member"])).toBe(false);
   });
 });
+
+import { isLeader as isLeader2 } from "./points";
+import { test as t2, expect as e2 } from "vitest";
+t2("professional advisors are left off the leaderboard", () => {
+  e2(isLeader2({ department: "media", position: "Thành viên" }, [], true)).toBe(true);
+  e2(isLeader2({ department: "media", position: "Thành viên" }, [], false)).toBe(false);
+});

@@ -218,6 +218,13 @@
       "when": 1791518901006,
       "tag": "0030_add_facebook_url_to_applications",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791527159645,
+      "tag": "0031_department_advisors",
+      "breakpoints": true
     }
   ]
 }
