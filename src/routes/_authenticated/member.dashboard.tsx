@@ -17,7 +17,7 @@ import type React from "react";
 import { POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
 const TONE: Record<string, string> = { bronze: "blue", silver: "green", gold: "wine", platinum: "purple" };
 import { TierBadge, TierProgress } from "@/components/TierBadge";
-import { DongSonDrum as DongSon, Crane } from "@/components/portal/PassOrnaments";
+import { DongSonDrum as DongSon, LacBirds } from "@/components/portal/PassOrnaments";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -185,9 +185,7 @@ function MemberDashboard() {
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {layout === "h" ? <>
             <DongSon className="-bottom-24 -left-16 h-72 w-72" />
-            <Crane className="bottom-10 left-[40%] h-7 w-[72px]" />
-            <Crane className="bottom-[68px] left-[52%] h-5 w-12" />
-            <Crane className="bottom-[92px] left-[61%] h-4 w-9" />
+            <LacBirds className="-bottom-16 left-[30%] h-56 w-56" />
             <div className="relative flex items-center gap-2 pl-4 pt-4">
               <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
               <div className="min-w-0 leading-tight">
@@ -216,16 +214,16 @@ function MemberDashboard() {
             </div>
             <div className="tml-pass-foot flex items-center justify-between px-4 py-1.5 text-[8px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
             </> : <>
-            <DongSon className="-bottom-28 left-1/2 h-[340px] w-[340px] -translate-x-1/2" />
-            <Crane className="left-3 top-[30%] h-6 w-16" />
-            <Crane className="right-3 top-[34%] h-6 w-16" flip />
-            <Crane className="left-6 top-[40%] h-4 w-10" />
-            <Crane className="right-6 top-[44%] h-4 w-10" flip />
+            <DongSon className="-bottom-20 left-1/2 h-[300px] w-[300px] -translate-x-1/2" />
+            <LacBirds className="-bottom-12 left-1/2 h-[250px] w-[250px] -translate-x-1/2" />
             <div aria-hidden className="tml-pass-vframe" />
-            <div className="tml-vhead relative flex flex-col items-center gap-1 px-4 pt-4 text-center">
-              <img src={logo.url} alt="TML" className="h-12 w-12 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
-              <p className="font-serif text-[15px] font-bold tracking-wide text-gold">普通话联盟</p>
-              <p className="text-[10px] font-semibold tracking-wide text-primary-foreground">THE MANDARIN LEAGUE · 会员证</p>
+            <div className="tml-vhead relative flex items-center gap-2 px-4 pb-6 pt-4">
+              <div className="min-w-0 flex-1 leading-tight">
+                <p className="font-serif text-[15px] font-bold tracking-wide text-gold">普通话联盟</p>
+                <p className="text-[10px] font-semibold tracking-wide text-primary-foreground">THE MANDARIN LEAGUE</p>
+                <p className="text-[8px] tracking-[0.25em] text-gold">会员证 · THẺ THÀNH VIÊN</p>
+              </div>
+              <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
             </div>
             <div className="relative flex flex-1 flex-col items-center px-4 pt-4 text-center">
               {avatarEl("h-[125px] w-[100px]")}
