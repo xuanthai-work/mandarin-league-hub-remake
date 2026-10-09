@@ -2,6 +2,7 @@
 export const PHRASES: Record<string, [string, string]> = {
   // Shared
   "Đang cập nhật": ["更新中", "Updating"],
+  "Cố vấn chuyên môn": ["专业顾问", "Professional Advisor"],
   "Tất cả": ["全部", "All"],
   "Đang tuyển sinh": ["招生中", "Enrolling"],
   "Đang mở đăng ký": ["报名开放中", "Registration open"],
