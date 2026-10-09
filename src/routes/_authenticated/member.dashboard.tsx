@@ -48,6 +48,7 @@ function MemberDashboard() {
     const cv = document.createElement("canvas"); JsBarcode(cv, c, { format: "CODE128", displayValue: false, margin: 0, height: 40, width: 1.4 }); setBarcode(cv.toDataURL("image/png")); }, [me.data?.member?.member_code]);
   const cardRef = useRef<HTMLDivElement>(null);
   const memberId = me.data?.member?.id;
+  const advisor = useQuery({ queryKey: ["my-advisor", memberId], enabled: !!memberId, queryFn: async () => (await supabase.rpc("my_advisor_roles")).data ?? [] });
   const tasks = useQuery({ queryKey: ["my-tasks", memberId], enabled: !!memberId, queryFn: async () =>
     (await supabase.from("tasks").select("*").eq("assignee_id", memberId!).order("created_at", { ascending: false })).data ?? [] });
   const history = useQuery({ queryKey: ["my-points", memberId], enabled: !!memberId, queryFn: async () =>
@@ -140,6 +141,7 @@ function MemberDashboard() {
                 {barcode && <img src={barcode} alt={`Mã vạch ${m.member_code}`} className="h-9 max-w-[190px] bg-background px-1" />}
                 <div><dt className="text-[9px] opacity-60">部门 · Ban</dt><dd className="font-semibold">{deptName(m.department)}</dd></div>
                 <div><dt className="text-[9px] opacity-60">职务 · Chức vụ</dt><dd className="font-semibold">{m.position}</dd></div>
+                {(advisor.data ?? []).length > 0 && <div><dt className="text-[9px] opacity-60">专业顾问 · Cố vấn chuyên môn</dt><dd className="font-semibold text-gold">🎓 {(advisor.data ?? []).map((a) => deptName(a.dept)).join(", ")}</dd></div>}
                 <div className="flex gap-4"><div><dt className="text-[9px] opacity-60">入会 · Gia nhập</dt><dd className="font-mono">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</dd></div>
                   <div><dt className="text-[9px] opacity-60">等级 · Hạng</dt><dd className="flex items-center gap-1"><TierBadge tierKey={tier.key} size={22} /><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></dd></div></div>
               </dl>

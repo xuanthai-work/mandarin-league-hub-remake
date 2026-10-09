@@ -3,7 +3,7 @@ import { DEPARTMENTS } from "@/lib/data/departments";
 export const EXECUTIVE = { id: "executive", name: "Ban Điều hành" };
 export const RECRUIT_DEPTS = [EXECUTIVE, ...DEPARTMENTS.map((d) => ({ id: d.id, name: d.name }))];
 export const deptName = (id: string | null) => (id ? RECRUIT_DEPTS.find((d) => d.id === id)?.name ?? id : "Câu hỏi chung");
-export const positionsFor = (dept: string) => (dept === "executive" ? ["Co-founder", "Thư ký"] : ["Trưởng Ban", "Phó Ban", "Thành viên"]);
+export const positionsFor = (dept: string) => (dept === "executive" ? ["Co-founder", "Thư ký"] : ["Trưởng Ban", "Phó Ban", "Cố vấn chuyên môn", "Thành viên"]);
 
 export const PERIOD_STATUS: Record<string, string> = {
   draft: "Nháp", scheduled: "Chờ mở", open: "Đang mở", paused: "Tạm đóng", ended: "Đã kết thúc", cancelled: "Đã hủy",
