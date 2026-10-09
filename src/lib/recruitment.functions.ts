@@ -26,6 +26,7 @@ const submitSchema = z.object({
   phone: z.string().trim().min(8).max(30),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((v) => { const d = new Date(v); const y = d.getUTCFullYear(); return !isNaN(+d) && d.toISOString().slice(0, 10) === v && y >= 1940 && d < new Date(); }),
   organization: z.string().trim().min(2).max(200),
+  facebook_url: z.string().trim().max(300).refine((v) => v === "" || /^https?:\/\/([\w-]+\.)*(facebook\.com|fb\.com|fb\.me)(\/|$)/i.test(v), "Link Facebook không hợp lệ").default(""),
   chinese_level: z.string().trim().max(100).default(""),
   hsk_level: z.string().trim().max(20).default(""),
   intro: z.string().trim().max(3000).default(""),
@@ -81,7 +82,7 @@ export const submitApplication = createServerFn({ method: "POST" })
 
     const { data: row, error } = await db.from("candidate_applications").insert({
       period_id: period.id, full_name: data.full_name, email: data.email.toLowerCase(), phone: data.phone, date_of_birth: data.date_of_birth,
-      organization: data.organization, chinese_level: data.chinese_level, hsk_level: data.hsk_level, intro: data.intro,
+      organization: data.organization, facebook_url: data.facebook_url, chinese_level: data.chinese_level, hsk_level: data.hsk_level, intro: data.intro,
       choices, answers, cv_path: data.cvPath,
     }).select("code").single();
     if (error) {
