@@ -75,7 +75,7 @@ function PointsPage() {
                 <span className="font-bold text-primary">{m.contribution_points}</span>
               </li>
             ))}
-            {members.data?.length === 0 && <li className="py-4 text-center text-sm text-muted-foreground">Chưa có thành viên.</li>}
+            {board.length === 0 && <li className="py-4 text-center text-sm text-muted-foreground">Chưa có thành viên.</li>}
           </ol>
         </section>
 
