@@ -47,6 +47,12 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      if (request.method === "GET" && (request.headers.get("accept") ?? "").includes("text/html")) {
+        const { domainRedirect } = await import("./lib/domain");
+        const u = new URL(request.url);
+        const to = domainRedirect(request.headers.get("host") ?? u.host, u.pathname, u.search);
+        if (to) return Response.redirect(to, 302);
+      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

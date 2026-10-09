@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { domainRedirect, portalOf } from "@/lib/domain";
 
 function NotFoundComponent() {
   return (
@@ -122,7 +123,15 @@ const PORTAL_PREFIXES = ["/login", "/admin", "/member/dashboard", "/change-passw
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const isPortal = PORTAL_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  useEffect(() => {
+    const to = domainRedirect(window.location.host, pathname, searchStr);
+    if (to) window.location.replace(to);
+    if (portalOf(window.location.host) === "member" && !document.querySelector('meta[name="robots"]')) {
+      const m = document.createElement("meta"); m.name = "robots"; m.content = "noindex, nofollow"; document.head.appendChild(m);
+    }
+  }, [pathname, searchStr]);
 
   return (
     <QueryClientProvider client={queryClient}>
