@@ -10,7 +10,7 @@ export const PERIOD_STATUS: Record<string, string> = {
 };
 export const APP_STATUS: Record<string, string> = {
   submitted: "Đã gửi", reviewing: "Đang xem xét", needs_info: "Cần bổ sung", interview: "Phỏng vấn",
-  approved: "Được chấp thuận", rejected: "Không được chấp thuận", withdrawn: "Rút đơn",
+  approved: "Được chấp thuận", rejected: "Chưa phù hợp đợt này", withdrawn: "Rút đơn",
 };
 export const QUESTION_KINDS: Record<string, string> = {
   short: "Trả lời ngắn", long: "Đoạn văn", single: "Một lựa chọn", multi: "Nhiều lựa chọn", dropdown: "Danh sách lựa chọn", file: "Tải tệp",
