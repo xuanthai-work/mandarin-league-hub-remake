@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Download, ExternalLink, FolderOpen, ListChecks, MessageCircle, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowLeft, Download, GraduationCap, Trash2, ExternalLink, FolderOpen, ListChecks, MessageCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEPARTMENTS } from "@/lib/data/departments";
 
@@ -30,7 +30,7 @@ function DepartmentsPage() {
   if (isLoading || !data) return <p className="p-10 text-center text-muted-foreground">Đang tải…</p>;
   const byDept = (id: string) => data.members.filter((m) => m.department === id);
 
-  if (sel) return <DeptDetail id={sel} members={byDept(sel)} channel={data.channels.find((c) => c.department === sel)} onBack={() => setSel(null)} onPick={setSel} />;
+  if (sel) return <DeptDetail id={sel} all={data.members} members={byDept(sel)} channel={data.channels.find((c) => c.department === sel)} onBack={() => setSel(null)} onPick={setSel} />;
 
   return (
     <section className="mx-auto max-w-7xl p-4 sm:p-6">
@@ -59,7 +59,7 @@ function DepartmentsPage() {
 type Member = Awaited<ReturnType<typeof load>>["members"][number];
 type Channel = Awaited<ReturnType<typeof load>>["channels"][number];
 
-function DeptDetail({ id, members, channel, onBack, onPick }: { id: string; members: Member[]; channel: Channel | undefined; onBack: () => void; onPick: (id: string) => void }) {
+function DeptDetail({ id, all, members, channel, onBack, onPick }: { id: string; all: Member[]; members: Member[]; channel: Channel | undefined; onBack: () => void; onPick: (id: string) => void }) {
   const d = DEPARTMENTS.find((x) => x.id === id)!;
   const sorted = [...members].sort((a, b) => (RANK[a.position] ?? 9) - (RANK[b.position] ?? 9) || a.member_code.localeCompare(b.member_code));
   const leaders = sorted.filter((m) => m.position in RANK);
@@ -91,7 +91,7 @@ function DeptDetail({ id, members, channel, onBack, onPick }: { id: string; memb
           <Group title="Lãnh đạo Ban" rows={leaders} empty="Chưa có Trưởng Ban / Phó Ban." />
           <Group title="Thành viên" rows={rest} empty="Chưa có thành viên." />
         </div>
-        <ChannelBox dept={id} channel={channel} />
+        <div className="space-y-6"><AdvisorBox key={id} dept={id} all={all} /><ChannelBox dept={id} channel={channel} /></div>
       </div>
     </section>
   );
@@ -149,6 +149,67 @@ function ChannelBox({ dept, channel }: { dept: string; channel: Channel | undefi
       <label className="mt-3 block text-xs text-muted-foreground">Ghi chú / mục tiêu của Ban</label>
       <textarea className={inp} rows={3} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
       <button onClick={save} className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Lưu</button>
+      {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
+    </div>
+  );
+}
+
+function AdvisorBox({ dept, all }: { dept: string; all: Member[] }) {
+  const qc = useQueryClient();
+  const key = ["dept-advisors", dept];
+  const { data } = useQuery({ queryKey: key, queryFn: async () => {
+    const [{ data: st }, { data: rows }] = await Promise.all([
+      supabase.from("department_advisor_settings").select("enabled").eq("department", dept).maybeSingle(),
+      supabase.from("department_advisors").select("id, member_id, specialty_area, display_order, is_active").eq("department", dept).order("display_order"),
+    ]);
+    return { enabled: st?.enabled ?? false, rows: rows ?? [] };
+  } });
+  const [pick, setPick] = useState(""); const [spec, setSpec] = useState(""); const [q, setQ] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const done = (error: { message: string } | null, ok = "Đã lưu.") => { setMsg(error ? error.message : ok); if (!error) qc.invalidateQueries({ queryKey: key }); };
+  const rows = data?.rows ?? [];
+  const name = (id: string) => all.find((m) => m.id === id);
+  const options = all.filter((m) => m.status === "active" && !rows.some((r) => r.member_id === m.id) && (!q || `${m.full_name} ${m.member_code}`.toLowerCase().includes(q.toLowerCase())));
+  const toggle = async (v: boolean) => done((await supabase.from("department_advisor_settings").upsert({ department: dept, enabled: v, updated_at: new Date().toISOString() })).error);
+  const add = async () => {
+    if (!pick) return setMsg("Hãy chọn một thành viên.");
+    const { error } = await supabase.from("department_advisors").insert({ department: dept, member_id: pick, specialty_area: spec.trim(), display_order: rows.length });
+    done(error, "Đã bổ nhiệm."); if (!error) { setPick(""); setSpec(""); setQ(""); }
+  };
+  const move = async (i: number, dir: -1 | 1) => {
+    const a = rows[i], b = rows[i + dir]; if (!a || !b) return;
+    await supabase.from("department_advisors").update({ display_order: i + dir }).eq("id", a.id);
+    done((await supabase.from("department_advisors").update({ display_order: i }).eq("id", b.id)).error);
+  };
+  return (
+    <div className="h-fit rounded-2xl border border-dashed border-gold bg-card p-5">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="inline-flex items-center gap-2 font-semibold"><GraduationCap className="h-4 w-4 text-gold" />Cố vấn chuyên môn</h2>
+        <label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={data?.enabled ?? false} onChange={(e) => toggle(e.target.checked)} />Bật cho Ban</label>
+      </div>
+      <p className="text-xs text-muted-foreground">Tư vấn – hỗ trợ chuyên môn, không có quyền quản trị hay phê duyệt. Gỡ phân công không xóa hồ sơ thành viên.</p>
+      {data?.enabled && (<>
+        <ul className="mt-3 space-y-2">
+          {rows.length === 0 && <li className="rounded-lg bg-secondary px-3 py-2 text-xs italic text-muted-foreground">Chưa bổ nhiệm (sơ đồ công khai sẽ ẩn vị trí này)</li>}
+          {rows.map((r, i) => (
+            <li key={r.id} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+              <div className="min-w-0 flex-1"><div className="truncate font-medium">{name(r.member_id)?.full_name ?? "—"}</div><div className="truncate text-xs text-muted-foreground">{r.specialty_area || "Chưa ghi lĩnh vực"}{name(r.member_id) && ` · ${name(r.member_id)!.department}`}</div></div>
+              <button aria-label="Lên" disabled={i === 0} onClick={() => move(i, -1)} className="disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+              <button aria-label="Xuống" disabled={i === rows.length - 1} onClick={() => move(i, 1)} className="disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
+              <button aria-label="Gỡ phân công" onClick={async () => confirm("Gỡ phân công cố vấn này?") && done((await supabase.from("department_advisors").delete().eq("id", r.id)).error, "Đã gỡ.")} className="text-destructive"><Trash2 className="h-4 w-4" /></button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 space-y-2 border-t border-border pt-3">
+          <input className={inp} placeholder="Tìm thành viên theo tên / mã…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <select className={inp} value={pick} onChange={(e) => setPick(e.target.value)}>
+            <option value="">— Chọn thành viên —</option>
+            {options.slice(0, 100).map((m) => <option key={m.id} value={m.id}>{m.full_name} ({m.member_code})</option>)}
+          </select>
+          <input className={inp} placeholder="Lĩnh vực chuyên môn (vd: Khảo thí HSK)" maxLength={120} value={spec} onChange={(e) => setSpec(e.target.value)} />
+          <button onClick={add} className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Bổ nhiệm Cố vấn</button>
+        </div>
+      </>)}
       {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
     </div>
   );

@@ -24,8 +24,9 @@ function PointsPage() {
     acc.forEach((a) => { map[a.member_id] = roles.filter((r) => r.user_id === a.user_id).map((r) => String(r.role)); });
     return map;
   } });
+  const advisorIds = useQuery({ queryKey: ["points-advisors"], queryFn: async () => new Set(((await supabase.from("department_advisors").select("member_id").eq("is_active", true)).data ?? []).map((a) => a.member_id)) });
   const [showAll, setShowAll] = useState(false);
-  const board = (members.data ?? []).filter((m) => showAll || !isLeader(m, roleMap.data?.[m.id]));
+  const board = (members.data ?? []).filter((m) => showAll || !isLeader(m, roleMap.data?.[m.id], advisorIds.data?.has(m.id)));
   const history = useQuery({ queryKey: ["points-history"], queryFn: async () =>
     (await supabase.from("point_transactions").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [] });
   const nameOf = (id: string) => members.data?.find((m) => m.id === id);
