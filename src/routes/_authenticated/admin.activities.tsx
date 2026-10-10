@@ -70,7 +70,9 @@ function ListTab() {
     const { data } = await supabase.from("activity_registrations").select("activity_id");
     const m = new Map<string, number>(); (data ?? []).forEach((r) => m.set(r.activity_id, (m.get(r.activity_id) ?? 0) + 1)); return m;
   } });
-  const [f, setF] = useState<Form | null>(null);
+  const [f, setFRaw] = useState<Form | null>(null);
+  const [extMode, setExtMode] = useState(false);
+  const setF = (v: Form | null) => { if (v && v.id !== f?.id) setExtMode(!!v.registration_url); if (v && !f) setExtMode(!!v.registration_url); setFRaw(v); };
   const [q, setQ] = useState(""); const [st, setSt] = useState("");
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-activities"] }); qc.invalidateQueries({ queryKey: ["public-activities"] }); };
@@ -78,9 +80,11 @@ function ListTab() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); if (!f) return; setErr("");
     if (f.start_time && f.end_time && f.end_time < f.start_time) return setErr("Thời gian kết thúc phải sau thời gian bắt đầu.");
-    for (const u of [f.registration_url, f.facebook_url, f.website_url]) if (u && !/^https?:\/\//i.test(u)) return setErr("Các liên kết phải bắt đầu bằng http(s)://");
+    const norm = (u: string) => { const t = (u ?? "").trim(); return !t ? "" : /^https?:\/\//i.test(t) ? t : `https://${t}`; };
+    const links = { registration_url: extMode ? norm(f.registration_url) : "", facebook_url: norm(f.facebook_url), website_url: norm(f.website_url) };
+    for (const u of Object.values(links)) if (u) { try { new URL(u); } catch { return setErr(`Liên kết không hợp lệ: ${u}`); } }
     setBusy(true);
-    const { id, banner: _b, ...row } = { ...f, slug: slugify(f.slug || f.title) } as Form & { banner?: string };
+    const { id, banner: _b, ...row } = { ...f, ...links, require_registration: true, slug: slugify(f.slug || f.title) } as Form & { banner?: string };
     const { error } = id ? await supabase.from("activities").update(row).eq("id", id) : await supabase.from("activities").insert(row);
     setBusy(false);
     if (error) return setErr(error.message.includes("slug") || error.code === "23505" ? "Slug đã tồn tại, hãy đổi slug khác." : error.message);
@@ -133,12 +137,22 @@ function ListTab() {
       <label className="text-xs text-muted-foreground">Hình thức
         <select className={`${inp} mt-1`} value={f.location_type} onChange={(e) => setF({ ...f, location_type: e.target.value as LocationType })}>{Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
       <label className="text-xs text-muted-foreground">Địa điểm / nền tảng<input maxLength={300} className={`${inp} mt-1`} placeholder="vd: Google Meet hoặc địa chỉ" value={f.location_detail} onChange={(e) => setF({ ...f, location_detail: e.target.value })} /></label>
-      <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={f.require_registration} onChange={(e) => setF({ ...f, require_registration: e.target.checked })} />Yêu cầu đăng ký</label>
-      {f.require_registration && <>
-        <label className="text-xs text-muted-foreground sm:col-span-2">Link đăng ký ngoài (để trống = dùng form TML)<input className={`${inp} mt-1`} placeholder="https://forms.gle/…" value={f.registration_url} onChange={(e) => setF({ ...f, registration_url: e.target.value })} /></label>
-        <label className="text-xs text-muted-foreground">Hạn đăng ký<input type="datetime-local" className={`${inp} mt-1`} value={toLocal(f.registration_deadline)} onChange={(e) => setF({ ...f, registration_deadline: fromLocal(e.target.value) })} /></label>
-        <label className="text-xs text-muted-foreground">Số người tối đa (0 = không giới hạn)<input type="number" min={0} className={`${inp} mt-1`} value={f.max_participants} onChange={(e) => setF({ ...f, max_participants: Math.max(0, Number(e.target.value)) })} /></label>
-      </>}
+      <div className="space-y-2 sm:col-span-2">
+        <p className="text-xs text-muted-foreground">Hình thức đăng ký</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {([["tml", "Dùng Form có sẵn của TML", "Người tham gia điền form ngay trên website, đơn về mục Đơn đăng ký."], ["ext", "Link đăng ký ngoài", "Chuyển tới Google Form… (có thể để trống, bổ sung sau)."]] as const).map(([k, l, d]) => {
+            const on = k === "ext" ? extMode : !extMode;
+            return (
+              <button type="button" key={k} onClick={() => { setExtMode(k === "ext"); if (k === "tml") setF({ ...f, registration_url: "" }); }}
+                className={`rounded-lg border p-3 text-left text-sm ${on ? "border-primary bg-primary/5" : "border-border"}`}>
+                <span className="font-semibold">{l}</span><span className="mt-0.5 block text-xs text-muted-foreground">{d}</span>
+              </button>);
+          })}
+        </div>
+      </div>
+      {extMode && <label className="text-xs text-muted-foreground sm:col-span-2">Link đăng ký ngoài (không bắt buộc)<input className={`${inp} mt-1`} placeholder="forms.gle/…" value={f.registration_url} onChange={(e) => setF({ ...f, registration_url: e.target.value })} /></label>}
+      <label className="text-xs text-muted-foreground">Hạn đăng ký (không bắt buộc)<input type="datetime-local" className={`${inp} mt-1`} value={toLocal(f.registration_deadline)} onChange={(e) => setF({ ...f, registration_deadline: fromLocal(e.target.value) })} /></label>
+      <label className="text-xs text-muted-foreground">Số người tối đa (0 = không giới hạn)<input type="number" min={0} className={`${inp} mt-1`} value={f.max_participants} onChange={(e) => setF({ ...f, max_participants: Math.max(0, Number(e.target.value)) })} /></label>
       <label className="text-xs text-muted-foreground">Link Facebook<input className={`${inp} mt-1`} value={f.facebook_url} onChange={(e) => setF({ ...f, facebook_url: e.target.value })} /></label>
       <label className="text-xs text-muted-foreground">Link Website<input className={`${inp} mt-1`} value={f.website_url} onChange={(e) => setF({ ...f, website_url: e.target.value })} /></label>
       {canPublish ? (
