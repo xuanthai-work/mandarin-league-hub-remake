@@ -171,7 +171,7 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
         <select className={`${inp} w-full`} value={status} onChange={(e) => { setStatus(e.target.value); setMsg((m) => nextCandidateMessage(m, e.target.value)); }}>{Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         <div className="flex items-center justify-between pt-1">
           <label className="block text-xs font-medium text-primary">Lời nhắn gửi ứng viên (ứng viên thấy khi tra cứu)</label>
-          {STATUS_MESSAGE_TEMPLATES[status] && <button type="button" onClick={() => setMsg(STATUS_MESSAGE_TEMPLATES[status])} className="text-xs text-primary underline">Điền mẫu câu chuẩn</button>}
+          {STATUS_MESSAGE_TEMPLATES[status] && <button type="button" onClick={() => setMsg(STATUS_MESSAGE_TEMPLATES[status] ?? "")} className="text-xs text-primary underline">Điền mẫu câu chuẩn</button>}
         </div>
         <textarea className={`${inp} w-full border-gold/50`} rows={3} maxLength={1500} placeholder="VD: Bạn vui lòng mở quyền xem Google Drive của CV và phản hồi về hr@themandarinleague.bond" value={msg} onChange={(e) => setMsg(e.target.value)} />
         <label className="block pt-1 text-xs font-medium text-muted-foreground">Chỉ nội bộ (ứng viên không thấy)</label>
