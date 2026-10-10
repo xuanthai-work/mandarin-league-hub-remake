@@ -123,6 +123,8 @@ export const analyzeApplication = createServerFn({ method: "POST" })
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Bạn không có quyền.");
     let content = data.text?.trim() ?? "";
+    let cvPart: { type: "file"; data: Uint8Array; mediaType: string; filename: string } | null = null;
+    let cvNote = "";
     if (data.applicationId) {
       const { data: app } = await context.supabase.from("candidate_applications").select("*").eq("id", data.applicationId).single();
       if (!app) throw new Error("Không tìm thấy hồ sơ.");
@@ -136,14 +138,33 @@ export const analyzeApplication = createServerFn({ method: "POST" })
         `Giới thiệu: ${app.intro}`,
         ...(qs ?? []).map((q) => `Hỏi: ${q.prompt}\nĐáp: ${[answers[q.id]].flat().join(", ") || "—"}`),
       ].join("\n");
+      if (app.cv_path) {
+        const { data: blob } = await context.supabase.storage.from("applications").download(app.cv_path);
+        const e = ext(app.cv_path);
+        if (blob && blob.size <= 10 * 1024 * 1024) {
+          const bytes = new Uint8Array(await blob.arrayBuffer());
+          if (e === "pdf") cvPart = { type: "file", data: bytes, mediaType: "application/pdf", filename: "cv.pdf" };
+          else if (e === "docx") {
+            try {
+              const { unzipSync, strFromU8 } = await import("fflate");
+              const doc = unzipSync(bytes, { filter: (f) => f.name === "word/document.xml" })["word/document.xml"];
+              if (!doc) throw new Error("no document");
+              const xml = strFromU8(doc);
+              const text = xml.replace(/<\/w:p>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\n{3,}/g, "\n\n").trim();
+              if (text) content += `\n\n=== NỘI DUNG CV (Word) ===\n${text.slice(0, 15000)}`;
+            } catch { cvNote = "(Không đọc được tệp CV Word.)"; }
+          } else cvNote = "(CV định dạng .doc cũ — AI không đọc được, chỉ phân tích form.)";
+        } else cvNote = "(Không tải được tệp CV.)";
+      }
+      if (cvNote) content += `\n${cvNote}`;
     }
     if (content.length < 20) throw new Error("Nội dung quá ngắn để phân tích.");
     const { runResponsesText } = await import("./ai/responses.server");
     let summary: string;
     try {
       summary = await runResponsesText(getRequest(),
-        "Bạn là trợ lý nhân sự của THE MANDARIN LEAGUE (cộng đồng học tiếng Trung). Phân tích hồ sơ ứng viên bằng tiếng Việt, ngắn gọn, khách quan. Trả về đúng 4 mục có tiêu đề: 1) Tóm tắt nhanh (2 câu), 2) Kỹ năng & kinh nghiệm chính (gạch đầu dòng), 3) Mức độ phù hợp với Ban ứng tuyển (Phù hợp cao / Tiềm năng / Cần phỏng vấn thêm, kèm điểm mạnh và điểm cần lưu ý), 4) Gợi ý 2–3 câu hỏi phỏng vấn. Không suy đoán thông tin không có. Không nhắc lại email hay số điện thoại. Dưới 300 từ.",
-        [{ role: "user", content }]);
+        "Bạn là trợ lý nhân sự của THE MANDARIN LEAGUE (cộng đồng học tiếng Trung). Phân tích hồ sơ ứng viên bằng tiếng Việt, ngắn gọn, khách quan, dựa trên cả thông tin form và tệp CV đính kèm (nếu có). Đối chiếu kinh nghiệm/kỹ năng trong CV với Ban ứng tuyển (VD: Học thuật → dạy/học tiếng Trung; Truyền thông → viết, thiết kế, video; Sự kiện → tổ chức; Nhân sự → quản lý con người). Trả về đúng 4 mục có tiêu đề: 1) Tóm tắt nhanh (2 câu), 2) Kỹ năng & kinh nghiệm chính (gạch đầu dòng, ghi rõ nguồn CV hay form), 3) Mức độ phù hợp với Ban ứng tuyển (Phù hợp cao / Tiềm năng / Cần phỏng vấn thêm, kèm điểm mạnh và điểm cần lưu ý), 4) Gợi ý 2–3 câu hỏi phỏng vấn. Không suy đoán thông tin không có. Không nhắc lại email, số điện thoại, địa chỉ. Dưới 350 từ.",
+        [{ role: "user", content: cvPart ? [{ type: "text", text: content }, cvPart] : content }]);
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
       if (status === 402) throw new Error("Hết hạn mức AI. Vui lòng nạp thêm credit trong Settings → Plans & credits.");

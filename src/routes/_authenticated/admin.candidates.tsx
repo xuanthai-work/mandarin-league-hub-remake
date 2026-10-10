@@ -8,7 +8,7 @@ import { analyzeApplication } from "@/lib/recruitment.functions";
 import { approveApplication } from "@/lib/accounts.functions";
 import { positionsFor } from "@/lib/recruitment";
 import { Link } from "@tanstack/react-router";
-import { APP_STATUS, RECRUIT_DEPTS, deptName, type Choice } from "@/lib/recruitment";
+import { APP_STATUS, RECRUIT_DEPTS, STATUS_MESSAGE_TEMPLATES, deptName, nextCandidateMessage, type Choice } from "@/lib/recruitment";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({ staticData: { sitemap: false }, component: Candidates });
 
@@ -161,14 +161,18 @@ function Detail({ app, questions, onClose }: { app: App; questions: { id: string
 
       <div className="mt-6 flex items-center justify-between"><h3 className="font-semibold">Phân tích AI</h3>
         <button onClick={runAi} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-gold px-3 py-1.5 text-sm hover:bg-gold-soft/40 disabled:opacity-60">{busy === "ai" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-gold" />}{app.ai_summary ? "Phân tích lại" : "Phân tích hồ sơ bằng AI"}</button></div>
+      <p className="mt-1 text-xs text-muted-foreground">{app.cv_path ? (app.cv_path.toLowerCase().endsWith(".pdf") ? "AI sẽ đọc cả tệp CV (PDF) và thông tin trong form." : "CV dạng Word: AI đọc nội dung chữ trong tệp và thông tin trong form.") : "Không có CV — AI phân tích theo thông tin trong form."}</p>
       <div className="mt-2">{app.ai_summary ? <AiBox summary={app.ai_summary} /> : <p className="text-sm text-muted-foreground">Chưa phân tích. AI chỉ hỗ trợ tóm tắt — quyết định cuối cùng thuộc về Ban Nhân sự.</p>}</div>
 
       <h3 className="mt-6 font-semibold">Xử lý hồ sơ</h3>
       <p className="text-xs text-muted-foreground">Người xử lý được ghi tự động theo tài khoản đang đăng nhập.</p>
       <div className="mt-2 space-y-2">
         <label className="block text-xs font-medium text-muted-foreground">Trạng thái (chọn tự do, chuyển thẳng sang bất kỳ bước nào)</label>
-        <select className={`${inp} w-full`} value={status} onChange={(e) => setStatus(e.target.value)}>{Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        <label className="block pt-1 text-xs font-medium text-primary">Lời nhắn gửi ứng viên (ứng viên thấy khi tra cứu)</label>
+        <select className={`${inp} w-full`} value={status} onChange={(e) => { setStatus(e.target.value); setMsg((m) => nextCandidateMessage(m, e.target.value)); }}>{Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        <div className="flex items-center justify-between pt-1">
+          <label className="block text-xs font-medium text-primary">Lời nhắn gửi ứng viên (ứng viên thấy khi tra cứu)</label>
+          {STATUS_MESSAGE_TEMPLATES[status] && <button type="button" onClick={() => setMsg(STATUS_MESSAGE_TEMPLATES[status] ?? "")} className="text-xs text-primary underline">Điền mẫu câu chuẩn</button>}
+        </div>
         <textarea className={`${inp} w-full border-gold/50`} rows={3} maxLength={1500} placeholder="VD: Bạn vui lòng mở quyền xem Google Drive của CV và phản hồi về hr@themandarinleague.bond" value={msg} onChange={(e) => setMsg(e.target.value)} />
         <label className="block pt-1 text-xs font-medium text-muted-foreground">Chỉ nội bộ (ứng viên không thấy)</label>
         <textarea className={`${inp} w-full`} rows={2} placeholder="Lý do / ghi chú cho lần xử lý này (không bắt buộc)" value={reason} onChange={(e) => setReason(e.target.value)} />

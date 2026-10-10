@@ -12,6 +12,19 @@ export const APP_STATUS: Record<string, string> = {
   submitted: "Đã gửi", reviewing: "Đang xem xét", needs_info: "Cần bổ sung", interview: "Phỏng vấn",
   approved: "Được chấp thuận", rejected: "Chưa phù hợp đợt này", withdrawn: "Rút đơn",
 };
+
+/** Default candidate messages per status; admins can edit before saving. */
+export const STATUS_MESSAGE_TEMPLATES: Record<string, string> = {
+  approved: "Chúc mừng bạn đã chính thức trở thành thành viên của The Mandarin League! Mong rằng chúng ta sẽ cùng nhau học hỏi, phát triển và tạo nên những giá trị ý nghĩa.",
+  rejected: "Cảm ơn bạn đã quan tâm và ứng tuyển vào The Mandarin League. Rất tiếc, hồ sơ của bạn chưa phù hợp với đợt tuyển thành viên lần này. Hy vọng chúng ta sẽ có cơ hội đồng hành trong tương lai!",
+};
+
+/** Next message when status changes: fill a template only if the box is empty or still holds another template. */
+export function nextCandidateMessage(current: string, newStatus: string): string {
+  const isTemplate = !current.trim() || Object.values(STATUS_MESSAGE_TEMPLATES).includes(current.trim());
+  if (!isTemplate) return current;
+  return STATUS_MESSAGE_TEMPLATES[newStatus] ?? (current.trim() ? "" : current);
+}
 export const QUESTION_KINDS: Record<string, string> = {
   short: "Trả lời ngắn", long: "Đoạn văn", single: "Một lựa chọn", multi: "Nhiều lựa chọn", dropdown: "Danh sách lựa chọn", file: "Tải tệp",
 };
