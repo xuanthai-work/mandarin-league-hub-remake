@@ -147,7 +147,9 @@ export const analyzeApplication = createServerFn({ method: "POST" })
           else if (e === "docx") {
             try {
               const { unzipSync, strFromU8 } = await import("fflate");
-              const xml = strFromU8(unzipSync(bytes, { filter: (f) => f.name === "word/document.xml" })["word/document.xml"]);
+              const doc = unzipSync(bytes, { filter: (f) => f.name === "word/document.xml" })["word/document.xml"];
+              if (!doc) throw new Error("no document");
+              const xml = strFromU8(doc);
               const text = xml.replace(/<\/w:p>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\n{3,}/g, "\n\n").trim();
               if (text) content += `\n\n=== NỘI DUNG CV (Word) ===\n${text.slice(0, 15000)}`;
             } catch { cvNote = "(Không đọc được tệp CV Word.)"; }

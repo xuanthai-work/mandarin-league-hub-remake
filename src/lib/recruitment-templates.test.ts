@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { STATUS_MESSAGE_TEMPLATES as T, nextCandidateMessage } from "./recruitment";
+import { STATUS_MESSAGE_TEMPLATES, nextCandidateMessage } from "./recruitment";
+
+const T = STATUS_MESSAGE_TEMPLATES as { approved: string; rejected: string };
 
 describe("nextCandidateMessage", () => {
   it("fills approved template when empty", () => expect(nextCandidateMessage("", "approved")).toBe(T.approved));
