@@ -70,7 +70,9 @@ function ListTab() {
     const { data } = await supabase.from("activity_registrations").select("activity_id");
     const m = new Map<string, number>(); (data ?? []).forEach((r) => m.set(r.activity_id, (m.get(r.activity_id) ?? 0) + 1)); return m;
   } });
-  const [f, setF] = useState<Form | null>(null);
+  const [f, setFRaw] = useState<Form | null>(null);
+  const [extMode, setExtMode] = useState(false);
+  const setF = (v: Form | null) => { if (v && v.id !== f?.id) setExtMode(!!v.registration_url); if (v && !f) setExtMode(!!v.registration_url); setFRaw(v); };
   const [q, setQ] = useState(""); const [st, setSt] = useState("");
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-activities"] }); qc.invalidateQueries({ queryKey: ["public-activities"] }); };
@@ -78,9 +80,11 @@ function ListTab() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); if (!f) return; setErr("");
     if (f.start_time && f.end_time && f.end_time < f.start_time) return setErr("Thời gian kết thúc phải sau thời gian bắt đầu.");
-    for (const u of [f.registration_url, f.facebook_url, f.website_url]) if (u && !/^https?:\/\//i.test(u)) return setErr("Các liên kết phải bắt đầu bằng http(s)://");
+    const norm = (u: string) => { const t = (u ?? "").trim(); return !t ? "" : /^https?:\/\//i.test(t) ? t : `https://${t}`; };
+    const links = { registration_url: extMode ? norm(f.registration_url) : "", facebook_url: norm(f.facebook_url), website_url: norm(f.website_url) };
+    for (const u of Object.values(links)) if (u) { try { new URL(u); } catch { return setErr(`Liên kết không hợp lệ: ${u}`); } }
     setBusy(true);
-    const { id, banner: _b, ...row } = { ...f, slug: slugify(f.slug || f.title) } as Form & { banner?: string };
+    const { id, banner: _b, ...row } = { ...f, ...links, require_registration: true, slug: slugify(f.slug || f.title) } as Form & { banner?: string };
     const { error } = id ? await supabase.from("activities").update(row).eq("id", id) : await supabase.from("activities").insert(row);
     setBusy(false);
     if (error) return setErr(error.message.includes("slug") || error.code === "23505" ? "Slug đã tồn tại, hãy đổi slug khác." : error.message);
