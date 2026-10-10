@@ -140,10 +140,14 @@ function Footer() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-primary-foreground/15 py-5 text-center text-xs">
-        <span className="opacity-70">© {new Date().getFullYear()} {site.footer_note || t("footer.rights")}</span>
-        <span className="mx-2 opacity-40">·</span>
-        <Link to="/login" className="inline-flex items-center gap-1 opacity-60 transition hover:opacity-100 hover:underline"><Lock className="h-3 w-3" />{t("footer.portal")}</Link>
+      <div className="border-t border-primary-foreground/15">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 text-center text-xs sm:flex-row sm:justify-between sm:text-left">
+          <div className="space-y-1">
+            <p className="opacity-80">© {new Date().getFullYear()} {site.footer_note || t("footer.rights")}</p>
+            <p className="opacity-55">{t("footer.tagline")}</p>
+          </div>
+          <Link to="/login" className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-4 py-1.5 font-medium opacity-85 transition hover:bg-primary-foreground/15 hover:opacity-100"><Lock className="h-3 w-3" />{t("footer.portal")}</Link>
+        </div>
       </div>
     </footer>
   );
