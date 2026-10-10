@@ -133,12 +133,22 @@ function ListTab() {
       <label className="text-xs text-muted-foreground">Hình thức
         <select className={`${inp} mt-1`} value={f.location_type} onChange={(e) => setF({ ...f, location_type: e.target.value as LocationType })}>{Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
       <label className="text-xs text-muted-foreground">Địa điểm / nền tảng<input maxLength={300} className={`${inp} mt-1`} placeholder="vd: Google Meet hoặc địa chỉ" value={f.location_detail} onChange={(e) => setF({ ...f, location_detail: e.target.value })} /></label>
-      <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={f.require_registration} onChange={(e) => setF({ ...f, require_registration: e.target.checked })} />Yêu cầu đăng ký</label>
-      {f.require_registration && <>
-        <label className="text-xs text-muted-foreground sm:col-span-2">Link đăng ký ngoài (để trống = dùng form TML)<input className={`${inp} mt-1`} placeholder="https://forms.gle/…" value={f.registration_url} onChange={(e) => setF({ ...f, registration_url: e.target.value })} /></label>
-        <label className="text-xs text-muted-foreground">Hạn đăng ký<input type="datetime-local" className={`${inp} mt-1`} value={toLocal(f.registration_deadline)} onChange={(e) => setF({ ...f, registration_deadline: fromLocal(e.target.value) })} /></label>
-        <label className="text-xs text-muted-foreground">Số người tối đa (0 = không giới hạn)<input type="number" min={0} className={`${inp} mt-1`} value={f.max_participants} onChange={(e) => setF({ ...f, max_participants: Math.max(0, Number(e.target.value)) })} /></label>
-      </>}
+      <div className="space-y-2 sm:col-span-2">
+        <p className="text-xs text-muted-foreground">Hình thức đăng ký</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {([["tml", "Dùng Form có sẵn của TML", "Người tham gia điền form ngay trên website, đơn về mục Đơn đăng ký."], ["ext", "Link đăng ký ngoài", "Chuyển tới Google Form… (có thể để trống, bổ sung sau)."]] as const).map(([k, l, d]) => {
+            const on = k === "tml" ? f.registration_url === null || f.registration_url === "" ? !extMode : false : extMode || !!f.registration_url;
+            return (
+              <button type="button" key={k} onClick={() => { setExtMode(k === "ext"); if (k === "tml") setF({ ...f, registration_url: "" }); }}
+                className={`rounded-lg border p-3 text-left text-sm ${on ? "border-primary bg-primary/5" : "border-border"}`}>
+                <span className="font-semibold">{l}</span><span className="mt-0.5 block text-xs text-muted-foreground">{d}</span>
+              </button>);
+          })}
+        </div>
+      </div>
+      {(extMode || !!f.registration_url) && <label className="text-xs text-muted-foreground sm:col-span-2">Link đăng ký ngoài (không bắt buộc)<input className={`${inp} mt-1`} placeholder="forms.gle/…" value={f.registration_url} onChange={(e) => setF({ ...f, registration_url: e.target.value })} /></label>}
+      <label className="text-xs text-muted-foreground">Hạn đăng ký (không bắt buộc)<input type="datetime-local" className={`${inp} mt-1`} value={toLocal(f.registration_deadline)} onChange={(e) => setF({ ...f, registration_deadline: fromLocal(e.target.value) })} /></label>
+      <label className="text-xs text-muted-foreground">Số người tối đa (0 = không giới hạn)<input type="number" min={0} className={`${inp} mt-1`} value={f.max_participants} onChange={(e) => setF({ ...f, max_participants: Math.max(0, Number(e.target.value)) })} /></label>
       <label className="text-xs text-muted-foreground">Link Facebook<input className={`${inp} mt-1`} value={f.facebook_url} onChange={(e) => setF({ ...f, facebook_url: e.target.value })} /></label>
       <label className="text-xs text-muted-foreground">Link Website<input className={`${inp} mt-1`} value={f.website_url} onChange={(e) => setF({ ...f, website_url: e.target.value })} /></label>
       {canPublish ? (
