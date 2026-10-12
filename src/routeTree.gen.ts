@@ -22,6 +22,7 @@ import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
@@ -126,6 +127,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -365,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/partners': typeof PartnersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/welcome': typeof WelcomeRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
@@ -419,6 +426,7 @@ export interface FileRoutesByTo {
   '/partners': typeof PartnersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/welcome': typeof WelcomeRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/admin/login': typeof AdminLoginRoute
@@ -474,6 +482,7 @@ export interface FileRoutesById {
   '/partners': typeof PartnersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/welcome': typeof WelcomeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
@@ -531,6 +540,7 @@ export interface FileRouteTypes {
     | '/partners'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/welcome'
     | '/admin'
     | '/change-password'
     | '/activities/$activityId'
@@ -585,6 +595,7 @@ export interface FileRouteTypes {
     | '/partners'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/welcome'
     | '/change-password'
     | '/activities/$activityId'
     | '/admin/login'
@@ -639,6 +650,7 @@ export interface FileRouteTypes {
     | '/partners'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/welcome'
     | '/_authenticated/admin'
     | '/_authenticated/change-password'
     | '/activities/$activityId'
@@ -696,6 +708,7 @@ export interface RootRouteChildren {
   PartnersRoute: typeof PartnersRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  WelcomeRoute: typeof WelcomeRoute
   AdminLoginRoute: typeof AdminLoginRoute
   CoursesSlugRoute: typeof CoursesSlugRoute
   CoursesHskRoute: typeof CoursesHskRouteWithChildren
@@ -804,6 +817,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -1200,6 +1220,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnersRoute: PartnersRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  WelcomeRoute: WelcomeRoute,
   AdminLoginRoute: AdminLoginRoute,
   CoursesSlugRoute: CoursesSlugRoute,
   CoursesHskRoute: CoursesHskRouteWithChildren,
