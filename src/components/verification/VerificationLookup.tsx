@@ -33,7 +33,6 @@ import {
 import { lookupCertificate } from "@/lib/certificates";
 import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { lookupHsk } from "@/lib/hsk";
-import QRCode from "qrcode";
 import { Copy, Download, Printer } from "lucide-react";
 import { getCertificateFileUrl } from "@/lib/certificate-files.functions";
 import { toast } from "sonner";
@@ -338,7 +337,14 @@ function CertificateResult({ record }: { record: CertificateRecord }) {
     } catch { toast.error("Không tải được tệp gốc"); }
     setDownloading(false);
   };
-  useEffect(() => { if (link) QRCode.toDataURL(link, { margin: 0, width: 180 }).then(setQr); }, [link]);
+  useEffect(() => {
+    if (!link) return;
+    let cancelled = false;
+    void import("qrcode").then((QRCode) =>
+      QRCode.toDataURL(link, { margin: 0, width: 180 }).then((url) => { if (!cancelled) setQr(url); }),
+    );
+    return () => { cancelled = true; };
+  }, [link]);
   const copy = async () => { await navigator.clipboard.writeText(link); toast.success("Đã sao chép liên kết xác thực"); };
   return (
     <div className="print-certificate">
