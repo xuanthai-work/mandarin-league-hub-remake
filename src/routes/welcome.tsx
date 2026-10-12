@@ -4,12 +4,12 @@ import logo from "@/assets/tml-logo.png.asset.json";
 import drum from "@/assets/dongson-drum-v2.png.asset.json";
 import { DEPARTMENTS } from "@/lib/data/departments";
 
-type Search = { name?: string; dept?: string };
+type Search = { name?: string | undefined; dept?: string | undefined };
 
-export const Route = createFileRoute("/welcome")({
+export const Route = createFileRoute("/welcome")({ staticData: { sitemap: false },
   validateSearch: (s: Record<string, unknown>): Search => ({
-    name: typeof s.name === "string" ? s.name.slice(0, 60) : undefined,
-    dept: typeof s.dept === "string" ? s.dept.slice(0, 40) : undefined,
+    name: typeof s["name"] === "string" ? s["name"].slice(0, 60) : undefined,
+    dept: typeof s["dept"] === "string" ? s["dept"].slice(0, 40) : undefined,
   }),
   head: () => ({
     meta: [
