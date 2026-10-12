@@ -381,7 +381,7 @@
 @keyframes wc-glow{50%{box-shadow:0 0 24px oklch(0.83 0.13 85/.55)}}
 .wc-ghost{display:block;margin:1rem auto 0;font-size:.85rem;opacity:.7;text-decoration:underline;font-family:ui-sans-serif,system-ui}
 .wc-skip{position:absolute;top:1rem;right:1rem;z-index:3;font-size:.8rem;opacity:.75;font-family:ui-sans-serif,system-ui;padding:.4rem .8rem;border:1px solid oklch(1 0 0/.25);border-radius:999px}
-.wc-logo{width:96px;height:96px;margin:0 auto 1rem;object-fit:contain;filter:drop-shadow(0 0 20px oklch(0.83 0.13 85/.5))}
+.wc-logo{width:104px;height:104px;margin:0 auto 1rem;object-fit:contain;border-radius:50%;background:var(--wc-ink);padding:6px;border:2px solid var(--wc-gold);filter:drop-shadow(0 0 20px oklch(0.83 0.13 85/.5))}
 /* opening */
 .wc-opening .wc-gate,.wc-done .wc-gate{opacity:1}
 .wc-opening .wc-knob{opacity:0;transform:translate(-50%,-50%) scale(1.4) rotate(40deg)}
