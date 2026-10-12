@@ -58,6 +58,7 @@ function MemberDashboard() {
     (await supabase.from("point_transactions").select("*").eq("member_id", memberId!).order("created_at", { ascending: false })).data ?? [] });
   useEffect(() => { const c = me.data?.member?.member_code; if (c) QRCode.toDataURL(c, { margin: 0, width: 160 }).then(setQr); }, [me.data?.member?.member_code]);
   const [reporting, setReporting] = useState<{ id: string; title: string } | null>(null);
+  const [savedImg, setSavedImg] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
 
@@ -122,9 +123,32 @@ function MemberDashboard() {
   );
   const downloadCard = async () => {
     if (!cardRef.current) return;
-    const el = cardRef.current; el.classList.add("is-exporting");
-    try { const url = await toPng(el, { pixelRatio: 3, cacheBust: true }); const a = document.createElement("a"); a.href = url; a.download = `${m.member_code}-${layout === "v" ? "vertical" : "horizontal"}.png`; a.click(); }
-    catch { setErr("Không tải được thẻ, vui lòng thử lại."); } finally { el.classList.remove("is-exporting"); }
+    const el = cardRef.current; el.classList.add("is-exporting"); setErr("");
+    const fileName = `${m.member_code}-${layout === "v" ? "vertical" : "horizontal"}.png`;
+    try {
+      // Inline the signed avatar as a data URL so export never hits CORS/cache-bust issues on mobile.
+      const imgs = Array.from(el.querySelectorAll("img"));
+      const originals = new Map<HTMLImageElement, string>();
+      await Promise.all(imgs.map(async (img) => {
+        if (!img.src.startsWith("http")) return;
+        try { const b = await (await fetch(img.src, { mode: "cors" })).blob();
+          const d = await new Promise<string>((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(b); });
+          originals.set(img, img.src); img.src = d; await img.decode().catch(() => {}); } catch { /* keep original */ }
+      }));
+      const ratio = Math.min(2.5, Math.max(2, window.devicePixelRatio || 2));
+      let url = "";
+      try { url = await toPng(el, { pixelRatio: ratio }); url = await toPng(el, { pixelRatio: ratio }); } // second pass fixes blank images on Safari
+      finally { originals.forEach((src, img) => { img.src = src; }); }
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], fileName, { type: "image/png" });
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "Thẻ thành viên TML" }); return; } catch (e) { if ((e as Error).name === "AbortError") return; }
+      }
+      if (isMobile) { setSavedImg(url); return; }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch { setErr("Không tải được thẻ, vui lòng thử lại."); } finally { el.classList.remove("is-exporting"); }
   };
   const act = async (id: string, action: "start" | "submit", evidence = "", note = "") => {
     setErr(""); setMsg("");
