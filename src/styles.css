@@ -322,6 +322,9 @@
 .tml-pass-pop { animation: pass-pop .7s cubic-bezier(.2,.9,.3,1.3) both; }
 @keyframes pass-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 .tml-pass.is-exporting, .tml-pass.is-exporting * { animation: none !important; transform: none !important; transition: none !important; }
+/* Safari/WebKit: keep rounded corners clipping children while the card uses 3D transforms */
+.tml-pass { isolation: isolate; -webkit-mask-image: -webkit-radial-gradient(white, black); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.tml-pass > .tml-pass-foot:last-child { border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; }
 .tml-pass.is-exporting::after { display: none; }
 @media (prefers-reduced-motion: reduce) { .tml-pass, .tml-pass *, .tml-pass::after { animation: none !important; transition: none !important; } .tml-pass { transform: none; } .tml-pass::after { display: none; } }
 

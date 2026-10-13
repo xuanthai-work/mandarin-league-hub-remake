@@ -357,6 +357,13 @@ function MemberDashboard() {
       {tab === "dept" && <MyDepartment canManage={canAdmin} />}
       {tab === "benefits" && <MyBenefits />}
       {reporting && <SubmitReportDialog title={reporting.title} onClose={() => setReporting(null)} onSubmit={(ev, n) => act(reporting.id, "submit", ev, n)} />}
+      {savedImg && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-foreground/80 p-4" onClick={() => setSavedImg(null)}>
+          <img src={savedImg} alt="Thẻ thành viên" className="max-h-[75vh] max-w-full rounded-xl" onClick={(e) => e.stopPropagation()} />
+          <p className="text-center text-sm text-background">Nhấn giữ ảnh rồi chọn “Lưu vào Ảnh” để lưu thẻ về máy.</p>
+          <button onClick={() => setSavedImg(null)} className="rounded-full bg-gold px-5 py-2 text-sm font-semibold text-primary-deep">Đóng</button>
+        </div>
+      )}
     </div></div>
   );
 }
