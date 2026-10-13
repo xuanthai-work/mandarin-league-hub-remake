@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import type React from "react";
 import logo from "@/assets/tml-logo.png.asset.json";
 import drum from "@/assets/dongson-drum-v2.png.asset.json";
 import crane from "@/assets/lac-crane.png.asset.json";
