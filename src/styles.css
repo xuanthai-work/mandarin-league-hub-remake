@@ -427,7 +427,7 @@
 .wc-corner{position:absolute;width:26px;height:26px;border:2px solid var(--wc-gold)}
 .wc-corner.tl{top:8px;left:8px;border-right:0;border-bottom:0}.wc-corner.tr{top:8px;right:8px;border-left:0;border-bottom:0}
 .wc-corner.bl{bottom:8px;left:8px;border-right:0;border-top:0}.wc-corner.br{bottom:8px;right:8px;border-left:0;border-top:0}
-.wc-letter>*{position:relative}
+.wc-letter>*{position:relative}.wc-letter>.wc-corner{position:absolute}
 .wc-head{text-align:center}
 .wc-logo{width:84px;height:84px;margin:0 auto .8rem;object-fit:contain;border-radius:50%;background:var(--wc-ink);padding:5px;border:2px solid var(--wc-gold);filter:drop-shadow(0 0 16px oklch(0.83 0.13 85/.5))}
 .wc-org{font-family:ui-sans-serif,system-ui;letter-spacing:.3em;font-size:.8rem;font-weight:700;color:var(--wc-gold)}
