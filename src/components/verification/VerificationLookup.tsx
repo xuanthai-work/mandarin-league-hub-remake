@@ -239,7 +239,7 @@ function HskResult({ record }: { record: HskRecord }) {
         <div className="relative border border-gold/70 px-5 py-8 md:px-10 md:py-10">
 
           <div className="text-center">
-            <div className="text-xs font-bold uppercase tracking-[0.3em] text-primary">The Mandarin League · 汉语联盟</div>
+            <div className="text-xs font-bold uppercase tracking-[0.08em] text-primary">The Mandarin League · 汉语联盟</div>
             <h2 className="mt-2 text-2xl font-extrabold tracking-wide text-primary-deep md:text-3xl">KẾT QUẢ HSK ĐƯỢC XÁC MINH</h2>
             <p className="mt-1 font-han text-primary">成绩验证</p>
             <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Kết quả được ghi nhận và xác minh trong hệ thống của THE MANDARIN LEAGUE.</p>
@@ -260,7 +260,7 @@ function HskResult({ record }: { record: HskRecord }) {
 
           <div className="py-7">
             <div className="text-center">
-              <h3 className="text-sm font-extrabold uppercase tracking-[0.25em] text-primary-deep">Điểm kỹ năng</h3>
+              <h3 className="text-sm font-extrabold uppercase tracking-[0.08em] text-primary-deep">Điểm kỹ năng</h3>
               <p className="text-xs text-muted-foreground">SKILL PERFORMANCE · 技能成绩</p>
             </div>
             <div className={`mt-5 grid gap-3 sm:grid-cols-2 ${cols}`}>
@@ -316,7 +316,7 @@ function VerifiedSeal() {
   return (
     <div className="mx-auto flex h-36 w-36 -rotate-6 items-center justify-center rounded-full border-[3px] border-destructive p-1 text-destructive">
       <div className="flex h-full w-full flex-col items-center justify-center rounded-full border border-dashed border-destructive/70 text-center">
-        <span className="text-[8px] font-bold tracking-[0.2em]">★ THE MANDARIN LEAGUE ★</span>
+        <span className="text-[8px] font-bold tracking-[0.08em]">★ THE MANDARIN LEAGUE ★</span>
         <Check className="mt-1 h-8 w-8" strokeWidth={3} />
         <span className="text-sm font-extrabold tracking-wide">ĐÃ XÁC THỰC</span>
         <span className="font-han text-[11px] font-bold">官方认证 · VERIFIED</span>
@@ -352,7 +352,7 @@ function CertificateResult({ record }: { record: CertificateRecord }) {
         <div className="relative border-2 border-gold/70 px-5 py-8 text-center md:px-12 md:py-12">
 
           <div className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><CheckCircle2 className="h-4 w-4" /> CHỨNG NHẬN HỢP LỆ · VERIFIED</div>
-          <div className="mt-5 text-xs font-bold uppercase tracking-[0.3em] text-primary">The Mandarin League · 汉语联盟</div>
+          <div className="mt-5 text-xs font-bold uppercase tracking-[0.08em] text-primary">The Mandarin League · 汉语联盟</div>
           <h2 className="mt-2 text-2xl font-extrabold text-primary-deep md:text-3xl">{record.typeLabel ?? "Chứng nhận"}</h2>
           <p className="mt-6 text-sm text-muted-foreground">Trân trọng chứng nhận</p>
           <p className="mt-2 font-serif text-3xl font-bold text-primary-deep md:text-4xl">{record.holderName || "Không công khai"}</p>

@@ -45,7 +45,7 @@ function Header() {
         <Link to="/" className="flex min-w-0 items-center gap-3">
           <img src={logoClear} alt="The Mandarin League" className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-bold tracking-wide text-primary-deep dark:text-foreground md:text-base">THE MANDARIN LEAGUE</div>
+            <div className="whitespace-nowrap text-sm font-bold tracking-normal text-primary-deep dark:text-foreground md:text-base">THE MANDARIN LEAGUE</div>
             <div className="truncate text-[11px] text-muted-foreground dark:text-gold/80 md:text-xs">{t("brand.sub")}</div>
           </div>
         </Link>
