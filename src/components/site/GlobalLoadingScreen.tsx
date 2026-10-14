@@ -43,8 +43,8 @@ export function GlobalLoadingScreen() {
             {[0, 1, 2, 3, 4, 5].map((k) => <span key={k} className="tml-spark" style={{ ["--k" as string]: k }} aria-hidden />)}
             <img src={logoClear} alt="The Mandarin League" className="tml-logo-in relative h-24 w-24 object-contain sm:h-28 sm:w-28" />
           </div>
-          <p className="mt-6 text-lg font-extrabold tracking-[0.2em] text-gold sm:text-xl">THE MANDARIN LEAGUE</p>
-          <p className="mt-1 text-sm font-semibold tracking-[0.3em] text-primary-foreground/90">LIÊN ĐOÀN HÁN NGỮ</p>
+          <p className="mt-6 text-lg font-extrabold tracking-[0.08em] text-gold sm:text-xl">THE MANDARIN LEAGUE</p>
+          <p className="mt-1 text-sm font-semibold tracking-[0.08em] text-primary-foreground/90">LIÊN ĐOÀN HÁN NGỮ</p>
           <p className="mt-2 text-xs italic text-primary-foreground/70">{TAG[lang as "vi"] ?? TAG.vi}</p>
           <div className="mt-6 h-1 w-56 overflow-hidden rounded-full bg-primary-foreground/10"><div className="tml-progress h-full w-1/3 rounded-full bg-gold" /></div>
           <p key={i} className="tml-msg mt-4 h-5 text-sm text-primary-foreground/80">{msgs[i % msgs.length]}</p>

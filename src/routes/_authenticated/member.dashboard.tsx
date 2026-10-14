@@ -215,10 +215,10 @@ function MemberDashboard() {
               <div className="min-w-0 leading-tight">
                 <p className="font-serif text-[15px] font-bold tracking-wide text-primary">普通话联盟</p>
                 <p className="text-[10px] font-semibold tracking-wide">The Mandarin League</p>
-                <p className="text-[8px] uppercase tracking-[0.2em] opacity-70">Liên Đoàn Hán Ngữ</p>
+                <p className="text-[8px] uppercase tracking-[0.08em] opacity-70">Liên Đoàn Hán Ngữ</p>
               </div>
               <div className="tml-banner ml-auto flex h-10 flex-1 items-center justify-end pr-4 sm:max-w-[48%]">
-                <div className="text-right leading-none text-primary-foreground"><p className="text-lg font-bold tracking-[0.2em]">会员证</p><p className="mt-0.5 text-[8px] tracking-[0.25em] text-gold">THẺ THÀNH VIÊN</p></div>
+                <div className="text-right leading-none text-primary-foreground"><p className="text-lg font-bold tracking-[0.08em]">会员证</p><p className="mt-0.5 text-[8px] tracking-[0.08em] text-gold">THẺ THÀNH VIÊN</p></div>
               </div>
             </div>
             <div className="relative grid grid-cols-[1fr_auto] gap-3 px-4 pb-4 pt-3">
@@ -236,7 +236,7 @@ function MemberDashboard() {
                 <p className="mt-1 font-mono text-[9px] font-bold tracking-wider text-primary">{m.member_code}</p>
               </div>
             </div>
-            <div className="tml-pass-foot flex items-center justify-between px-4 py-1.5 text-[8px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
+            <div className="tml-pass-foot flex items-center justify-between px-4 py-1.5 text-[8px] tracking-[0.08em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
             </> : <>
             <DongSon className="-bottom-24 left-1/2 h-[280px] w-[280px] -translate-x-1/2" />
             <LacBirds flock={FLOCK_V} />
@@ -245,7 +245,7 @@ function MemberDashboard() {
               <div className="min-w-0 flex-1 leading-tight">
                 <p className="font-serif text-[15px] font-bold tracking-wide text-gold">普通话联盟</p>
                 <p className="text-[10px] font-semibold tracking-wide text-primary-foreground">THE MANDARIN LEAGUE</p>
-                <p className="text-[8px] tracking-[0.25em] text-gold">会员证 · THẺ THÀNH VIÊN</p>
+                <p className="text-[8px] tracking-[0.08em] text-gold">会员证 · THẺ THÀNH VIÊN</p>
               </div>
               <img src={logo.url} alt="TML" className="h-11 w-11 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
             </div>
@@ -261,7 +261,7 @@ function MemberDashboard() {
               </dl>
               {qr && <img src={qr} alt={`QR ${m.member_code}`} className="mb-2 mt-auto h-11 w-11 rounded bg-background p-0.5" />}
             </div>
-            <div className="tml-pass-foot flex flex-col items-center py-1.5 text-[7px] tracking-[0.3em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
+            <div className="tml-pass-foot flex flex-col items-center py-1.5 text-[7px] tracking-[0.08em]"><span>THEMANDARINLEAGUE.BOND</span><span>TML VERIFIED</span></div>
             </>}
           </div>
           </div>
