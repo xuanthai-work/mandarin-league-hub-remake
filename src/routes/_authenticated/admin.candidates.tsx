@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Download, FileText, Loader2, Sparkles, X } from "lucide-react";
+import { Copy, Download, ExternalLink, FileText, Loader2, QrCode, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeApplication } from "@/lib/recruitment.functions";
 import { approveApplication } from "@/lib/accounts.functions";
@@ -249,6 +249,41 @@ function Approve({ app }: { app: App }) {
           {err && <p className="text-sm text-destructive">{err}</p>}
         </div>
       )}
+      {(code || app.status === "approved") && <WelcomeQr name={app.full_name} dept={code ? dept : (first?.department ?? dept)} role={code ? pos : (first?.position ?? pos)} code={code ?? ""} />}
     </div>
+  );
+}
+
+function WelcomeQr({ name, dept, role, code }: { name: string; dept: string; role: string; code: string }) {
+  const [open, setOpen] = useState(false);
+  const [png, setPng] = useState("");
+  const [copied, setCopied] = useState(false);
+  const date = new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const origin = typeof window !== "undefined" && /themandarinleague\.bond$/.test(window.location.hostname) ? "https://www.themandarinleague.bond" : (typeof window !== "undefined" ? window.location.origin : "");
+  const p = new URLSearchParams({ name, dept, role, date, ...(code ? { code } : {}) });
+  const url = `${origin}/welcome?${p.toString()}`;
+  const show = async () => {
+    setOpen(true);
+    const QR = (await import("qrcode")).default;
+    setPng(await QR.toDataURL(url, { width: 1024, margin: 2, errorCorrectionLevel: "M" }));
+  };
+  return (
+    <>
+      <button type="button" onClick={show} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-primary px-3 py-1.5 text-sm font-medium text-primary hover:bg-accent"><QrCode className="h-4 w-4" />Mã QR & Link thiệp chào mừng</button>
+      {open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40 p-4" onClick={() => setOpen(false)}>
+          <div className="w-full max-w-sm rounded-2xl bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between"><h3 className="font-semibold text-primary-deep">Thiệp chào mừng</h3><button onClick={() => setOpen(false)}><X className="h-5 w-5" /></button></div>
+            <p className="mt-1 text-xs text-muted-foreground">{name} · {deptName(dept)} · {role}{code ? ` · ${code}` : ""}</p>
+            <div className="mt-3 flex aspect-square items-center justify-center rounded-xl border border-border bg-card">{png ? <img src={png} alt="Mã QR thiệp chào mừng" className="h-full w-full rounded-xl" /> : <Loader2 className="h-6 w-6 animate-spin" />}</div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <a href={png || undefined} download={`thiep-tml-${(code || name).replace(/\s+/g, "-")}.png`} className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-2 py-2 font-semibold text-primary-foreground"><Download className="h-3.5 w-3.5" />Tải PNG</a>
+              <button onClick={async () => { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2"><Copy className="h-3.5 w-3.5" />{copied ? "Đã chép" : "Chép link"}</button>
+              <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2"><ExternalLink className="h-3.5 w-3.5" />Xem thử</a>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
