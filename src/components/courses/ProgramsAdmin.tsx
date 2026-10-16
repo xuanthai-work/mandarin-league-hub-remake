@@ -4,6 +4,7 @@ import { BookOpen, CalendarCheck, Copy, ExternalLink, Eye, EyeOff, Pencil, Plus,
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirm } from "@/components/admin/Trash";
+import { COURSE_ROLE_LABEL, resolveTeacherPhotos, type CourseTeacherRole } from "@/lib/teachers";
 import { COURSE_BUCKET, programFee, slugify, STATUS_LABEL, TYPE_LABEL, withThumbs, type CourseType, type Program, type ProgramStatus } from "@/lib/programs";
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
@@ -17,8 +18,10 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
     queryKey: ["admin-programs"],
     queryFn: async () => withThumbs(((await supabase.from("courses").select("*").is("deleted_at", null).order("created_at", { ascending: false })).data ?? []) as Program[]),
   });
-  const { data: teachers } = useQuery({ queryKey: ["admin-teacher-names"], queryFn: async () => (await supabase.from("teachers").select("id, full_name").order("sort_order")).data ?? [] });
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-programs"] }); qc.invalidateQueries({ queryKey: ["public-programs"] }); };
+  const { data: teachers } = useQuery({ queryKey: ["admin-teacher-names"], queryFn: async () => resolveTeacherPhotos(((await supabase.from("teachers").select("id, full_name, avatar_url, status").order("sort_order")).data ?? []) as TeacherOpt[]) });
+  const { data: links } = useQuery({ queryKey: ["admin-course-teachers"], queryFn: async () => ((await supabase.from("course_teachers").select("course_id, teacher_id, role, sort_order").order("sort_order")).data ?? []) as Link[] });
+  const refresh = () => { ["admin-programs", "public-programs", "admin-course-teachers", "course-teachers", "teacher-courses"].forEach((k) => qc.invalidateQueries({ queryKey: [k] })); };
+  const namesFor = (id: string) => (links ?? []).filter((l) => l.course_id === id).map((l) => teachers?.find((t) => t.id === l.teacher_id)?.full_name).filter(Boolean).join(", ");
 
   const patch = async (p: Program, v: { is_published?: boolean; deleted_at?: string; show_in_activities?: boolean }, msg: string) => {
     const { error } = await supabase.from("courses").update({ ...v, updated_at: new Date().toISOString() }).eq("id", p.id);
@@ -50,7 +53,7 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
                   <div><div className="font-medium">{p.title}</div><div className="text-xs text-muted-foreground">{p.level || "—"} · {programFee(p)}</div></div>
                 </div></td>
                 <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${TYPE_LABEL[p.course_type].tone}`}>{TYPE_LABEL[p.course_type].label}</span></td>
-                <td className="p-3 text-xs">{teachers?.find((t) => t.id === p.teacher_id)?.full_name ?? "—"}</td>
+                <td className="p-3 text-xs">{namesFor(p.id) || "—"}</td>
                 <td className="p-3 text-xs">{STATUS_LABEL[p.status]}{!p.is_published && <div className="font-semibold text-destructive">Đang ẩn</div>}{p.show_in_activities && <div className="font-semibold text-primary">+ Hoạt động</div>}</td>
                 <td className="p-3"><button onClick={() => onFilter(p.id)} className="font-semibold text-primary hover:underline">{p.registration_url ? "Link ngoài" : enrollCounts.get(p.id) ?? 0}</button></td>
                 <td className="p-3 text-xs">{new Date(p.created_at).toLocaleDateString("vi-VN")}</td>
@@ -67,13 +70,18 @@ export function ProgramsAdmin({ enrollCounts, onFilter }: { enrollCounts: Map<st
           </tbody>
         </table>
       </div>
-      {edit && <ProgramForm init={edit} teachers={teachers ?? []} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); refresh(); }} />}
+      {edit && <ProgramForm init={edit} teachers={teachers ?? []} initLinks={(links ?? []).filter((l) => l.course_id === edit.id).map(({ teacher_id, role }) => ({ teacher_id, role }))} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); refresh(); }} />}
     </section>
   );
 }
 
-function ProgramForm({ init, teachers, onClose, onSaved }: { init: Partial<Program>; teachers: { id: string; full_name: string }[]; onClose: () => void; onSaved: () => void }) {
+type TeacherOpt = { id: string; full_name: string; avatar_url: string; status: string; photo?: string };
+type Link = { course_id: string; teacher_id: string; role: CourseTeacherRole; sort_order: number };
+type Pick = { teacher_id: string; role: CourseTeacherRole };
+
+function ProgramForm({ init, teachers, initLinks, onClose, onSaved }: { init: Partial<Program>; teachers: TeacherOpt[]; initLinks: Pick[]; onClose: () => void; onSaved: () => void }) {
   const [f, setF] = useState<Partial<Program>>(init);
+  const [picks, setPicks] = useState<Pick[]>(initLinks.length ? initLinks : init.teacher_id ? [{ teacher_id: init.teacher_id, role: "lead" }] : []);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const s = (k: keyof Program) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -95,14 +103,18 @@ function ProgramForm({ init, teachers, onClose, onSaved }: { init: Partial<Progr
     const row = {
       title: f.title!.trim(), slug: slugify(f.slug || f.title!) || crypto.randomUUID().slice(0, 8),
       short_description: f.short_description ?? "", description: f.description ?? "", thumbnail_path, level: f.level ?? "",
-      course_type: f.course_type!, teacher_id: f.teacher_id || null, duration: f.duration ?? "", schedule: f.schedule ?? "", format: f.format ?? "",
+      course_type: f.course_type!, teacher_id: (picks.find((x) => x.role === "lead") ?? picks[0])?.teacher_id ?? null, duration: f.duration ?? "", schedule: f.schedule ?? "", format: f.format ?? "",
       price: f.course_type === "FREE_COMMUNITY" ? 0 : Math.max(0, Number(f.price) || 0), capacity: Math.max(1, Number(f.capacity) || 1),
       facebook_url: f.facebook_url ?? "", registration_url: f.registration_url ?? "", website_url: f.website_url ?? "",
       status: f.status!, is_published: !!f.is_published, show_in_courses: f.show_in_courses ?? true, show_in_activities: !!f.show_in_activities, updated_at: new Date().toISOString(),
     };
-    const { error } = f.id ? await supabase.from("courses").update(row).eq("id", f.id) : await supabase.from("courses").insert(row);
+    const res = f.id ? await supabase.from("courses").update(row).eq("id", f.id).select("id").single() : await supabase.from("courses").insert(row).select("id").single();
+    if (res.error || !res.data) { setBusy(false); toast.error(res.error?.code === "23505" ? "Đường dẫn (slug) đã tồn tại, hãy đổi khác" : "Không lưu được (cần quyền Admin/Ban Chuyên môn)"); return; }
+    const courseId = res.data.id;
+    const del = await supabase.from("course_teachers").delete().eq("course_id", courseId);
+    const ins = !del.error && picks.length ? await supabase.from("course_teachers").insert(picks.map((x, i) => ({ course_id: courseId, teacher_id: x.teacher_id, role: x.role, sort_order: i }))) : { error: del.error };
     setBusy(false);
-    if (error) toast.error(error.code === "23505" ? "Đường dẫn (slug) đã tồn tại, hãy đổi khác" : "Không lưu được (cần quyền Admin/Ban Chuyên môn)");
+    if (ins.error) toast.error("Đã lưu chương trình nhưng chưa lưu được danh sách giáo viên");
     else { toast.success("Đã lưu chương trình"); onSaved(); }
   };
 
@@ -117,11 +129,11 @@ function ProgramForm({ init, teachers, onClose, onSaved }: { init: Partial<Progr
           {f.course_type !== "FREE_COMMUNITY" && <label className="text-sm">Học phí (VNĐ, 0 = liên hệ)<input type="number" min={0} step={10000} className={inp} value={f.price} onChange={(e) => setF({ ...f, price: Number(e.target.value) })} /></label>}
           <label className="text-sm">Trạng thái<select className={inp} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value as ProgramStatus })}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label className="text-sm">Trình độ<input placeholder="VD: HSK 1, Mọi trình độ" className={inp} value={f.level} onChange={s("level")} /></label>
-          <label className="text-sm">Giáo viên<select className={inp} value={f.teacher_id ?? ""} onChange={(e) => setF({ ...f, teacher_id: e.target.value || null })}><option value="">— Đang cập nhật —</option>{teachers.map((t) => <option key={t.id} value={t.id}>{t.full_name}</option>)}</select></label>
           <label className="text-sm">Hình thức<input className={inp} value={f.format} onChange={s("format")} /></label>
           <label className="text-sm">Thời lượng<input placeholder="VD: 8 buổi" className={inp} value={f.duration} onChange={s("duration")} /></label>
           <label className="text-sm">Lịch học<input placeholder="VD: T3 & T5, 20:00" className={inp} value={f.schedule} onChange={s("schedule")} /></label>
           <label className="text-sm">Sĩ số tối đa<input type="number" min={1} className={inp} value={f.capacity} onChange={(e) => setF({ ...f, capacity: Number(e.target.value) })} /></label>
+          <div className="sm:col-span-2"><TeacherPicker teachers={teachers} picks={picks} onChange={setPicks} /></div>
           <label className="text-sm sm:col-span-2">Mô tả ngắn<input maxLength={300} className={inp} value={f.short_description} onChange={s("short_description")} /></label>
           <label className="text-sm sm:col-span-2">Mô tả chi tiết<textarea rows={6} className={inp} value={f.description} onChange={s("description")} /></label>
           <label className="text-sm sm:col-span-2">Ảnh đại diện (JPG/PNG/WebP ≤ 5 MB){f.thumbnail_path && !file && " — đã có ảnh"}<input type="file" accept="image/jpeg,image/png,image/webp" className={inp} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
@@ -134,6 +146,38 @@ function ProgramForm({ init, teachers, onClose, onSaved }: { init: Partial<Progr
         </div>
         <button disabled={busy} className="w-full rounded-full bg-primary py-2.5 font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang lưu…" : "Lưu chương trình"}</button>
       </form>
+    </div>
+  );
+}
+
+/** Multi-teacher assignment with a role per teacher; order = display order. */
+function TeacherPicker({ teachers, picks, onChange }: { teachers: TeacherOpt[]; picks: Pick[]; onChange: (p: Pick[]) => void }) {
+  const [q, setQ] = useState("");
+  const avail = teachers.filter((t) => !picks.some((p) => p.teacher_id === t.id) && (!q || t.full_name.toLowerCase().includes(q.toLowerCase())));
+  const move = (i: number, d: number) => { const n = [...picks]; const j = i + d; if (j < 0 || j >= n.length) return; [n[i], n[j]] = [n[j], n[i]]; onChange(n); };
+  return (
+    <div className="rounded-xl border border-border p-3 text-sm">
+      <div className="font-medium">Giáo viên tham gia <span className="text-xs font-normal text-muted-foreground">(không bắt buộc — có thể bổ sung sau)</span></div>
+      <div className="mt-2 space-y-2">
+        {picks.length === 0 && <div className="text-xs text-muted-foreground">Chưa chọn giáo viên — trang công khai sẽ ghi "Đang cập nhật".</div>}
+        {picks.map((p, i) => { const t = teachers.find((x) => x.id === p.teacher_id); return (
+          <div key={p.teacher_id} className="flex flex-wrap items-center gap-2 rounded-lg bg-secondary p-2">
+            {t?.photo ? <img src={t.photo} alt="" className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-accent" />}
+            <span className="flex-1 font-medium">{t?.full_name ?? "—"}{t && t.status !== "visible" && <span className="ml-1 text-xs text-muted-foreground">(chưa công khai)</span>}</span>
+            <select className="rounded-md border border-input bg-background px-2 py-1 text-xs" value={p.role} onChange={(e) => onChange(picks.map((x, k) => k === i ? { ...x, role: e.target.value as CourseTeacherRole } : x))}>
+              {Object.entries(COURSE_ROLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <button type="button" onClick={() => move(i, -1)} className="rounded px-1.5 hover:bg-muted" aria-label="Lên">↑</button>
+            <button type="button" onClick={() => move(i, 1)} className="rounded px-1.5 hover:bg-muted" aria-label="Xuống">↓</button>
+            <button type="button" onClick={() => onChange(picks.filter((_, k) => k !== i))} className="rounded p-1 text-destructive hover:bg-muted" aria-label="Gỡ"><X className="h-4 w-4" /></button>
+          </div>); })}
+      </div>
+      <input className={`${inp} mt-2`} placeholder="Tìm giáo viên để thêm…" value={q} onChange={(e) => setQ(e.target.value)} />
+      {avail.length > 0 && <div className="mt-1 max-h-36 overflow-y-auto rounded-lg border border-border">
+        {avail.map((t) => <button type="button" key={t.id} onClick={() => { onChange([...picks, { teacher_id: t.id, role: picks.length ? "instructor" : "lead" }]); setQ(""); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-accent">
+          {t.photo ? <img src={t.photo} alt="" className="h-6 w-6 rounded-full object-cover" /> : <div className="h-6 w-6 rounded-full bg-accent" />}{t.full_name}<Plus className="ml-auto h-3.5 w-3.5" />
+        </button>)}
+      </div>}
     </div>
   );
 }
