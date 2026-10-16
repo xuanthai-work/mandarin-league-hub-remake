@@ -4,7 +4,7 @@ export const COURSE_STATUSES: CourseStatus[] = ["Đang tuyển sinh", "Sắp kha
 
 const NAMES = ["Nhập môn tiếng Trung", "Giao tiếp cơ bản", "Tiếng Trung sơ trung cấp", "Trung cấp & luyện thi", "Trung cao cấp", "Cao cấp & học thuật"];
 const SESSIONS = [24, 24, 30, 36, 40, 48];
-const STATUS: CourseStatus[] = ["Đang tuyển sinh", "Đang tuyển sinh", "Sắp khai giảng", "Sắp khai giảng", "Đã đủ lớp", "Sắp khai giảng"];
+const STATUS: CourseStatus[] = Array(6).fill("Sắp khai giảng");
 
 // DEMO data — teacher, fee and schedule are placeholders until TML publishes real classes.
 export const COURSES: Course[] = NAMES.map((name, i) => {
@@ -16,7 +16,7 @@ export const COURSES: Course[] = NAMES.map((name, i) => {
     sessions: SESSIONS[i] ?? 24,
     duration: "90 phút/buổi",
     schedule: "Đang cập nhật",
-    mode: "Trực tuyến qua Google Meet / phòng học online",
+    mode: "Trực tuyến (Online)",
     fee: "Đang cập nhật",
     capacity: 20,
     status: STATUS[i] ?? "Sắp khai giảng",
@@ -25,8 +25,8 @@ export const COURSES: Course[] = NAMES.map((name, i) => {
     audience: level === 1 ? ["Người mới bắt đầu", "Học sinh, sinh viên yêu thích tiếng Trung"] : [`Đã hoàn thành HSK ${level - 1} hoặc tương đương`],
     outcomes: [`Sẵn sàng thi HSK ${level}`, "Tự tin giao tiếp theo trình độ", "Phương pháp tự học hiệu quả"],
     faq: [
-      { q: "Học online như thế nào?", a: "Lớp học trực tiếp qua Google Meet hoặc phòng học online; lịch và link học gửi trong nhóm Zalo lớp." },
-      { q: "Có cần thanh toán online không?", a: "Hiện chưa. Không. Đơn được xét duyệt; học viên trúng tuyển nhận hướng dẫn qua email." },
+      { q: "Học online như thế nào?", a: "Lớp học trực tuyến; lịch và link học gửi trong nhóm Zalo lớp." },
+      { q: "Có cần thanh toán online không?", a: "Không. Đơn được xét duyệt; học viên trúng tuyển nhận hướng dẫn qua email." },
     ],
     demo: true,
   };

@@ -32,7 +32,7 @@ const FOOTER_EXTRA = [
 
 export const CONTACT = {
   email: "community@themandarinleague.bond",
-  facebook: "https://facebook.com",
+  facebook: "https://www.facebook.com/themandarinleague/",
   instagram: "https://www.instagram.com/liendoanhanngu?stkn=MXJzbXhkY3kyNDc2aw==",
 };
 
