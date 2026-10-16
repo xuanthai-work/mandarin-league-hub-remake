@@ -246,6 +246,13 @@
       "when": 1791594097883,
       "tag": "0034_fix_anon_storage_read_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792114630007,
+      "tag": "0035_teachers_profiles_and_course_teachers",
+      "breakpoints": true
     }
   ]
 }

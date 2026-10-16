@@ -625,6 +625,48 @@ export type Database = {
         }
         Relationships: []
       }
+      course_teachers: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          role: string
+          sort_order: number
+          teacher_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          sort_order?: number
+          teacher_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          sort_order?: number
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_teachers_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_teachers_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           capacity: number
@@ -1646,11 +1688,22 @@ export type Database = {
         Row: {
           avatar_url: string
           bio: string
+          bio_zh: string
+          certificates: string
+          chinese_level: string
+          chinese_name: string
           created_at: string
+          experience: string
           full_name: string
           id: string
+          is_featured: boolean
           member_id: string | null
+          programs: string[]
+          show_on_home: boolean
           sort_order: number
+          specialty: string
+          status: string
+          teacher_type: string
           teaching_levels: number[]
           title: string
           visible: boolean
@@ -1658,11 +1711,22 @@ export type Database = {
         Insert: {
           avatar_url?: string
           bio?: string
+          bio_zh?: string
+          certificates?: string
+          chinese_level?: string
+          chinese_name?: string
           created_at?: string
+          experience?: string
           full_name: string
           id?: string
+          is_featured?: boolean
           member_id?: string | null
+          programs?: string[]
+          show_on_home?: boolean
           sort_order?: number
+          specialty?: string
+          status?: string
+          teacher_type?: string
           teaching_levels?: number[]
           title?: string
           visible?: boolean
@@ -1670,11 +1734,22 @@ export type Database = {
         Update: {
           avatar_url?: string
           bio?: string
+          bio_zh?: string
+          certificates?: string
+          chinese_level?: string
+          chinese_name?: string
           created_at?: string
+          experience?: string
           full_name?: string
           id?: string
+          is_featured?: boolean
           member_id?: string | null
+          programs?: string[]
+          show_on_home?: boolean
           sort_order?: number
+          specialty?: string
+          status?: string
+          teacher_type?: string
           teaching_levels?: number[]
           title?: string
           visible?: boolean
