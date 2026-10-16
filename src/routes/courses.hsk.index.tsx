@@ -28,7 +28,7 @@ function PCourses() {
 
   return (
     <>
-      <PageHero eyebrow="Khóa học HSK" title="Lộ trình HSK 1–6" desc="Học online qua Zoom, lộ trình rõ ràng từ nhập môn đến cao cấp." />
+      <PageHero eyebrow="Khóa học HSK" title="Lộ trình HSK 1–6" desc="Học trực tuyến, lộ trình rõ ràng từ nhập môn đến cao cấp." />
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((c) => (
@@ -41,7 +41,7 @@ function PCourses() {
               <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{c.description}</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2"><Clock className="h-4 w-4" />{c.sessions} buổi</span>
-                <span className="flex items-center gap-2"><Video className="h-4 w-4" />Google Meet</span>
+                <span className="flex items-center gap-2"><Video className="h-4 w-4" />Trực tuyến</span>
                 <span className="col-span-2 flex items-center gap-2 font-semibold text-primary-deep"><Wallet className="h-4 w-4" />{formatFee(st(c.level))}</span>
               </div>
             </Link>
