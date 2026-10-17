@@ -21,7 +21,7 @@ export function TeacherCard({ t, role }: { t: PublicTeacher; role?: string }) {
         {t.is_featured && <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-0.5 text-[11px] font-semibold text-primary-deep">★ {tr("Nổi bật")}</span>}
       </div>
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-bold text-primary-deep">{t.full_name}{t.chinese_name && <span className="ml-2 font-cjk text-base font-medium text-muted-foreground">{t.chinese_name}</span>}</h3>
+        <h3 className="text-lg font-bold text-primary-deep">{t.full_name}{t.chinese_name && <span className="ml-2 text-base font-medium text-muted-foreground">{t.chinese_name}</span>}</h3>
         <div className="mt-0.5 text-sm font-medium text-primary">{role ?? (t.title || tr("Giảng viên"))}</div>
         {t.specialty && <div className="mt-1 text-xs text-muted-foreground">{t.specialty}</div>}
         {tags.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{tags.map((x) => <span key={x} className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground">{x}</span>)}</div>}

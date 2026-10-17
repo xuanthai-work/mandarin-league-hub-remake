@@ -33,7 +33,7 @@ function TeacherProfile() {
           <div>
             <Link to="/teachers" className="text-sm font-medium text-primary">← {tr("Đội ngũ Giảng viên")}</Link>
             <h1 className="mt-3 text-3xl font-bold text-primary-deep md:text-5xl">{t.full_name}</h1>
-            {t.chinese_name && <div className="mt-1 font-cjk text-xl text-muted-foreground">{t.chinese_name}</div>}
+            {t.chinese_name && <div className="mt-1 text-xl text-muted-foreground">{t.chinese_name}</div>}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {t.title && <span className="font-semibold text-primary">{t.title}</span>}
               <span className="rounded-full bg-gold-soft px-2.5 py-0.5 text-xs font-semibold text-warning-foreground">{tr(TEACHER_TYPE_LABEL[t.teacher_type])}</span>
@@ -47,7 +47,7 @@ function TeacherProfile() {
           <div>
             <h2 className="text-xl font-bold text-primary-deep">{tr("Giới thiệu")}</h2>
             <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground">{t.bio || tr("Đang cập nhật")}</p>
-            {t.bio_zh && <p className="mt-3 whitespace-pre-line font-cjk leading-relaxed text-muted-foreground">{t.bio_zh}</p>}
+            {t.bio_zh && <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground">{t.bio_zh}</p>}
           </div>
           <div>
             <h2 className="text-xl font-bold text-primary-deep">{tr("Khóa học tham gia")}</h2>
