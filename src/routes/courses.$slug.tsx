@@ -4,7 +4,8 @@ import { CalendarDays, Clock, ExternalLink, Facebook, Globe, UserRound, Users, V
 import { EmptyState } from "@/components/site/ui";
 import { EnrollmentDialog } from "@/components/courses/EnrollmentDialog";
 import { programFee, STATUS_LABEL, TYPE_LABEL, useProgram } from "@/lib/programs";
-import { usePublicTeachers } from "@/lib/teachers";
+import { COURSE_ROLE_LABEL, useCourseTeachers } from "@/lib/teachers";
+import { TeacherPhoto } from "@/components/site/TeacherCard";
 
 export const Route = createFileRoute("/courses/$slug")({ staticData: { sitemap: false },
   head: () => ({ meta: [
@@ -20,11 +21,10 @@ export const Route = createFileRoute("/courses/$slug")({ staticData: { sitemap: 
 function ProgramPage() {
   const { slug } = Route.useParams();
   const { data: p, isLoading } = useProgram(slug);
-  const { data: teachers } = usePublicTeachers();
   const [dlg, setDlg] = useState(false);
+  const { data: team } = useCourseTeachers(p?.id);
   if (isLoading) return <div className="mx-auto max-w-3xl px-4 py-20 text-center text-muted-foreground">Đang tải…</div>;
   if (!p) return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy chương trình" desc="Chương trình không tồn tại hoặc đã tạm ẩn." /><div className="mt-6 text-center"><Link to="/courses" className="font-semibold text-primary">← Tất cả chương trình</Link></div></div>;
-  const t = teachers?.find((x) => x.id === p.teacher_id);
   const fee = programFee(p);
   const canEnroll = p.status === "enrolling";
   const cta = !canEnroll
@@ -49,9 +49,24 @@ function ProgramPage() {
         </div>
       </section>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:px-6 lg:grid-cols-[1fr_340px]">
-        <article className="whitespace-pre-line leading-relaxed">{p.description || "Nội dung chi tiết đang cập nhật."}</article>
+        <div className="space-y-10">
+          <article className="whitespace-pre-line leading-relaxed">{p.description || "Nội dung chi tiết đang cập nhật."}</article>
+          <section>
+            <h2 className="text-xl font-bold text-primary-deep">Giáo viên giảng dạy</h2>
+            {!team?.length ? <p className="mt-3 text-sm text-muted-foreground">Danh sách giáo viên đang được cập nhật.</p> : (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {team.map(({ teacher: x, role }) => (
+                  <Link key={x.id} to="/teachers/$teacherId" params={{ teacherId: x.id }} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition hover:border-gold/60">
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40"><TeacherPhoto t={x} /></div>
+                    <div><div className="font-semibold">{x.full_name}</div><div className="text-xs text-primary">{COURSE_ROLE_LABEL[role]}</div>{x.title && <div className="text-xs text-muted-foreground">{x.title}</div>}</div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
         <aside className="h-fit space-y-4 rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-24">
-          <Info icon={UserRound} l="Giáo viên" v={t?.full_name ?? "Đang cập nhật"} />
+          <Info icon={UserRound} l="Giáo viên" v={team?.length ? team.map((x) => x.teacher.full_name).join(", ") : "Đang cập nhật"} />
           {p.level && <Info icon={Users} l="Trình độ" v={p.level} />}
           {p.duration && <Info icon={Clock} l="Thời lượng" v={p.duration} />}
           {p.schedule && <Info icon={CalendarDays} l="Lịch học" v={p.schedule} />}

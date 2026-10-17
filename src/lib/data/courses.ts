@@ -28,7 +28,7 @@ export const COURSES: Course[] = NAMES.map((name, i) => {
       { q: "Học online như thế nào?", a: "Lớp học trực tuyến; lịch và link học gửi trong nhóm Zalo lớp." },
       { q: "Có cần thanh toán online không?", a: "Không. Đơn được xét duyệt; học viên trúng tuyển nhận hướng dẫn qua email." },
     ],
-    demo: true,
+    demo: false,
   };
 });
 
