@@ -50,7 +50,6 @@ export const PHRASES: Record<string, [string, string]> = {
   "Giảng viên": ["讲师", "Teacher"],
   "Tìm giáo viên theo tên…": ["按姓名搜索教师…", "Search teachers by name…"],
   "Tải thêm": ["加载更多", "Load more"],
-  "Giới thiệu": ["简介", "About"],
   "Khóa học tham gia": ["参与课程", "Courses"],
   "Chuyên môn": ["专业方向", "Specialty"],
   "Trình độ Hán ngữ": ["汉语水平", "Chinese level"],
