@@ -154,7 +154,7 @@ function ProgramForm({ init, teachers, initLinks, onClose, onSaved }: { init: Pa
 function TeacherPicker({ teachers, picks, onChange }: { teachers: TeacherOpt[]; picks: Pick[]; onChange: (p: Pick[]) => void }) {
   const [q, setQ] = useState("");
   const avail = teachers.filter((t) => !picks.some((p) => p.teacher_id === t.id) && (!q || t.full_name.toLowerCase().includes(q.toLowerCase())));
-  const move = (i: number, d: number) => { const n = [...picks]; const j = i + d; if (j < 0 || j >= n.length) return; [n[i], n[j]] = [n[j], n[i]]; onChange(n); };
+  const move = (i: number, d: number) => { const n = [...picks]; const j = i + d; if (j < 0 || j >= n.length) return; const a = n[i]!, b = n[j]!; n[i] = b; n[j] = a; onChange(n); };
   return (
     <div className="rounded-xl border border-border p-3 text-sm">
       <div className="font-medium">Giáo viên tham gia <span className="text-xs font-normal text-muted-foreground">(không bắt buộc — có thể bổ sung sau)</span></div>
