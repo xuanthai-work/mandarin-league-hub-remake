@@ -6,6 +6,8 @@ import { useSiteContent } from "@/lib/site-content";
 import { usePublishedClasses, classFee } from "@/lib/hsk-classes";
 import { usePublicActivities, CATEGORY_LABEL, fmtDateTime } from "@/lib/activities";
 import { EmptyState } from "@/components/site/ui";
+import { TeacherCard } from "@/components/site/TeacherCard";
+import { usePublicTeachers } from "@/lib/teachers";
 
 export const Route = createFileRoute("/")({ staticData: { sitemap: true },
   head: () => ({
@@ -30,6 +32,7 @@ function Home() {
   const site = useSiteContent("site").data;
   const classes = (usePublishedClasses().data ?? []).slice(0, 4);
   const acts = (usePublicActivities().data ?? []).slice(0, 3);
+  const faculty = (usePublicTeachers().data ?? []).filter((x) => x.show_on_home).slice(0, 8);
   return (
     <>
       {preview && <div className="bg-gold/20 py-2 text-center text-sm font-semibold text-primary-deep">Đang xem trước bản nháp — khách truy cập chưa thấy nội dung này.</div>}
@@ -117,6 +120,21 @@ function Home() {
               </div>
             </Link>
           ))}
+        </div>
+      </section>}
+
+      {/* Faculty — hidden until admins pick teachers for the homepage */}
+      {faculty.length > 0 && <section className="border-t border-border py-20">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <SectionLabel>师资团队 · {tr("Đội ngũ Giảng viên")}</SectionLabel>
+              <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">{tr("ĐỘI NGŨ GIẢNG VIÊN")}</h2>
+              <p className="mt-3 max-w-2xl text-muted-foreground">{tr("Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập.")}</p>
+            </div>
+            <Link to="/teachers" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">{tr("Xem tất cả giáo viên")} <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{faculty.map((x) => <TeacherCard key={x.id} t={x} />)}</div>
         </div>
       </section>}
 

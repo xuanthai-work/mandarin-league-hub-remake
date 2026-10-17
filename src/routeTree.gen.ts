@@ -34,6 +34,8 @@ import { Route as CoursesHskRouteImport } from './routes/courses.hsk'
 import { Route as MemberMemberIdRouteImport } from './routes/member.$memberId'
 import { Route as NewsIndexRouteImport } from './routes/news.index'
 import { Route as NewsSlugRouteImport } from './routes/news.$slug'
+import { Route as TeachersIndexRouteImport } from './routes/teachers.index'
+import { Route as TeachersTeacherIdRouteImport } from './routes/teachers.$teacherId'
 import { Route as VerifyIndexRouteImport } from './routes/verify.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminSectionRouteImport } from './routes/_authenticated/admin.$section'
@@ -188,6 +190,16 @@ const NewsIndexRoute = NewsIndexRouteImport.update({
 const NewsSlugRoute = NewsSlugRouteImport.update({
   id: '/news/$slug',
   path: '/news/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeachersIndexRoute = TeachersIndexRouteImport.update({
+  id: '/teachers/',
+  path: '/teachers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeachersTeacherIdRoute = TeachersTeacherIdRouteImport.update({
+  id: '/teachers/$teacherId',
+  path: '/teachers/$teacherId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyIndexRoute = VerifyIndexRouteImport.update({
@@ -380,9 +392,11 @@ export interface FileRoutesByFullPath {
   '/courses/hsk': typeof CoursesHskRouteWithChildren
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
+  '/teachers/$teacherId': typeof TeachersTeacherIdRoute
   '/activities/': typeof ActivitiesIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/news/': typeof NewsIndexRoute
+  '/teachers/': typeof TeachersIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
@@ -433,9 +447,11 @@ export interface FileRoutesByTo {
   '/courses/$slug': typeof CoursesSlugRoute
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
+  '/teachers/$teacherId': typeof TeachersTeacherIdRoute
   '/activities': typeof ActivitiesIndexRoute
   '/courses': typeof CoursesIndexRoute
   '/news': typeof NewsIndexRoute
+  '/teachers': typeof TeachersIndexRoute
   '/verify': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
@@ -491,9 +507,11 @@ export interface FileRoutesById {
   '/courses/hsk': typeof CoursesHskRouteWithChildren
   '/member/$memberId': typeof MemberMemberIdRoute
   '/news/$slug': typeof NewsSlugRoute
+  '/teachers/$teacherId': typeof TeachersTeacherIdRoute
   '/activities/': typeof ActivitiesIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/news/': typeof NewsIndexRoute
+  '/teachers/': typeof TeachersIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/_authenticated/admin/$section': typeof AuthenticatedAdminSectionRoute
   '/_authenticated/admin/accounts': typeof AuthenticatedAdminAccountsRoute
@@ -549,9 +567,11 @@ export interface FileRouteTypes {
     | '/courses/hsk'
     | '/member/$memberId'
     | '/news/$slug'
+    | '/teachers/$teacherId'
     | '/activities/'
     | '/courses/'
     | '/news/'
+    | '/teachers/'
     | '/verify/'
     | '/admin/$section'
     | '/admin/accounts'
@@ -602,9 +622,11 @@ export interface FileRouteTypes {
     | '/courses/$slug'
     | '/member/$memberId'
     | '/news/$slug'
+    | '/teachers/$teacherId'
     | '/activities'
     | '/courses'
     | '/news'
+    | '/teachers'
     | '/verify'
     | '/admin/$section'
     | '/admin/accounts'
@@ -659,9 +681,11 @@ export interface FileRouteTypes {
     | '/courses/hsk'
     | '/member/$memberId'
     | '/news/$slug'
+    | '/teachers/$teacherId'
     | '/activities/'
     | '/courses/'
     | '/news/'
+    | '/teachers/'
     | '/verify/'
     | '/_authenticated/admin/$section'
     | '/_authenticated/admin/accounts'
@@ -714,8 +738,10 @@ export interface RootRouteChildren {
   CoursesHskRoute: typeof CoursesHskRouteWithChildren
   MemberMemberIdRoute: typeof MemberMemberIdRoute
   NewsSlugRoute: typeof NewsSlugRoute
+  TeachersTeacherIdRoute: typeof TeachersTeacherIdRoute
   CoursesIndexRoute: typeof CoursesIndexRoute
   NewsIndexRoute: typeof NewsIndexRoute
+  TeachersIndexRoute: typeof TeachersIndexRoute
   VerifyIndexRoute: typeof VerifyIndexRoute
   VerifyCertificateCodeRoute: typeof VerifyCertificateCodeRoute
   VerifyHskCodeRoute: typeof VerifyHskCodeRoute
@@ -901,6 +927,20 @@ declare module '@tanstack/react-router' {
       path: '/news/$slug'
       fullPath: '/news/$slug'
       preLoaderRoute: typeof NewsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teachers/': {
+      id: '/teachers/'
+      path: '/teachers'
+      fullPath: '/teachers/'
+      preLoaderRoute: typeof TeachersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teachers/$teacherId': {
+      id: '/teachers/$teacherId'
+      path: '/teachers/$teacherId'
+      fullPath: '/teachers/$teacherId'
+      preLoaderRoute: typeof TeachersTeacherIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify/': {
@@ -1226,8 +1266,10 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesHskRoute: CoursesHskRouteWithChildren,
   MemberMemberIdRoute: MemberMemberIdRoute,
   NewsSlugRoute: NewsSlugRoute,
+  TeachersTeacherIdRoute: TeachersTeacherIdRoute,
   CoursesIndexRoute: CoursesIndexRoute,
   NewsIndexRoute: NewsIndexRoute,
+  TeachersIndexRoute: TeachersIndexRoute,
   VerifyIndexRoute: VerifyIndexRoute,
   VerifyCertificateCodeRoute: VerifyCertificateCodeRoute,
   VerifyHskCodeRoute: VerifyHskCodeRoute,
