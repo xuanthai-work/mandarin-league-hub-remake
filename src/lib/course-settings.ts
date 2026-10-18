@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type CourseSetting = { level: number; registration_open: boolean; fee_type: "free" | "paid"; fee_amount: number; capacity: number };
+export type CourseSetting = { level: number; registration_open: boolean; fee_type: "free" | "paid"; fee_amount: number; capacity: number; lead_teacher_id?: string | null };
 
 export const ENROLL_STATUS: Record<string, { label: string; tone: string }> = {
   pending: { label: "Đang chờ xét duyệt", tone: "bg-accent text-primary" },

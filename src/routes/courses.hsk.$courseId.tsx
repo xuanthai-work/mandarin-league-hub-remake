@@ -6,7 +6,7 @@ import { EnrollmentDialog } from "@/components/courses/EnrollmentDialog";
 import { formatFee, useCourseSettings } from "@/lib/course-settings";
 import { getCourse } from "@/lib/data/courses";
 import { pageMeta } from "@/lib/seo";
-import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
+import { usePublicTeachers, leadTeacherForLevel } from "@/lib/teachers";
 
 export const Route = createFileRoute("/courses/hsk/$courseId")({ staticData: { sitemap: true },
   loader: ({ params }) => {
@@ -30,9 +30,9 @@ function CourseNotFound() {
 function PCourse() {
   const { course: c } = Route.useLoaderData();
   const { data: teachers } = usePublicTeachers();
-  const ts = teachersForLevel(teachers, c.level);
   const { data: settings } = useCourseSettings();
   const st = settings?.find((x) => x.level === c.level);
+  const lead = leadTeacherForLevel(teachers, c.level, st?.lead_teacher_id);
   const open = st ? st.registration_open : true;
   const fee = formatFee(st);
   const [dlg, setDlg] = useState(false);
@@ -64,14 +64,17 @@ function PCourse() {
           </section>
         </div>
         <aside className="h-fit space-y-4 rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-24">
-          {ts.length === 0 ? (
-            <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div><div><div className="text-xs text-muted-foreground">Giáo viên</div><div className="font-semibold">Đang cập nhật</div></div></div>
-          ) : ts.map((t) => (
-            <div key={t.id} className="flex items-start gap-3">
-              {t.avatar_url ? <img src={t.avatar_url} alt={t.full_name} className="h-12 w-12 shrink-0 rounded-full object-cover" /> : <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div>}
-              <div><div className="text-xs text-muted-foreground">Giáo viên{t.title ? ` · ${t.title}` : ""}</div><div className="font-semibold">{t.full_name}</div>{t.bio && <p className="mt-1 text-sm text-muted-foreground">{t.bio}</p>}</div>
+          {!lead ? (
+            <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div><div><div className="text-xs text-muted-foreground">Giảng viên phụ trách</div><div className="font-semibold">Đang cập nhật</div></div></div>
+          ) : (
+            <div className="border-b border-border pb-4">
+              <Link to="/teachers/$teacherId" params={{ teacherId: lead.id }} className="group flex items-center gap-3">
+                {lead.avatar_url ? <img src={lead.avatar_url} alt={lead.full_name} className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-gold/50" /> : <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div>}
+                <div className="min-w-0"><div className="text-xs text-muted-foreground">Giảng viên phụ trách chính</div><div className="font-semibold group-hover:text-primary">{lead.full_name}</div>{lead.title && <div className="line-clamp-1 text-xs text-muted-foreground">{lead.title}</div>}</div>
+              </Link>
+              <p className="mt-3 text-xs text-muted-foreground">Đồng giảng dạy cùng đội ngũ giảng viên TML · <Link to="/teachers" className="font-semibold text-primary hover:underline">Xem tất cả giảng viên →</Link></p>
             </div>
-          ))}
+          )}
           <Info icon={Clock} l="Số buổi / thời lượng" v={`${c.sessions} buổi · ${c.duration}`} />
           <Info icon={CalendarDays} l="Lịch học" v={c.schedule} />
           <Info icon={Video} l="Hình thức" v={c.mode} />

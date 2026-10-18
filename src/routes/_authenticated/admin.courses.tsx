@@ -101,6 +101,7 @@ function CoursesAdmin() {
 
 function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pending: number; approved: number; onSave: (p: Partial<CourseSetting>) => void }) {
   const [fee, setFee] = useState({ fee_type: s.fee_type, fee_amount: s.fee_amount, capacity: s.capacity });
+  const { data: teachers } = useQuery({ queryKey: ["admin-teacher-names"], queryFn: async () => ((await supabase.from("teachers").select("id, full_name, teaching_levels").neq("status", "hidden").order("sort_order")).data ?? []) as { id: string; full_name: string; teaching_levels: number[] }[] });
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
@@ -110,6 +111,12 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
         </button>
       </div>
       <div className="mt-2 text-xs text-muted-foreground">{pending} chờ duyệt · {approved}/{s.capacity} trúng tuyển · {formatFee(s)}</div>
+      <label className="mt-3 block text-xs text-muted-foreground">Giảng viên phụ trách chính (hiện trên trang khóa)
+        <select className={`${inp} mt-1`} value={s.lead_teacher_id ?? ""} onChange={(e) => onSave({ lead_teacher_id: e.target.value || null })}>
+          <option value="">Tự động (nổi bật / xếp đầu)</option>
+          {(teachers ?? []).map((t) => <option key={t.id} value={t.id}>{t.full_name}{t.teaching_levels.includes(s.level) ? "" : " (chưa gán cấp này)"}</option>)}
+        </select>
+      </label>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <select className={inp} value={fee.fee_type} onChange={(e) => setFee({ ...fee, fee_type: e.target.value as "free" | "paid" })}><option value="free">Miễn phí</option><option value="paid">Có phí</option></select>
         <input type="number" min={1} className={inp} title="Sĩ số tối đa" value={fee.capacity} onChange={(e) => setFee({ ...fee, capacity: Number(e.target.value) })} />
