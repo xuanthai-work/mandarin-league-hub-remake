@@ -42,7 +42,7 @@ function Header() {
   const { t } = useT();
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 md:h-20 md:px-5">
         <Link to="/" className="flex min-w-0 items-center gap-3">
           <img src={logoClear} alt="The Mandarin League" className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
           <div className="min-w-0 leading-tight">
@@ -50,23 +50,23 @@ function Header() {
             <div className="truncate text-[11px] text-muted-foreground dark:text-gold/80 md:text-xs">{t("brand.sub")}</div>
           </div>
         </Link>
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden min-w-0 items-center gap-0.5 lg:flex">
           {NAV.map((n) => (
             <Link
               key={n.to}
               to={n.to}
               activeOptions={{ exact: n.to === "/" }}
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:px-2.5 xl:text-sm"
               activeProps={{ className: "text-primary bg-accent" }}
             >
               {t(`nav.${n.to}` as DictKey)}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 lg:flex"><LanguageSwitcher /><ThemeToggle /></div>
+        <div className="hidden shrink-0 items-center gap-1 lg:flex"><LanguageSwitcher /><ThemeToggle /></div>
         <Link
           to="/join"
-          className="hidden rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 lg:inline-flex"
+          className="hidden whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 xl:px-5 xl:py-2.5 lg:inline-flex"
         >
           {t("cta.join")}
         </Link>
