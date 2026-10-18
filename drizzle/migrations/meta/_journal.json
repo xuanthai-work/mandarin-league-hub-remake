@@ -253,6 +253,13 @@
       "when": 1792114630007,
       "tag": "0035_teachers_profiles_and_course_teachers",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792291868216,
+      "tag": "0036_course_settings_lead_teacher",
+      "breakpoints": true
     }
   ]
 }

@@ -603,6 +603,7 @@ export type Database = {
           capacity: number
           fee_amount: number
           fee_type: string
+          lead_teacher_id: string | null
           level: number
           registration_open: boolean
           updated_at: string
@@ -611,6 +612,7 @@ export type Database = {
           capacity?: number
           fee_amount?: number
           fee_type?: string
+          lead_teacher_id?: string | null
           level: number
           registration_open?: boolean
           updated_at?: string
@@ -619,11 +621,20 @@ export type Database = {
           capacity?: number
           fee_amount?: number
           fee_type?: string
+          lead_teacher_id?: string | null
           level?: number
           registration_open?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "course_settings_lead_teacher_id_fkey"
+            columns: ["lead_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       course_teachers: {
         Row: {
