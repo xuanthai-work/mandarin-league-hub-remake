@@ -88,4 +88,8 @@ export function useTeacherCourses(teacherId: string) {
 
 export const teachersForLevel = <T extends { teaching_levels: number[] }>(list: T[] | undefined, level: number) => (list ?? []).filter((t) => t.teaching_levels.includes(level));
 
+/** One lead teacher per HSK level: admin pick if visible, else first (featured/sorted) teacher of that level. */
+export const leadTeacherForLevel = <T extends { id: string; teaching_levels: number[] }>(list: T[] | undefined, level: number, pickedId?: string | null) =>
+  (pickedId && (list ?? []).find((t) => t.id === pickedId)) || teachersForLevel(list, level)[0] || null;
+
 export const teacherTags = (t: Pick<PublicTeacher, "teaching_levels" | "programs">) => [...t.teaching_levels.map((l) => `HSK ${l}`), ...t.programs];

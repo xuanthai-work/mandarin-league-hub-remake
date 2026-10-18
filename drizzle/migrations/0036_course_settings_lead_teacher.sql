@@ -1,0 +1,1 @@
+ALTER TABLE public.course_settings ADD COLUMN IF NOT EXISTS lead_teacher_id uuid REFERENCES public.teachers(id) ON DELETE SET NULL;
