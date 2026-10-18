@@ -6,7 +6,7 @@ import { useSiteContent } from "@/lib/site-content";
 import { usePublishedClasses, classFee } from "@/lib/hsk-classes";
 import { usePublicActivities, CATEGORY_LABEL, fmtDateTime } from "@/lib/activities";
 import { EmptyState } from "@/components/site/ui";
-import { TeacherCard } from "@/components/site/TeacherCard";
+import { TeacherCardCompact } from "@/components/site/TeacherCard";
 import { usePublicTeachers } from "@/lib/teachers";
 
 export const Route = createFileRoute("/")({ staticData: { sitemap: true },
