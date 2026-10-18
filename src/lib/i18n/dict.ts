@@ -5,6 +5,7 @@ export const DICT = {
   "nav./about": { vi: "Giới thiệu", zh: "关于我们", en: "About" },
   "nav./organization": { vi: "Cơ cấu tổ chức", zh: "组织架构", en: "Organization" },
   "nav./courses": { vi: "Khóa học", zh: "课程", en: "Courses" },
+  "nav./teachers": { vi: "Giảng viên", zh: "师资", en: "Faculty" },
   "nav./activities": { vi: "Hoạt động", zh: "活动", en: "Activities" },
   "nav./verify": { vi: "Xác minh", zh: "证书查询", en: "Verify" },
   "nav./join": { vi: "Tuyển thành viên", zh: "招募成员", en: "Join us" },

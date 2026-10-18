@@ -16,6 +16,7 @@ export const NAV = [
   { to: "/about", label: "Giới thiệu" },
   { to: "/organization", label: "Cơ cấu tổ chức" },
   { to: "/courses", label: "Khóa học" },
+  { to: "/teachers", label: "Giảng viên" },
   { to: "/activities", label: "Hoạt động" },
   { to: "/verify", label: "Xác minh" },
   { to: "/join", label: "Tuyển thành viên" },
