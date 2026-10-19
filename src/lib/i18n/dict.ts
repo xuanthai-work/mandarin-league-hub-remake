@@ -13,6 +13,7 @@ export const DICT = {
   "nav./community": { vi: "Cộng đồng", zh: "社区", en: "Community" },
   "nav./partners": { vi: "Đối tác", zh: "合作伙伴", en: "Partners" },
   "nav./news": { vi: "Tin tức", zh: "新闻", en: "News" },
+  "nav.more": { vi: "Thêm", zh: "更多", en: "More" },
   "cta.join": { vi: "Tham gia TML", zh: "加入 TML", en: "Join TML" },
   "cta.hsk": { vi: "Xem khóa học HSK", zh: "查看 HSK 课程", en: "View HSK courses" },
   "menu.open": { vi: "Mở menu", zh: "打开菜单", en: "Open menu" },
