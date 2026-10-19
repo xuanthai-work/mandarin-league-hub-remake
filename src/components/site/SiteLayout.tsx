@@ -19,7 +19,6 @@ export const NAV = [
   { to: "/teachers", label: "Giảng viên" },
   { to: "/activities", label: "Hoạt động" },
   { to: "/verify", label: "Xác minh" },
-  { to: "/join", label: "Tuyển thành viên" },
   { to: "/contact", label: "Liên hệ" },
 ] as const;
 
