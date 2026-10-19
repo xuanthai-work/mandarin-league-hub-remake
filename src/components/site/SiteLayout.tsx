@@ -1,13 +1,14 @@
 import { useTr as useTrHero } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { Menu, X, Mail, Facebook, Instagram, AtSign, MapPin, Lock, Music2, Linkedin } from "lucide-react";
+import { Menu, X, Mail, Facebook, Instagram, AtSign, MapPin, Lock, Music2, Linkedin, ChevronDown } from "lucide-react";
 import logo from "@/assets/tml-logo.png.asset.json";
 import logoClear from "@/assets/tml-logo-transparent.png";
 import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CrystalParticles } from "./CrystalParticles";
 import { useSiteContent } from "@/lib/site-content";
 
@@ -19,13 +20,16 @@ export const NAV = [
   { to: "/teachers", label: "Giảng viên" },
   { to: "/activities", label: "Hoạt động" },
   { to: "/verify", label: "Xác minh" },
-  { to: "/join", label: "Tuyển thành viên" },
   { to: "/contact", label: "Liên hệ" },
 ] as const;
+
+// Items collapsed into the "More" menu on narrow desktop widths (1024–1279px).
+const NAV_MORE: readonly string[] = ["/organization", "/verify", "/contact"];
 
 export const TAGLINE = "Connecting learners, educators & opportunities across Vietnam and China.";
 
 const FOOTER_EXTRA = [
+  { to: "/join", label: "Tuyển thành viên" },
   { to: "/community", label: "Cộng đồng" },
   { to: "/partners", label: "Đối tác" },
   { to: "/news", label: "Tin tức" },
@@ -46,8 +50,8 @@ function Header() {
         <Link to="/" className="flex min-w-0 items-center gap-3">
           <img src={logoClear} alt="The Mandarin League" className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
           <div className="min-w-0 leading-tight">
-            <div className="whitespace-nowrap text-sm font-bold tracking-normal text-primary-deep dark:text-foreground md:text-base">THE MANDARIN LEAGUE</div>
-            <div className="truncate text-[11px] text-muted-foreground dark:text-gold/80 md:text-xs">{t("brand.sub")}</div>
+            <div className="whitespace-nowrap text-sm font-bold tracking-normal text-primary-deep dark:text-foreground xl:text-base">THE MANDARIN LEAGUE</div>
+            <div className="hidden truncate text-[11px] text-muted-foreground dark:text-gold/80 md:block md:text-xs lg:hidden xl:block">{t("brand.sub")}</div>
           </div>
         </Link>
         <nav className="hidden min-w-0 items-center gap-0.5 lg:flex">
@@ -56,12 +60,26 @@ function Header() {
               key={n.to}
               to={n.to}
               activeOptions={{ exact: n.to === "/" }}
-              className="whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:px-2.5 xl:text-sm"
+              className={`whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:px-2.5 xl:text-sm${NAV_MORE.includes(n.to) ? " hidden xl:inline-flex" : ""}`}
               activeProps={{ className: "text-primary bg-accent" }}
             >
               {t(`nav.${n.to}` as DictKey)}
             </Link>
           ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex shrink-0 items-center gap-1 rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:hidden">
+              {t("nav.more")} <ChevronDown className="h-3.5 w-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-48">
+              {NAV.filter((n) => NAV_MORE.includes(n.to)).map((n) => (
+                <DropdownMenuItem key={n.to} asChild>
+                  <Link to={n.to} className="flex w-full" activeOptions={{ exact: n.to === "/" }}>
+                    {t(`nav.${n.to}` as DictKey)}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
         <div className="hidden shrink-0 items-center gap-1 lg:flex"><LanguageSwitcher /><ThemeToggle /></div>
         <Link
@@ -131,7 +149,7 @@ function Footer() {
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{t("footer.contact")}</div>
           <ul className="space-y-3 text-sm opacity-90">
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${site.email}`} className="hover:underline">{site.email}</a></li>
+            <li className="flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${site.email}`} className="break-all hover:underline">{site.email}</a></li>
             <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={site.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
             <li className="flex items-center gap-2"><Instagram className="h-4 w-4" /><a href={site.instagram} target="_blank" rel="noreferrer" className="hover:underline">Instagram</a></li>
             {site.threads && <li className="flex items-center gap-2"><AtSign className="h-4 w-4" /><a href={site.threads} target="_blank" rel="noreferrer" className="hover:underline">Threads</a></li>}
