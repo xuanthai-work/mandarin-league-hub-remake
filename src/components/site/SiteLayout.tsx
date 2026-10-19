@@ -51,7 +51,7 @@ function Header() {
           <img src={logoClear} alt="The Mandarin League" className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
           <div className="min-w-0 leading-tight">
             <div className="whitespace-nowrap text-sm font-bold tracking-normal text-primary-deep dark:text-foreground xl:text-base">THE MANDARIN LEAGUE</div>
-            <div className="truncate text-[11px] text-muted-foreground dark:text-gold/80 md:text-xs">{t("brand.sub")}</div>
+            <div className="hidden truncate text-[11px] text-muted-foreground dark:text-gold/80 md:block md:text-xs lg:hidden xl:block">{t("brand.sub")}</div>
           </div>
         </Link>
         <nav className="hidden min-w-0 items-center gap-0.5 lg:flex">
