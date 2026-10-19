@@ -25,6 +25,7 @@ export const NAV = [
 export const TAGLINE = "Connecting learners, educators & opportunities across Vietnam and China.";
 
 const FOOTER_EXTRA = [
+  { to: "/join", label: "Tuyển thành viên" },
   { to: "/community", label: "Cộng đồng" },
   { to: "/partners", label: "Đối tác" },
   { to: "/news", label: "Tin tức" },
@@ -130,7 +131,7 @@ function Footer() {
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{t("footer.contact")}</div>
           <ul className="space-y-3 text-sm opacity-90">
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /><a href={`mailto:${site.email}`} className="hover:underline">{site.email}</a></li>
+            <li className="flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${site.email}`} className="break-all hover:underline">{site.email}</a></li>
             <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={site.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
             <li className="flex items-center gap-2"><Instagram className="h-4 w-4" /><a href={site.instagram} target="_blank" rel="noreferrer" className="hover:underline">Instagram</a></li>
             {site.threads && <li className="flex items-center gap-2"><AtSign className="h-4 w-4" /><a href={site.threads} target="_blank" rel="noreferrer" className="hover:underline">Threads</a></li>}
