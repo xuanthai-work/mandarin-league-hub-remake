@@ -5,6 +5,6 @@
 - [ ] Đa ngôn ngữ bước 3: Khóa học, Hoạt động, Tin tức, Đối tác, form ứng tuyển, kết quả tra cứu
 - [x] Nút 'Ứng tuyển vào Ban này' chọn sẵn Ban trên /join
 - [x] Tối ưu menu header laptop
-- [ ] Trạng thái thành viên: Đang hoạt động / Tạm nghỉ (ngày off đến) / Đã rời
-- [ ] Admin xóa tài khoản thành viên
-- [ ] HSK: Giáo viên chính + đồng hành + trợ giảng
+- [x] Trạng thái thành viên: Đang hoạt động / Tạm nghỉ (ngày off đến) / Đã rời
+- [x] Admin xóa tài khoản thành viên
+- [x] HSK: Giáo viên chính + đồng hành + trợ giảng
