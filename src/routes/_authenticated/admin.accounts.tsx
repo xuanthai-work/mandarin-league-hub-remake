@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { KeyRound, Loader2, Plus, X } from "lucide-react";
+import { KeyRound, Loader2, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { createAccount, listAccounts, resetAccountPassword, updateAccount } from "@/lib/accounts.functions";
+import { createAccount, deleteAccount, listAccounts, resetAccountPassword, updateAccount } from "@/lib/accounts.functions";
 import { ACCESS_LABELS, ACCOUNT_DEPTS, ACCOUNT_STATUS, PERMISSIONS, PERMISSION_TEMPLATES, positionsFor, type AccessLevel, type AccountStatus } from "@/lib/accounts";
 import { deptName } from "@/lib/recruitment";
 
@@ -173,6 +173,8 @@ function EditDrawer({ acct, onClose }: { acct: Acct; onClose: () => void }) {
   const qc = useQueryClient();
   const update = useServerFn(updateAccount);
   const reset = useServerFn(resetAccountPassword);
+  const del = useServerFn(deleteAccount);
+  const [confirm, setConfirm] = useState(""); const [delProfile, setDelProfile] = useState(false);
   const [v, setV] = useState({ department: acct.member.department, position: acct.member.position, access: acct.access as AccessLevel, permissions: acct.permissions, status: acct.account_status as AccountStatus });
   const [pw, setPw] = useState(randomPassword());
   const [msg, setMsg] = useState(""); const [err, setErr] = useState(""); const [busy, setBusy] = useState<string | null>(null);
@@ -203,6 +205,13 @@ function EditDrawer({ acct, onClose }: { acct: Acct; onClose: () => void }) {
       <button disabled={!!busy} onClick={() => run("link", () => reset({ data: { userId: acct.user_id, mode: "link", redirectTo: `${window.location.origin}/reset-password` } }), "Đã gửi liên kết đặt lại mật khẩu tới email.")} className="mt-2 text-sm text-primary underline">Gửi liên kết đặt lại mật khẩu qua email</button>
       {msg && <p className="mt-3 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{msg}</p>}
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
+      <div className="mt-8 rounded-xl border border-destructive/40 p-4">
+        <h3 className="flex items-center gap-2 font-semibold text-destructive"><Trash2 className="h-4 w-4" />Xóa tài khoản</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Xóa vĩnh viễn quyền đăng nhập. Không thể hoàn tác. Nếu chỉ tạm ngưng, hãy dùng “Tạm khóa”.</p>
+        <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={delProfile} onChange={(e) => setDelProfile(e.target.checked)} />Xóa luôn hồ sơ thành viên (mã, điểm)</label>
+        <input className={`${inp} mt-2 w-full`} placeholder={`Gõ XOA để xác nhận`} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        <button disabled={!!busy || confirm.trim().toUpperCase() !== "XOA"} onClick={() => run("del", () => del({ data: { userId: acct.user_id, deleteProfile: delProfile } }).then(() => { qc.invalidateQueries({ queryKey: ["admin-members"] }); onClose(); }), "Đã xóa tài khoản.")} className="mt-2 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50">Xóa tài khoản vĩnh viễn</button>
+      </div>
     </Drawer>
   );
 }
