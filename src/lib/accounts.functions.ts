@@ -131,6 +131,26 @@ export const resetAccountPassword = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ userId: z.string().uuid(), deleteProfile: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const db = await adminClient(context);
+    if (data.userId === context.userId) throw new Error("Bạn không thể tự xóa tài khoản của chính mình.");
+    const { data: cur } = await db.from("user_roles").select("role").eq("user_id", data.userId);
+    if ((cur ?? []).some((r: any) => r.role === "admin") && (await adminCount(db)) <= 1) throw new Error("Hệ thống phải luôn còn ít nhất một Quản trị viên.");
+    const { data: acct } = await db.from("member_accounts").select("member_id").eq("user_id", data.userId).maybeSingle();
+    await db.from("user_roles").delete().eq("user_id", data.userId);
+    await db.from("member_accounts").delete().eq("user_id", data.userId);
+    const { error } = await db.auth.admin.deleteUser(data.userId);
+    if (error && !/not found/i.test(error.message)) throw new Error(error.message);
+    if (data.deleteProfile && acct?.member_id) {
+      const { error: mErr } = await db.from("members").delete().eq("id", acct.member_id);
+      if (mErr) throw new Error("Đã xóa tài khoản, nhưng không xóa được hồ sơ (còn dữ liệu liên quan như điểm/nhiệm vụ). Hãy đặt trạng thái “Đã rời” thay thế.");
+    }
+    return { ok: true };
+  });
+
 export const approveApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({
