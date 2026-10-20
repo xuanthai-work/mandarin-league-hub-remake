@@ -2,52 +2,120 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState } from "react";
+import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
+import { leaveDaysLeft, MEMBER_STATUS_LABEL, type MemberStatus } from "@/lib/member-status";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Thành viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: MembersPage,
 });
 
+type Row = { id: string; member_code: string; full_name: string; department: string; position: string; joined_on: string; contribution_points: number; status: string; is_public: boolean; leave_from: string | null; leave_until: string | null; left_on: string | null; status_note: string; hasAccount: boolean };
+const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
+const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
+
+function StatusCell({ m }: { m: Row }) {
+  if (m.status === "on_leave") {
+    const d = leaveDaysLeft(m.leave_until);
+    const over = d !== null && d < 0;
+    return <div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${over ? "bg-destructive/10 text-destructive" : "bg-warning-soft text-foreground"}`}>{over ? "Quá hạn off" : "Tạm nghỉ"}</span>
+      {m.leave_until && <div className="mt-1 text-xs text-muted-foreground">Off đến {fmt(m.leave_until)}{d !== null && (over ? ` · quá ${-d} ngày` : ` · còn ${d} ngày`)}</div>}</div>;
+  }
+  if (m.status === "left") return <div><span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">Đã rời</span>{m.left_on && <div className="mt-1 text-xs text-muted-foreground">{fmt(m.left_on)}</div>}</div>;
+  return <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">Đang hoạt động</span>;
+}
+
 function MembersPage() {
   const [q, setQ] = useState("");
+  const [tab, setTab] = useState<"" | MemberStatus>("");
+  const [edit, setEdit] = useState<Row | null>(null);
   const qc = useQueryClient();
   const toggle = async (id: string, v: boolean) => { const { error } = await supabase.rpc("set_member_visibility", { _member: id, _public: v }); if (error) toast.error(error.message); else qc.invalidateQueries({ queryKey: ["admin-members"] }); };
   const { data, isLoading } = useQuery({ queryKey: ["admin-members"], queryFn: async () => {
     const [{ data: m }, { data: a }] = await Promise.all([
-      supabase.from("members").select("id, member_code, full_name, department, position, joined_on, contribution_points, status, is_public").order("created_at", { ascending: false }),
+      supabase.from("members").select("id, member_code, full_name, department, position, joined_on, contribution_points, status, is_public, leave_from, leave_until, left_on, status_note").order("created_at", { ascending: false }),
       supabase.from("member_accounts").select("member_id"),
     ]);
     const linked = new Set((a ?? []).map((x) => x.member_id));
-    return (m ?? []).map((x) => ({ ...x, hasAccount: linked.has(x.id) }));
+    return (m ?? []).map((x) => ({ ...x, hasAccount: linked.has(x.id) })) as Row[];
   } });
-  const rows = (data ?? []).filter((m) => !q || `${m.full_name} ${m.member_code}`.toLowerCase().includes(q.toLowerCase()));
+  const all = data ?? [];
+  const rows = all.filter((m) => (!tab || m.status === tab) && (!q || `${m.full_name} ${m.member_code}`.toLowerCase().includes(q.toLowerCase())));
+  const cnt = (s: string) => all.filter((m) => m.status === s).length;
   return (
     <div className="p-4 sm:p-6">
       <h1 className="text-2xl font-bold text-primary-deep">Thành viên</h1>
-      <p className="text-sm text-muted-foreground">Hồ sơ thành viên chính thức (mã TML-MBR). Trưởng Ban chỉ thấy thành viên thuộc Ban mình.</p>
-      <input className="mt-4 w-full max-w-sm rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Tìm tên hoặc mã…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <p className="text-sm text-muted-foreground">Hồ sơ thành viên chính thức (mã TML-MBR). Bấm vào một dòng để cập nhật trạng thái hoạt động.</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {([["", `Tất cả (${all.length})`], ["active", `Đang hoạt động (${cnt("active")})`], ["on_leave", `Tạm nghỉ (${cnt("on_leave")})`], ["left", `Đã rời (${cnt("left")})`]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>
+        ))}
+      </div>
+      <input className="mt-3 w-full max-w-sm rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Tìm tên hoặc mã…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-secondary text-left text-xs text-muted-foreground"><tr>{["Mã thành viên", "Họ tên", "Ban", "Chức vụ", "Ngày gia nhập", "Điểm", "Tài khoản", "Hiện trên web"].map((h) => <th key={h} className="p-3">{h}</th>)}</tr></thead>
+        <table className="w-full min-w-[860px] text-sm">
+          <thead className="bg-secondary text-left text-xs text-muted-foreground"><tr>{["Mã thành viên", "Họ tên", "Ban", "Chức vụ", "Ngày gia nhập", "Điểm", "Trạng thái", "Tài khoản", "Hiện trên web"].map((h) => <th key={h} className="p-3">{h}</th>)}</tr></thead>
           <tbody>
-            {isLoading && <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Đang tải…</td></tr>}
-            {!isLoading && rows.length === 0 && <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Chưa có thành viên chính thức.</td></tr>}
+            {isLoading && <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Đang tải…</td></tr>}
+            {!isLoading && rows.length === 0 && <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Không có thành viên.</td></tr>}
             {rows.map((m) => (
-              <tr key={m.id} className="border-t border-border">
+              <tr key={m.id} onClick={() => setEdit(m)} className="cursor-pointer border-t border-border hover:bg-accent/50">
                 <td className="p-3 font-mono text-xs text-primary">{m.member_code}</td>
                 <td className="p-3 font-medium">{m.full_name}</td>
                 <td className="p-3">{deptName(m.department)}</td>
                 <td className="p-3">{m.position}</td>
-                <td className="p-3">{new Date(m.joined_on).toLocaleDateString("vi-VN")}</td>
+                <td className="p-3">{fmt(m.joined_on)}</td>
                 <td className="p-3">{m.contribution_points}</td>
+                <td className="p-3"><StatusCell m={m} /></td>
                 <td className="p-3 text-xs">{m.hasAccount ? "Đã cấp" : "Chưa cấp"}</td>
-                <td className="p-3"><input type="checkbox" checked={m.is_public} onChange={(e) => toggle(m.id, e.target.checked)} /></td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={m.is_public} onChange={(e) => toggle(m.id, e.target.checked)} /></td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+      {edit && <StatusDialog m={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); qc.invalidateQueries({ queryKey: ["admin-members"] }); }} />}
+    </div>
+  );
+}
+
+function StatusDialog({ m, onClose, onSaved }: { m: Row; onClose: () => void; onSaved: () => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [v, setV] = useState({ status: (m.status as MemberStatus) in MEMBER_STATUS_LABEL ? (m.status as MemberStatus) : "active", leave_from: m.leave_from ?? today, leave_until: m.leave_until ?? "", left_on: m.left_on ?? today, status_note: m.status_note ?? "" });
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (v.status === "on_leave" && !v.leave_until) return toast.error("Vui lòng chọn ngày dự kiến quay lại.");
+    if (v.status === "on_leave" && v.leave_until < v.leave_from) return toast.error("Ngày quay lại phải sau ngày bắt đầu nghỉ.");
+    setBusy(true);
+    const { error } = await supabase.from("members").update({
+      status: v.status, status_note: v.status === "active" ? "" : v.status_note.trim().slice(0, 500),
+      leave_from: v.status === "on_leave" ? v.leave_from : null, leave_until: v.status === "on_leave" ? v.leave_until : null,
+      left_on: v.status === "left" ? v.left_on : null,
+    }).eq("id", m.id);
+    setBusy(false);
+    if (error) toast.error("Không lưu được (chỉ Quản trị viên được cập nhật)"); else { toast.success("Đã cập nhật trạng thái"); onSaved(); }
+  };
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-foreground/40" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
+        <div className="flex items-start justify-between"><div><h2 className="text-lg font-bold">{m.full_name}</h2><p className="font-mono text-xs text-primary">{m.member_code}</p></div><button aria-label="Đóng" onClick={onClose}><X className="h-5 w-5" /></button></div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {(Object.keys(MEMBER_STATUS_LABEL) as MemberStatus[]).map((s) => (
+            <button key={s} onClick={() => setV({ ...v, status: s })} className={`rounded-lg border px-2 py-2 text-xs font-semibold ${v.status === s ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>{MEMBER_STATUS_LABEL[s]}</button>
+          ))}
+        </div>
+        {v.status === "on_leave" && <div className="mt-4 grid grid-cols-2 gap-2">
+          <label className="text-xs text-muted-foreground">Bắt đầu nghỉ<input type="date" className={`${inp} mt-1`} value={v.leave_from} onChange={(e) => setV({ ...v, leave_from: e.target.value })} /></label>
+          <label className="text-xs text-muted-foreground">Off đến ngày *<input type="date" className={`${inp} mt-1`} value={v.leave_until} min={v.leave_from} onChange={(e) => setV({ ...v, leave_until: e.target.value })} /></label>
+        </div>}
+        {v.status === "left" && <label className="mt-4 block text-xs text-muted-foreground">Ngày rời<input type="date" className={`${inp} mt-1`} value={v.left_on} onChange={(e) => setV({ ...v, left_on: e.target.value })} /></label>}
+        {v.status !== "active" && <label className="mt-3 block text-xs text-muted-foreground">{v.status === "on_leave" ? "Lý do xin nghỉ" : "Lý do / ghi chú bàn giao"}
+          <textarea rows={3} maxLength={500} className={`${inp} mt-1`} value={v.status_note} onChange={(e) => setV({ ...v, status_note: e.target.value })} /></label>}
+        {v.status === "left" && m.hasAccount && <p className="mt-3 rounded-lg bg-warning-soft px-3 py-2 text-xs">Thành viên này còn tài khoản đăng nhập — hãy vào Tài khoản nội bộ để khóa hoặc xóa.</p>}
+        <button disabled={busy} onClick={save} className="mt-5 w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">Lưu trạng thái</button>
       </div>
     </div>
   );
