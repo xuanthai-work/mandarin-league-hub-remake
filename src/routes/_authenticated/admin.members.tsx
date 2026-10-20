@@ -96,6 +96,7 @@ function StatusDialog({ m, onClose, onSaved }: { m: Row; onClose: () => void; on
     }).eq("id", m.id);
     setBusy(false);
     if (error) toast.error("Không lưu được (chỉ Quản trị viên được cập nhật)"); else { toast.success("Đã cập nhật trạng thái"); onSaved(); }
+    return undefined;
   };
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
