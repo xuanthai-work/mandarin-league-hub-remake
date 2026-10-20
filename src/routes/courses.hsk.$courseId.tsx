@@ -6,7 +6,7 @@ import { EnrollmentDialog } from "@/components/courses/EnrollmentDialog";
 import { formatFee, useCourseSettings } from "@/lib/course-settings";
 import { getCourse } from "@/lib/data/courses";
 import { pageMeta } from "@/lib/seo";
-import { usePublicTeachers, leadTeacherForLevel } from "@/lib/teachers";
+import { usePublicTeachers, leadTeacherForLevel, pickTeachers } from "@/lib/teachers";
 
 export const Route = createFileRoute("/courses/hsk/$courseId")({ staticData: { sitemap: true },
   loader: ({ params }) => {
@@ -72,6 +72,17 @@ function PCourse() {
                 {lead.avatar_url ? <img src={lead.avatar_url} alt={lead.full_name} className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-gold/50" /> : <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-6 w-6" /></div>}
                 <div className="min-w-0"><div className="text-xs text-muted-foreground">Giảng viên phụ trách chính</div><div className="font-semibold group-hover:text-primary">{lead.full_name}</div>{lead.title && <div className="line-clamp-1 text-xs text-muted-foreground">{lead.title}</div>}</div>
               </Link>
+              {([["Giảng viên đồng hành", pickTeachers(teachers, st?.co_teacher_ids, lead.id)], ["Trợ giảng", pickTeachers(teachers, st?.assistant_ids, lead.id)]] as const).map(([label, list]) => list.length > 0 && (
+                <div key={label} className="mt-3">
+                  <div className="text-xs text-muted-foreground">{label}</div>
+                  <div className="mt-1.5 space-y-1.5">{list.map((t) => (
+                    <Link key={t.id} to="/teachers/$teacherId" params={{ teacherId: t.id }} className="flex items-center gap-2 text-sm hover:text-primary">
+                      {t.avatar_url ? <img src={t.avatar_url} alt={t.full_name} className="h-8 w-8 rounded-full object-cover" /> : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-4 w-4" /></span>}
+                      <span className="font-medium">{t.full_name}</span>
+                    </Link>
+                  ))}</div>
+                </div>
+              ))}
               <p className="mt-3 text-xs text-muted-foreground">Đồng giảng dạy cùng đội ngũ giảng viên TML · <Link to="/teachers" className="font-semibold text-primary hover:underline">Xem tất cả giảng viên →</Link></p>
             </div>
           )}

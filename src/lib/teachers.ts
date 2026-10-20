@@ -92,4 +92,8 @@ export const teachersForLevel = <T extends { teaching_levels: number[] }>(list: 
 export const leadTeacherForLevel = <T extends { id: string; teaching_levels: number[] }>(list: T[] | undefined, level: number, pickedId?: string | null) =>
   (pickedId && (list ?? []).find((t) => t.id === pickedId)) || teachersForLevel(list, level)[0] || null;
 
+/** Visible teachers for picked ids, in pick order, excluding the lead. */
+export const pickTeachers = <T extends { id: string }>(list: T[] | undefined, ids: string[] | undefined, excludeId?: string) =>
+  (ids ?? []).filter((id) => id !== excludeId).map((id) => (list ?? []).find((t) => t.id === id)).filter((t): t is T => !!t);
+
 export const teacherTags = (t: Pick<PublicTeacher, "teaching_levels" | "programs">) => [...t.teaching_levels.map((l) => `HSK ${l}`), ...t.programs];

@@ -117,6 +117,19 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
           {(teachers ?? []).map((t) => <option key={t.id} value={t.id}>{t.full_name}{t.teaching_levels.includes(s.level) ? "" : " (chưa gán cấp này)"}</option>)}
         </select>
       </label>
+      {([["co_teacher_ids", "Giảng viên đồng hành"], ["assistant_ids", "Trợ giảng"]] as const).map(([key, label]) => {
+        const ids = s[key] ?? [];
+        return (
+          <div key={key} className="mt-3 text-xs text-muted-foreground">{label} <span className="opacity-70">(tùy chọn)</span>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {(teachers ?? []).filter((t) => t.id !== s.lead_teacher_id).map((t) => {
+                const on = ids.includes(t.id);
+                return <button key={t.id} type="button" onClick={() => onSave({ [key]: on ? ids.filter((x) => x !== t.id) : [...ids, t.id] })} className={`rounded-full border px-2.5 py-1 ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}>{t.full_name}</button>;
+              })}
+            </div>
+          </div>
+        );
+      })}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <select className={inp} value={fee.fee_type} onChange={(e) => setFee({ ...fee, fee_type: e.target.value as "free" | "paid" })}><option value="free">Miễn phí</option><option value="paid">Có phí</option></select>
         <input type="number" min={1} className={inp} title="Sĩ số tối đa" value={fee.capacity} onChange={(e) => setFee({ ...fee, capacity: Number(e.target.value) })} />
