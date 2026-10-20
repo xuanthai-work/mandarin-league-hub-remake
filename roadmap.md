@@ -4,4 +4,7 @@
 - [x] Đa ngôn ngữ bước 2: Trang chủ, Giới thiệu, Cơ cấu tổ chức, Xác minh, Cộng đồng, Liên hệ, Tuyển thành viên (phần trang)
 - [ ] Đa ngôn ngữ bước 3: Khóa học, Hoạt động, Tin tức, Đối tác, form ứng tuyển, kết quả tra cứu
 - [x] Nút 'Ứng tuyển vào Ban này' chọn sẵn Ban trên /join
-- [x] Tối ưu menu header laptop: bỏ mục "Tuyển thành viên" (trùng nút "Tham gia TML"), thu gọn khoảng cách/cỡ chữ
+- [x] Tối ưu menu header laptop
+- [ ] Trạng thái thành viên: Đang hoạt động / Tạm nghỉ (ngày off đến) / Đã rời
+- [ ] Admin xóa tài khoản thành viên
+- [ ] HSK: Giáo viên chính + đồng hành + trợ giảng

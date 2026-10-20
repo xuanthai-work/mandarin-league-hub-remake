@@ -600,7 +600,9 @@ export type Database = {
       }
       course_settings: {
         Row: {
+          assistant_ids: string[]
           capacity: number
+          co_teacher_ids: string[]
           fee_amount: number
           fee_type: string
           lead_teacher_id: string | null
@@ -609,7 +611,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assistant_ids?: string[]
           capacity?: number
+          co_teacher_ids?: string[]
           fee_amount?: number
           fee_type?: string
           lead_teacher_id?: string | null
@@ -618,7 +622,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assistant_ids?: string[]
           capacity?: number
+          co_teacher_ids?: string[]
           fee_amount?: number
           fee_type?: string
           lead_teacher_id?: string | null
@@ -1191,10 +1197,14 @@ export type Database = {
           id: string
           is_public: boolean
           joined_on: string
+          leave_from: string | null
+          leave_until: string | null
+          left_on: string | null
           member_code: string
           phone: string
           position: string
           status: string
+          status_note: string
         }
         Insert: {
           application_id?: string | null
@@ -1207,10 +1217,14 @@ export type Database = {
           id?: string
           is_public?: boolean
           joined_on?: string
+          leave_from?: string | null
+          leave_until?: string | null
+          left_on?: string | null
           member_code?: string
           phone?: string
           position: string
           status?: string
+          status_note?: string
         }
         Update: {
           application_id?: string | null
@@ -1223,10 +1237,14 @@ export type Database = {
           id?: string
           is_public?: boolean
           joined_on?: string
+          leave_from?: string | null
+          leave_until?: string | null
+          left_on?: string | null
           member_code?: string
           phone?: string
           position?: string
           status?: string
+          status_note?: string
         }
         Relationships: [
           {

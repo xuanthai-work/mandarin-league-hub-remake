@@ -260,6 +260,13 @@
       "when": 1792291868216,
       "tag": "0036_course_settings_lead_teacher",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792481335397,
+      "tag": "0037_member_leave_and_hsk_teacher_roles",
+      "breakpoints": true
     }
   ]
 }
