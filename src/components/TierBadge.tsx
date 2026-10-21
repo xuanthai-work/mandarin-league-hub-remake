@@ -2,16 +2,21 @@ import { useId, useState } from "react";
 import { Lock, X } from "lucide-react";
 import { TIERS, tierOf } from "@/lib/points";
 
-const METAL: Record<string, string> = { bronze: "bronze", silver: "silver", gold: "gold", platinum: "purple" };
+const METAL: Record<string, string> = { bronze: "bronze", official: "azure", silver: "emerald", gold: "gold", excellent: "amber", platinum: "purple", honor: "gold" };
 
 export const TIER_INFO: Record<string, { zh: string; motto: string; perks: string[] }> = {
   bronze: { zh: "见习", motto: "Khởi đầu hành trình học hỏi và hòa nhập cùng Liên Đoàn.", perks: ["Thẻ thành viên chính thức", "Tham gia nhiệm vụ & dự án Ban"] },
+  official: { zh: "正式", motto: "Đã hòa nhập, tham gia đều đặn sinh hoạt của Ban.", perks: ["Được giao nhiệm vụ riêng", "Tham gia hoạt động toàn Liên Đoàn"] },
   silver: { zh: "积极", motto: "Năng nổ, luôn có mặt trong sinh hoạt và nhiệm vụ Ban.", perks: ["Ưu tiên cấp quyền lợi học tập", "Được ghi nhận trong báo cáo Ban"] },
   gold: { zh: "骨干", motto: "Trụ cột chuyên môn, hoàn thành xuất sắc dự án lớn.", perks: ["Ưu tiên quyền lợi Premium", "Ưu tiên xét đề bạt Phó/Trưởng Ban"] },
-  platinum: { zh: "精英", motto: "Vinh danh tối cao cho cống hiến bền bỉ và tầm ảnh hưởng.", perks: ["Vinh danh thường niên", "Đặc quyền cao nhất của TML"] },
+  excellent: { zh: "优秀", motto: "Hiệu suất vượt trội, dẫn dắt đầu việc quan trọng của Ban.", perks: ["Đề cử khen thưởng định kỳ", "Ưu tiên tham gia dự án đối ngoại"] },
+  platinum: { zh: "菁英", motto: "Tinh hoa của Liên Đoàn, gắn bó bền bỉ và có tầm ảnh hưởng.", perks: ["Vinh danh thường niên", "Đặc quyền Premium cao cấp"] },
+  honor: { zh: "荣誉", motto: "Vinh danh cống hiến tối cao cho Liên Đoàn Hán Ngữ.", perks: ["Bảng vàng Danh dự TML", "Đặc quyền cao nhất của TML"] },
 };
-const ENAMEL: Record<string, string> = { bronze: "var(--enamel-amber)", silver: "var(--enamel-azure)", gold: "var(--sapphire)", platinum: "var(--metal-purple-lo)" };
-const GLYPH: Record<string, string> = { bronze: "习", silver: "积", gold: "骨", platinum: "精" };
+const ENAMEL: Record<string, string> = { bronze: "var(--enamel-amber)", official: "var(--enamel-azure)", silver: "var(--enamel-emerald)", gold: "var(--sapphire)", excellent: "var(--enamel-amber)", platinum: "var(--metal-purple-lo)", honor: "var(--enamel-crimson)" };
+const GLYPH: Record<string, string> = { bronze: "习", official: "正", silver: "积", gold: "骨", excellent: "优", platinum: "菁", honor: "誉" };
+const GOLD_TRIM = ["platinum", "honor", "excellent"];
+const HALO = ["gold", "excellent", "platinum", "honor"];
 
 const star = (n: number, ro: number, ri: number, rot = -Math.PI / 2) =>
   Array.from({ length: n * 2 }).map((_, i) => { const r = i % 2 ? ri : ro; const a = rot + (i * Math.PI) / n; return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`; }).join(" ");
@@ -21,7 +26,10 @@ const SHIELD = "M50 6 L86 17 V47 C86 70 70 85 50 94 C30 85 14 70 14 47 V17 Z";
 function Outer({ k, fill }: { k: string; fill: string }) {
   if (k === "bronze") return <path d={SHIELD} fill={fill} />;
   if (k === "silver") return <polygon points={star(6, 48, 38)} fill={fill} />;
+  if (k === "official") return <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill={fill} />;
   if (k === "gold") return <polygon points={star(16, 48, 40, -Math.PI / 2)} fill={fill} />;
+  if (k === "excellent") return <polygon points={star(10, 49, 39)} fill={fill} />;
+  if (k === "honor") return <polygon points={star(12, 50, 36)} fill={fill} />;
   return <polygon points={star(8, 49, 33)} fill={fill} />;
 }
 
@@ -39,9 +47,10 @@ export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: str
   const k = METAL[tierKey] ? tierKey : "bronze";
   const m = METAL[k]!;
   const v = (x: string) => `var(--metal-${m}${x})`;
-  const trim = k === "platinum" ? "var(--metal-gold)" : v("");
-  const trimHi = k === "platinum" ? "var(--metal-gold-hi)" : v("-hi");
-  const trimLo = k === "platinum" ? "var(--metal-gold-lo)" : v("-lo");
+  const gt = GOLD_TRIM.includes(k);
+  const trim = gt ? "var(--metal-gold)" : v("");
+  const trimHi = gt ? "var(--metal-gold-hi)" : v("-hi");
+  const trimLo = gt ? "var(--metal-gold-lo)" : v("-lo");
   const detail = size >= 40;
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-label={`Huy hiệu ${tierKey}`} className={locked ? "opacity-40 grayscale" : "drop-shadow-lg"}>
@@ -53,7 +62,7 @@ export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: str
           <stop offset="0" style={{ stopColor: v("-hi") }} /><stop offset="0.35" style={{ stopColor: v("") }} /><stop offset="1" style={{ stopColor: ENAMEL[k] }} />
         </radialGradient>
         <radialGradient id={`a${id}`}>
-          <stop offset="0.5" style={{ stopColor: k === "platinum" ? "var(--amethyst-glow)" : trimHi, stopOpacity: 0.8 }} /><stop offset="1" style={{ stopColor: trim, stopOpacity: 0 }} />
+          <stop offset="0.5" style={{ stopColor: k === "platinum" ? "var(--amethyst-glow)" : k === "honor" ? "var(--metal-gold-hi)" : trimHi, stopOpacity: 0.8 }} /><stop offset="1" style={{ stopColor: trim, stopOpacity: 0 }} />
         </radialGradient>
         <linearGradient id={`s${id}`} x1="0" x2="1">
           <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset="0.5" stopColor="#fff" stopOpacity="0.75" /><stop offset="1" stopColor="#fff" stopOpacity="0" />
@@ -61,9 +70,9 @@ export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: str
         <clipPath id={`c${id}`}><Outer k={k} fill="#000" /></clipPath>
       </defs>
 
-      {!locked && (k === "gold" || k === "platinum") && <circle className="badge-aura" cx="50" cy="50" r="50" fill={`url(#a${id})`} />}
-      {k === "platinum" && detail && Array.from({ length: 16 }).map((_, i) => (
-        <line key={i} x1="50" y1="50" x2={50 + 50 * Math.cos((i * Math.PI) / 8 + Math.PI / 16)} y2={50 + 50 * Math.sin((i * Math.PI) / 8 + Math.PI / 16)} style={{ stroke: "var(--amethyst-glow)" }} strokeWidth="0.6" opacity="0.5" />
+      {!locked && HALO.includes(k) && <circle className="badge-aura" cx="50" cy="50" r="50" fill={`url(#a${id})`} />}
+      {(k === "platinum" || k === "honor") && detail && Array.from({ length: 16 }).map((_, i) => (
+        <line key={i} x1="50" y1="50" x2={50 + 50 * Math.cos((i * Math.PI) / 8 + Math.PI / 16)} y2={50 + 50 * Math.sin((i * Math.PI) / 8 + Math.PI / 16)} style={{ stroke: k === "honor" ? "var(--metal-gold-hi)" : "var(--amethyst-glow)" }} strokeWidth="0.6" opacity="0.5" />
       ))}
 
       <Outer k={k} fill={`url(#m${id})`} />
@@ -82,15 +91,15 @@ export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: str
       </g>}
       <circle cx="50" cy="50" r="27" fill="none" style={{ stroke: trimHi }} strokeWidth="0.8" />
 
-      {(k === "gold" || k === "platinum") && detail && <Laurel color={trimHi} />}
+      {HALO.includes(k) && detail && <Laurel color={trimHi} />}
 
-      {k === "platinum" && <path d="M38 33 L41 25 L45 31 L50 22 L55 31 L59 25 L62 33 Z" style={{ fill: "var(--metal-gold-hi)", stroke: "var(--metal-gold-lo)" }} strokeWidth="0.6" />}
+      {(k === "platinum" || k === "honor") && <path d="M38 33 L41 25 L45 31 L50 22 L55 31 L59 25 L62 33 Z" style={{ fill: "var(--metal-gold-hi)", stroke: "var(--metal-gold-lo)" }} strokeWidth="0.6" />}
       {k === "bronze" && detail && <g style={{ stroke: trimHi }} strokeWidth="1.2" fill="none" strokeLinecap="round"><path d="M38 66 H62 M40 69 H60" /><path d="M50 64 V30 M50 40 Q43 37 42 31 Q49 33 50 40 M50 36 Q57 33 58 27 Q51 29 50 36" /></g>}
-      {k === "silver" && detail && <path d="M30 66 Q36 62 42 66 T54 66 T66 66 T72 66" fill="none" style={{ stroke: trimHi }} strokeWidth="1" />}
+      {(k === "silver" || k === "official") && detail && <path d="M30 66 Q36 62 42 66 T54 66 T66 66 T72 66" fill="none" style={{ stroke: trimHi }} strokeWidth="1" />}
 
-      {!(k === "bronze" && detail) && <text x="50" y={k === "platinum" ? 58 : k === "bronze" ? 57 : 59} textAnchor="middle" fontSize={k === "bronze" ? 17 : 22} fontWeight="800" fontFamily="'Noto Serif SC', 'Songti SC', serif"
-        style={{ fill: k === "platinum" ? "var(--metal-gold-hi)" : trimHi, stroke: trimLo }} strokeWidth="0.6" paintOrder="stroke">{GLYPH[k]}</text>}
-      {k === "platinum" && <path d="M44 66 Q50 60 56 66 Q50 70 44 66 Z" style={{ fill: "var(--metal-gold)" }} />}
+      {!(k === "bronze" && detail) && <text x="50" y={k === "platinum" || k === "honor" ? 58 : k === "bronze" ? 57 : 59} textAnchor="middle" fontSize={k === "bronze" ? 17 : 22} fontWeight="800" fontFamily="'Noto Serif SC', 'Songti SC', serif"
+        style={{ fill: gt ? "var(--metal-gold-hi)" : trimHi, stroke: trimLo }} strokeWidth="0.6" paintOrder="stroke">{GLYPH[k]}</text>}
+      {(k === "platinum" || k === "honor") && <path d="M44 66 Q50 60 56 66 Q50 70 44 66 Z" style={{ fill: "var(--metal-gold)" }} />}
 
       {!locked && <g clipPath={`url(#c${id})`}><rect className="badge-sheen" x="20" y="-10" width="18" height="120" fill={`url(#s${id})`} /></g>}
       {locked && <g><circle cx="78" cy="78" r="12" style={{ fill: "var(--primary-deep)" }} /><foreignObject x="70" y="70" width="16" height="16"><Lock className="h-4 w-4 text-primary-foreground" /></foreignObject></g>}
@@ -123,7 +132,7 @@ export function TierProgress({ points }: { points: number }) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4" onClick={() => setOpen(false)}>
           <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-background p-6 text-foreground" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between"><h3 className="text-lg font-bold text-primary-deep">Thang bậc cống hiến TML</h3><button onClick={() => setOpen(false)} aria-label="Đóng"><X className="h-5 w-5" /></button></div>
+            <div className="flex items-center justify-between"><h3 className="text-lg font-bold text-primary-deep">Thang 7 bậc cống hiến TML</h3><button onClick={() => setOpen(false)} aria-label="Đóng"><X className="h-5 w-5" /></button></div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {asc.map((t, i) => {
                 const info = TIER_INFO[t.key]!; const reached = points >= t.min; const isCur = t.key === cur.key;
@@ -139,7 +148,7 @@ export function TierProgress({ points }: { points: number }) {
                 );
               })}
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Quyền lợi cụ thể do Ban Điều Hành cấu hình.</p>
+            <p className="mt-4 text-xs text-muted-foreground">Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Ban Quản trị, Trưởng/Phó Ban và Cố vấn chuyên môn dùng thẻ màu Đen than chì riêng. Quyền lợi cụ thể do Ban Điều Hành cấu hình.</p>
           </div>
         </div>
       )}
