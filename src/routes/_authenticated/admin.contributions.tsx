@@ -38,19 +38,37 @@ function PointsPage() {
   const monthMinus = monthRows.filter((t) => t.delta < 0).reduce((s, t) => s + t.delta, 0);
   const monthTasks = monthRows.filter((t) => t.kind === "task").length;
 
-  const [f, setF] = useState({ member: "", kind: "attendance", amount: 5, reason: "" });
-  const [err, setErr] = useState(""); const [msg, setMsg] = useState("");
+  const [f, setF] = useState({ dept: "", picked: [] as string[], q: "", kind: "attendance", amount: 5, reason: "" });
+  const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
+  const depts = [...new Set((members.data ?? []).map((m) => m.department).filter(Boolean))];
+  const pool = (members.data ?? []).filter((m) => (!f.dept || m.department === f.dept) && (!f.q || `${m.full_name} ${m.member_code}`.toLowerCase().includes(f.q.toLowerCase())));
+  const toggle = (id: string) => setF({ ...f, picked: f.picked.includes(id) ? f.picked.filter((x) => x !== id) : [...f.picked, id] });
+  const allOn = pool.length > 0 && pool.every((m) => f.picked.includes(m.id));
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(""); setMsg("");
+    if (f.picked.length === 0) return setErr("Chọn ít nhất 1 thành viên.");
     const delta = f.kind === "penalty" ? -Math.abs(f.amount) : Math.abs(f.amount);
-    const { error } = await supabase.rpc("adjust_points", { _member: f.member, _delta: delta, _reason: f.reason, _kind: f.kind });
-    if (error) return setErr(error.message);
-    setMsg("Đã ghi nhận điểm."); setF({ ...f, reason: "" });
+    setBusy(true);
+    const fails: string[] = [];
+    for (const id of f.picked) {
+      const { error } = await supabase.rpc("adjust_points", { _member: id, _delta: delta, _reason: f.reason, _kind: f.kind });
+      if (error) fails.push(`${nameOf(id)?.full_name ?? id}: ${error.message}`);
+    }
+    setBusy(false);
+    if (fails.length) setErr(fails.join(" · "));
+    const ok = f.picked.length - fails.length;
+    if (ok) setMsg(`Đã ghi nhận điểm cho ${ok} thành viên.`);
+    setF({ ...f, picked: [], reason: "" });
     qc.invalidateQueries({ queryKey: ["points-members"] }); qc.invalidateQueries({ queryKey: ["points-history"] });
   };
 
   const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
   const kinds = isAdmin ? ["attendance", "bonus", "penalty"] : ["attendance"];
+  const presets = [
+    { label: "Họp Ban (+5)", kind: "attendance", amount: 5, reason: "Tham gia họp Ban" },
+    { label: "Họp toàn thể (+10)", kind: "attendance", amount: 10, reason: "Tham gia họp toàn thể" },
+    ...(isAdmin ? [{ label: "Hỗ trợ sự kiện (+15)", kind: "bonus", amount: 15, reason: "Hỗ trợ sự kiện" }] : []),
+  ];
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div>
@@ -82,10 +100,34 @@ function PointsPage() {
 
         <form onSubmit={submit} className="space-y-3 rounded-xl border border-border bg-card p-4">
           <h2 className="font-semibold">Ghi nhận điểm</h2>
-          <select required className={inp} value={f.member} onChange={(e) => setF({ ...f, member: e.target.value })}>
-            <option value="">— Chọn thành viên —</option>
-            {(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name} · {m.member_code}</option>)}
-          </select>
+          <div className="flex flex-wrap gap-2">
+            {presets.map((p) => (
+              <button key={p.label} type="button" onClick={() => setF({ ...f, kind: p.kind, amount: p.amount, reason: p.reason })}
+                className={`rounded-full border px-3 py-1 text-xs ${f.reason === p.reason && f.amount === p.amount ? "border-primary bg-primary/10 text-primary" : "border-input"}`}>{p.label}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <select className={inp} value={f.dept} onChange={(e) => setF({ ...f, dept: e.target.value, picked: [] })}>
+              <option value="">Tất cả Ban</option>{depts.map((d) => <option key={d} value={d}>{deptName(d)}</option>)}
+            </select>
+            <input className={inp} placeholder="Tìm tên / mã" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
+          </div>
+          <div className="rounded-lg border border-input">
+            <label className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs font-medium">
+              <input type="checkbox" checked={allOn} onChange={() => setF({ ...f, picked: allOn ? f.picked.filter((id) => !pool.some((m) => m.id === id)) : [...new Set([...f.picked, ...pool.map((m) => m.id)])] })} />
+              Chọn tất cả ({pool.length}) · đã chọn <b className="text-primary">{f.picked.length}</b>
+            </label>
+            <div className="max-h-56 overflow-y-auto">
+              {pool.map((m) => (
+                <label key={m.id} className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm hover:bg-secondary">
+                  <input type="checkbox" checked={f.picked.includes(m.id)} onChange={() => toggle(m.id)} />
+                  <span className="flex-1 truncate">{m.full_name}</span>
+                  <span className="text-xs text-muted-foreground">{m.member_code}</span>
+                </label>
+              ))}
+              {pool.length === 0 && <p className="p-3 text-center text-xs text-muted-foreground">Không có thành viên.</p>}
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <select className={inp} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value, amount: e.target.value === "attendance" ? 5 : 20 })}>
               {kinds.map((k) => <option key={k} value={k}>{POINT_KIND[k]}</option>)}
@@ -96,7 +138,7 @@ function PointsPage() {
           <p className="text-xs text-muted-foreground">Điểm danh: họp Ban +5, họp toàn thể +10. {isAdmin ? "Thưởng/trừ điểm chỉ Quản trị viên." : "Thưởng/trừ điểm do Quản trị viên thực hiện."}</p>
           {err && <p className="text-sm text-destructive">{err}</p>}
           {msg && <p className="text-sm text-success">{msg}</p>}
-          <button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Ghi nhận</button>
+          <button disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang ghi nhận…" : `Ghi nhận${f.picked.length ? ` (${f.picked.length})` : ""}`}</button>
         </form>
       </div>
 

@@ -101,7 +101,7 @@ function CoursesAdmin() {
 
 function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pending: number; approved: number; onSave: (p: Partial<CourseSetting>) => void }) {
   const [fee, setFee] = useState({ fee_type: s.fee_type, fee_amount: s.fee_amount, capacity: s.capacity });
-  const { data: teachers } = useQuery({ queryKey: ["admin-teacher-names"], queryFn: async () => ((await supabase.from("teachers").select("id, full_name, teaching_levels").neq("status", "hidden").order("sort_order")).data ?? []) as { id: string; full_name: string; teaching_levels: number[] }[] });
+  const { data: teachers } = useQuery({ queryKey: ["admin-teacher-setting-options"], queryFn: async () => ((await supabase.from("teachers").select("id, full_name, teaching_levels").neq("status", "hidden").order("sort_order")).data ?? []) as { id: string; full_name: string; teaching_levels: number[] }[] });
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
@@ -114,11 +114,11 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
       <label className="mt-3 block text-xs text-muted-foreground">Giảng viên phụ trách chính (hiện trên trang khóa)
         <select className={`${inp} mt-1`} value={s.lead_teacher_id ?? ""} onChange={(e) => onSave({ lead_teacher_id: e.target.value || null })}>
           <option value="">Tự động (nổi bật / xếp đầu)</option>
-          {(teachers ?? []).map((t) => <option key={t.id} value={t.id}>{t.full_name}{t.teaching_levels.includes(s.level) ? "" : " (chưa gán cấp này)"}</option>)}
+          {(teachers ?? []).map((t) => <option key={t.id} value={t.id}>{t.full_name}{(t.teaching_levels ?? []).includes(s.level) ? "" : " (chưa gán cấp này)"}</option>)}
         </select>
       </label>
       {([["co_teacher_ids", "Giảng viên đồng hành"], ["assistant_ids", "Trợ giảng"]] as const).map(([key, label]) => {
-        const ids = s[key] ?? [];
+        const ids: string[] = Array.isArray(s[key]) ? (s[key] as string[]) : [];
         return (
           <div key={key} className="mt-3 text-xs text-muted-foreground">{label} <span className="opacity-70">(tùy chọn)</span>
             <div className="mt-1 flex flex-wrap gap-1.5">
