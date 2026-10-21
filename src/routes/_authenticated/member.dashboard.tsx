@@ -14,8 +14,7 @@ import { SubmitReportDialog } from "@/components/portal/SubmitReportDialog";
 import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import type React from "react";
-import { POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
-const TONE: Record<string, string> = { bronze: "blue", silver: "green", gold: "wine", platinum: "purple" };
+import { LEADER_TONE, POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
 import { DongSonDrum as DongSon, LacBirds, FLOCK_H, FLOCK_V } from "@/components/portal/PassOrnaments";
 
@@ -104,9 +103,9 @@ function MemberDashboard() {
 
   const realTier = tierOf(m.contribution_points);
   const special = isLeader(m, me.data?.roles ?? [], (advisor.data ?? []).length > 0) && m.position !== "Thành viên";
-  const previewTier = previewTone && previewTone !== "black" ? TIERS.find((t) => TONE[t.key] === previewTone) : undefined;
+  const previewTier = previewTone && previewTone !== "black" ? TIERS.find((t) => t.tone === previewTone) : undefined;
   const tier = previewTier ?? realTier;
-  const tone = previewTone ?? (special ? "black" : TONE[realTier.key] ?? "blue");
+  const tone = previewTone ?? (special ? "black" : realTier.tone);
   const advNames = (advisor.data ?? []).map((a) => deptName(a.dept).replace(/^Ban\s+/, "").split(/\s*&\s*/)[0]);
   const mainAdvisor = m.position === "Cố vấn chuyên môn";
   const deptLabel = mainAdvisor && advNames.length ? (advNames.length === 1 ? deptName((advisor.data ?? [])[0]?.dept ?? "") : advNames.join(" · ")) : deptName(m.department);
@@ -275,7 +274,7 @@ function MemberDashboard() {
             <div className="portal-glass mt-3 rounded-2xl p-4">
               <p className="text-xs font-semibold text-gold">Xem trước màu thẻ (chỉ Admin thấy, không đổi điểm thật)</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {([["blue", "Tập sự"], ["green", "Tích cực"], ["wine", "Nòng cốt"], ["purple", "Tinh hoa"], ["black", "Lãnh đạo / Cố vấn"]] as const).map(([k, l]) => (
+                {[...[...TIERS].reverse().map((t) => [t.tone, t.label] as const), [LEADER_TONE.key, LEADER_TONE.label] as const].map(([k, l]) => (
                   <button key={k} type="button" onClick={() => setPreviewTone(k)} style={{ background: `var(--pass-${k})` }}
                     className={`rounded-full px-3 py-1 text-xs font-semibold text-primary-foreground ring-2 ${previewTone === k ? "ring-gold" : "ring-transparent"}`}>{l}</button>
                 ))}
