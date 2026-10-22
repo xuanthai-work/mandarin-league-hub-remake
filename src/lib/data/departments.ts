@@ -7,7 +7,7 @@ export const DEPARTMENTS: Department[] = [
   { id: "comms", name: "Ban Truyền thông – Marketing", nameEn: "Communications & Marketing", description: "Lan tỏa hình ảnh và hoạt động của TML.", members: [] },
   { id: "design", name: "Ban Thiết kế", nameEn: "Design", description: "Thiết kế nhận diện, ấn phẩm và nội dung hình ảnh.", members: [] },
   { id: "translation", name: "Ban Biên dịch – Phiên dịch", nameEn: "Translation & Interpretation", description: "Biên dịch tài liệu và hỗ trợ giao lưu Việt – Trung.", members: [] },
-  { id: "postcard", name: "Ban Postcard – Podcast", nameEn: "Postcard & Podcast", description: "Sản xuất postcard, podcast về tiếng Trung và văn hóa.", members: [] },
+  { id: "postcard", name: "Ban Podcast", nameEn: "Podcast", description: "Sản xuất podcast về tiếng Trung và văn hóa.", members: [] },
   { id: "finance", name: "Ban Tài chính – Đối ngoại", nameEn: "Finance & External Relations", description: "Quản lý tài chính và phát triển quan hệ đối tác.", members: [] },
   {
     id: "tech", name: "Ban Công nghệ & Hệ thống", nameEn: "Technology & Systems",

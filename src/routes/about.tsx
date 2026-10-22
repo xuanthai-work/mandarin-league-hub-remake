@@ -18,7 +18,7 @@ const VALUES = [
 ];
 
 const STEPS = ["Học tập qua khóa HSK online", "Trải nghiệm qua workshop, cuộc thi", "Đóng góp trong 8 Ban chuyên môn", "Kết nối cơ hội Việt Nam – Trung Quốc"];
-const PROGRAMS = ["Khóa học HSK 1–6", "Workshop & Webinar", "Cuộc thi tiếng Trung", "Giao lưu Việt – Trung", "Postcard & Podcast", "Dự án cộng đồng"];
+const PROGRAMS = ["Khóa học HSK 1–6", "Workshop & Webinar", "Cuộc thi tiếng Trung", "Giao lưu Việt – Trung", "Podcast", "Dự án cộng đồng"];
 
 function PAbout() {
   const tr = useTr();
