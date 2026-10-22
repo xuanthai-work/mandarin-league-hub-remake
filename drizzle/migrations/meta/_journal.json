@@ -274,6 +274,13 @@
       "when": 1792630464360,
       "tag": "0038_tighten_advisors_content_benefit_logos",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1792630480115,
+      "tag": "0039_benefit_logos_policy_use_definer",
+      "breakpoints": true
     }
   ]
 }
