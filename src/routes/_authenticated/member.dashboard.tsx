@@ -112,7 +112,7 @@ function MemberDashboard() {
   const posLabel = mainAdvisor ? <span className="text-gold">Cố vấn chuyên môn</span>
     : advNames.length ? <>{m.position} · <span className="text-gold">Cố vấn {advNames.join(" · ")}</span></> : m.position;
   const joined = new Date(m.joined_on).toLocaleDateString("vi-VN");
-  const tierEl = <><span key={tier.key} className="tml-pass-pop inline-flex"><TierBadge tierKey={tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></>;
+  const tierEl = <><span key={tier.key} className="tml-pass-pop inline-flex"><TierBadge tierKey={tone === "black" ? "leader" : tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></>;
   const avatarEl = (size: string) => (
     <label className={`group relative ${size} cursor-pointer overflow-hidden rounded-md border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60`}>
       {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-3xl font-bold text-primary">{m.full_name.charAt(0)}</span>}
@@ -161,7 +161,7 @@ function MemberDashboard() {
           <button type="button" onClick={() => setTab("card")} title="Mở thẻ thành viên" style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
             className="tml-pass relative ml-1 inline-flex items-center gap-1.5 overflow-hidden rounded-full py-1 pl-1 pr-3 text-xs font-semibold text-primary-deep">
             <span aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-gold/50" />
-            <span key={tier.key} className="tml-pass-pop relative inline-flex"><TierBadge tierKey={tier.key} size={24} /></span>
+            <span key={tier.key} className="tml-pass-pop relative inline-flex"><TierBadge tierKey={tone === "black" ? "leader" : tier.key} size={24} /></span>
             <span className="relative">{tier.label}</span>
           </button>
         </h1>
@@ -181,7 +181,7 @@ function MemberDashboard() {
       {congrats && (
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4" onClick={() => setCongrats(null)}>
           <div className="tml-pass-pop portal-glass max-w-sm rounded-2xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto w-fit"><TierBadge tierKey={tier.key} size={88} /></div>
+            <div className="mx-auto w-fit"><TierBadge tierKey={tone === "black" ? "leader" : tier.key} size={88} /></div>
             <p className="mt-4 text-lg font-bold text-primary-deep">Chúc mừng bạn đã đạt cấp bậc thành viên mới tại The Mandarin League!</p>
             <p className="mt-1 text-sm font-semibold text-gold">{congrats}</p>
             <button onClick={() => setCongrats(null)} className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground">Tuyệt vời</button>
