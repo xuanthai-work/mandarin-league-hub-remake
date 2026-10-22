@@ -6,12 +6,12 @@ export type Tier = { key: string; label: string; min: number; className: string;
  * The 8th card colour ("black") is reserved for leaders/advisors, not earned by points.
  */
 export const TIERS: Tier[] = [
-  { key: "honor", label: "Danh dự", min: 1000, className: "tier-honor", tone: "honor" },
-  { key: "platinum", label: "Ưu tú", min: 500, className: "tier-purple", tone: "purple" },
-  { key: "excellent", label: "Xuất sắc", min: 350, className: "tier-pink", tone: "pink" },
-  { key: "gold", label: "Nòng cốt", min: 200, className: "tier-wine", tone: "wine" },
-  { key: "silver", label: "Tích cực", min: 50, className: "tier-green", tone: "green" },
-  { key: "official", label: "Chính thức", min: 20, className: "tier-blue", tone: "blue" },
+  { key: "honor", label: "Danh dự", min: 2200, className: "tier-honor", tone: "honor" },
+  { key: "platinum", label: "Ưu tú", min: 1600, className: "tier-purple", tone: "purple" },
+  { key: "excellent", label: "Xuất sắc", min: 1000, className: "tier-pink", tone: "pink" },
+  { key: "gold", label: "Nòng cốt", min: 600, className: "tier-wine", tone: "wine" },
+  { key: "silver", label: "Tích cực", min: 300, className: "tier-green", tone: "green" },
+  { key: "official", label: "Chính thức", min: 100, className: "tier-blue", tone: "blue" },
   { key: "bronze", label: "Tập sự", min: 0, className: "tier-bronze", tone: "bronze" },
 ];
 
