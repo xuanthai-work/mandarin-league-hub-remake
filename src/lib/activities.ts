@@ -54,8 +54,8 @@ export const fmtDateTime = (iso: string | null) =>
 export async function withBanners(rows: ActivityRow[]): Promise<ActivityRow[]> {
   const paths = rows.map((r) => r.banner_path).filter(Boolean);
   if (!paths.length) return rows;
-  const { data } = await supabase.storage.from(ACTIVITY_BUCKET).createSignedUrls(paths, 60 * 60 * 6);
-  const map = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
+  const { signImages } = await import("./public-images.functions");
+  const map = await signImages(ACTIVITY_BUCKET, paths);
   return rows.map((r) => ({ ...r, banner: map.get(r.banner_path) ?? "" }));
 }
 

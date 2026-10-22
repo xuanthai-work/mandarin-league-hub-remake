@@ -20,11 +20,11 @@ export type PartnerRow = {
   website_url: string; sort_order: number; is_active: boolean; logo?: string;
 };
 
-async function sign<T>(bucket: string, rows: T[], key: keyof T, out: string): Promise<T[]> {
+async function sign<T>(bucket: "news-covers" | "partner-logos", rows: T[], key: keyof T, out: string): Promise<T[]> {
   const paths = rows.map((r) => r[key] as unknown as string).filter(Boolean);
   if (!paths.length) return rows;
-  const { data } = await supabase.storage.from(bucket).createSignedUrls(paths, 60 * 60 * 6);
-  const m = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
+  const { signImages } = await import("./public-images.functions");
+  const m = await signImages(bucket, paths);
   return rows.map((r) => ({ ...r, [out]: m.get(r[key] as unknown as string) ?? "" }));
 }
 export const withCovers = (rows: NewsRow[]) => sign(NEWS_BUCKET, rows, "cover_path", "cover");
