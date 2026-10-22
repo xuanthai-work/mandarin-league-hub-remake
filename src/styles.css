@@ -284,6 +284,8 @@
   --metal-amber-hi: oklch(0.9 0.1 75); --metal-amber: oklch(0.7 0.15 60); --metal-amber-lo: oklch(0.45 0.12 50);
   --enamel-emerald: oklch(0.42 0.1 165); --enamel-crimson: oklch(0.4 0.14 25);
   --enamel-amber: oklch(0.45 0.1 55);
+  --metal-pink-hi: #f9a8d4; --metal-pink: #db2777; --metal-pink-lo: #831843; --enamel-pink: #9d174d;
+  --metal-obsidian-hi: #6b7280; --metal-obsidian: #374151; --metal-obsidian-lo: #111827; --enamel-obsidian: #1f2937;
   --amethyst-glow: oklch(0.65 0.25 310);
 }
 .tier-bronze { background: color-mix(in oklab, var(--metal-bronze) 22%, var(--background)); color: var(--foreground); border-color: var(--metal-bronze); }
@@ -291,6 +293,7 @@
 .tier-green { background: color-mix(in oklab, var(--metal-emerald) 20%, var(--background)); color: var(--foreground); border-color: var(--metal-emerald); }
 .tier-wine { background: var(--gold); color: var(--foreground); border-color: var(--gold); }
 .tier-amber { background: linear-gradient(135deg, var(--metal-amber-hi), var(--metal-amber)); color: var(--foreground); border-color: var(--metal-gold); }
+.tier-pink { background: linear-gradient(135deg, var(--metal-pink-hi), var(--metal-pink)); color: var(--foreground); border-color: var(--metal-gold); }
 .tier-honor { background: linear-gradient(135deg, var(--metal-gold-hi), var(--metal-gold)); color: var(--foreground); border-color: var(--metal-gold-lo); }
 .tier-purple { background: linear-gradient(135deg, var(--metal-purple), var(--metal-purple-lo)); color: var(--metal-gold-hi); border-color: var(--metal-gold); }
 .badge-sheen { animation: badge-sheen 4.5s ease-in-out infinite; }
@@ -323,7 +326,7 @@
 }
 
 /* Member pass — tier colors (admin tier config maps to these tokens) */
-:root { --pass-bronze: #8a5a2b; --pass-amber: #a8641c; --pass-honor: #9c7a1e; --pass-blue: #245a91; --pass-green: #23765a; --pass-wine: #7d263a; --pass-purple: #514080; --pass-black: #242832; }
+:root { --pass-bronze: #8a5a2b; --pass-amber: #a8641c; --pass-pink: #db2777; --pass-honor: #9c7a1e; --pass-blue: #245a91; --pass-green: #23765a; --pass-wine: #7d263a; --pass-purple: #514080; --pass-black: #242832; }
 .tml-pass { --pass-c: var(--pass-blue); --pass-accent: color-mix(in oklab, var(--gold) 60%, var(--pass-c));
   background: radial-gradient(120% 80% at 100% 0%, color-mix(in oklab, var(--pass-c) 16%, transparent), transparent 60%), linear-gradient(160deg, var(--background), color-mix(in oklab, var(--pass-c) 10%, var(--background)));
   box-shadow: 0 30px 60px -24px color-mix(in oklab, var(--pass-c) 70%, transparent), 0 0 0 1.5px color-mix(in oklab, var(--pass-accent) 70%, transparent), 0 0 22px -4px color-mix(in oklab, var(--pass-c) 55%, transparent);

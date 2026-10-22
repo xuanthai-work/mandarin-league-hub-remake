@@ -8,7 +8,7 @@ export type Tier = { key: string; label: string; min: number; className: string;
 export const TIERS: Tier[] = [
   { key: "honor", label: "Danh dự", min: 1000, className: "tier-honor", tone: "honor" },
   { key: "platinum", label: "Ưu tú", min: 500, className: "tier-purple", tone: "purple" },
-  { key: "excellent", label: "Xuất sắc", min: 350, className: "tier-amber", tone: "amber" },
+  { key: "excellent", label: "Xuất sắc", min: 350, className: "tier-pink", tone: "pink" },
   { key: "gold", label: "Nòng cốt", min: 200, className: "tier-wine", tone: "wine" },
   { key: "silver", label: "Tích cực", min: 50, className: "tier-green", tone: "green" },
   { key: "official", label: "Chính thức", min: 20, className: "tier-blue", tone: "blue" },

@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { Lock, X } from "lucide-react";
 import { TIERS, tierOf } from "@/lib/points";
 
-const METAL: Record<string, string> = { bronze: "bronze", official: "azure", silver: "emerald", gold: "gold", excellent: "amber", platinum: "purple", honor: "gold" };
+const METAL: Record<string, string> = { bronze: "bronze", official: "azure", silver: "emerald", gold: "gold", excellent: "pink", platinum: "purple", honor: "gold", leader: "obsidian" };
 
 export const TIER_INFO: Record<string, { zh: string; motto: string; perks: string[] }> = {
   bronze: { zh: "见习", motto: "Khởi đầu hành trình học hỏi và hòa nhập cùng Liên Đoàn.", perks: ["Thẻ thành viên chính thức", "Tham gia nhiệm vụ & dự án Ban"] },
@@ -11,26 +11,40 @@ export const TIER_INFO: Record<string, { zh: string; motto: string; perks: strin
   gold: { zh: "骨干", motto: "Trụ cột chuyên môn, hoàn thành xuất sắc dự án lớn.", perks: ["Ưu tiên quyền lợi Premium", "Ưu tiên xét đề bạt Phó/Trưởng Ban"] },
   excellent: { zh: "优秀", motto: "Hiệu suất vượt trội, dẫn dắt đầu việc quan trọng của Ban.", perks: ["Đề cử khen thưởng định kỳ", "Ưu tiên tham gia dự án đối ngoại"] },
   platinum: { zh: "菁英", motto: "Tinh hoa của Liên Đoàn, gắn bó bền bỉ và có tầm ảnh hưởng.", perks: ["Vinh danh thường niên", "Đặc quyền Premium cao cấp"] },
+  leader: { zh: "领导", motto: "Lãnh đạo & Cố vấn dẫn dắt Liên Đoàn.", perks: ["Thẻ Obsidian danh dự", "Không tính vào BXH điểm"] },
   honor: { zh: "荣誉", motto: "Vinh danh cống hiến tối cao cho Liên Đoàn Hán Ngữ.", perks: ["Bảng vàng Danh dự TML", "Đặc quyền cao nhất của TML"] },
 };
-const ENAMEL: Record<string, string> = { bronze: "var(--enamel-amber)", official: "var(--enamel-azure)", silver: "var(--enamel-emerald)", gold: "var(--sapphire)", excellent: "var(--enamel-amber)", platinum: "var(--metal-purple-lo)", honor: "var(--enamel-crimson)" };
-const GLYPH: Record<string, string> = { bronze: "习", official: "正", silver: "积", gold: "骨", excellent: "优", platinum: "菁", honor: "誉" };
-const GOLD_TRIM = ["platinum", "honor", "excellent"];
-const HALO = ["gold", "excellent", "platinum", "honor"];
+const ENAMEL: Record<string, string> = { bronze: "var(--enamel-amber)", official: "var(--enamel-azure)", silver: "var(--enamel-emerald)", gold: "var(--sapphire)", excellent: "var(--enamel-pink)", leader: "var(--enamel-obsidian)", platinum: "var(--metal-purple-lo)", honor: "var(--enamel-crimson)" };
+const GLYPH: Record<string, string> = { bronze: "习", official: "正", silver: "积", gold: "骨", excellent: "优", platinum: "菁", honor: "誉", leader: "领" };
+const GOLD_TRIM = ["platinum", "honor", "excellent", "leader"];
+const HALO = ["gold", "excellent", "platinum", "honor", "leader"];
+const CROWN = ["platinum", "honor", "leader"];
 
 const star = (n: number, ro: number, ri: number, rot = -Math.PI / 2) =>
   Array.from({ length: n * 2 }).map((_, i) => { const r = i % 2 ? ri : ro; const a = rot + (i * Math.PI) / n; return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`; }).join(" ");
 
 const SHIELD = "M50 6 L86 17 V47 C86 70 70 85 50 94 C30 85 14 70 14 47 V17 Z";
 
+const pt = (r: number, a: number) => `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`;
+/** 10-petal lotus outline. */
+const LOTUS = Array.from({ length: 10 }).map((_, i) => { const s = (2 * Math.PI) / 10, a0 = -Math.PI / 2 + i * s - s / 2, a1 = a0 + s, m = (a0 + a1) / 2;
+  return `${i ? "" : `M${pt(36, a0)} `}Q${pt(50, a0 + s * 0.1)} ${pt(49, m)} Q${pt(50, a1 - s * 0.1)} ${pt(36, a1)}`; }).join(" ") + " Z";
+/** 12-arm cross-flower: alternating long/short points. */
+const CROSS12 = Array.from({ length: 24 }).map((_, i) => pt(i % 2 ? 38 : (i / 2) % 3 === 0 ? 50 : 44, -Math.PI / 2 + (i * Math.PI) / 12)).join(" ");
+/** 12 sun rays: sharp triangles. */
+const SUN = Array.from({ length: 36 }).map((_, i) => pt(i % 3 === 1 ? 50 : 37, -Math.PI / 2 + (i * Math.PI * 2) / 36)).join(" ");
+const OBSIDIAN = "M50 4 L88 14 V46 C88 72 70 88 50 96 C30 88 12 72 12 46 V14 Z";
+
+/** Each tier owns a unique silhouette. */
 function Outer({ k, fill }: { k: string; fill: string }) {
   if (k === "bronze") return <path d={SHIELD} fill={fill} />;
-  if (k === "silver") return <polygon points={star(6, 48, 38)} fill={fill} />;
   if (k === "official") return <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill={fill} />;
-  if (k === "gold") return <polygon points={star(16, 48, 40, -Math.PI / 2)} fill={fill} />;
-  if (k === "excellent") return <polygon points={star(10, 49, 39)} fill={fill} />;
-  if (k === "honor") return <polygon points={star(12, 50, 36)} fill={fill} />;
-  return <polygon points={star(8, 49, 33)} fill={fill} />;
+  if (k === "silver") return <polygon points={star(8, 49, 36)} fill={fill} />;
+  if (k === "gold") return <polygon points={CROSS12} fill={fill} />;
+  if (k === "excellent") return <path d={LOTUS} fill={fill} />;
+  if (k === "platinum") return <polygon points={star(16, 50, 40)} fill={fill} />;
+  if (k === "honor") return <polygon points={SUN} fill={fill} />;
+  return <path d={OBSIDIAN} fill={fill} />;
 }
 
 function Laurel({ color }: { color: string }) {
@@ -80,6 +94,7 @@ export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: str
       <g transform="translate(50 50) scale(0.88) translate(-50 -50)" style={{ stroke: trimLo }} strokeWidth="0.8" fill="none"><Outer k={k} fill="none" /></g>
 
       {k === "bronze" && detail && [[24, 22], [76, 22], [24, 58], [76, 58], [50, 86]].map(([x, y]) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.8" style={{ fill: trimHi, stroke: trimLo }} strokeWidth="0.5" />)}
+      {k === "leader" && <circle cx="50" cy="66" r="2.6" style={{ fill: "var(--metal-pink)", stroke: "var(--metal-gold-hi)" }} strokeWidth="0.6" />}
       {k === "platinum" && Array.from({ length: 8 }).map((_, i) => { const a = -Math.PI / 2 + (i * Math.PI) / 4; return <circle key={i} cx={50 + 42 * Math.cos(a)} cy={50 + 42 * Math.sin(a)} r="3" style={{ fill: "var(--metal-purple)", stroke: "var(--metal-gold-hi)" }} strokeWidth="0.8" />; })}
 
       {/* medallion */}
@@ -93,13 +108,13 @@ export function TierBadge({ tierKey, size = 96, locked = false }: { tierKey: str
 
       {HALO.includes(k) && detail && <Laurel color={trimHi} />}
 
-      {(k === "platinum" || k === "honor") && <path d="M38 33 L41 25 L45 31 L50 22 L55 31 L59 25 L62 33 Z" style={{ fill: "var(--metal-gold-hi)", stroke: "var(--metal-gold-lo)" }} strokeWidth="0.6" />}
+      {CROWN.includes(k) && <path d="M38 33 L41 25 L45 31 L50 22 L55 31 L59 25 L62 33 Z" style={{ fill: "var(--metal-gold-hi)", stroke: "var(--metal-gold-lo)" }} strokeWidth="0.6" />}
       {k === "bronze" && detail && <g style={{ stroke: trimHi }} strokeWidth="1.2" fill="none" strokeLinecap="round"><path d="M38 66 H62 M40 69 H60" /><path d="M50 64 V30 M50 40 Q43 37 42 31 Q49 33 50 40 M50 36 Q57 33 58 27 Q51 29 50 36" /></g>}
       {(k === "silver" || k === "official") && detail && <path d="M30 66 Q36 62 42 66 T54 66 T66 66 T72 66" fill="none" style={{ stroke: trimHi }} strokeWidth="1" />}
 
-      {!(k === "bronze" && detail) && <text x="50" y={k === "platinum" || k === "honor" ? 58 : k === "bronze" ? 57 : 59} textAnchor="middle" fontSize={k === "bronze" ? 17 : 22} fontWeight="800" fontFamily="'Noto Serif SC', 'Songti SC', serif"
+      {!(k === "bronze" && detail) && <text x="50" y={CROWN.includes(k) ? 58 : k === "bronze" ? 57 : 59} textAnchor="middle" fontSize={k === "bronze" ? 17 : 22} fontWeight="800" fontFamily="'Noto Serif SC', 'Songti SC', serif"
         style={{ fill: gt ? "var(--metal-gold-hi)" : trimHi, stroke: trimLo }} strokeWidth="0.6" paintOrder="stroke">{GLYPH[k]}</text>}
-      {(k === "platinum" || k === "honor") && <path d="M44 66 Q50 60 56 66 Q50 70 44 66 Z" style={{ fill: "var(--metal-gold)" }} />}
+      {CROWN.includes(k) && <path d="M44 66 Q50 60 56 66 Q50 70 44 66 Z" style={{ fill: "var(--metal-gold)" }} />}
 
       {!locked && <g clipPath={`url(#c${id})`}><rect className="badge-sheen" x="20" y="-10" width="18" height="120" fill={`url(#s${id})`} /></g>}
       {locked && <g><circle cx="78" cy="78" r="12" style={{ fill: "var(--primary-deep)" }} /><foreignObject x="70" y="70" width="16" height="16"><Lock className="h-4 w-4 text-primary-foreground" /></foreignObject></g>}
