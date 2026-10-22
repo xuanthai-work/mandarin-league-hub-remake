@@ -85,8 +85,8 @@ export const QUESTION_BANK: BankEntry[] = [
   ] },
   { department: "postcard", position: null, topics: [
     { title: "Năng lực sáng tạo nội dung", description: "Kinh nghiệm viết, kể chuyện, thu âm.", questions: [req("Bạn có kinh nghiệm viết nội dung, kể chuyện, thu âm hoặc podcast không?")] },
-    { title: "Mảng muốn tham gia", description: "Chọn mảng bạn quan tâm.", questions: [{ prompt: "Có thể chọn:", kind: "multi", options: ["Viết nội dung", "Viết kịch bản", "Thu âm", "Biên tập âm thanh", "Dẫn chương trình", "Thiết kế postcard", "Khác"], required: true }] },
-    { title: "Ý tưởng nội dung", description: "Đề xuất chủ đề.", questions: [req("Hãy đề xuất một chủ đề postcard hoặc podcast cho TML."), opt("Nếu đã có sản phẩm, dán liên kết (Google Drive, YouTube, Spotify...)", "short")] },
+    { title: "Mảng muốn tham gia", description: "Chọn mảng bạn quan tâm.", questions: [{ prompt: "Có thể chọn:", kind: "multi", options: ["Viết nội dung", "Viết kịch bản", "Thu âm", "Biên tập âm thanh", "Dẫn chương trình", "Khác"], required: true }] },
+    { title: "Ý tưởng nội dung", description: "Đề xuất chủ đề.", questions: [req("Hãy đề xuất một chủ đề podcast cho TML."), opt("Nếu đã có sản phẩm, dán liên kết (Google Drive, YouTube, Spotify...)", "short")] },
   ] },
   { department: "finance", position: null, topics: [
     { title: "Kinh nghiệm đối ngoại", description: "Làm việc với đối tác, tài trợ.", questions: [req("Bạn đã từng làm việc với đối tác, tài trợ hoặc hoạt động đối ngoại chưa?")] },
