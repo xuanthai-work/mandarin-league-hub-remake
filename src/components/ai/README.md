@@ -1,6 +1,6 @@
 # TML AI — Phase 1
 
-Public route: `/ai-tutor`. Entry points: shared website header and footer. Vietnamese-first, official TML logo and existing theme tokens.
+Public route: `/ai-tutor`. Entry points: shared website mobile menu and footer (desktop header kept intact to avoid crowding). Vietnamese-first, official TML logo and existing theme tokens.
 
 ## Interaction and data boundary
 
@@ -25,3 +25,12 @@ Review Phase 1 first. Implement a real server-side adapter, cancellation, safe f
 - New: `src/routes/ai-tutor.tsx`, `src/components/ai/TmlAiChat.tsx`, this README, `src/lib/tml-ai.ts`, `src/lib/tml-ai.test.ts`.
 - Added AI Elements source: `conversation.tsx`, `message.tsx`, `prompt-input.tsx`, `shimmer.tsx` and their `button-group`, `input-group`, `spinner` UI dependencies.
 - Existing: `SiteLayout.tsx` (two entry links), `button.tsx` (compatible icon-sm size), package manifest/lockfile (UI dependencies), `AGENTS.md` and `roadmap.md`.
+
+## Verification
+
+- 23 targeted tests passed (demo boundaries, domain routing, points, admin permissions).
+- Browser confirmed public page, HSK selection, prompt fill/clear, curated example, clipboard, unavailable reply, reset and reload without persistence. Submitting the arbitrary question caused zero network requests.
+- Desktop, tablet and mobile widths checked: 375, 768, 1024, 1280, 1440; no page overflow. Existing header unchanged on desktop.
+- Automatic build/typecheck passed. Focused lint has no errors; AI Elements source has development-only refresh warnings. Whole-project lint includes extensive pre-existing formatting and unrelated warnings, not changed in this scoped feature.
+- Fixed the new chat dependency conflict by pinning parse5 to the compatible 7.2.1 version while preserving the existing entities 4.5.0 override. This prevents the markdown dependency optimizer from hanging the preview.
+- Private member/admin flows were not re-exercised; their files, tables and authentication were not changed.

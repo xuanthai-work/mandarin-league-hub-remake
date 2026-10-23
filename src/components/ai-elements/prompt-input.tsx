@@ -860,6 +860,7 @@ export const PromptInput = ({
         ref={inputRef}
         title="Upload files"
         type="file"
+        style={{}}
       />
       <form className={cn("w-full", className)} onSubmit={handleSubmit} ref={formRef} {...props}>
         <InputGroup className="overflow-hidden">{children}</InputGroup>

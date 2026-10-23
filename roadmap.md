@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] TML AI Phase 1: public demo interface, mode/HSK selection, session chat and responsive verification (no provider connection).
+- [x] TML AI Phase 1: public demo interface, mode/HSK selection, session chat and responsive verification (no provider connection).
 - [x] AI đọc ảnh/PDF chứng nhận và điền sẵn form Admin
 - [x] Đa ngôn ngữ bước 1: nút VI/中/EN, menu, chân trang, phần đầu trang chủ
 - [x] Đa ngôn ngữ bước 2: Trang chủ, Giới thiệu, Cơ cấu tổ chức, Xác minh, Cộng đồng, Liên hệ, Tuyển thành viên (phần trang)
