@@ -3,19 +3,27 @@ export type HskLevel = "general" | 1 | 2 | 3 | 4 | 5 | 6;
 export type DemoRequest = { mode: AssistantMode; level: HskLevel; text: string };
 export type DemoReply = { kind: "example" | "unavailable"; text: string };
 export type ChatService = (request: DemoRequest, signal: AbortSignal) => Promise<DemoReply>;
-export type ChatMessage = { id: number; role: "user" | "assistant"; text: string; kind?: DemoReply["kind"]; context: string };
+export type ChatMessage = {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  kind?: DemoReply["kind"];
+  context: string;
+};
 
 export const HSK_LEVELS: HskLevel[] = ["general", 1, 2, 3, 4, 5, 6];
-export const levelLabel = (level: HskLevel) => level === "general" ? "Tiếng Trung tổng quát" : `HSK ${level}`;
+export const levelLabel = (level: HskLevel) =>
+  level === "general" ? "Tiếng Trung tổng quát" : `HSK ${level}`;
 
 export function suggestedPrompts(mode: AssistantMode, level: HskLevel): string[] {
-  if (mode === "community") return [
-    "Liên Đoàn Hán Ngữ là tổ chức như thế nào?",
-    "Làm thế nào để tham gia Liên Đoàn Hán Ngữ?",
-    "Tôi có thể tìm thông tin tuyển thành viên ở đâu?",
-    "Làm thế nào để tìm các lớp học và hoạt động của TML?",
-    "Tôi có thể tìm hiểu quyền lợi thành viên ở đâu?",
-  ];
+  if (mode === "community")
+    return [
+      "Liên Đoàn Hán Ngữ là tổ chức như thế nào?",
+      "Làm thế nào để tham gia Liên Đoàn Hán Ngữ?",
+      "Tôi có thể tìm thông tin tuyển thành viên ở đâu?",
+      "Làm thế nào để tìm các lớp học và hoạt động của TML?",
+      "Tôi có thể tìm hiểu quyền lợi thành viên ở đâu?",
+    ];
   return [
     "Giải thích sự khác nhau giữa 觉得 和 认为.",
     `Dạy tôi 10 từ vựng ${level === "general" ? "tiếng Trung" : `HSK ${level}`} theo chủ đề công việc.`,
@@ -53,15 +61,27 @@ export function resolveDemo(request: DemoRequest): DemoReply {
     const answer = answers[index];
     if (answer) return { kind: "example", text: answer };
   }
-  return { kind: "unavailable", text: "Dịch vụ AI chưa được kết nối. Câu hỏi này chưa có câu trả lời mẫu và không được gửi đến nhà cung cấp AI. Bạn có thể thử ví dụ “Giải thích sự khác nhau giữa 觉得 和 认为.” hoặc các câu hỏi về Liên Đoàn." };
+  return {
+    kind: "unavailable",
+    text: "Dịch vụ AI chưa được kết nối. Câu hỏi này chưa có câu trả lời mẫu và không được gửi đến nhà cung cấp AI. Bạn có thể thử ví dụ “Giải thích sự khác nhau giữa 觉得 和 认为.” hoặc các câu hỏi về Liên Đoàn.",
+  };
 }
 
 /** Local adapter; replace its implementation in a later, separately approved phase. */
 export const demoChatService: ChatService = async (request, signal) => {
   await new Promise<void>((resolve, reject) => {
-    if (signal.aborted) { reject(new DOMException("Aborted", "AbortError")); return; }
-    const cancel = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
-    const timer = setTimeout(() => { signal.removeEventListener("abort", cancel); resolve(); }, 450);
+    if (signal.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const cancel = () => {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", cancel);
+      resolve();
+    }, 450);
     signal.addEventListener("abort", cancel, { once: true });
   });
   return resolveDemo(request);
