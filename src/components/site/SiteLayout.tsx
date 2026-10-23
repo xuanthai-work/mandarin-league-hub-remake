@@ -113,6 +113,7 @@ function Header() {
           <Link to="/join" onClick={() => setOpen(false)} className="mt-2 block rounded-full bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground">
             {t("cta.join")}
           </Link>
+          <Link to="/ai-tutor" onClick={() => setOpen(false)} className="mt-2 block rounded-md border border-gold/40 px-3 py-2.5 text-sm font-medium text-primary-deep dark:text-foreground">TML AI</Link>
         </nav>
       )}
     </header>
@@ -141,6 +142,7 @@ function Footer() {
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{t("footer.explore")}</div>
           <ul className="space-y-2 text-sm">
+            <li><Link to="/ai-tutor" className="opacity-85 hover:opacity-100 hover:underline">TML AI</Link></li>
             {[...NAV.slice(1), ...FOOTER_EXTRA].map((n) => (
               <li key={n.to}><Link to={n.to} className="opacity-85 hover:opacity-100 hover:underline">{t(`nav.${n.to}` as DictKey)}</Link></li>
             ))}
