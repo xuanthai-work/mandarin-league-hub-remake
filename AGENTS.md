@@ -11,6 +11,8 @@
 
 ## Architecture decisions
 
+- TML AI uses AI Elements and a client-safe injectable chat adapter with curated session-only demo replies; no provider or persistence is added until Phase 2 approval, so public UI cannot leak private records or impersonate real AI.
+
 - Keep public verification domain types, demo records, and Zod validation in one client-safe module so Lovable Cloud can replace the data source later without rebuilding the UI.
 - Public content groups use typed accessors in src/lib/data/* so data sources can change without UI changes.
 - Recruitment (periods, positions, topics, questions, applications) lives in Lovable Cloud tables; public submissions go through a server function that re-validates every rule with the admin client, so the browser is never trusted.
