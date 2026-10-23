@@ -11,7 +11,6 @@ import { ThemeToggle } from "./ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CrystalParticles } from "./CrystalParticles";
 import { useSiteContent } from "@/lib/site-content";
-import { Button } from "@/components/ui/button";
 
 export const NAV = [
   { to: "/", label: "Trang chủ" },
@@ -83,7 +82,6 @@ function Header() {
           </DropdownMenu>
         </nav>
         <div className="hidden shrink-0 items-center gap-1 lg:flex"><LanguageSwitcher /><ThemeToggle /></div>
-        <Button asChild variant="outline" size="sm" className="ml-auto shrink-0 border-gold/50 text-primary-deep dark:text-foreground lg:ml-0"><Link to="/ai-tutor">TML AI</Link></Button>
         <Link
           to="/join"
           className="hidden whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 xl:px-5 xl:py-2.5 lg:inline-flex"
@@ -115,6 +113,7 @@ function Header() {
           <Link to="/join" onClick={() => setOpen(false)} className="mt-2 block rounded-full bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground">
             {t("cta.join")}
           </Link>
+          <Link to="/ai-tutor" onClick={() => setOpen(false)} className="mt-2 block rounded-md border border-gold/40 px-3 py-2.5 text-sm font-medium text-primary-deep dark:text-foreground">TML AI</Link>
         </nav>
       )}
     </header>
