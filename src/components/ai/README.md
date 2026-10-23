@@ -34,3 +34,4 @@ Review Phase 1 first. Implement a real server-side adapter, cancellation, safe f
 - Automatic build/typecheck passed. Focused lint has no errors; AI Elements source has development-only refresh warnings. Whole-project lint includes extensive pre-existing formatting and unrelated warnings, not changed in this scoped feature.
 - Fixed the new chat dependency conflict by pinning parse5 to the compatible 7.2.1 version while preserving the existing entities 4.5.0 override. This prevents the markdown dependency optimizer from hanging the preview.
 - Private member/admin flows were not re-exercised; their files, tables and authentication were not changed.
+- Clipboard failure state was exercised in the browser. An early screenshot before hydration temporarily changed input caret styles and produced a screenshot-only hydration warning; final checks wait for hydration before capturing.

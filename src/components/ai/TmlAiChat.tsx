@@ -433,7 +433,6 @@ function ChatWorkspace({ service }: { service: ChatService }) {
             >
               <PromptInputTextarea
                 ref={textarea}
-                style={{}}
                 aria-label="Câu hỏi của bạn"
                 placeholder={
                   isTutor ? "Viết câu hỏi tiếng Trung của bạn…" : "Bạn muốn hỏi gì về Liên Đoàn?"
