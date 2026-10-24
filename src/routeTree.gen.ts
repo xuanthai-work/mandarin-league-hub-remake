@@ -58,6 +58,7 @@ import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authenticated/admin.tasks'
 import { Route as AuthenticatedAdminTeachersRouteImport } from './routes/_authenticated/admin.teachers'
 import { Route as AuthenticatedMemberDashboardRouteImport } from './routes/_authenticated/member.dashboard'
+import { Route as ApiPublicTmlAiRouteImport } from './routes/api/public/tml-ai'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
 import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.certificate.index'
@@ -329,6 +330,11 @@ const AuthenticatedMemberDashboardRoute =
     path: '/member/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicTmlAiRoute = ApiPublicTmlAiRouteImport.update({
+  id: '/api/public/tml-ai',
+  path: '/api/public/tml-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoursesHskIndexRoute = CoursesHskIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -424,6 +430,7 @@ export interface FileRoutesByFullPath {
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
+  '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -480,6 +487,7 @@ export interface FileRoutesByTo {
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
+  '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -541,6 +549,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/_authenticated/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/_authenticated/member/dashboard': typeof AuthenticatedMemberDashboardRoute
+  '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
   '/verify/hsk/$code': typeof VerifyHskCodeRoute
@@ -602,6 +611,7 @@ export interface FileRouteTypes {
     | '/admin/tasks'
     | '/admin/teachers'
     | '/member/dashboard'
+    | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -658,6 +668,7 @@ export interface FileRouteTypes {
     | '/admin/tasks'
     | '/admin/teachers'
     | '/member/dashboard'
+    | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tasks'
     | '/_authenticated/admin/teachers'
     | '/_authenticated/member/dashboard'
+    | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
     | '/verify/hsk/$code'
@@ -756,6 +768,7 @@ export interface RootRouteChildren {
   NewsIndexRoute: typeof NewsIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
   VerifyIndexRoute: typeof VerifyIndexRoute
+  ApiPublicTmlAiRoute: typeof ApiPublicTmlAiRoute
   VerifyCertificateCodeRoute: typeof VerifyCertificateCodeRoute
   VerifyHskCodeRoute: typeof VerifyHskCodeRoute
   VerifyCertificateIndexRoute: typeof VerifyCertificateIndexRoute
@@ -1110,6 +1123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMemberDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/tml-ai': {
+      id: '/api/public/tml-ai'
+      path: '/api/public/tml-ai'
+      fullPath: '/api/public/tml-ai'
+      preLoaderRoute: typeof ApiPublicTmlAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/courses/hsk/': {
       id: '/courses/hsk/'
       path: '/'
@@ -1292,6 +1312,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewsIndexRoute: NewsIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
   VerifyIndexRoute: VerifyIndexRoute,
+  ApiPublicTmlAiRoute: ApiPublicTmlAiRoute,
   VerifyCertificateCodeRoute: VerifyCertificateCodeRoute,
   VerifyHskCodeRoute: VerifyHskCodeRoute,
   VerifyCertificateIndexRoute: VerifyCertificateIndexRoute,

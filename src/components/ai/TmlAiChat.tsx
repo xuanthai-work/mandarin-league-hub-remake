@@ -40,9 +40,10 @@ import {
   usePromptInputController,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
+import { liveChatService } from "@/lib/tml-ai-live";
 import {
   HSK_LEVELS,
-  demoChatService,
   levelLabel,
   suggestedPrompts,
   type AssistantMode,
@@ -81,7 +82,7 @@ function IconAction({
   );
 }
 
-export function TmlAiChat({ service = demoChatService }: { service?: ChatService }) {
+export function TmlAiChat({ service = liveChatService }: { service?: ChatService }) {
   return (
     <TooltipProvider>
       <PromptInputProvider>
@@ -99,6 +100,8 @@ function ChatWorkspace({ service }: { service: ChatService }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captcha = useRef<RecaptchaHandle>(null);
   const pending = useRef<AbortController | null>(null);
   const messageId = useRef(0);
   const textarea = useRef<HTMLTextAreaElement>(null);
@@ -145,6 +148,8 @@ function ChatWorkspace({ service }: { service: ChatService }) {
   async function submit({ text }: { text: string }) {
     const question = text.trim();
     if (!question || loading) return;
+    if (!captchaToken) { setError("Vui lòng xác minh bảo mật trước khi gửi câu hỏi."); return; }
+    if (question.length > 2000) { setError("Câu hỏi tối đa 2.000 ký tự."); return; }
     setError(null);
     const context = isTutor ? `AI Tutor · ${levelLabel(level)}` : "Community Assistant";
     const controller = new AbortController();
@@ -155,20 +160,22 @@ function ChatWorkspace({ service }: { service: ChatService }) {
     ]);
     textInput.clear();
     setLoading(true);
+    const replyId = ++messageId.current;
+    setMessages((previous) => [...previous, { id: replyId, role: "assistant", text: "", context }]);
     try {
-      const reply = await service({ mode, level, text: question }, controller.signal);
+      const reply = await service({ mode, level, text: question, captchaToken,
+        history: messages.filter((m) => m.context === context && m.text && (m.role === "user" || m.kind === "generated")).slice(-6).map(({ role, text }) => ({ role, text: text.slice(0, 6000) })),
+      }, controller.signal, (text) => {
+        if (!controller.signal.aborted) setMessages((previous) => previous.map((m) => m.id === replyId ? { ...m, text } : m));
+      });
       if (controller.signal.aborted) return;
-      setMessages((previous) => [
-        ...previous,
-        { id: ++messageId.current, role: "assistant", context, ...reply },
-      ]);
+      setMessages((previous) => previous.map((m) => m.id === replyId ? { ...m, ...reply } : m));
     } catch (failure) {
       if (controller.signal.aborted) return;
-      setError(
-        "Không thể hiển thị nội dung mẫu. Vui lòng thử lại; câu hỏi chưa được gửi đến dịch vụ AI.",
-      );
+      setError(failure instanceof Error ? failure.message : "Không thể kết nối AI. Vui lòng thử lại khi sẵn sàng.");
       textInput.setInput(question);
     } finally {
+      captcha.current?.reset();
       if (pending.current === controller) {
         pending.current = null;
         setLoading(false);
@@ -196,7 +203,7 @@ function ChatWorkspace({ service }: { service: ChatService }) {
           </Link>
         </Button>
         <span className="inline-flex items-center gap-2 rounded-md bg-gold-soft px-3 py-1.5 text-xs font-medium text-warning-foreground">
-          <Info className="size-3.5" /> Bản trải nghiệm mẫu · Chưa kết nối AI
+          <Info className="size-3.5" /> Gemini · Hạn mức Google
         </span>
       </div>
 
@@ -293,8 +300,8 @@ function ChatWorkspace({ service }: { service: ChatService }) {
               trong phiên này
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Hội thoại mẫu không được lưu vào hệ thống và sẽ mất khi bạn tải lại hoặc rời trang.
-              Không nhập thông tin nhạy cảm.
+              Hội thoại không được lưu vào hệ thống TML và sẽ mất khi bạn tải lại hoặc rời trang.
+              Câu hỏi được gửi đến Google Gemini; Google có thể dùng nội dung miễn phí để cải thiện sản phẩm. Không nhập thông tin nhạy cảm.
             </p>
           </div>
         </aside>
@@ -361,7 +368,7 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                     ))}
                   </div>
                   <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-                    Nội dung trả lời là ví dụ biên soạn sẵn, không phải kết quả từ mô hình AI.
+                    {isTutor ? "Nội dung do AI tạo, có thể có sai sót; không phải đề thi hay chứng chỉ chính thức." : "Chỉ trích dẫn tài liệu công khai đã duyệt, kèm nguồn và ngày cập nhật."}
                   </p>
                 </div>
               ) : (
@@ -373,7 +380,7 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                       {message.role === "user" ? "Bạn" : "TML AI"} · {message.context}
                       {message.role === "assistant" && (
                         <span className="ml-2 font-medium text-warning-foreground">
-                          {message.kind === "example" ? "Ví dụ biên soạn sẵn" : "Chưa kết nối AI"}
+                          {message.kind === "generated" ? "Nội dung do AI tạo" : message.kind === "verified" ? "Trích tài liệu đã duyệt" : message.kind === "unconfirmed" ? "Chưa được xác nhận" : message.kind === "example" ? "Ví dụ biên soạn sẵn" : message.kind === "unavailable" ? "Chưa kết nối AI" : "Chưa hoàn tất"}
                         </span>
                       )}
                     </div>
@@ -405,7 +412,7 @@ function ChatWorkspace({ service }: { service: ChatService }) {
               )}
               {loading && (
                 <div role="status" aria-live="polite">
-                  <Shimmer>Đang mở nội dung mẫu…</Shimmer>
+                  <Shimmer>Đang trả lời…</Shimmer>
                 </div>
               )}
             </ConversationContent>
@@ -440,7 +447,7 @@ function ChatWorkspace({ service }: { service: ChatService }) {
               onSubmit={submit}
               maxFiles={0}
               onError={() =>
-                setError("Bản trải nghiệm này chỉ nhận văn bản, chưa hỗ trợ tệp đính kèm.")
+                setError("TML AI chỉ nhận văn bản, chưa hỗ trợ tệp đính kèm.")
               }
             >
               <PromptInputTextarea
@@ -450,6 +457,7 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                   isTutor ? "Viết câu hỏi tiếng Trung của bạn…" : "Bạn muốn hỏi gì về Liên Đoàn?"
                 }
                 className="min-h-24 px-4 text-base"
+                maxLength={2000}
               />
               <PromptInputFooter className="px-3 pb-3">
                 <IconAction
@@ -460,19 +468,20 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                   <Trash2 />
                 </IconAction>
                 <PromptInputSubmit
-                  aria-label={loading ? "Dừng nội dung mẫu" : "Gửi câu hỏi"}
-                  title={loading ? "Dừng nội dung mẫu" : "Gửi câu hỏi"}
+                  aria-label={loading ? "Dừng câu trả lời" : "Gửi câu hỏi"}
+                  title={loading ? "Dừng câu trả lời" : "Gửi câu hỏi"}
                   status={loading ? "submitted" : error ? "error" : "ready"}
                   onStop={stop}
-                  disabled={!loading && !textInput.value.trim()}
+                  disabled={!loading && (!textInput.value.trim() || !captchaToken)}
                   className="size-10 shrink-0 rounded-md bg-primary-deep text-primary-foreground hover:bg-primary-deep/90"
                 >
                   {!loading && <Send className="size-4" />}
                 </PromptInputSubmit>
               </PromptInputFooter>
             </PromptInput>
+            <div className="mt-3 overflow-x-auto"><Recaptcha ref={captcha} onChange={setCaptchaToken} /></div>
             <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-              Chỉ là trải nghiệm mẫu · Không gửi câu hỏi đến dịch vụ AI · Không lưu hội thoại
+              Gửi câu hỏi đến Google Gemini · TML không lưu hội thoại · Không tự gửi lại khi hết hạn mức
             </p>
           </div>
         </section>
