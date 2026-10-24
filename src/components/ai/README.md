@@ -13,6 +13,14 @@
 
 ## Historical Phase 1 notes
 
+### Phase 2 verification outcome
+
+- 40 focused tests passed, covering live transport, public-only retrieval, exact excerpt enforcement, Google 429/no retry, CAPTCHA rejection, domain and permissions regressions. Focused lint passed; automatic build/typecheck passed after adding the endpoint sitemap exclusion.
+- Authenticated Gemini model discovery confirmed `gemini-3.8-flash`; a real streaming question returned HTTP 200 with eight chunks and visible Vietnamese/Chinese content. This verifies provider access, not the Google project's free-tier/billing settings.
+- Public browser checks confirmed mode switching, prompt population, disabled sends without CAPTCHA, HTTP 400 for an invalid token, no runtime errors and no horizontal overflow at 375px.
+- Full browser-to-Gemini acceptance remains unverified: a human must complete the real reCAPTCHA. Community source/date end-to-end testing additionally awaits real owner-approved documents; those paths are tested with isolated fixtures only. The database was verified to contain the new schema, but no knowledge content was invented or seeded.
+- Authentication, member IDs, recruitment forms and Admin permissions were not modified; their complete private workflows were not re-exercised.
+
 Public route: `/ai-tutor`. Entry points: shared website mobile menu and footer (desktop header kept intact to avoid crowding). Vietnamese-first, official TML logo and existing theme tokens.
 
 ## Interaction and data boundary
