@@ -7,7 +7,7 @@ export const Route = createFileRoute("/ai-tutor")({
   head: () => ({
     meta: pageMeta(
       "TML AI — Học tiếng Trung & Hỗ trợ Liên Đoàn",
-      "Trải nghiệm giao diện mẫu TML AI: học tiếng Trung HSK 1–6 và tìm thông tin công khai về Liên Đoàn Hán Ngữ. Chưa kết nối dịch vụ AI.",
+      "Học tiếng Trung HSK 1–6 cùng 小龙 qua Gemini và tra cứu tài liệu công khai đã duyệt của Liên Đoàn Hán Ngữ. TML không lưu hội thoại.",
     ),
   }),
   component: TmlAiPage,

@@ -1,4 +1,25 @@
-# TML AI — Phase 1
+# TML AI — Phase 2
+
+## Live Gemini connection
+
+- `src/lib/tml-ai-live.ts` consumes NDJSON from `/api/public/tml-ai`; `TmlAiChat` incrementally updates one assistant message and propagates Stop/reset/unmount cancellation.
+- `src/routes/api/public/tml-ai.ts` dynamically loads `src/lib/tml-ai.server.ts`. This project does not support adding new Edge Functions: the TanStack server route is the server-only HTTP boundary.
+- `GOOGLE_API_KEY` is collected via the project's encrypted form and read only server-side. `gemini-3.8-flash` uses Google's streaming REST API; no Lovable AI calls are added or existing calls changed.
+- Each send requires the existing reCAPTCHA v2, same-origin validation, bounded text/history and a single pending request. Owner chose Google quota only, not custom daily/session rate limits. No automatic retries; 429 is clearly shown. Fewer than 50 questions/day does not guarantee free capacity. Free-tier eligibility and quotas must be checked in Google AI Studio; code does not activate billing or guarantee that an already billed Google project is free.
+- Tutor content is streamed with an AI/not-official-exam-or-certificate notice. Google may use free-tier content to improve products; privacy notices warn against sensitive input. TML stores no questions, transcripts or prompt logs.
+- Community mode uses only `tml_ai_public_documents` through a publishable client and approved/public RLS, with source/date required. No reads of member/application/benefit/account/role tables. Keyword relevance and exclusion filters run before Gemini. Gemini selects a verbatim excerpt; the server verifies its document ID and exact content membership, appends server-owned source/date, and falls back to the unconfirmed/contact reply on insufficient evidence.
+- The knowledge table deliberately starts empty: no organizational content is auto-approved. Supply reviewed title/content/keywords/https source/update date, then explicitly approve and mark public using Lovable Cloud. No CMS or Admin permission changes in this phase. Hanzii, Migii, HeyChina, Canva and Tsinghua Graduate Horizons remain excluded until confirmed.
+- Tests: `bunx vitest run src/lib/tml-ai.test.ts src/lib/tml-ai-protocol.test.ts src/lib/tml-ai-server.test.ts src/lib/tml-ai-live.test.ts`. Provider testing and CAPTCHA/public-document end-to-end verification are tracked separately below; mocks do not prove Google's quota or settings.
+
+## Historical Phase 1 notes
+
+### Phase 2 verification outcome
+
+- 40 focused tests passed, covering live transport, public-only retrieval, exact excerpt enforcement, Google 429/no retry, CAPTCHA rejection, domain and permissions regressions. Focused lint passed; automatic build/typecheck passed after adding the endpoint sitemap exclusion.
+- Authenticated Gemini model discovery confirmed `gemini-3.8-flash`; a real streaming question returned HTTP 200 with eight chunks and visible Vietnamese/Chinese content. This verifies provider access, not the Google project's free-tier/billing settings.
+- Public browser checks confirmed mode switching, prompt population, disabled sends without CAPTCHA, HTTP 400 for an invalid token, no runtime errors and no horizontal overflow at 375px.
+- Full browser-to-Gemini acceptance remains unverified: a human must complete the real reCAPTCHA. Community source/date end-to-end testing additionally awaits real owner-approved documents; those paths are tested with isolated fixtures only. The database was verified to contain the new schema, but no knowledge content was invented or seeded.
+- Authentication, member IDs, recruitment forms and Admin permissions were not modified; their complete private workflows were not re-exercised.
 
 Public route: `/ai-tutor`. Entry points: shared website mobile menu and footer (desktop header kept intact to avoid crowding). Vietnamese-first, official TML logo and existing theme tokens.
 

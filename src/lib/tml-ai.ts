@@ -1,8 +1,21 @@
 export type AssistantMode = "tutor" | "community";
 export type HskLevel = "general" | 1 | 2 | 3 | 4 | 5 | 6;
-export type DemoRequest = { mode: AssistantMode; level: HskLevel; text: string };
-export type DemoReply = { kind: "example" | "unavailable"; text: string };
-export type ChatService = (request: DemoRequest, signal: AbortSignal) => Promise<DemoReply>;
+export type DemoRequest = {
+  mode: AssistantMode;
+  level: HskLevel;
+  text: string;
+  captchaToken?: string;
+  history?: { role: "user" | "assistant"; text: string }[];
+};
+export type DemoReply = {
+  kind: "example" | "unavailable" | "generated" | "verified" | "unconfirmed";
+  text: string;
+};
+export type ChatService = (
+  request: DemoRequest,
+  signal: AbortSignal,
+  onProgress?: (text: string) => void,
+) => Promise<DemoReply>;
 export type ChatMessage = {
   id: number;
   role: "user" | "assistant";

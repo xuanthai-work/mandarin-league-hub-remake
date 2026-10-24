@@ -1793,6 +1793,39 @@ export type Database = {
           },
         ]
       }
+      tml_ai_public_documents: {
+        Row: {
+          content: string
+          id: string
+          keywords: string[]
+          scope: string
+          source_url: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          id?: string
+          keywords?: string[]
+          scope?: string
+          source_url: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          keywords?: string[]
+          scope?: string
+          source_url?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

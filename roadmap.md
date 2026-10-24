@@ -1,5 +1,7 @@
 # Roadmap
-- [ ] TML AI Phase 2: server-side Gemini, approved public knowledge, no question storage, quota protection and end-to-end checks (requires Gemini key and approval of custom send limits).
+- [x] TML AI Phase 2 implementation: server-side Gemini, approved public knowledge, no question storage, Google quota handling; 40 targeted tests, live provider call and public browser checks passed.
+- [ ] TML AI public knowledge: awaiting owner-supplied approved documents with sources/update dates (deliberately empty; unconfirmed programs excluded).
+- [ ] TML AI final end-to-end acceptance: awaiting a human-completed reCAPTCHA and approved real document; browser automation cannot bypass the production CAPTCHA.
 - [x] TML AI Phase 1: public demo interface, mode/HSK selection, session chat and responsive verification (no provider connection).
 - [x] AI đọc ảnh/PDF chứng nhận và điền sẵn form Admin
 - [x] Đa ngôn ngữ bước 1: nút VI/中/EN, menu, chân trang, phần đầu trang chủ
