@@ -148,8 +148,14 @@ function ChatWorkspace({ service }: { service: ChatService }) {
   async function submit({ text }: { text: string }) {
     const question = text.trim();
     if (!question || loading) return;
-    if (!captchaToken) { setError("Vui lòng xác minh bảo mật trước khi gửi câu hỏi."); return; }
-    if (question.length > 2000) { setError("Câu hỏi tối đa 2.000 ký tự."); return; }
+    if (!captchaToken) {
+      setError("Vui lòng xác minh bảo mật trước khi gửi câu hỏi.");
+      return;
+    }
+    if (question.length > 2000) {
+      setError("Câu hỏi tối đa 2.000 ký tự.");
+      return;
+    }
     setError(null);
     const context = isTutor ? `AI Tutor · ${levelLabel(level)}` : "Community Assistant";
     const controller = new AbortController();
@@ -163,16 +169,35 @@ function ChatWorkspace({ service }: { service: ChatService }) {
     const replyId = ++messageId.current;
     setMessages((previous) => [...previous, { id: replyId, role: "assistant", text: "", context }]);
     try {
-      const reply = await service({ mode, level, text: question, captchaToken,
-        history: messages.filter((m) => m.context === context && m.text && (m.role === "user" || m.kind === "generated")).slice(-6).map(({ role, text }) => ({ role, text: text.slice(0, 6000) })),
-      }, controller.signal, (text) => {
-        if (!controller.signal.aborted) setMessages((previous) => previous.map((m) => m.id === replyId ? { ...m, text } : m));
-      });
+      const reply = await service(
+        {
+          mode,
+          level,
+          text: question,
+          captchaToken,
+          history: messages
+            .filter(
+              (m) =>
+                m.context === context && m.text && (m.role === "user" || m.kind === "generated"),
+            )
+            .slice(-6)
+            .map(({ role, text }) => ({ role, text: text.slice(0, 6000) })),
+        },
+        controller.signal,
+        (text) => {
+          if (!controller.signal.aborted)
+            setMessages((previous) => previous.map((m) => (m.id === replyId ? { ...m, text } : m)));
+        },
+      );
       if (controller.signal.aborted) return;
-      setMessages((previous) => previous.map((m) => m.id === replyId ? { ...m, ...reply } : m));
+      setMessages((previous) => previous.map((m) => (m.id === replyId ? { ...m, ...reply } : m)));
     } catch (failure) {
       if (controller.signal.aborted) return;
-      setError(failure instanceof Error ? failure.message : "Không thể kết nối AI. Vui lòng thử lại khi sẵn sàng.");
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Không thể kết nối AI. Vui lòng thử lại khi sẵn sàng.",
+      );
       textInput.setInput(question);
     } finally {
       captcha.current?.reset();
@@ -228,8 +253,8 @@ function ChatWorkspace({ service }: { service: ChatService }) {
             <span className="font-han text-base font-semibold text-primary-deep dark:text-foreground">
               小龙
             </span>{" "}
-            <span className="font-medium text-foreground">(Tiểu Long)</span>, trợ lý AI của TML. Cùng
-            học tiếng Trung, kết nối với Liên Đoàn Hán Ngữ.
+            <span className="font-medium text-foreground">(Tiểu Long)</span>, trợ lý AI của TML.
+            Cùng học tiếng Trung, kết nối với Liên Đoàn Hán Ngữ.
           </p>
         </div>
       </header>
@@ -301,7 +326,8 @@ function ChatWorkspace({ service }: { service: ChatService }) {
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               Hội thoại không được lưu vào hệ thống TML và sẽ mất khi bạn tải lại hoặc rời trang.
-              Câu hỏi được gửi đến Google Gemini; Google có thể dùng nội dung miễn phí để cải thiện sản phẩm. Không nhập thông tin nhạy cảm.
+              Câu hỏi được gửi đến Google Gemini; Google có thể dùng nội dung miễn phí để cải thiện
+              sản phẩm. Không nhập thông tin nhạy cảm.
             </p>
           </div>
         </aside>
@@ -368,7 +394,9 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                     ))}
                   </div>
                   <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-                    {isTutor ? "Nội dung do AI tạo, có thể có sai sót; không phải đề thi hay chứng chỉ chính thức." : "Chỉ trích dẫn tài liệu công khai đã duyệt, kèm nguồn và ngày cập nhật."}
+                    {isTutor
+                      ? "Nội dung do AI tạo, có thể có sai sót; không phải đề thi hay chứng chỉ chính thức."
+                      : "Chỉ trích dẫn tài liệu công khai đã duyệt, kèm nguồn và ngày cập nhật."}
                   </p>
                 </div>
               ) : (
@@ -380,7 +408,17 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                       {message.role === "user" ? "Bạn" : "TML AI"} · {message.context}
                       {message.role === "assistant" && (
                         <span className="ml-2 font-medium text-warning-foreground">
-                          {message.kind === "generated" ? "Nội dung do AI tạo" : message.kind === "verified" ? "Trích tài liệu đã duyệt" : message.kind === "unconfirmed" ? "Chưa được xác nhận" : message.kind === "example" ? "Ví dụ biên soạn sẵn" : message.kind === "unavailable" ? "Chưa kết nối AI" : "Chưa hoàn tất"}
+                          {message.kind === "generated"
+                            ? "Nội dung do AI tạo"
+                            : message.kind === "verified"
+                              ? "Trích tài liệu đã duyệt"
+                              : message.kind === "unconfirmed"
+                                ? "Chưa được xác nhận"
+                                : message.kind === "example"
+                                  ? "Ví dụ biên soạn sẵn"
+                                  : message.kind === "unavailable"
+                                    ? "Chưa kết nối AI"
+                                    : "Chưa hoàn tất"}
                         </span>
                       )}
                     </div>
@@ -446,9 +484,7 @@ function ChatWorkspace({ service }: { service: ChatService }) {
             <PromptInput
               onSubmit={submit}
               maxFiles={0}
-              onError={() =>
-                setError("TML AI chỉ nhận văn bản, chưa hỗ trợ tệp đính kèm.")
-              }
+              onError={() => setError("TML AI chỉ nhận văn bản, chưa hỗ trợ tệp đính kèm.")}
             >
               <PromptInputTextarea
                 ref={textarea}
@@ -479,9 +515,12 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                 </PromptInputSubmit>
               </PromptInputFooter>
             </PromptInput>
-            <div className="mt-3 overflow-x-auto"><Recaptcha ref={captcha} onChange={setCaptchaToken} /></div>
+            <div className="mt-3 overflow-x-auto">
+              <Recaptcha ref={captcha} onChange={setCaptchaToken} />
+            </div>
             <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-              Gửi câu hỏi đến Google Gemini · TML không lưu hội thoại · Không tự gửi lại khi hết hạn mức
+              Gửi câu hỏi đến Google Gemini · TML không lưu hội thoại · Không tự gửi lại khi hết hạn
+              mức
             </p>
           </div>
         </section>
