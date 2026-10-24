@@ -217,7 +217,12 @@ function ChatWorkspace({ service }: { service: ChatService }) {
             Mandarin Learning &amp; Community Assistant
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Cùng học tiếng Trung, kết nối với Liên Đoàn Hán Ngữ.
+            Tôi là{" "}
+            <span className="font-han text-base font-semibold text-primary-deep dark:text-foreground">
+              小龙
+            </span>{" "}
+            <span className="font-medium text-foreground">(Tiểu Long)</span>, trợ lý AI của TML. Cùng
+            học tiếng Trung, kết nối với Liên Đoàn Hán Ngữ.
           </p>
         </div>
       </header>
@@ -323,6 +328,13 @@ function ChatWorkspace({ service }: { service: ChatService }) {
                       你好 · Xin chào
                     </span>
                   </div>
+                  <p className="mb-3 text-sm leading-relaxed text-foreground">
+                    Tôi là{" "}
+                    <span className="font-han text-base font-semibold text-primary-deep dark:text-foreground">
+                      小龙
+                    </span>{" "}
+                    <span className="font-medium">(Tiểu Long)</span>, trợ lý AI của TML.
+                  </p>
                   <h2 className="text-2xl font-semibold text-primary-deep dark:text-foreground">
                     {isTutor ? "Hôm nay, bạn muốn học gì?" : "Bạn muốn tìm hiểu gì về TML?"}
                   </h2>
