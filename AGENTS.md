@@ -11,7 +11,7 @@
 
 ## Architecture decisions
 
-- TML AI uses AI Elements and a client-safe injectable chat adapter with curated session-only demo replies; no provider or persistence is added until Phase 2 approval, so public UI cannot leak private records or impersonate real AI.
+- TML AI uses AI Elements and an injectable streaming adapter through a same-origin CAPTCHA-verified TanStack server route; Gemini keys stay server-only, conversations stay in React state, and community retrieval uses a publishable client reading only the dedicated approved-public document table. Community output is a validated verbatim excerpt with source/date, so model-generated claims never become public organizational facts.
 
 - Keep public verification domain types, demo records, and Zod validation in one client-safe module so Lovable Cloud can replace the data source later without rebuilding the UI.
 - Public content groups use typed accessors in src/lib/data/* so data sources can change without UI changes.
