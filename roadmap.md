@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Thu gọn TML AI thành hỏi đáp Liên Đoàn, bỏ dạy tiếng Trung và chọn HSK; kiểm tra giao diện và chặn chế độ tutor cũ.
+- [x] Thu gọn TML AI thành hỏi đáp Liên Đoàn, bỏ AI Tutor và chọn trình độ theo xác nhận của Daniel; 28 tests đạt, giao diện/gợi ý/xóa được kiểm tra, build OK; chặn chế độ tutor cũ.
 - [x] TML AI Phase 2 implementation: server-side Gemini, approved public knowledge, no question storage, Google quota handling; 40 targeted tests, live provider call and public browser checks passed.
 - [ ] TML AI public knowledge: awaiting owner-supplied approved documents with sources/update dates (deliberately empty; unconfirmed programs excluded).
 - [ ] TML AI final end-to-end acceptance: awaiting a human-completed reCAPTCHA and approved real document; browser automation cannot bypass the production CAPTCHA.
