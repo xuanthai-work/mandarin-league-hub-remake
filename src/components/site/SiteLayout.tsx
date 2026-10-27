@@ -11,6 +11,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CrystalParticles } from "./CrystalParticles";
 import { useSiteContent } from "@/lib/site-content";
+import { HomeLink } from "./HomeLink";
 
 export const NAV = [
   { to: "/", label: "Trang chủ" },
@@ -47,19 +48,19 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 md:h-20 md:px-5">
-        <Link to="/" className="flex min-w-0 items-center gap-3">
+        <HomeLink className="flex min-w-0 items-center gap-3">
           <img src={logoClear} alt="The Mandarin League" className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
           <div className="min-w-0 leading-tight">
             <div className="whitespace-nowrap text-sm font-bold tracking-normal text-primary-deep dark:text-foreground xl:text-base">THE MANDARIN LEAGUE</div>
             <div className="hidden truncate text-[11px] text-muted-foreground dark:text-gold/80 md:block md:text-xs lg:hidden xl:block">{t("brand.sub")}</div>
           </div>
-        </Link>
+        </HomeLink>
         <nav className="hidden min-w-0 items-center gap-0.5 lg:flex">
           {NAV.map((n) => (
-            <Link
+            n.to === "/" ? <HomeLink key={n.to} className="whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:px-2.5 xl:text-sm">{t("nav./")}</HomeLink> : <Link
               key={n.to}
               to={n.to}
-              activeOptions={{ exact: n.to === "/" }}
+              activeOptions={{ exact: false }}
               className={`whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:px-2.5 xl:text-sm${NAV_MORE.includes(n.to) ? " hidden xl:inline-flex" : ""}`}
               activeProps={{ className: "text-primary bg-accent" }}
             >
@@ -99,11 +100,11 @@ function Header() {
             <ThemeToggle />
           </div>
           {NAV.map((n) => (
-            <Link
+            n.to === "/" ? <HomeLink key={n.to} onClick={() => setOpen(false)} className="block rounded-md px-3 py-2.5 text-sm font-medium">{t("nav./")}</HomeLink> : <Link
               key={n.to}
               to={n.to}
               onClick={() => setOpen(false)}
-              activeOptions={{ exact: n.to === "/" }}
+              activeOptions={{ exact: false }}
               className="block rounded-md px-3 py-2.5 text-sm font-medium"
               activeProps={{ className: "text-primary bg-accent" }}
             >

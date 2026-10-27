@@ -39,5 +39,6 @@
 - Public submit/lookup forms need a server-verified reCAPTCHA token; QR-token lookups skip it so QR links keep working.
 - Member benefits (shared Premium accounts) live in `benefits`/`member_benefits` (admin-only RLS); members read via definer RPCs only, so credentials never leak.
 - Portal hostnames (main/join/member) are mapped in src/lib/domain.ts and enforced both in src/server.ts (first load) and the root route (client navigation), so one codebase serves all three portals and preview hosts never redirect.
+- Shared HomeLink uses the domain helper for full-document navigation from satellite portals to the main homepage, so root landing redirects cannot trap Home clicks; main and preview hosts retain local router navigation.
 - Professional advisors live in `department_advisors` + per-department `department_advisor_settings` (admin-only writes), public reads via definer `public_dept_advisors()`, so advisor assignments never alter member profiles or grant permissions.
 - Course–teacher assignments live in `course_teachers` (role + sort_order); `courses.teacher_id` is deprecated and only mirrors the lead, and teacher `status` drives `visible` via trigger so old readers keep working.

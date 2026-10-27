@@ -6,6 +6,12 @@ export const MEMBER_ORIGIN = `https://member.${ROOT_DOMAIN}`;
 
 export type Portal = "main" | "join" | "member" | "other";
 
+/** Home controls leave satellite portals; preview and main hosts keep local navigation. */
+export function mainHomeUrl(host: string): string | null {
+  const portal = portalOf(host);
+  return portal === "join" || portal === "member" ? `${MAIN_ORIGIN}/` : null;
+}
+
 export function portalOf(host: string): Portal {
   const h = host.toLowerCase().split(":")[0];
   if (h === ROOT_DOMAIN || h === `www.${ROOT_DOMAIN}`) return "main";

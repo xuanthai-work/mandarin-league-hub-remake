@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { domainRedirect } from "./domain";
+import { domainRedirect, mainHomeUrl } from "./domain";
+
+describe("home navigation", () => {
+  it("recruitment Home leaves join instead of reopening recruitment", () => {
+    expect(mainHomeUrl("join.themandarinleague.bond")).toBe("https://themandarinleague.bond/");
+  });
+  it("member Home leaves member instead of reopening login", () => {
+    expect(mainHomeUrl("member.themandarinleague.bond")).toBe("https://themandarinleague.bond/");
+  });
+  it.each(["themandarinleague.bond", "www.themandarinleague.bond", "localhost:8080", "id-preview--x.lovable.app"])("keeps local Home on %s", (host) => {
+    expect(mainHomeUrl(host)).toBeNull();
+  });
+});
 
 describe("domainRedirect", () => {
   it("join root opens the recruitment page", () => expect(domainRedirect("join.themandarinleague.bond", "/")).toBe("https://join.themandarinleague.bond/join"));

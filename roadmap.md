@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Fix Home/logo navigation from recruitment and member portals; 13 domain tests passed, desktop/mobile join Home clicks reach main origin and preview Home stays local (production-host behavior verified through local proxy).
 - [x] Thu gọn TML AI thành hỏi đáp Liên Đoàn, bỏ AI Tutor và chọn trình độ theo xác nhận của Daniel; 28 tests đạt, giao diện/gợi ý/xóa được kiểm tra, build OK; chặn chế độ tutor cũ.
 - [x] TML AI Phase 2 implementation: server-side Gemini, approved public knowledge, no question storage, Google quota handling; 40 targeted tests, live provider call and public browser checks passed.
 - [ ] TML AI public knowledge: awaiting owner-supplied approved documents with sources/update dates (deliberately empty; unconfirmed programs excluded).

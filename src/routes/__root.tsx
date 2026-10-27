@@ -18,6 +18,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { GlobalLoadingScreen } from "@/components/site/GlobalLoadingScreen";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { domainRedirect, portalOf } from "@/lib/domain";
+import { HomeLink } from "@/components/site/HomeLink";
 
 function NotFoundComponent() {
   return (
@@ -29,12 +30,11 @@ function NotFoundComponent() {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <div className="mt-6">
-          <Link
-            to="/"
+          <HomeLink
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Go home
-          </Link>
+          </HomeLink>
         </div>
       </div>
     </div>
@@ -67,12 +67,11 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           >
             Try again
           </button>
-          <a
-            href="/"
+          <HomeLink
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home
-          </a>
+          </HomeLink>
         </div>
       </div>
     </div>
@@ -154,7 +153,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       {isPortal ? (
         <div className="relative min-h-screen">
-          {!pathname.startsWith("/admin/") && pathname !== "/admin" && !pathname.startsWith("/member") || pathname === "/admin/login" ? <Link to="/" className="absolute left-4 top-4 z-40 rounded-full border border-gold/40 bg-background/80 px-3 py-1.5 text-xs font-medium text-primary-deep backdrop-blur hover:bg-background">← Trở về Website TML</Link> : null}
+          {!pathname.startsWith("/admin/") && pathname !== "/admin" && !pathname.startsWith("/member") || pathname === "/admin/login" ? <HomeLink className="absolute left-4 top-4 z-40 rounded-full border border-gold/40 bg-background/80 px-3 py-1.5 text-xs font-medium text-primary-deep backdrop-blur hover:bg-background">← Trở về Website TML</HomeLink> : null}
           <Outlet />
         </div>
       ) : (
