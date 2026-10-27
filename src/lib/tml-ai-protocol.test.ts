@@ -38,24 +38,21 @@ describe("TML AI public knowledge boundaries", () => {
     expect(matchingPublicDocuments("học bổng du học", [doc])).toEqual([]));
   it("retrieves eligible matching public knowledge", () =>
     expect(matchingPublicDocuments("khóa học HSK", [doc]).map((d) => d.id)).toEqual(["1"]));
-  it("allows exactly general Chinese and HSK 1–6", () => {
-    for (const level of ["general", 1, 2, 3, 4, 5, 6])
-      expect(
-        chatRequestSchema.safeParse({
-          mode: "tutor",
-          level,
-          text: "hello",
-          captchaToken: "x".repeat(20),
-        }).success,
-      ).toBe(true);
+  it("allows community Q&A", () => {
     expect(
       chatRequestSchema.safeParse({
-        mode: "tutor",
-        level: 7,
+        mode: "community",
+        level: "general",
         text: "hello",
         captchaToken: "x".repeat(20),
       }).success,
-    ).toBe(false);
+    ).toBe(true);
+  });
+  it("rejects Chinese tutor requests", () => {
+    expect(chatRequestSchema.safeParse({
+      mode: "tutor", level: 3, text: "Dạy tôi tiếng Trung",
+      captchaToken: "x".repeat(20),
+    }).success).toBe(false);
   });
   it("handles split SSE, metadata and empty thinking before visible text", async () => {
     const encoder = new TextEncoder();
