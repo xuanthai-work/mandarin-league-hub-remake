@@ -6,10 +6,8 @@ import {
   BookOpen,
   Check,
   Copy,
-  Info,
   Plus,
   Send,
-  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
@@ -204,15 +202,12 @@ function ChatWorkspace({ service }: { service: ChatService }) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10" lang="vi">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6">
         <Button asChild variant="link" className="h-auto px-0 text-muted-foreground">
           <Link to="/">
             <ArrowLeft /> Website TML
           </Link>
         </Button>
-        <span className="inline-flex items-center gap-2 rounded-md bg-gold-soft px-3 py-1.5 text-xs font-medium text-warning-foreground">
-          <Info className="size-3.5" /> Gemini · Hạn mức Google
-        </span>
       </div>
 
       <header className="mb-8 flex items-start gap-4">
@@ -242,20 +237,8 @@ function ChatWorkspace({ service }: { service: ChatService }) {
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-8">
-        <aside className="min-w-0 space-y-6 lg:border-r lg:border-border lg:pr-6">
-          <div className="border-border lg:border-t lg:pt-5">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <ShieldCheck className="size-4 text-primary-deep dark:text-foreground" /> Riêng tư
-              trong phiên này
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Hội thoại không được lưu vào hệ thống TML và sẽ mất khi bạn tải lại hoặc rời trang.
-              Câu hỏi được gửi đến Google Gemini; Google có thể dùng nội dung miễn phí để cải thiện
-              sản phẩm. Không nhập thông tin nhạy cảm.
-            </p>
-          </div>
-        </aside>
+      <div className="mx-auto max-w-5xl">
+
 
         <section
           className="flex min-w-0 flex-col rounded-md border border-border bg-card"
