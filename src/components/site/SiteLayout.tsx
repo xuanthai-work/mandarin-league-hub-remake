@@ -60,7 +60,7 @@ function Header() {
             n.to === "/" ? <HomeLink key={n.to} className="whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:px-2.5 xl:text-sm">{t("nav./")}</HomeLink> : <Link
               key={n.to}
               to={n.to}
-              activeOptions={{ exact: n.to === "/" }}
+              activeOptions={{ exact: false }}
               className={`whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-accent-foreground xl:px-2.5 xl:text-sm${NAV_MORE.includes(n.to) ? " hidden xl:inline-flex" : ""}`}
               activeProps={{ className: "text-primary bg-accent" }}
             >
@@ -104,7 +104,7 @@ function Header() {
               key={n.to}
               to={n.to}
               onClick={() => setOpen(false)}
-              activeOptions={{ exact: n.to === "/" }}
+              activeOptions={{ exact: false }}
               className="block rounded-md px-3 py-2.5 text-sm font-medium"
               activeProps={{ className: "text-primary bg-accent" }}
             >
