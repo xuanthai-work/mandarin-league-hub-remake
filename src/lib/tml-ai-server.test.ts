@@ -35,7 +35,7 @@ const doc: PublicAiDocument = {
   status: "approved",
   scope: "public",
 };
-const request = (mode = "tutor", text = "Giải thích 你好") =>
+const request = (mode = "community", text = "khóa học HSK") =>
   new Request("http://localhost:8080/api/public/tml-ai", {
     method: "POST",
     headers: { origin: "http://localhost:8080", "Content-Type": "application/json" },
@@ -73,15 +73,12 @@ describe("TML AI server boundary", () => {
     req.headers.set("origin", "https://foreign.test");
     expect((await handleTmlAi(req)).status).toBe(403);
   });
-  it("tutor streams AI content without any database reads or writes", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => sse("你好 (nǐ hǎo) nghĩa là xin chào.")),
-    );
-    const response = await handleTmlAi(request());
-    const output = await response.text();
-    expect(output).toContain("你好");
-    expect(output).toContain('"kind":"generated"');
+  it("rejects the removed tutor mode before database or provider access", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const response = await handleTmlAi(request("tutor", "Dạy tôi tiếng Trung"));
+    expect(response.status).toBe(400);
+    expect(fetch).not.toHaveBeenCalled();
     expect(state.tables).toEqual([]);
   });
   it("empty knowledge returns unconfirmed without a Gemini call", async () => {
@@ -123,6 +120,7 @@ describe("TML AI server boundary", () => {
     expect(output).not.toContain("học bổng toàn phần");
   });
   it("preserves Google 429 without replaying the question", async () => {
+    state.docs = [doc];
     const fetch = vi.fn(async () => new Response("quota", { status: 429 }));
     vi.stubGlobal("fetch", fetch);
     const response = await handleTmlAi(request());

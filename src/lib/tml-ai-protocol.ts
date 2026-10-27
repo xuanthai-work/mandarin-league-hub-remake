@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const chatRequestSchema = z.object({
-  mode: z.enum(["tutor", "community"]),
+  mode: z.literal("community"),
   level: z.union([
     z.literal("general"),
     z.literal(1),

@@ -6,8 +6,8 @@ export const Route = createFileRoute("/ai-tutor")({
   staticData: { sitemap: true },
   head: () => ({
     meta: pageMeta(
-      "TML AI — Học tiếng Trung & Hỗ trợ Liên Đoàn",
-      "Học tiếng Trung HSK 1–6 cùng 小龙 qua Gemini và tra cứu tài liệu công khai đã duyệt của Liên Đoàn Hán Ngữ. TML không lưu hội thoại.",
+      "TML AI — Trợ lý hỏi đáp Liên Đoàn Hán Ngữ",
+      "Hỏi đáp cùng 小龙 về Liên Đoàn Hán Ngữ dựa trên tài liệu công khai đã duyệt, kèm nguồn và ngày cập nhật. TML không lưu hội thoại.",
     ),
   }),
   component: TmlAiPage,
