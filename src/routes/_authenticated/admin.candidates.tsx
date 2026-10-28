@@ -6,7 +6,7 @@ import { Copy, Download, ExternalLink, FileText, Loader2, QrCode, Sparkles, X } 
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeApplication } from "@/lib/recruitment.functions";
 import { approveApplication } from "@/lib/accounts.functions";
-import { positionsFor } from "@/lib/recruitment";
+import { defaultPosition, positionsFor } from "@/lib/recruitment";
 import { Link } from "@tanstack/react-router";
 import { APP_STATUS, RECRUIT_DEPTS, STATUS_MESSAGE_TEMPLATES, deptName, nextCandidateMessage, type Choice } from "@/lib/recruitment";
 
@@ -222,34 +222,60 @@ function Approve({ app }: { app: App }) {
   const qc = useQueryClient();
   const approve = useServerFn(approveApplication);
   const first = ((app.choices ?? []) as Choice[])[0];
-  const [dept, setDept] = useState(first?.department ?? "executive");
-  const [pos, setPos] = useState(first?.position ?? positionsFor(first?.department ?? "executive")[0]!);
-  const existing = useQuery({ queryKey: ["app-member", app.id], queryFn: async () => (await supabase.from("members").select("member_code").eq("application_id", app.id).maybeSingle()).data });
+  const initDept = first?.department ?? "executive";
+  const [dept, setDept] = useState(initDept);
+  const [pos, setPos] = useState(defaultPosition(initDept, first?.position));
+  const existing = useQuery({ queryKey: ["app-member", app.id], queryFn: async () => (await supabase.from("members").select("id, member_code, department, position").eq("application_id", app.id).maybeSingle()).data });
   const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
-  const code = existing.data?.member_code;
+  const [editing, setEditing] = useState(false);
+  const [eDept, setEDept] = useState(""); const [ePos, setEPos] = useState("");
+  const m = existing.data;
+  const code = m?.member_code;
   const run = async () => {
     setBusy(true); setErr("");
     try { await approve({ data: { applicationId: app.id, department: dept, position: pos } }); qc.invalidateQueries({ queryKey: ["app-member", app.id] }); qc.invalidateQueries({ queryKey: ["admin-candidates"] }); }
     catch (e) { setErr((e as Error).message); }
     setBusy(false);
   };
+  const saveEdit = async () => {
+    if (!m) return;
+    setBusy(true); setErr("");
+    const { error } = await supabase.from("members").update({ department: eDept, position: ePos }).eq("id", m.id);
+    if (error) setErr(error.message); else { setEditing(false); qc.invalidateQueries({ queryKey: ["app-member", app.id] }); qc.invalidateQueries({ queryKey: ["admin-members"] }); }
+    setBusy(false);
+  };
   return (
     <div className="mt-6 rounded-xl border border-gold/50 bg-gold-soft/20 p-4">
       <h3 className="font-semibold">Chấp thuận kết nạp</h3>
-      {code ? (
+      {m ? (
         <div className="mt-2 text-sm">Đã kết nạp — Mã thành viên: <span className="font-mono font-semibold text-primary">{code}</span>
+          <p className="mt-1">Ban: <b>{deptName(m.department)}</b> · Chức vụ: <b>{m.position}</b>
+            {!editing && <button type="button" onClick={() => { setEDept(m.department); setEPos(defaultPosition(m.department, m.position)); setEditing(true); }} className="ml-2 text-primary underline">Sửa Ban / Chức vụ</button>}</p>
+          {editing && (
+            <div className="mt-2 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <select className={inp} value={eDept} onChange={(e) => { setEDept(e.target.value); setEPos(defaultPosition(e.target.value)); }}>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+                <select className={inp} value={ePos} onChange={(e) => setEPos(e.target.value)}>{positionsFor(eDept).map((p) => <option key={p}>{p}</option>)}</select>
+              </div>
+              <div className="flex gap-2">
+                <button disabled={busy} onClick={saveEdit} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang lưu…" : "Lưu thay đổi"}</button>
+                <button type="button" onClick={() => setEditing(false)} className="rounded-lg border border-border px-3 py-1.5 text-sm">Hủy</button>
+              </div>
+            </div>
+          )}
           <p className="mt-1 text-muted-foreground">Chưa tự động có tài khoản. Nếu cần, cấp tại <Link to="/admin/accounts" className="text-primary underline">Tài khoản nội bộ</Link>.</p></div>
       ) : (
         <div className="mt-2 space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <select className={inp} value={dept} onChange={(e) => { setDept(e.target.value); setPos(positionsFor(e.target.value)[0]!); }}>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+            <select className={inp} value={dept} onChange={(e) => { setDept(e.target.value); setPos(defaultPosition(e.target.value)); }}>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
             <select className={inp} value={pos} onChange={(e) => setPos(e.target.value)}>{positionsFor(dept).map((p) => <option key={p}>{p}</option>)}</select>
           </div>
+          <p className="text-xs text-muted-foreground">Kiểm tra lại: sẽ kết nạp vào <b>{deptName(dept)}</b> với chức vụ <b>{pos}</b>.</p>
           <button disabled={busy} onClick={run} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang xử lý…" : "Chấp thuận & cấp mã TML-MBR"}</button>
-          {err && <p className="text-sm text-destructive">{err}</p>}
         </div>
       )}
-      {(code || app.status === "approved") && <WelcomeQr name={app.full_name} dept={code ? dept : (first?.department ?? dept)} role={code ? pos : (first?.position ?? pos)} code={code ?? ""} />}
+      {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
+      {(m || app.status === "approved") && <WelcomeQr name={app.full_name} dept={m ? m.department : (first?.department ?? dept)} role={m ? m.position : (first?.position ?? pos)} code={code ?? ""} />}
     </div>
   );
 }
