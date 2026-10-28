@@ -3,7 +3,10 @@ import { DEPARTMENTS } from "@/lib/data/departments";
 export const EXECUTIVE = { id: "executive", name: "Ban Điều hành" };
 export const RECRUIT_DEPTS = [EXECUTIVE, ...DEPARTMENTS.map((d) => ({ id: d.id, name: d.name }))];
 export const deptName = (id: string | null) => (id ? RECRUIT_DEPTS.find((d) => d.id === id)?.name ?? id : "Câu hỏi chung");
-export const positionsFor = (dept: string) => (dept === "executive" ? ["Co-founder", "Thư ký"] : ["Trưởng Ban", "Phó Ban", "Cố vấn chuyên môn", "Thành viên"]);
+/** First entry is the safe default: ordinary "Thành viên", never a leadership title. */
+export const positionsFor = (dept: string) => (dept === "executive" ? ["Thư ký", "Co-founder"] : ["Thành viên", "Phó Ban", "Trưởng Ban", "Cố vấn chuyên môn"]);
+/** Keep the applicant's chosen position if valid for the dept; otherwise the safe default. */
+export const defaultPosition = (dept: string, wanted?: string | null) => { const l = positionsFor(dept); return wanted && l.includes(wanted) ? wanted : l[0]!; };
 
 export const PERIOD_STATUS: Record<string, string> = {
   draft: "Nháp", scheduled: "Chờ mở", open: "Đang mở", paused: "Tạm đóng", ended: "Đã kết thúc", cancelled: "Đã hủy",
