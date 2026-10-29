@@ -22,7 +22,7 @@ export function portalOf(host: string): Portal {
 
 const has = (path: string, prefixes: string[]) => prefixes.some((p) => path === p || path.startsWith(p + "/"));
 const JOIN_PATHS = ["/join"];
-const MEMBER_PATHS = ["/login", "/member", "/admin", "/change-password", "/reset-password", "/auth"];
+const MEMBER_PATHS = ["/login", "/member", "/library-access", "/admin", "/change-password", "/reset-password", "/auth"];
 
 /** Returns the absolute URL to redirect to, or null when the path belongs on this host. */
 export function domainRedirect(host: string, path: string, search = ""): string | null {

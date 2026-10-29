@@ -6,6 +6,7 @@ import logo from "@/assets/tml-logo.png.asset.json";
 import { routeAfterLogin } from "@/lib/portal";
 
 export const Route = createFileRoute("/login")({ staticData: { sitemap: false },
+  validateSearch: (search: Record<string, unknown>): { next?: "library-access" } => ({ next: search.next === "library-access" ? "library-access" : undefined }),
   head: () => ({
     meta: [
       { title: "Cổng nội bộ | The Mandarin League" },
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/login")({ staticData: { sitemap: false },
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +52,7 @@ function LoginPage() {
       await supabase.auth.signOut();
       return setError(dest === "blocked" ? "Tài khoản đã bị tạm khóa hoặc vô hiệu hóa. Vui lòng liên hệ Ban Điều hành." : "Tài khoản chưa được TML cấp quyền truy cập nội bộ.");
     }
-    navigate({ to: dest });
+    navigate({ to: next === "library-access" && dest !== "/change-password" ? "/library-access" : dest });
   };
 
   const inp = "w-full rounded-lg border border-input bg-background px-4 py-3";
