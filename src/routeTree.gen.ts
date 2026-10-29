@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as LibraryAccessRouteImport } from './routes/library-access'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as PartnersRouteImport } from './routes/partners'
@@ -58,6 +59,7 @@ import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authenticated/admin.tasks'
 import { Route as AuthenticatedAdminTeachersRouteImport } from './routes/_authenticated/admin.teachers'
 import { Route as AuthenticatedMemberDashboardRouteImport } from './routes/_authenticated/member.dashboard'
+import { Route as AuthenticatedMemberLibraryRouteImport } from './routes/_authenticated/member.library'
 import { Route as ApiPublicTmlAiRouteImport } from './routes/api/public/tml-ai'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
@@ -111,6 +113,11 @@ const ContactRoute = ContactRouteImport.update({
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibraryAccessRoute = LibraryAccessRouteImport.update({
+  id: '/library-access',
+  path: '/library-access',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -330,6 +337,12 @@ const AuthenticatedMemberDashboardRoute =
     path: '/member/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMemberLibraryRoute =
+  AuthenticatedMemberLibraryRouteImport.update({
+    id: '/member/library',
+    path: '/member/library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicTmlAiRoute = ApiPublicTmlAiRouteImport.update({
   id: '/api/public/tml-ai',
   path: '/api/public/tml-ai',
@@ -391,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/library-access': typeof LibraryAccessRoute
   '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
@@ -430,6 +444,7 @@ export interface FileRoutesByFullPath {
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
+  '/member/library': typeof AuthenticatedMemberLibraryRoute
   '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -450,6 +465,7 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/library-access': typeof LibraryAccessRoute
   '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
@@ -487,6 +503,7 @@ export interface FileRoutesByTo {
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
+  '/member/library': typeof AuthenticatedMemberLibraryRoute
   '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -510,6 +527,7 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/contact': typeof ContactRoute
   '/join': typeof JoinRoute
+  '/library-access': typeof LibraryAccessRoute
   '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
@@ -549,6 +567,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/_authenticated/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/_authenticated/member/dashboard': typeof AuthenticatedMemberDashboardRoute
+  '/_authenticated/member/library': typeof AuthenticatedMemberLibraryRoute
   '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -572,6 +591,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/library-access'
     | '/login'
     | '/organization'
     | '/partners'
@@ -611,6 +631,7 @@ export interface FileRouteTypes {
     | '/admin/tasks'
     | '/admin/teachers'
     | '/member/dashboard'
+    | '/member/library'
     | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -631,6 +652,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/library-access'
     | '/login'
     | '/organization'
     | '/partners'
@@ -668,6 +690,7 @@ export interface FileRouteTypes {
     | '/admin/tasks'
     | '/admin/teachers'
     | '/member/dashboard'
+    | '/member/library'
     | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -690,6 +713,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/contact'
     | '/join'
+    | '/library-access'
     | '/login'
     | '/organization'
     | '/partners'
@@ -729,6 +753,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tasks'
     | '/_authenticated/admin/teachers'
     | '/_authenticated/member/dashboard'
+    | '/_authenticated/member/library'
     | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -752,6 +777,7 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   ContactRoute: typeof ContactRoute
   JoinRoute: typeof JoinRoute
+  LibraryAccessRoute: typeof LibraryAccessRoute
   LoginRoute: typeof LoginRoute
   OrganizationRoute: typeof OrganizationRoute
   PartnersRoute: typeof PartnersRoute
@@ -841,6 +867,13 @@ declare module '@tanstack/react-router' {
       path: '/join'
       fullPath: '/join'
       preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library-access': {
+      id: '/library-access'
+      path: '/library-access'
+      fullPath: '/library-access'
+      preLoaderRoute: typeof LibraryAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1123,6 +1156,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMemberDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/member/library': {
+      id: '/_authenticated/member/library'
+      path: '/member/library'
+      fullPath: '/member/library'
+      preLoaderRoute: typeof AuthenticatedMemberLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/tml-ai': {
       id: '/api/public/tml-ai'
       path: '/api/public/tml-ai'
@@ -1247,12 +1287,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedMemberDashboardRoute: typeof AuthenticatedMemberDashboardRoute
+  AuthenticatedMemberLibraryRoute: typeof AuthenticatedMemberLibraryRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedMemberDashboardRoute: AuthenticatedMemberDashboardRoute,
+  AuthenticatedMemberLibraryRoute: AuthenticatedMemberLibraryRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1296,6 +1338,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   ContactRoute: ContactRoute,
   JoinRoute: JoinRoute,
+  LibraryAccessRoute: LibraryAccessRoute,
   LoginRoute: LoginRoute,
   OrganizationRoute: OrganizationRoute,
   PartnersRoute: PartnersRoute,
