@@ -6,6 +6,7 @@ import { getLibraryAccess } from "@/lib/member-library.functions";
 
 const accessQuery = queryOptions({ queryKey: ["member-library-access"], queryFn: () => getLibraryAccess(), staleTime: 0, gcTime: 0, retry: false, refetchInterval: 30_000 });
 export const Route = createFileRoute("/_authenticated/member/library")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: "Thư viện thành viên | TML" },
     { name: "description", content: "Thư viện dành cho thành viên TML đã xác thực Member Pass." },

@@ -6,7 +6,7 @@ import logo from "@/assets/tml-logo.png.asset.json";
 import { routeAfterLogin } from "@/lib/portal";
 
 export const Route = createFileRoute("/login")({ staticData: { sitemap: false },
-  validateSearch: (search: Record<string, unknown>): { next?: "library-access" } => ({ next: search.next === "library-access" ? "library-access" : undefined }),
+  validateSearch: (search: Record<string, unknown>): { next?: "library-access" } => search["next"] === "library-access" ? { next: "library-access" } : {},
   head: () => ({
     meta: [
       { title: "Cổng nội bộ | The Mandarin League" },
