@@ -33,6 +33,8 @@ function MembersPage() {
   const [edit, setEdit] = useState<Row | null>(null);
   const qc = useQueryClient();
   const toggle = async (id: string, v: boolean) => { const { error } = await supabase.rpc("set_member_visibility", { _member: id, _public: v }); if (error) toast.error(error.message); else qc.invalidateQueries({ queryKey: ["admin-members"] }); };
+  const rotate = async (m: Row) => { if (!confirm(`Làm mới mã QR của ${m.full_name}? Mã QR cũ sẽ không dùng được nữa.`)) return;
+    const { error } = await supabase.rpc("rotate_member_pass", { _member: m.id }); if (error) toast.error(error.message); else toast.success("Đã cấp mã QR mới"); };
   const { data, isLoading } = useQuery({ queryKey: ["admin-members"], queryFn: async () => {
     const [{ data: m }, { data: a }] = await Promise.all([
       supabase.from("members").select("id, member_code, full_name, department, position, joined_on, contribution_points, status, is_public, leave_from, leave_until, left_on, status_note").order("created_at", { ascending: false }),
@@ -71,6 +73,7 @@ function MembersPage() {
                 <td className="p-3"><StatusCell m={m} /></td>
                 <td className="p-3 text-xs">{m.hasAccount ? "Đã cấp" : "Chưa cấp"}</td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={m.is_public} onChange={(e) => toggle(m.id, e.target.checked)} /></td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}><button className="rounded-lg border border-border px-2 py-1 text-xs font-semibold hover:bg-accent" onClick={() => rotate(m)}>Làm mới mã QR</button></td>
               </tr>
             ))}
           </tbody>

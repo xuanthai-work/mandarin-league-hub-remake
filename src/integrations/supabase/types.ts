@@ -1185,6 +1185,35 @@ export type Database = {
           },
         ]
       }
+      member_passes: {
+        Row: {
+          member_id: string
+          pass_status: string
+          pass_token: string
+          pass_updated_at: string
+        }
+        Insert: {
+          member_id: string
+          pass_status?: string
+          pass_token?: string
+          pass_updated_at?: string
+        }
+        Update: {
+          member_id?: string
+          pass_status?: string
+          pass_token?: string
+          pass_updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_passes_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           application_id: string | null
@@ -1958,6 +1987,14 @@ export type Database = {
       my_head_department: { Args: never; Returns: string }
       my_member_department: { Args: never; Returns: string }
       my_member_id: { Args: never; Returns: string }
+      my_pass: {
+        Args: never
+        Returns: {
+          pass_status: string
+          pass_token: string
+          pass_updated_at: string
+        }[]
+      }
       public_dept_advisors: {
         Args: never
         Returns: {
@@ -1985,6 +2022,7 @@ export type Database = {
         Args: { _approve: boolean; _note: string; _task: string }
         Returns: undefined
       }
+      rotate_member_pass: { Args: { _member: string }; Returns: undefined }
       set_application_status: {
         Args: { _app: string; _note: string; _status: string }
         Returns: undefined
