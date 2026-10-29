@@ -302,6 +302,13 @@
       "when": 1793235405237,
       "tag": "0042_member_pass_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793237554935,
+      "tag": "0043_member_library_qr_sessions",
+      "breakpoints": true
     }
   ]
 }

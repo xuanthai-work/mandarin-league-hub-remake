@@ -118,7 +118,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const PORTAL_PREFIXES = ["/login", "/admin", "/member/dashboard", "/change-password", "/reset-password", "/auth"];
+const PORTAL_PREFIXES = ["/login", "/admin", "/member", "/library-access", "/change-password", "/reset-password", "/auth"];
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

@@ -1185,6 +1185,47 @@ export type Database = {
           },
         ]
       }
+      member_library_sessions: {
+        Row: {
+          auth_session_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          member_id: string
+          pass_token_hash: string
+          session_hash: string
+          user_id: string
+        }
+        Insert: {
+          auth_session_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          member_id: string
+          pass_token_hash: string
+          session_hash: string
+          user_id: string
+        }
+        Update: {
+          auth_session_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          member_id?: string
+          pass_token_hash?: string
+          session_hash?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_library_sessions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_passes: {
         Row: {
           member_id: string
@@ -1943,6 +1984,10 @@ export type Database = {
         Returns: string
       }
       delete_task: { Args: { _task: string }; Returns: undefined }
+      has_member_library_access: {
+        Args: { _session: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2120,6 +2165,13 @@ export type Database = {
           total_score: number
           verify_token: string
           writing_score: number
+        }[]
+      }
+      verify_member_library_pass: {
+        Args: { _pass: string }
+        Returns: {
+          expires_at: string
+          session_token: string
         }[]
       }
     }
