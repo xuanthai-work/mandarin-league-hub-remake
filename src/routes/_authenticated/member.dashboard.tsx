@@ -55,7 +55,9 @@ function MemberDashboard() {
     (await supabase.from("tasks").select("*").eq("assignee_id", memberId!).order("created_at", { ascending: false })).data ?? [] });
   const history = useQuery({ queryKey: ["my-points", memberId], enabled: !!memberId, queryFn: async () =>
     (await supabase.from("point_transactions").select("*").eq("member_id", memberId!).order("created_at", { ascending: false })).data ?? [] });
-  useEffect(() => { const c = me.data?.member?.member_code; if (c) QRCode.toDataURL(c, { margin: 0, width: 160 }).then(setQr); }, [me.data?.member?.member_code]);
+  const pass = useQuery({ queryKey: ["my-pass", memberId], enabled: !!memberId, queryFn: async () => ((await supabase.rpc("my_pass")).data ?? [])[0] ?? null });
+  useEffect(() => { const t = pass.data?.pass_token; if (!t) { setQr(""); return; }
+    QRCode.toDataURL(`https://member.themandarinleague.bond/library-access?pass=${t}`, { margin: 0, width: 200, errorCorrectionLevel: "M" }).then(setQr); }, [pass.data?.pass_token]);
   const [reporting, setReporting] = useState<{ id: string; title: string } | null>(null);
   const [savedImg, setSavedImg] = useState<string | null>(null);
   const [name, setName] = useState("");
