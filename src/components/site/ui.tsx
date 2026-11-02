@@ -39,9 +39,7 @@ export function EmptyState({ title = "Đang cập nhật", desc }: { title?: str
   const tr = useTr();
   return (
     <div className="rounded-2xl border border-dashed border-primary/40 bg-accent/40 p-10 text-center">
-      <div className="font-han text-3xl text-primary">敬请期待</div>
-      <div className="mt-2 font-semibold text-primary-deep">{tr(title)}</div>
-      {desc && <p className="mt-1 text-sm text-muted-foreground">{tr(desc)}</p>}
+      <p className="font-semibold text-primary-deep">{tr(title)}{desc ? ` — ${tr(desc)}` : ""}</p>
     </div>
   );
 }

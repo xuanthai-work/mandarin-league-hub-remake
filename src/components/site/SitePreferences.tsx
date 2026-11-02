@@ -1,4 +1,4 @@
-import { Check, Globe, Moon, Sun } from "lucide-react";
+import { Check, Settings, Moon, Sun } from "lucide-react";
 import { setLang, useLang, useTr, type Lang } from "@/lib/i18n";
 import { setTheme, useTheme } from "@/lib/theme";
 import {
@@ -32,18 +32,14 @@ export function SitePreferences({ className = "" }: { className?: string }) {
   const lang = useLang();
   const theme = useTheme();
   const tr = useTr();
-  const cur = OPTIONS.find((o) => o.code === lang) ?? OPTIONS[0]!;
-  const dark = theme === "dark";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`${tr("Ngôn ngữ")} / ${tr("Giao diện")}`}
-        className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 text-xs font-semibold text-foreground/80 transition hover:border-gold hover:text-gold focus:outline-none ${className}`}
+        title={`${tr("Ngôn ngữ")} / ${tr("Giao diện")}`}
+        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground/80 transition hover:border-gold hover:text-gold focus:outline-none ${className}`}
       >
-        <Globe className="h-[18px] w-[18px]" />
-        <Flag code={cur.code} />
-        <span className={cur.code === "zh" ? "font-han" : ""}>{cur.short}</span>
-        {dark ? <Moon className="h-[18px] w-[18px] text-primary" /> : <Sun className="h-[18px] w-[18px] text-primary" />}
+        <Settings className="h-[18px] w-[18px]" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-48">
         <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">{tr("Ngôn ngữ")}</DropdownMenuLabel>

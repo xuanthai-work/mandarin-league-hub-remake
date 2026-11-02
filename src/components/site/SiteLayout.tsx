@@ -93,8 +93,9 @@ function Header() {
       </div>
       {open && (
         <nav className="border-t border-border bg-background px-4 py-3 lg:hidden">
-          <div className="mb-2 flex items-center rounded-xl border border-border bg-muted/40 px-3 py-2">
-            <SitePreferences className="w-full justify-between" />
+          <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2">
+            <span className="text-sm font-medium text-muted-foreground">{t("pref.settings")}</span>
+            <SitePreferences />
           </div>
           {NAV.map((n) => (
             n.to === "/" ? <HomeLink key={n.to} onClick={() => setOpen(false)} className="block rounded-md px-3 py-2.5 text-sm font-medium">{t("nav./")}</HomeLink> : <Link
@@ -123,7 +124,7 @@ function Footer() {
   const site = useSiteContent("site").data;
   return (
     <footer className="mt-24 bg-primary-deep text-primary-foreground">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-2 md:px-6 lg:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-background p-1"><img src="/logo.svg" alt="" className="h-12 w-12 rounded-full object-cover" /></div>
@@ -149,7 +150,7 @@ function Footer() {
         <div>
           <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{t("footer.contact")}</div>
           <ul className="space-y-3 text-sm opacity-90">
-            <li className="flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${site.email}`} className="break-all hover:underline">{site.email}</a></li>
+            <li className="flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${site.email}`} className="whitespace-nowrap text-[13px] hover:underline sm:text-sm">{site.email}</a></li>
             <li className="flex items-center gap-2"><Facebook className="h-4 w-4" /><a href={site.facebook} target="_blank" rel="noreferrer" className="hover:underline">Facebook</a></li>
             <li className="flex items-center gap-2"><Instagram className="h-4 w-4" /><a href={site.instagram} target="_blank" rel="noreferrer" className="hover:underline">Instagram</a></li>
             {site.threads && <li className="flex items-center gap-2"><AtSign className="h-4 w-4" /><a href={site.threads} target="_blank" rel="noreferrer" className="hover:underline">Threads</a></li>}
@@ -203,8 +204,7 @@ export function ComingSoon({ eyebrow, title, desc }: { eyebrow: string; title: s
       <PageHero eyebrow={eyebrow} title={title} desc={desc} />
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-6">
         <div className="rounded-2xl border border-dashed border-primary/40 bg-accent/40 p-10 text-center">
-          <div className="font-han text-3xl text-primary">敬请期待</div>
-          <p className="mt-2 text-muted-foreground">{t("soon.text")}</p>
+          <p className="text-base font-semibold text-primary-deep">{t("soon.text")}</p>
         </div>
       </div>
     </>

@@ -39,6 +39,7 @@ export const DICT = {
     zh: "本页面正在建设中，将在下一阶段上线。",
     en: "This page is under construction and will launch in the next phase.",
   },
+  "pref.settings": { vi: "Ngôn ngữ & giao diện", zh: "语言与主题", en: "Language & theme" },
 } satisfies Record<string, Entry>;
 
 export type DictKey = keyof typeof DICT;
