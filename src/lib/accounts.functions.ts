@@ -66,7 +66,8 @@ export const createAccount = createServerFn({ method: "POST" })
     if (memberId) {
       const { data: linked } = await db.from("member_accounts").select("user_id").eq("member_id", memberId).maybeSingle();
       if (linked) throw new Error("Thành viên này đã có tài khoản nội bộ.");
-      await db.from("members").update({ department: data.department, position: data.position, email: data.email }).eq("id", memberId);
+      // Cấp lại tài khoản cũng đưa hồ sơ đã "Đã rời" trở lại hoạt động.
+      await db.from("members").update({ department: data.department, position: data.position, email: data.email, status: "active", left_on: null }).eq("id", memberId);
     } else {
       if (!data.newMember) throw new Error("Cần chọn hoặc nhập thông tin thành viên.");
       const { data: m, error } = await db.from("members").insert({ ...data.newMember, email: data.email, department: data.department, position: data.position }).select("id").single();
@@ -133,21 +134,44 @@ export const resetAccountPassword = createServerFn({ method: "POST" })
 
 export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ userId: z.string().uuid(), deleteProfile: z.boolean() }).parse(d))
+  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const db = await adminClient(context);
     if (data.userId === context.userId) throw new Error("Bạn không thể tự xóa tài khoản của chính mình.");
     const { data: cur } = await db.from("user_roles").select("role").eq("user_id", data.userId);
     if ((cur ?? []).some((r: any) => r.role === "admin") && (await adminCount(db)) <= 1) throw new Error("Hệ thống phải luôn còn ít nhất một Quản trị viên.");
     const { data: acct } = await db.from("member_accounts").select("member_id").eq("user_id", data.userId).maybeSingle();
+
+    // 1. Xóa thông tin đăng nhập, quyền và liên kết tài khoản.
     await db.from("user_roles").delete().eq("user_id", data.userId);
     await db.from("member_accounts").delete().eq("user_id", data.userId);
     const { error } = await db.auth.admin.deleteUser(data.userId);
     if (error && !/not found/i.test(error.message)) throw new Error(error.message);
-    if (data.deleteProfile && acct?.member_id) {
-      const { error: mErr } = await db.from("members").delete().eq("id", acct.member_id);
-      if (mErr) throw new Error("Đã xóa tài khoản, nhưng không xóa được hồ sơ (còn dữ liệu liên quan như điểm/nhiệm vụ). Hãy đặt trạng thái “Đã rời” thay thế.");
+
+    // 2. Hồ sơ thành viên được giữ lại để lưu lịch sử, hệ thống tự chuyển sang "Đã rời".
+    if (acct?.member_id) {
+      const today = new Date().toISOString().slice(0, 10);
+      const { error: mErr } = await db.from("members").update({
+        status: "left",
+        left_on: today,
+        status_note: "Tài khoản nội bộ đã bị xóa bởi Quản trị viên.",
+        is_public: false,
+      }).eq("id", acct.member_id);
+      if (mErr) throw new Error("Đã xóa tài khoản nhưng không cập nhật được hồ sơ thành viên: " + mErr.message);
     }
+    return { ok: true };
+  });
+
+/** Xóa hẳn hồ sơ thành viên chưa có tài khoản (hồ sơ mồ côi/rác). */
+export const deleteMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const db = await adminClient(context);
+    const { data: linked } = await db.from("member_accounts").select("user_id").eq("member_id", data.memberId).maybeSingle();
+    if (linked) throw new Error("Thành viên này đang có tài khoản đăng nhập. Hãy xóa tài khoản trước khi xóa hồ sơ.");
+    const { error } = await db.from("members").delete().eq("id", data.memberId);
+    if (error) throw new Error("Không thể xóa hồ sơ thành viên: " + error.message);
     return { ok: true };
   });
 

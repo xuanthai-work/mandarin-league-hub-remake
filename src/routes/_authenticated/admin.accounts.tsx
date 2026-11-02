@@ -174,7 +174,7 @@ function EditDrawer({ acct, onClose }: { acct: Acct; onClose: () => void }) {
   const update = useServerFn(updateAccount);
   const reset = useServerFn(resetAccountPassword);
   const del = useServerFn(deleteAccount);
-  const [confirm, setConfirm] = useState(""); const [delProfile, setDelProfile] = useState(false);
+  const [confirm, setConfirm] = useState("");
   const [v, setV] = useState({ department: acct.member.department, position: acct.member.position, access: acct.access as AccessLevel, permissions: acct.permissions, status: acct.account_status as AccountStatus });
   const [pw, setPw] = useState(randomPassword());
   const [msg, setMsg] = useState(""); const [err, setErr] = useState(""); const [busy, setBusy] = useState<string | null>(null);
@@ -207,10 +207,9 @@ function EditDrawer({ acct, onClose }: { acct: Acct; onClose: () => void }) {
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
       <div className="mt-8 rounded-xl border border-destructive/40 p-4">
         <h3 className="flex items-center gap-2 font-semibold text-destructive"><Trash2 className="h-4 w-4" />Xóa tài khoản</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Xóa vĩnh viễn quyền đăng nhập. Không thể hoàn tác. Nếu chỉ tạm ngưng, hãy dùng “Tạm khóa”.</p>
-        <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={delProfile} onChange={(e) => setDelProfile(e.target.checked)} />Xóa luôn hồ sơ thành viên (mã, điểm)</label>
+        <p className="mt-1 text-xs text-muted-foreground">Xóa vĩnh viễn quyền đăng nhập. Hồ sơ thành viên sẽ tự động chuyển sang trạng thái “Đã rời” để lưu lại lịch sử cống hiến và ẩn khỏi website. Nếu chỉ tạm ngưng, hãy dùng “Tạm khóa”.</p>
         <input className={`${inp} mt-2 w-full`} placeholder={`Gõ XOA để xác nhận`} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-        <button disabled={!!busy || confirm.trim().toUpperCase() !== "XOA"} onClick={() => run("del", () => del({ data: { userId: acct.user_id, deleteProfile: delProfile } }).then(() => { qc.invalidateQueries({ queryKey: ["admin-members"] }); onClose(); }), "Đã xóa tài khoản.")} className="mt-2 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50">Xóa tài khoản vĩnh viễn</button>
+        <button disabled={!!busy || confirm.trim().toUpperCase() !== "XOA"} onClick={() => run("del", () => del({ data: { userId: acct.user_id } }).then(() => { qc.invalidateQueries({ queryKey: ["admin-members"] }); onClose(); }), "Đã xóa tài khoản.")} className="mt-2 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50">Xóa tài khoản vĩnh viễn</button>
       </div>
     </Drawer>
   );

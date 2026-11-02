@@ -12,12 +12,11 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-03-PURGE-LOVABLE-ROUTES-TELEMETRY` | Xóa routes Lovable, bypass middleware & telemetry | 2026-11-02 | **PASS** | [task-03-purge-lovable-routes-telemetry.md](tasks/task-03-purge-lovable-routes-telemetry.md) |
 | `TASK-04-CLEAN-SUPABASE-DRIZZLE` | Chuẩn hóa Supabase client, preview auth & Drizzle config | 2026-11-02 | **PASS** | [task-04-clean-supabase-drizzle.md](tasks/task-04-clean-supabase-drizzle.md) |
 | `TASK-05-METADATA-CLEANUP` | Dọn dẹp Metadata, thư mục `.lovable/`, `.env.example` & docs | 2026-11-02 | **PASS** | [task-05-metadata-cleanup.md](tasks/task-05-metadata-cleanup.md) |
-| `TASK-04-FIX-LOGIN-LOGO` | Sửa logo trang đăng nhập nội bộ sang logo SVG chuẩn | 2026-11-02 | **PASS** | [task-04-fix-login-logo.md](tasks/task-04-fix-login-logo.md) |
-| `TASK-05-FIX-HOMEPAGE-HERO-LOGO` | Sửa logo Hero trang chủ và các vị trí còn dùng asset Lovable 404 | 2026-11-02 | **PASS** | [task-05-fix-homepage-hero-logo.md](tasks/task-05-fix-homepage-hero-logo.md) |
+| `TASK-06-SYNC-MEMBER-ACCOUNT-LIFECYCLE` | Đồng bộ vòng đời Thành viên và Tài khoản nội bộ | 2026-11-02 | **PASS** | [task-06-sync-member-account-lifecycle.md](tasks/task-06-sync-member-account-lifecycle.md) |
 
 ---
 
 ## 2. Status Overview
 
-- **Current Active Task**: None (`Status: DONE` trong `justdoit.md`).
+- **Current Active Task**: None (`Status: IDLE` trong `justdoit.md`).
 - **Archive Directory**: [docs/tasks/](tasks/)
