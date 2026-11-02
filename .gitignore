@@ -16,6 +16,11 @@ dist-ssr
 .nitro
 *.local
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
@@ -31,7 +36,14 @@ dist-ssr
 *.sln
 *.sw?
 
+# Local tools & caches
+.codegraph/
+.remember/
+mem-tmp
 
 # BA workflow files
 GEMINI.md
 justdoit.md
+
+# Specific private docs
+docs/SMTP_AND_PORTALS_GUIDE.md
