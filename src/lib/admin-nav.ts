@@ -18,26 +18,60 @@ export const ROLE_PRIORITY: AdminRole[] = ["admin", "department_head", "deputy_h
 
 export type AdminSection = { slug: string; label: string; icon: LucideIcon };
 
-/** Placeholder modules rendered by /admin/$section until each is built. */
-export const ADMIN_SECTIONS: AdminSection[] = [
-  { slug: "recruitment", label: "Đợt tuyển & Câu hỏi", icon: Megaphone },
-  { slug: "candidates", label: "Ứng viên", icon: UserPlus },
-  { slug: "members", label: "Thành viên", icon: Users },
-  { slug: "accounts", label: "Tài khoản nội bộ", icon: KeyRound },
-  { slug: "tasks", label: "Nhiệm vụ", icon: ListChecks },
-  { slug: "contributions", label: "Điểm đóng góp", icon: Award },
-  { slug: "benefits", label: "Quyền lợi thành viên", icon: Gift },
-  { slug: "photos", label: "Hình ảnh", icon: Image },
-  { slug: "departments", label: "Ban", icon: Building2 },
-  { slug: "teachers", label: "Giáo viên", icon: GraduationCap },
-  { slug: "courses", label: "Khóa học", icon: BookOpen },
-  { slug: "activities", label: "Hoạt động", icon: CalendarDays },
-  { slug: "news", label: "Tin tức", icon: Newspaper },
-  { slug: "partners", label: "Đối tác", icon: Handshake },
-  { slug: "certificates", label: "Chứng nhận", icon: BadgeCheck },
-  { slug: "hsk", label: "Kết quả HSK", icon: FileCheck2 },
-  { slug: "content", label: "Trang & Nội dung", icon: FileText },
-  { slug: "settings", label: "Cài đặt", icon: Settings },
+/** A named block of the admin sidebar; groups keep 18 modules scannable. */
+export type AdminNavGroup = { title?: string; sections: AdminSection[] };
+
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+  {
+    title: "Nhân sự & Tổ chức",
+    sections: [
+      { slug: "recruitment", label: "Đợt tuyển & Câu hỏi", icon: Megaphone },
+      { slug: "candidates", label: "Ứng viên", icon: UserPlus },
+      { slug: "members", label: "Thành viên", icon: Users },
+      { slug: "tasks", label: "Nhiệm vụ", icon: ListChecks },
+      { slug: "contributions", label: "Điểm đóng góp", icon: Award },
+      { slug: "benefits", label: "Quyền lợi thành viên", icon: Gift },
+    ],
+  },
+  {
+    title: "Học thuật & Đào tạo",
+    sections: [
+      { slug: "courses", label: "Khóa học", icon: BookOpen },
+      { slug: "teachers", label: "Giáo viên", icon: GraduationCap },
+      { slug: "hsk", label: "Kết quả HSK", icon: FileCheck2 },
+      { slug: "certificates", label: "Chứng nhận", icon: BadgeCheck },
+    ],
+  },
+  {
+    title: "Hoạt động & Truyền thông",
+    sections: [
+      { slug: "activities", label: "Hoạt động", icon: CalendarDays },
+      { slug: "news", label: "Tin tức", icon: Newspaper },
+      { slug: "photos", label: "Hình ảnh", icon: Image },
+      { slug: "partners", label: "Đối tác", icon: Handshake },
+    ],
+  },
+  {
+    title: "Hệ thống & Cấu hình",
+    sections: [
+      { slug: "accounts", label: "Tài khoản nội bộ", icon: KeyRound },
+      { slug: "departments", label: "Ban", icon: Building2 },
+      { slug: "content", label: "Trang & Nội dung", icon: FileText },
+      { slug: "settings", label: "Cài đặt", icon: Settings },
+    ],
+  },
 ];
+
+/** Flat list used by route validation and the dashboard cards. */
+export const ADMIN_SECTIONS: AdminSection[] = ADMIN_NAV_GROUPS.flatMap((g) => g.sections);
+
+/** Groups the signed-in user may open; groups with nothing left are dropped. */
+export function navGroupsFor(allowed: string[] | "all"): AdminNavGroup[] {
+  if (allowed === "all") return ADMIN_NAV_GROUPS;
+  return ADMIN_NAV_GROUPS.map((g) => ({
+    ...(g.title ? { title: g.title } : {}),
+    sections: g.sections.filter((s) => allowed.includes(s.slug)),
+  })).filter((g) => g.sections.length > 0);
+}
 
 export const OVERVIEW_ICON = LayoutDashboard;

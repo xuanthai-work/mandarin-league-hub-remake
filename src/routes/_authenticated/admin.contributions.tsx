@@ -5,6 +5,7 @@ import { Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import { POINT_KIND, isLeader, tierOf } from "@/lib/points";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({ staticData: { sitemap: false },
@@ -70,11 +71,11 @@ function PointsPage() {
     ...(isAdmin ? [{ label: "Hỗ trợ sự kiện (+15)", kind: "bonus", amount: 15, reason: "Hỗ trợ sự kiện" }] : []),
   ];
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div>
-        <h1 className="text-2xl font-bold text-primary-deep">Điểm đóng góp</h1>
-        <p className="text-sm text-muted-foreground">Mọi thay đổi điểm đều được lưu lịch sử: thời gian, lý do, người duyệt và số dư sau thay đổi.</p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Điểm đóng góp"
+        description="Mọi thay đổi điểm đều được lưu lịch sử: thời gian, lý do, người duyệt và số dư sau thay đổi."
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-4">

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { HSK_LEVELS, HSK_PREFIXES, hskRule, hskSkills } from "@/lib/hsk";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/hsk")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Kết quả HSK | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -123,24 +124,22 @@ function HskAdminPage() {
   const total = edit ? skills.reduce((s, k) => s + (edit[scoreKey(k)] ?? 0), 0) : 0;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-primary-deep">Kết quả HSK</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Ghi nhận kết quả thi thử / đánh giá do TML tổ chức hoặc liên kết. Tổng điểm và Đạt/Chưa đạt do hệ thống tự tính.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Kết quả HSK"
+        description="Ghi nhận kết quả thi thử / đánh giá do TML tổ chức hoặc liên kết. Tổng điểm và Đạt/Chưa đạt do hệ thống tự tính."
+        actions={<>
           <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent">
             <Upload className="h-4 w-4" /> Nhập CSV
             <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { importCsv(e.target.files?.[0]); e.target.value = ""; }} />
           </label>
           <button onClick={exportCsv} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent"><Download className="h-4 w-4" /> Xuất CSV</button>
           <button onClick={openNew} className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" /> Nhập kết quả</button>
-        </div>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">CSV mẫu (dòng đầu là tiêu đề): <code>ma,ho_ten,cap_do,ngay_thi,nghe,doc,viet,khau_ngu,dot_thi</code> — cấp độ: HSK1…HSK6, HSKK-BEG/INT/ADV; bỏ trống mã để hệ thống tự tạo.</p>
+        </>}
+      />
+      <p className="text-xs text-muted-foreground">CSV mẫu (dòng đầu là tiêu đề): <code>ma,ho_ten,cap_do,ngay_thi,nghe,doc,viet,khau_ngu,dot_thi</code> — cấp độ: HSK1…HSK6, HSKK-BEG/INT/ADV; bỏ trống mã để hệ thống tự tạo.</p>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mã, tên, đợt thi…" className={`${inp} max-w-xs`} />
         <select value={level} onChange={(e) => setLevel(e.target.value)} className={`${inp} w-auto`}><option value="">Mọi cấp độ</option>{Object.entries(HSK_LEVELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         <select value={status} onChange={(e) => setStatus(e.target.value)} className={`${inp} w-auto`}><option value="">Mọi trạng thái</option><option value="VALID">Hợp lệ</option><option value="REVOKED">Đã hủy</option></select>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, ArrowLeft, Download, GraduationCap, Trash2, ExternalLink, FolderOpen, ListChecks, MessageCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEPARTMENTS } from "@/lib/data/departments";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/departments")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Ban | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -33,10 +34,12 @@ function DepartmentsPage() {
   if (sel) return <DeptDetail id={sel} all={data.members} members={byDept(sel)} channel={data.channels.find((c) => c.department === sel)} onBack={() => setSel(null)} onPick={setSel} />;
 
   return (
-    <section className="mx-auto max-w-7xl p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-primary-deep">8 Ban chuyên môn</h1>
-      <p className="text-sm text-muted-foreground">Chọn một Ban để xem thành viên, kênh Zalo và tài liệu của Ban.</p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="8 Ban chuyên môn"
+        description="Chọn một Ban để xem thành viên, kênh Zalo và tài liệu của Ban."
+      />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {DEPARTMENTS.map((d) => {
           const ms = byDept(d.id);
           const head = ms.find((m) => m.position === "Trưởng Ban");
@@ -75,18 +78,22 @@ function DeptDetail({ id, all, members, channel, onBack, onPick }: { id: string;
   };
 
   return (
-    <section className="mx-auto max-w-7xl p-4 sm:p-6">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <button onClick={onBack} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" />Tất cả Ban</button>
       <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
         {DEPARTMENTS.map((x) => <button key={x.id} onClick={() => onPick(x.id)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${x.id === id ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-accent"}`}>{x.name}</button>)}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <div className="flex-1"><h1 className="text-2xl font-bold text-primary-deep">{d.name}</h1><p className="text-sm text-muted-foreground">{d.description}</p></div>
-        <Link to="/admin/tasks" className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"><ListChecks className="h-4 w-4" />Giao việc cho Ban</Link>
-        <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Download className="h-4 w-4" />Xuất danh sách Ban</button>
-      </div>
+      <AdminPageHeader
+        className="mt-3"
+        title={d.name}
+        description={d.description}
+        actions={<>
+          <Link to="/admin/tasks" className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"><ListChecks className="h-4 w-4" />Giao việc cho Ban</Link>
+          <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Download className="h-4 w-4" />Xuất danh sách Ban</button>
+        </>}
+      />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Group title="Lãnh đạo Ban" rows={leaders} empty="Chưa có Trưởng Ban / Phó Ban." />
           <Group title="Thành viên" rows={rest} empty="Chưa có thành viên." />

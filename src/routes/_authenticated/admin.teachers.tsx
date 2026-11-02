@@ -5,6 +5,7 @@ import { Eye, EyeOff, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PROGRAM_OPTIONS, resolveTeacherPhotos, TEACHER_BUCKET, TEACHER_STATUS_LABEL, TEACHER_TYPE_LABEL, type TeacherStatus, type TeacherType } from "@/lib/teachers";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/teachers")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Giáo viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -62,12 +63,13 @@ function TeachersPage() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl p-4 sm:p-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1"><h1 className="text-2xl font-bold text-primary-deep">Giáo viên</h1><p className="text-sm text-muted-foreground">Hồ sơ hiển thị ở trang Giảng viên, Khóa học và Đội ngũ Giảng viên trang chủ.</p></div>
-        <button onClick={() => setEdit({ ...EMPTY, sort_order: (data?.length ?? 0) + 1 })} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Thêm giáo viên</button>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Giáo viên"
+        description="Hồ sơ hiển thị ở trang Giảng viên, Khóa học và Đội ngũ Giảng viên trang chủ."
+        actions={<button onClick={() => setEdit({ ...EMPTY, sort_order: (data?.length ?? 0) + 1 })} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Thêm giáo viên</button>}
+      />
+      <div className="flex flex-wrap gap-2">
         <input className={`${inp} max-w-xs`} placeholder="Tìm tên hoặc chức danh…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select className={`${inp} max-w-[160px]`} value={lv} onChange={(e) => setLv(Number(e.target.value))}>
           <option value={0}>Tất cả cấp HSK</option>{LEVELS.map((l) => <option key={l} value={l}>HSK {l}</option>)}

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createAccount, deleteAccount, listAccounts, resetAccountPassword, updateAccount } from "@/lib/accounts.functions";
 import { ACCESS_LABELS, ACCOUNT_DEPTS, ACCOUNT_STATUS, PERMISSIONS, PERMISSION_TEMPLATES, positionsFor, type AccessLevel, type AccountStatus } from "@/lib/accounts";
 import { deptName } from "@/lib/recruitment";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/accounts")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Tài khoản nội bộ | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -36,13 +37,13 @@ function AccountsPage() {
   }), [q.data, f]);
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="text-2xl font-bold text-primary-deep">Tài khoản nội bộ</h1>
-          <p className="text-sm text-muted-foreground">Không có tự đăng ký — chỉ Quản trị viên cấp tài khoản.</p></div>
-        <button onClick={() => setCreating(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo tài khoản</button>
-      </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Tài khoản nội bộ"
+        description="Không có tự đăng ký — chỉ Quản trị viên cấp tài khoản."
+        actions={<button onClick={() => setCreating(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo tài khoản</button>}
+      />
+      <div className="grid gap-2 sm:grid-cols-3">
         <input className={inp} placeholder="Tìm tên, mã, email…" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
         <select className={inp} value={f.dept} onChange={(e) => setF({ ...f, dept: e.target.value })}><option value="">Mọi Ban</option>{ACCOUNT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
         <select className={inp} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Mọi trạng thái</option>{Object.entries(ACCOUNT_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
@@ -174,7 +175,7 @@ function EditDrawer({ acct, onClose }: { acct: Acct; onClose: () => void }) {
   const update = useServerFn(updateAccount);
   const reset = useServerFn(resetAccountPassword);
   const del = useServerFn(deleteAccount);
-  const [confirm, setConfirm] = useState(""); const [delProfile, setDelProfile] = useState(false);
+  const [confirm, setConfirm] = useState("");
   const [v, setV] = useState({ department: acct.member.department, position: acct.member.position, access: acct.access as AccessLevel, permissions: acct.permissions, status: acct.account_status as AccountStatus });
   const [pw, setPw] = useState(randomPassword());
   const [msg, setMsg] = useState(""); const [err, setErr] = useState(""); const [busy, setBusy] = useState<string | null>(null);
@@ -207,10 +208,9 @@ function EditDrawer({ acct, onClose }: { acct: Acct; onClose: () => void }) {
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
       <div className="mt-8 rounded-xl border border-destructive/40 p-4">
         <h3 className="flex items-center gap-2 font-semibold text-destructive"><Trash2 className="h-4 w-4" />Xóa tài khoản</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Xóa vĩnh viễn quyền đăng nhập. Không thể hoàn tác. Nếu chỉ tạm ngưng, hãy dùng “Tạm khóa”.</p>
-        <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={delProfile} onChange={(e) => setDelProfile(e.target.checked)} />Xóa luôn hồ sơ thành viên (mã, điểm)</label>
+        <p className="mt-1 text-xs text-muted-foreground">Xóa vĩnh viễn quyền đăng nhập. Hồ sơ thành viên sẽ tự động chuyển sang trạng thái “Đã rời” để lưu lại lịch sử cống hiến và ẩn khỏi website. Nếu chỉ tạm ngưng, hãy dùng “Tạm khóa”.</p>
         <input className={`${inp} mt-2 w-full`} placeholder={`Gõ XOA để xác nhận`} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-        <button disabled={!!busy || confirm.trim().toUpperCase() !== "XOA"} onClick={() => run("del", () => del({ data: { userId: acct.user_id, deleteProfile: delProfile } }).then(() => { qc.invalidateQueries({ queryKey: ["admin-members"] }); onClose(); }), "Đã xóa tài khoản.")} className="mt-2 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50">Xóa tài khoản vĩnh viễn</button>
+        <button disabled={!!busy || confirm.trim().toUpperCase() !== "XOA"} onClick={() => run("del", () => del({ data: { userId: acct.user_id } }).then(() => { qc.invalidateQueries({ queryKey: ["admin-members"] }); onClose(); }), "Đã xóa tài khoản.")} className="mt-2 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50">Xóa tài khoản vĩnh viễn</button>
       </div>
     </Drawer>
   );

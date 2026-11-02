@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIOD_STATUS, QUESTION_BANK, QUESTION_KINDS, RECRUIT_DEPTS, deptName, positionsFor } from "@/lib/recruitment";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/recruitment")({ staticData: { sitemap: false }, component: RecruitmentAdmin });
 
@@ -37,9 +38,9 @@ function RecruitmentAdmin() {
   if (!data) return <p className="p-10 text-center text-muted-foreground">Đang tải…</p>;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-primary-deep">Đợt tuyển & Câu hỏi</h1>
-      <div className="mt-4 flex gap-2">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader title="Đợt tuyển & Câu hỏi" description="Quản lý đợt tuyển, vị trí, chủ đề và câu hỏi dành cho ứng viên." />
+      <div className="flex gap-2">
         {(["periods", "questions"] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === t ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{t === "periods" ? "Đợt tuyển" : "Chủ đề & Câu hỏi"}</button>)}
       </div>
       {msg && <p className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm">{msg}</p>}

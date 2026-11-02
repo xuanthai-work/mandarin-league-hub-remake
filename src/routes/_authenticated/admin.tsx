@@ -1,9 +1,11 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LogOut, Menu, X, ShieldAlert, IdCard } from "lucide-react";
+import { LogOut, Menu, X, ShieldAlert, IdCard, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY } from "@/lib/admin-nav";
+import {
+  ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, navGroupsFor, type AdminNavGroup,
+} from "@/lib/admin-nav";
 import { allowedSections } from "@/lib/admin-permissions";
 
 export const Route = createFileRoute("/_authenticated/admin")({ staticData: { sitemap: false },
@@ -26,14 +28,154 @@ export function useAdminAccess() {
     queryKey: ["admin-access"],
     queryFn: async () => {
       const { data } = await supabase.rpc("my_account");
-      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null; member: { department: string } | null };
+      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null; member: { department: string; full_name: string } | null };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
       const department = blocked ? null : me.member?.department ?? null;
       const allowed = allowedSections(roles, department);
-      return { email: me.email ?? "", roles, department, allowed, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
+      return { email: me.email ?? "", name: blocked ? "" : me.member?.full_name ?? "", roles, department, allowed, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
     },
   });
+}
+
+const NAV_ITEM =
+  "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
+const NAV_ACTIVE =
+  "bg-primary/10 font-semibold text-primary-deep shadow-xs dark:bg-primary/15 dark:text-primary after:ml-auto after:h-1.5 after:w-1.5 after:shrink-0 after:rounded-full after:bg-primary after:content-['']";
+const ICON_BTN =
+  "grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-accent/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
+
+/** Groups the user collapsed stay collapsed across reloads; the active group always opens. */
+const COLLAPSE_KEY = "tml_admin_collapsed_groups";
+
+function readCollapsedGroups(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(COLLAPSE_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: Record<string, boolean> = {};
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === "boolean") out[key] = value;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onToggleGroup, onNavigate, onSignOut, onClose }: {
+  email: string;
+  roleLabel: string;
+  groups: AdminNavGroup[];
+  currentSlug: string;
+  collapsed: Record<string, boolean>;
+  onToggleGroup: (title: string) => void;
+  onNavigate: () => void;
+  onSignOut: () => void;
+  onClose?: () => void;
+}) {
+  const initials = (email.split("@")[0] ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "TML";
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-card">
+      <div className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-4">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gold/50 bg-background shadow-[0_2px_12px_-6px_color-mix(in_oklab,var(--gold)_70%,transparent)]">
+          <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full object-cover" />
+        </span>
+        <div className="min-w-0">
+          <p className="font-han truncate text-[13px] font-semibold leading-tight tracking-tight text-foreground">The Mandarin League</p>
+          <span className="mt-1 inline-block rounded bg-gold/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-[color:var(--metal-gold-lo)] dark:text-gold">
+            Admin Portal
+          </span>
+        </div>
+        {onClose && (
+          <button aria-label="Đóng menu" onClick={onClose} className={`${ICON_BTN} ml-auto`}>
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      <nav aria-label="Điều hướng quản trị" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
+        <Link
+          to="/admin"
+          activeOptions={{ exact: true }}
+          className={`${NAV_ITEM} mt-3`}
+          activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
+          onClick={onNavigate}
+        >
+          <OVERVIEW_ICON className="h-4 w-4 shrink-0" strokeWidth={1.75} /> Tổng quan
+        </Link>
+        {groups.map((g) => {
+          const key = g.title ?? "group";
+          const active = !!currentSlug && g.sections.some((s) => s.slug === currentSlug);
+          const isCollapsed = !active && !!collapsed[key];
+          const panelId = `nav-group-${g.sections[0]?.slug ?? key}`;
+          return (
+            <div key={key}>
+              {g.title && (
+                <button
+                  type="button"
+                  onClick={() => onToggleGroup(key)}
+                  aria-expanded={!isCollapsed}
+                  aria-controls={panelId}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-3 pt-5 pb-1.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
+                  <span>{g.title}</span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isCollapsed ? "-rotate-90 text-muted-foreground/60" : "rotate-0 text-muted-foreground"}`}
+                  />
+                </button>
+              )}
+              <div
+                id={panelId}
+                className={`grid transition-[grid-template-rows] duration-200 ${isCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="space-y-0.5" inert={isCollapsed || undefined}>
+                    {g.sections.map((s) => (
+                      <Link
+                        key={s.slug}
+                        to="/admin/$section"
+                        params={{ section: s.slug }}
+                        className={NAV_ITEM}
+                        activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
+                        onClick={onNavigate}
+                      >
+                        <s.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                        <span className="truncate">{s.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+
+      <div className="shrink-0 border-t border-border/60 bg-muted/20 p-3">
+        <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card p-2">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-bold text-primary ring-1 ring-primary/20">
+            {initials}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-foreground">{email}</p>
+            <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-primary-deep dark:text-gold">{roleLabel}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Link to="/member/dashboard" onClick={onNavigate} className={ICON_BTN} aria-label="Thẻ thành viên" title="Thẻ thành viên">
+              <IdCard className="h-4 w-4" />
+            </Link>
+            <button onClick={onSignOut} className={ICON_BTN} aria-label="Đăng xuất" title="Đăng xuất">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function AdminLayout() {
@@ -41,6 +183,12 @@ function AdminLayout() {
   const navigate = useNavigate();
   const access = useAdminAccess();
   const [open, setOpen] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(readCollapsedGroups);
+  const toggleGroup = (title: string) => setCollapsedGroups((prev) => {
+    const next = { ...prev, [title]: !prev[title] };
+    try { window.localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next)); } catch { /* storage unavailable: keep the in-memory state */ }
+    return next;
+  });
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const signOut = async () => {
@@ -60,97 +208,84 @@ function AdminLayout() {
     else if (d.hasAccount && !hasAny) navigate({ to: "/member/dashboard", replace: true });
   }, [access.data, hasAny, navigate]);
 
-  if (access.isLoading) {
-    return <div className="admin-shell flex min-h-screen items-center justify-center bg-background"><p className="text-sm text-muted-foreground">Đang kiểm tra quyền truy cập…</p></div>;
-  }
+  // Close the drawer on navigation; Escape closes it; body scroll stays locked while open.
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [open]);
+
+  if (access.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
 
   const roles = access.data?.roles ?? [];
-  const sections = allowed === "all" ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => allowed.includes(s.slug));
-  const current = pathname.replace(/^\/admin\/?/, "").split("/")[0];
+  const roleLabel = roles[0] ? ROLE_LABELS[roles[0]] : "Thành viên";
+  const groups = navGroupsFor(allowed);
+  const current = pathname.replace(/^\/admin\/?/, "").split("/")[0] ?? "";
   const blockedHere = !!current && allowed !== "all" && !allowed.includes(current);
+  const title = ADMIN_SECTIONS.find((s) => s.slug === current)?.label ?? "Tổng quan";
+
   if (!hasAny) {
     return (
-      <div className="admin-shell flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
-          <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
-          <h1 className="mt-4 text-xl font-bold text-foreground">Tài khoản chưa được cấp quyền</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Vui lòng liên hệ Ban Công nghệ &amp; Hệ thống để được phân quyền.</p>
-          <button onClick={signOut} className="mt-6 rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground hover:bg-primary-deep">Đăng xuất</button>
-        </div>
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
+        <h1 className="mt-4 text-xl font-bold">Tài khoản chưa được cấp quyền</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Vui lòng liên hệ Ban Công nghệ & Hệ thống để được phân quyền.</p>
+        <button onClick={signOut} className="mt-6 rounded-full bg-primary px-6 py-2 font-semibold text-primary-foreground">Đăng xuất</button>
       </div>
     );
   }
 
-  const link = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-primary data-[status=active]:bg-primary/10 data-[status=active]:font-semibold data-[status=active]:text-primary data-[status=active]:ring-1 data-[status=active]:ring-primary/20";
-
-  const nav = (
-    <nav className="space-y-1 p-3">
-      <Link to="/admin" activeOptions={{ exact: true }} className={link} onClick={() => setOpen(false)}>
-        <OVERVIEW_ICON className="h-4 w-4 shrink-0" /> Tổng quan
-      </Link>
-      {sections.map((s) => (
-        <Link key={s.slug} to="/admin/$section" params={{ section: s.slug }} className={link} onClick={() => setOpen(false)}>
-          <s.icon className="h-4 w-4 shrink-0" /> {s.label}
-        </Link>
-      ))}
-    </nav>
-  );
-
-  const brand = (
-    <div className="flex min-w-0 items-center gap-3">
-      <img src="/logo.svg" alt="TML" className="h-9 w-9 shrink-0 rounded-full border border-border bg-card object-cover" />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-bold tracking-tight text-primary-deep">The Mandarin League</p>
-        <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">Admin Portal</span>
-      </div>
-    </div>
-  );
+  const email = access.data?.email ?? "";
 
   return (
-    <div className="admin-shell fixed inset-0 z-50 flex bg-background text-foreground">
-      <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:block">
-        <div className="border-b border-border/70 px-4 py-4">{brand}</div>
-        {nav}
+    <div className="fixed inset-0 z-50 flex admin-shell bg-background text-foreground">
+      <aside className="hidden w-[272px] shrink-0 border-r border-border lg:block">
+        <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} currentSlug={current} collapsed={collapsedGroups} onToggleGroup={toggleGroup} onNavigate={() => setOpen(false)} onSignOut={signOut} />
       </aside>
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-foreground/40" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 overflow-y-auto border-r border-border bg-card shadow-xl">
-            <div className="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-4">
-              {brand}
-              <button aria-label="Đóng menu" onClick={() => setOpen(false)} className="shrink-0 rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            {nav}
+          <div className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200" onClick={() => setOpen(false)} />
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Điều hướng quản trị"
+            className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
+          >
+            <SidebarPanel
+              email={email}
+              roleLabel={roleLabel}
+              groups={groups}
+              currentSlug={current}
+              collapsed={collapsedGroups}
+              onToggleGroup={toggleGroup}
+              onNavigate={() => setOpen(false)}
+              onSignOut={signOut}
+              onClose={() => setOpen(false)}
+            />
           </aside>
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3.5 shadow-xs lg:px-6">
-          <button aria-label="Mở menu" className="rounded-lg p-1 text-primary-deep hover:bg-accent lg:hidden" onClick={() => setOpen(true)}>
+        <header className="portal-ai portal-ink flex items-center gap-3 px-4 py-2.5 lg:hidden">
+          <button aria-label="Mở menu" className="grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10" onClick={() => setOpen(true)}>
             <Menu className="h-5 w-5" />
           </button>
-          <div className="ml-auto flex items-center gap-3">
-            <Link to="/member/dashboard" className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-card px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-accent">
-              <IdCard className="h-4 w-4" /><span className="hidden sm:inline">Thẻ thành viên của tôi</span>
-            </Link>
-            <div className="text-right">
-              <p className="max-w-[180px] truncate text-sm font-semibold text-foreground">{access.data?.email}</p>
-              <p className="mt-0.5 inline-flex rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{ROLE_LABELS[roles[0]!]}</p>
-            </div>
-            <button onClick={signOut} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive">
-              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Đăng xuất</span>
-            </button>
-          </div>
+          <h1 className="truncate text-sm font-semibold tracking-tight">{title}</h1>
+          <button onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất" className="ml-auto grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10">
+            <LogOut className="h-4 w-4" />
+          </button>
         </header>
-        <main className="flex-1 overflow-y-auto bg-background">
+        <main className="flex-1 overflow-y-auto">
           {blockedHere ? (
             <div className="mx-auto max-w-md px-4 py-20 text-center">
               <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
-              <h1 className="mt-4 text-xl font-bold text-foreground">Bạn chưa được cấp quyền cho mục này</h1>
+              <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
               <p className="mt-2 text-sm text-muted-foreground">Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.</p>
             </div>
           ) : <Outlet />}

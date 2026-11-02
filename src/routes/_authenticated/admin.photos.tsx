@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, RefreshCw, Trash2, Upload, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   deletePhoto, listAllPhotos, reorderPhotos, replacePhoto, updatePhoto, uploadPhoto, type ActivityPhoto,
 } from "@/lib/activity-photos";
@@ -64,13 +65,13 @@ function AdminPhotos() {
   };
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary-deep">Ảnh hoạt động trang chủ</h1>
-        <button onClick={signOut} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><LogOut className="h-4 w-4" />Đăng xuất</button>
-      </div>
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Ảnh hoạt động trang chủ"
+        actions={<button onClick={signOut} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><LogOut className="h-4 w-4" />Đăng xuất</button>}
+      />
 
-      <div className="mt-8 rounded-2xl border border-border bg-card p-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
         <h2 className="font-semibold">Thêm ảnh mới</h2>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Chú thích (tùy chọn)"

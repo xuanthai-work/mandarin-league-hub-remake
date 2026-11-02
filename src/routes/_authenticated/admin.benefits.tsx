@@ -5,6 +5,7 @@ import { Pencil, Plus, Trash2, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BENEFIT_ICONS, BENEFIT_LOGO_BUCKET, BENEFIT_STATUS, BenefitIcon, useBenefitLogoUrls } from "@/lib/benefits";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/benefits")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Quyền lợi thành viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -60,12 +61,12 @@ function BenefitsAdmin() {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 className="text-2xl font-bold">Quyền lợi thành viên</h1>
-          <p className="text-sm text-muted-foreground">Tài khoản Premium dùng chung — sửa mật khẩu một lần, áp dụng cho mọi thành viên được cấp.</p></div>
-        <button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo quyền lợi</button>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Quyền lợi thành viên"
+        description="Tài khoản Premium dùng chung — sửa mật khẩu một lần, áp dụng cho mọi thành viên được cấp."
+        actions={<button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo quyền lợi</button>}
+      />
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-secondary text-left text-xs text-muted-foreground"><tr><th className="p-3">Quyền lợi</th><th className="p-3">Áp dụng</th><th className="p-3">Cấp riêng</th><th className="p-3">Hết hạn</th><th className="p-3">Trạng thái</th><th className="p-3 text-right">Thao tác</th></tr></thead>

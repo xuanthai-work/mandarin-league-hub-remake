@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Construction } from "lucide-react";
 import { ADMIN_SECTIONS } from "@/lib/admin-nav";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/$section")({ staticData: { sitemap: false },
   beforeLoad: ({ params }) => {
@@ -14,9 +15,9 @@ function Placeholder() {
   const { section } = Route.useParams();
   const s = ADMIN_SECTIONS.find((x) => x.slug === section)!;
   return (
-    <section className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-bold tracking-tight text-primary-deep">{s.label}</h1>
-      <div className="mt-8 rounded-2xl border border-border bg-card p-12 text-center shadow-xs">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader title={s.label} />
+      <div className="rounded-2xl border border-border bg-card p-12 text-center shadow-xs">
         <Construction className="mx-auto h-8 w-8 text-primary" />
         <p className="mt-3 font-semibold text-foreground">Mô-đun đang được chuẩn bị</p>
         <p className="mt-1 text-sm text-muted-foreground">Chức năng chi tiết sẽ được triển khai ở giai đoạn sau.</p>

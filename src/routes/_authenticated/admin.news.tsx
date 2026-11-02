@@ -10,6 +10,7 @@ import { NEWS_BUCKET, NEWS_STATUS_LABEL, fmtDate, withCovers, type NewsRow, type
 import { canReviewNews } from "@/lib/admin-permissions";
 import { useAdminAccess } from "./admin";
 import { TrashList, useConfirm } from "@/components/admin/Trash";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/news")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Tin tức | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -84,17 +85,13 @@ function NewsAdmin() {
   const editable = (a: NewsRow) => reviewer || ["draft", "pending_review", "needs_revision"].includes(a.status);
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
       {dialog}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-primary-deep">Tin tức</h1>
-          <p className="text-sm text-muted-foreground">
-            {reviewer ? "Bạn có quyền duyệt & xuất bản bài viết của Ban Truyền thông – Marketing." : "Soạn bài, lưu nháp và gửi duyệt. Trưởng/Phó Ban sẽ duyệt trước khi bài được đăng."}
-          </p>
-        </div>
-        <button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" /> Viết bài mới</button>
-      </div>
+      <AdminPageHeader
+        title="Tin tức"
+        description={reviewer ? "Bạn có quyền duyệt & xuất bản bài viết của Ban Truyền thông – Marketing." : "Soạn bài, lưu nháp và gửi duyệt. Trưởng/Phó Ban sẽ duyệt trước khi bài được đăng."}
+        actions={<button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" /> Viết bài mới</button>}
+      />
 
       {reviewer && pending > 0 && <div className="rounded-xl border border-gold/50 bg-gold/10 p-3 text-sm">Có <b>{pending}</b> bài đang chờ duyệt.</div>}
 
