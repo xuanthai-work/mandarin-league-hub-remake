@@ -100,6 +100,17 @@ function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }
   );
 }
 
+/** Shared column widths so every department table lines up as one grid. */
+const MEMBER_COLS = [
+  { label: "Mã thành viên", className: "w-[160px]" },
+  { label: "Họ tên", className: "w-[200px]" },
+  { label: "Tài khoản & Trạng thái", className: "w-[260px]" },
+  { label: "Chức vụ", className: "w-[180px]" },
+  { label: "Ngày gia nhập", className: "w-[130px]" },
+  { label: "Điểm", className: "w-[80px]" },
+  { label: "Thao tác", className: "w-[140px]" },
+] as const;
+
 /** One department's members in their own table; the group header replaces a "Ban" column. */
 function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
   deptId: string;
@@ -116,9 +127,9 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1150px] table-fixed text-sm">
           <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-            <tr>{["Mã thành viên", "Họ tên", "Tài khoản & Trạng thái", "Chức vụ", "Ngày gia nhập", "Điểm", "Thao tác"].map((h) => <th key={h} className="p-3 font-semibold">{h}</th>)}</tr>
+            <tr>{MEMBER_COLS.map((col) => <th key={col.label} className={`p-3 font-semibold ${col.className}`}>{col.label}</th>)}</tr>
           </thead>
           <tbody>
             {members.length === 0 ? (
@@ -127,16 +138,16 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
               <tr key={m.id} onClick={() => onOpen(m, "profile")} className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50">
                 <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">{m.member_code}</td>
                 <td className="p-3">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{initials(m.full_name)}</span>
-                    <span className="whitespace-nowrap font-medium text-foreground">{m.full_name}</span>
+                    <span className="min-w-0 truncate font-medium text-foreground">{m.full_name}</span>
                   </div>
                 </td>
                 <td className="p-3">{isAdmin ? <AccountStatusCell m={m} onGrant={() => onOpen(m, "account")} /> : <StatusPill m={m} />}</td>
                 <td className="p-3">
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-foreground">
-                    {m.position}
-                    {m.account?.access === "admin" && <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[color:var(--metal-gold-lo)] dark:text-gold">Admin</span>}
+                  <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 font-medium text-foreground">
+                    <span className="truncate">{m.position}</span>
+                    {m.account?.access === "admin" && <span className="shrink-0 rounded bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[color:var(--metal-gold-lo)] dark:text-gold">Admin</span>}
                   </span>
                 </td>
                 <td className="whitespace-nowrap p-3 text-muted-foreground">{fmt(m.joined_on)}</td>
