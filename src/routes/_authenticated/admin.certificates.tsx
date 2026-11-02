@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { CERT_TYPES, normalizeCode } from "@/lib/certificates";
 import { extractCertificate } from "@/lib/certificate-extract.functions";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/certificates")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Chứng nhận | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -124,13 +125,16 @@ function CertificatesPage() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl p-4 sm:p-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1"><h1 className="text-2xl font-bold text-primary-deep">Chứng nhận</h1><p className="text-sm text-muted-foreground">Cấp, thu hồi và quản lý chứng nhận tra cứu tại trang Xác minh.</p></div>
-        <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold"><Download className="h-4 w-4" />Xuất CSV</button>
-        <button onClick={openNew} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Cấp chứng nhận</button>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Chứng nhận"
+        description="Cấp, thu hồi và quản lý chứng nhận tra cứu tại trang Xác minh."
+        actions={<>
+          <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold"><Download className="h-4 w-4" />Xuất CSV</button>
+          <button onClick={openNew} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Cấp chứng nhận</button>
+        </>}
+      />
+      <div className="flex flex-wrap gap-2">
         <input className={`${inp} max-w-xs`} placeholder="Tìm mã, tên, chương trình…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select className={`${inp} max-w-[240px]`} value={type} onChange={(e) => setType(e.target.value)}><option value="">Tất cả loại</option>{Object.entries(CERT_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         <select className={`${inp} max-w-[180px]`} value={status} onChange={(e) => setStatus(e.target.value)}><option value="">Tất cả trạng thái</option><option value="VALID">Hợp lệ</option><option value="REVOKED">Đã thu hồi</option></select>

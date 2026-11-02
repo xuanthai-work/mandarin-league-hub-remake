@@ -9,6 +9,7 @@ import { approveApplication } from "@/lib/accounts.functions";
 import { defaultPosition, positionsFor } from "@/lib/recruitment";
 import { Link } from "@tanstack/react-router";
 import { APP_STATUS, RECRUIT_DEPTS, STATUS_MESSAGE_TEMPLATES, deptName, nextCandidateMessage, type Choice } from "@/lib/recruitment";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({ staticData: { sitemap: false }, component: Candidates });
 
@@ -56,13 +57,15 @@ function Candidates() {
   const current = data.apps.find((a) => a.id === sel);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex-1 text-2xl font-bold text-primary-deep">Ứng viên <span className="text-base font-normal text-muted-foreground">({list.length})</span></h1>
-        <button onClick={() => setFreeOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"><Sparkles className="h-4 w-4 text-gold" />Phân tích nội dung dán vào</button>
-        <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Download className="h-4 w-4" />Xuất Excel (CSV)</button>
-      </div>
-      <div className="mt-5 grid gap-2 md:grid-cols-5">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title={`Ứng viên (${list.length})`}
+        actions={<>
+          <button onClick={() => setFreeOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"><Sparkles className="h-4 w-4 text-gold" />Phân tích nội dung dán vào</button>
+          <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Download className="h-4 w-4" />Xuất Excel (CSV)</button>
+        </>}
+      />
+      <div className="grid gap-2 md:grid-cols-5">
         <input className={inp} placeholder="Tìm tên, email, mã hồ sơ" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
         <select className={inp} value={f.period} onChange={(e) => setF({ ...f, period: e.target.value })}><option value="">Mọi đợt tuyển</option>{data.periods.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
         <select className={inp} value={f.dept} onChange={(e) => setF({ ...f, dept: e.target.value })}><option value="">Mọi Ban</option>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>

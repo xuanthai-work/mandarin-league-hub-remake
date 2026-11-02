@@ -12,6 +12,7 @@ import {
 import { useAdminAccess } from "./admin";
 import { canReviewNews } from "@/lib/admin-permissions";
 import { TrashList, useConfirm } from "@/components/admin/Trash";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 export const Route = createFileRoute("/_authenticated/admin/activities")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Hoạt động | TML Admin" }, { name: "robots", content: "noindex" }] }),
   component: ActivitiesAdmin,
@@ -37,11 +38,11 @@ function ActivitiesAdmin() {
   const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const canPublish = useCanPublish();
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div>
-        <h1 className="text-2xl font-bold text-primary-deep">Hoạt động</h1>
-        <p className="text-sm text-muted-foreground">Quản lý workshop, cuộc thi, trại, sự kiện. Chương trình học bật "Hiện ở Hoạt động" tự xuất hiện trên trang công khai.</p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Hoạt động"
+        description={'Quản lý workshop, cuộc thi, trại, sự kiện. Chương trình học bật "Hiện ở Hoạt động" tự xuất hiện trên trang công khai.'}
+      />
       <div className="flex gap-2">
         {([["list", "Danh sách hoạt động"], ["regs", "Đơn đăng ký"], ["audit", "Nhật ký thay đổi"], ["trash", "Thùng rác"]] as const).filter(([k]) => canPublish || k === "list").map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>

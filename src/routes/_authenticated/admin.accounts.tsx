@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createAccount, deleteAccount, listAccounts, resetAccountPassword, updateAccount } from "@/lib/accounts.functions";
 import { ACCESS_LABELS, ACCOUNT_DEPTS, ACCOUNT_STATUS, PERMISSIONS, PERMISSION_TEMPLATES, positionsFor, type AccessLevel, type AccountStatus } from "@/lib/accounts";
 import { deptName } from "@/lib/recruitment";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/accounts")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Tài khoản nội bộ | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -36,13 +37,13 @@ function AccountsPage() {
   }), [q.data, f]);
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="text-2xl font-bold text-primary-deep">Tài khoản nội bộ</h1>
-          <p className="text-sm text-muted-foreground">Không có tự đăng ký — chỉ Quản trị viên cấp tài khoản.</p></div>
-        <button onClick={() => setCreating(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo tài khoản</button>
-      </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Tài khoản nội bộ"
+        description="Không có tự đăng ký — chỉ Quản trị viên cấp tài khoản."
+        actions={<button onClick={() => setCreating(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo tài khoản</button>}
+      />
+      <div className="grid gap-2 sm:grid-cols-3">
         <input className={inp} placeholder="Tìm tên, mã, email…" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
         <select className={inp} value={f.dept} onChange={(e) => setF({ ...f, dept: e.target.value })}><option value="">Mọi Ban</option>{ACCOUNT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
         <select className={inp} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Mọi trạng thái</option>{Object.entries(ACCOUNT_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>

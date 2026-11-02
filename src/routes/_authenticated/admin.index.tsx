@@ -285,11 +285,11 @@ function Overview() {
   const actions = data?.actions ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       {/* Greeting + quick actions */}
       <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-500 motion-reduce:animate-none">
-          <h1 className="text-2xl font-semibold tracking-tight text-primary-deep sm:text-[28px]">
+          <h1 className="text-2xl font-bold tracking-tight text-primary-deep sm:text-3xl">
             {greeting}, {name}
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">

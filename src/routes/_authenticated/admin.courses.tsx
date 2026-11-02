@@ -10,6 +10,7 @@ import { HskClassesAdmin } from "@/components/courses/HskClassesAdmin";
 import { classFee, type HskClass } from "@/lib/hsk-classes";
 import { reviewEnrollment } from "@/lib/courses.functions";
 import { TrashList } from "@/components/admin/Trash";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useAdminAccess } from "./admin";
 import { ENROLL_STATUS, formatFee, useCourseSettings, type CourseSetting } from "@/lib/course-settings";
 
@@ -47,8 +48,8 @@ function CoursesAdmin() {
   };
 
   return (
-    <div className="space-y-8">
-      <div><h1 className="text-2xl font-bold">Khóa học & Đơn đăng ký</h1><p className="text-sm text-muted-foreground">Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên.</p></div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader title="Khóa học & Đơn đăng ký" description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên." />
       <div className="flex flex-wrap gap-2">
         {([["hsk", "Khóa học HSK"], ["programs", "Chương trình học"], ["enroll", "Đơn đăng ký"], ["trash", "Thùng rác"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>

@@ -6,6 +6,7 @@ import { ExternalLink, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import { PRIORITY, TASK_STATUS, fmtDate } from "@/lib/points";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/tasks")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Nhiệm vụ | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -73,11 +74,11 @@ function TasksPage() {
   const rows = (tasks.data ?? []).filter((t) => (filter === "all" || t.status === filter) && (!person || t.assignee_id === person) && (!giver || t.assigned_by_name === giver));
   const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div>
-        <h1 className="text-2xl font-bold text-primary-deep">Nhiệm vụ</h1>
-        <p className="text-sm text-muted-foreground">Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Trưởng Ban chỉ quản lý Ban mình.</p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Nhiệm vụ"
+        description="Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Trưởng Ban chỉ quản lý Ban mình."
+      />
 
       <form onSubmit={create} className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
         <h2 className="font-semibold sm:col-span-2">Giao nhiệm vụ mới</h2>

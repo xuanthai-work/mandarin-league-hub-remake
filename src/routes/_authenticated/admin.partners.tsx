@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
 import { PARTNER_BUCKET, withLogos, type PartnerRow } from "@/lib/news-db";
 import { canManagePartners } from "@/lib/admin-permissions";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/partners")({ staticData: { sitemap: false },
@@ -55,14 +56,12 @@ function PartnersAdmin() {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-primary-deep">Đối tác</h1>
-          <p className="text-sm text-muted-foreground">{manager ? "Ban Tài chính – Đối ngoại quản lý danh sách đối tác hiển thị trên website." : "Chế độ xem: Ban Truyền thông dùng thông tin và logo đối tác cho truyền thông."}</p>
-        </div>
-        {manager && <button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" /> Thêm đối tác</button>}
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Đối tác"
+        description={manager ? "Ban Tài chính – Đối ngoại quản lý danh sách đối tác hiển thị trên website." : "Chế độ xem: Ban Truyền thông dùng thông tin và logo đối tác cho truyền thông."}
+        actions={manager ? <button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" /> Thêm đối tác</button> : null}
+      />
 
       {f && manager && (
         <div className="grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-2">

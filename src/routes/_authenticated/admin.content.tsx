@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { HOME_DEFAULTS, HOME_SECTIONS, SITE_DEFAULTS, mergeContent, type ContentKey, type HomeContent, type HomeSectionKey, type SiteSettings } from "@/lib/site-content";
 import { useConfirm } from "@/components/admin/Trash";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/content")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Trang & Nội dung | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -21,11 +22,11 @@ function useRow(key: ContentKey) {
 function ContentAdmin() {
   const [tab, setTab] = useState<"home" | "site" | "log">("home");
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div>
-        <h1 className="text-2xl font-bold text-primary-deep">Trang & Nội dung</h1>
-        <p className="text-sm text-muted-foreground">Sửa câu chữ trên website mà không cần lập trình. "Lưu nháp" chỉ bạn thấy khi xem trước; "Xuất bản" mới hiện cho khách. Ô để trống sẽ dùng nội dung mặc định.</p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Trang & Nội dung"
+        description='Sửa câu chữ trên website mà không cần lập trình. "Lưu nháp" chỉ bạn thấy khi xem trước; "Xuất bản" mới hiện cho khách. Ô để trống sẽ dùng nội dung mặc định.'
+      />
       <div className="flex flex-wrap gap-2">
         {([["home", "Trang chủ"], ["site", "Liên hệ & Chân trang"], ["log", "Lịch sử thay đổi"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>

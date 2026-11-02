@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import { leaveDaysLeft, MEMBER_STATUS_LABEL, type MemberStatus } from "@/lib/member-status";
 import { deleteMember } from "@/lib/accounts.functions";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Thành viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -51,10 +52,12 @@ function MembersPage() {
   const rows = all.filter((m) => (!tab || m.status === tab) && (!q || `${m.full_name} ${m.member_code}`.toLowerCase().includes(q.toLowerCase())));
   const cnt = (s: string) => all.filter((m) => m.status === s).length;
   return (
-    <div className="p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-primary-deep">Thành viên</h1>
-      <p className="text-sm text-muted-foreground">Hồ sơ thành viên chính thức (mã TML-MBR). Bấm vào một dòng để cập nhật trạng thái hoạt động.</p>
-      <div className="mt-4 flex flex-wrap gap-2">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <AdminPageHeader
+        title="Thành viên"
+        description="Hồ sơ thành viên chính thức (mã TML-MBR). Bấm vào một dòng để cập nhật trạng thái hoạt động."
+      />
+      <div className="flex flex-wrap gap-2">
         {([["", `Tất cả (${all.length})`], ["active", `Đang hoạt động (${cnt("active")})`], ["on_leave", `Tạm nghỉ (${cnt("on_leave")})`], ["left", `Đã rời (${cnt("left")})`]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>
         ))}
