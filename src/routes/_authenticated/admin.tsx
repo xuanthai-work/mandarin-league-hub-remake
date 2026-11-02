@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LogOut, Menu, X, ShieldAlert, IdCard } from "lucide-react";
+import { LogOut, Menu, X, ShieldAlert, IdCard, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, navGroupsFor, type AdminNavGroup,
@@ -45,10 +45,33 @@ const NAV_ACTIVE =
 const ICON_BTN =
   "grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-accent/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 
-function SidebarPanel({ email, roleLabel, groups, onNavigate, onSignOut, onClose }: {
+/** Groups the user collapsed stay collapsed across reloads; the active group always opens. */
+const COLLAPSE_KEY = "tml_admin_collapsed_groups";
+
+function readCollapsedGroups(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(COLLAPSE_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: Record<string, boolean> = {};
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === "boolean") out[key] = value;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onToggleGroup, onNavigate, onSignOut, onClose }: {
   email: string;
   roleLabel: string;
   groups: AdminNavGroup[];
+  currentSlug: string;
+  collapsed: Record<string, boolean>;
+  onToggleGroup: (title: string) => void;
   onNavigate: () => void;
   onSignOut: () => void;
   onClose?: () => void;
@@ -83,28 +106,53 @@ function SidebarPanel({ email, roleLabel, groups, onNavigate, onSignOut, onClose
         >
           <OVERVIEW_ICON className="h-4 w-4 shrink-0" strokeWidth={1.75} /> Tổng quan
         </Link>
-        {groups.map((g) => (
-          <div key={g.title ?? "group"}>
-            {g.title && (
-              <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{g.title}</p>
-            )}
-            <div className="space-y-0.5">
-              {g.sections.map((s) => (
-                <Link
-                  key={s.slug}
-                  to="/admin/$section"
-                  params={{ section: s.slug }}
-                  className={NAV_ITEM}
-                  activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
-                  onClick={onNavigate}
+        {groups.map((g) => {
+          const key = g.title ?? "group";
+          const active = !!currentSlug && g.sections.some((s) => s.slug === currentSlug);
+          const isCollapsed = !active && !!collapsed[key];
+          const panelId = `nav-group-${g.sections[0]?.slug ?? key}`;
+          return (
+            <div key={key}>
+              {g.title && (
+                <button
+                  type="button"
+                  onClick={() => onToggleGroup(key)}
+                  aria-expanded={!isCollapsed}
+                  aria-controls={panelId}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-3 pt-5 pb-1.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
-                  <s.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-                  <span className="truncate">{s.label}</span>
-                </Link>
-              ))}
+                  <span>{g.title}</span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isCollapsed ? "-rotate-90 text-muted-foreground/60" : "rotate-0 text-muted-foreground"}`}
+                  />
+                </button>
+              )}
+              <div
+                id={panelId}
+                className={`grid transition-[grid-template-rows] duration-200 ${isCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="space-y-0.5" inert={isCollapsed || undefined}>
+                    {g.sections.map((s) => (
+                      <Link
+                        key={s.slug}
+                        to="/admin/$section"
+                        params={{ section: s.slug }}
+                        className={NAV_ITEM}
+                        activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
+                        onClick={onNavigate}
+                      >
+                        <s.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                        <span className="truncate">{s.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
 
       <div className="shrink-0 border-t border-border/60 bg-muted/20 p-3">
@@ -135,6 +183,12 @@ function AdminLayout() {
   const navigate = useNavigate();
   const access = useAdminAccess();
   const [open, setOpen] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(readCollapsedGroups);
+  const toggleGroup = (title: string) => setCollapsedGroups((prev) => {
+    const next = { ...prev, [title]: !prev[title] };
+    try { window.localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next)); } catch { /* storage unavailable: keep the in-memory state */ }
+    return next;
+  });
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const signOut = async () => {
@@ -190,7 +244,7 @@ function AdminLayout() {
   return (
     <div className="fixed inset-0 z-50 flex bg-muted/40">
       <aside className="hidden w-[272px] shrink-0 border-r border-border lg:block">
-        <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} onNavigate={() => setOpen(false)} onSignOut={signOut} />
+        <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} currentSlug={current} collapsed={collapsedGroups} onToggleGroup={toggleGroup} onNavigate={() => setOpen(false)} onSignOut={signOut} />
       </aside>
 
       {open && (
@@ -206,6 +260,9 @@ function AdminLayout() {
               email={email}
               roleLabel={roleLabel}
               groups={groups}
+              currentSlug={current}
+              collapsed={collapsedGroups}
+              onToggleGroup={toggleGroup}
               onNavigate={() => setOpen(false)}
               onSignOut={signOut}
               onClose={() => setOpen(false)}
