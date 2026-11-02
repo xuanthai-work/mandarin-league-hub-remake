@@ -27,6 +27,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-19-DRAWER-POLISH-SCROLLBAR-WIDTH-AND-BACKDROP` | Sleek Scrollbar, Standard 550px Width & Clean Backdrop | 2026-11-02 | **PASS** | [task-19-drawer-polish-scrollbar-width-and-backdrop.md](tasks/task-19-drawer-polish-scrollbar-width-and-backdrop.md) |
 | `TASK-20-COPY-MEMBER-CODE-AND-EMAIL-IN-DRAWER` | Copy mã thành viên & email, làm rõ text email trong Drawer | 2026-11-03 | **PASS** | [task-20-copy-member-code-and-email-in-drawer.md](tasks/task-20-copy-member-code-and-email-in-drawer.md) |
 | `TASK-21-FIX-SYSTEM-ROLE-PERSISTENCE-AND-MEMBER-LOGIC` | Khắc phục lỗi hiển thị & đồng bộ vai trò hệ thống qua Server Function | 2026-11-03 | **PASS** | [task-21-fix-system-role-persistence-and-member-logic.md](tasks/task-21-fix-system-role-persistence-and-member-logic.md) |
+| `TASK-22-THEME-ADMIN-PORTAL-WHITE-BLUE` | Chuyển giao diện Admin Portal sang tông Trắng & Xanh, thêm chế độ tối riêng | 2026-11-03 | **PASS** | [task-22-theme-admin-portal-white-blue.md](tasks/task-22-theme-admin-portal-white-blue.md) |
 
 ---
 
