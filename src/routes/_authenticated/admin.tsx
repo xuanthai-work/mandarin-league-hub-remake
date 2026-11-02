@@ -28,12 +28,12 @@ export function useAdminAccess() {
     queryKey: ["admin-access"],
     queryFn: async () => {
       const { data } = await supabase.rpc("my_account");
-      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null; member: { department: string } | null };
+      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null; member: { department: string; full_name: string } | null };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
       const department = blocked ? null : me.member?.department ?? null;
       const allowed = allowedSections(roles, department);
-      return { email: me.email ?? "", roles, department, allowed, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
+      return { email: me.email ?? "", name: blocked ? "" : me.member?.full_name ?? "", roles, department, allowed, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
     },
   });
 }
@@ -224,7 +224,7 @@ function AdminLayout() {
   const roles = access.data?.roles ?? [];
   const roleLabel = roles[0] ? ROLE_LABELS[roles[0]] : "Thành viên";
   const groups = navGroupsFor(allowed);
-  const current = pathname.replace(/^\/admin\/?/, "").split("/")[0];
+  const current = pathname.replace(/^\/admin\/?/, "").split("/")[0] ?? "";
   const blockedHere = !!current && allowed !== "all" && !allowed.includes(current);
   const title = ADMIN_SECTIONS.find((s) => s.slug === current)?.label ?? "Tổng quan";
 
