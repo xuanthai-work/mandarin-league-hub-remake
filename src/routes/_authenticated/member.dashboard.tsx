@@ -167,8 +167,10 @@ function MemberDashboard() {
     </label>
   );
   const watermark = (
-    <img src="/logo.svg" alt="" aria-hidden
-      className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 select-none opacity-[0.07] grayscale contrast-125" />
+    <div aria-hidden className="tml-watermark-wrap select-none">
+      <div className="tml-hologram-halo" />
+      <div className="tml-hologram-logo h-56 w-56 sm:h-64 sm:w-64" />
+    </div>
   );
   const downloadCard = async () => {
     if (!cardRef.current) return;

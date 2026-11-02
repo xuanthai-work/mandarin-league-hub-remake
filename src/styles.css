@@ -495,6 +495,53 @@
 .tml-pass-back .flip-back-form input { padding-block: .4rem; font-size: .78rem; }
 .tml-pass-back .flip-back-form button { padding-block: .45rem; font-size: .78rem; }
 .tml-pass-back .flip-back-form form > * + * { margin-top: .35rem; }
+
+/* Watermark hologram sheen (option 2): oversized security seal with an iridescent sweep */
+.tml-watermark-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+}
+.tml-hologram-halo {
+  position: absolute;
+  inset: -15%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in oklab, var(--gold) 35%, transparent) 0%, transparent 70%);
+  filter: blur(20px);
+  opacity: .4;
+}
+.tml-hologram-logo {
+  position: relative;
+  mask-image: url("/logo.svg");
+  -webkit-mask-image: url("/logo.svg");
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+  background: linear-gradient(135deg,
+    rgba(219, 234, 254, .4) 0%,
+    rgba(253, 230, 138, .6) 25%,
+    rgba(187, 247, 208, .5) 50%,
+    rgba(251, 207, 232, .6) 75%,
+    rgba(219, 234, 254, .4) 100%);
+  background-size: 250% 250%;
+  animation: hologram-shimmer 7s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(253, 230, 138, .4));
+  opacity: .14;
+}
+@keyframes hologram-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tml-hologram-logo { animation: none !important; }
+}
 @media (prefers-reduced-motion: reduce) {
   .flip-inner, .flip-inner.is-flipped { transition: none !important; }
 }
