@@ -541,6 +541,13 @@ function NewMemberDialog({ onClose, onChanged }: { onClose: () => void; onChange
               <label className="block text-xs text-muted-foreground">Trạng thái tài khoản
                 <select className={`${inp} mt-1`} value={v.status} onChange={(e) => set({ status: e.target.value as AccountStatus })}>{Object.entries(ACCOUNT_STATUS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
             </div>
+            <fieldset className="rounded-lg border border-border p-3">
+              <legend className="px-1 text-xs text-muted-foreground">Quyền chi tiết</legend>
+              <p className="mb-2 text-[11px] text-muted-foreground">Mặc định theo vai trò đã chọn — có thể tick thêm hoặc bỏ bớt từng quyền.</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {PERMISSIONS.map(([k, l]) => <label key={k} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={v.permissions.includes(k)} onChange={(e) => set({ permissions: e.target.checked ? [...v.permissions, k] : v.permissions.filter((x) => x !== k) })} />{l}</label>)}
+              </div>
+            </fieldset>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={v.mustChange} onChange={(e) => set({ mustChange: e.target.checked })} />Yêu cầu đổi mật khẩu khi đăng nhập lần đầu</label>
           </>}
 

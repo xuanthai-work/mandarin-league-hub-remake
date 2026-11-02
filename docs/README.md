@@ -19,10 +19,11 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-10-REDESIGN-ADMIN-OVERVIEW-DASHBOARD` | Tái thiết kế Tổng quan Quản trị thành Executive Command Center | 2026-11-02 | **PASS** | [task-10-redesign-admin-overview-dashboard.md](tasks/task-10-redesign-admin-overview-dashboard.md) |
 | `TASK-11-STANDARDIZE-ADMIN-PAGE-HEADERS` | Chuẩn hóa Container & Tiêu đề trang dùng chung AdminPageHeader | 2026-11-02 | **PASS** | [task-11-standardize-admin-page-headers.md](tasks/task-11-standardize-admin-page-headers.md) |
 | `TASK-12-MERGE-MEMBERS-AND-ACCOUNTS` | Hợp nhất quản lý Tài khoản nội bộ vào trang Thành viên | 2026-11-02 | **PASS** | [task-12-merge-members-and-accounts.md](tasks/task-12-merge-members-and-accounts.md) |
+| `TASK-13-ADD-GRANULAR-PERMISSIONS-TO-MEMBER-CREATE-MODAL` | Bổ sung Checkbox quyền chi tiết vào modal Thêm thành viên | 2026-11-02 | **PASS** | [task-13-add-granular-permissions-to-member-create-modal.md](tasks/task-13-add-granular-permissions-to-member-create-modal.md) |
 
 ---
 
 ## 2. Status Overview
 
-- **Current Active Task**: None (`Status: IDLE` trong `justdoit.md`).
+- **Current Active Task**: `TASK-14-CLEANUP-DEPRECATION-WARNINGS` (trong `justdoit.md`).
 - **Archive Directory**: [docs/tasks/](tasks/)
