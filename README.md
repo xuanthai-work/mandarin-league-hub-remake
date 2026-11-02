@@ -45,7 +45,7 @@ Supabase Auth (email + mật khẩu). Vai trò lưu riêng trong bảng `user_ro
 Logic backend dùng TanStack server functions (`src/lib/*.functions.ts`) chạy cùng website (Cloudflare Workers / Node). Không dùng Supabase Edge Functions; webhook/API công khai nằm ở `src/routes/api/public/*`.
 
 ## Email configuration
-Mẫu email: `src/lib/email-templates/*` (React Email). Hiện gửi qua dịch vụ email của Lovable với domain `notify.themandarinleague.bond` (`src/lib/email-templates/send-email.ts`). Khi rời Lovable: thay hàm gửi trong `send-email.ts` bằng Resend/SendGrid, dùng `@react-email/render` để render HTML, cấu hình lại DNS (SPF/DKIM) tại nhà cung cấp mới. Auth emails: cấu hình SMTP trong Supabase Auth.
+Mẫu email: `src/lib/email-templates/*` (React Email), render bằng `@react-email/render` và gửi qua Resend (`RESEND_API_KEY`) trong `src/lib/email-templates/send-email.ts`. Domain gửi cần được xác thực SPF/DKIM trong Resend. Auth emails: cấu hình SMTP trong Supabase Auth (có thể dùng SMTP của Resend).
 
 ## Deployment
 Mặc định build cho Cloudflare Workers (`npm run build`, deploy bằng `wrangler`). Có thể chuyển sang Vercel/Netlify/Node bằng cách đổi preset deploy của TanStack Start trong `vite.config.ts`. Đặt các biến môi trường tại hosting.
@@ -55,14 +55,15 @@ Mặc định build cho Cloudflare Workers (`npm run build`, deploy bằng `wran
 - Schema: `drizzle/migrations`.
 - Dữ liệu: `pg_dump` định kỳ (`supabase db dump --data-only > backup.sql`), tải về file Storage quan trọng.
 
-## How to migrate away from Lovable
-1. Kết nối GitHub (Lovable → Project Settings → GitHub) để có toàn bộ code.
-2. Tạo Supabase project riêng, chạy migrations, tạo buckets (mục Supabase setup).
-3. Export dữ liệu từ backend hiện tại và import vào project mới.
-4. Thay phần gửi email (mục Email configuration).
-5. Điền `.env`, build và deploy lên hosting mới; trỏ DNS `themandarinleague.bond`.
+## Chuyển sang hosting độc lập
+Build và email đã tách khỏi nền tảng cũ: `vite.config.ts` dùng plugin Vite/TanStack Start chuẩn, không còn route `/lovable/*`, telemetry hay package `@lovable.dev/*`; email gửi trực tiếp qua Resend.
+1. Tạo Supabase project riêng, chạy migrations trong `drizzle/migrations`, tạo buckets (mục Supabase setup).
+2. `pg_dump` dữ liệu từ project hiện tại rồi import sang project mới.
+3. Điền `.env`/biến môi trường hosting (Supabase, `RESEND_API_KEY`, `DATABASE_URL`/`DIRECT_URL` cho Drizzle CLI) và xác thực domain gửi email.
+4. `bun run build` rồi deploy lên Cloudflare Workers/Vercel/Node; trỏ DNS `themandarinleague.bond`.
+5. Cấu hình SMTP cho Supabase Auth (email xác nhận, reset mật khẩu).
 
-Thành phần còn phụ thuộc Lovable: dịch vụ gửi email (`@lovable.dev/email-js`, `LOVABLE_API_KEY`) và hosting hiện tại. Mọi thứ khác là mã nguồn mở chuẩn.
+Thành phần còn phụ thuộc nền tảng cũ: AI Gateway (`LOVABLE_API_KEY`) dùng bởi trích xuất chứng nhận, onboarding và AI tuyển dụng — sẽ chuyển sang provider riêng khi có API key.
 
 ## Git workflow
 `main` = production, `develop` = development, tính năng mới dùng `feature/<tên>`.

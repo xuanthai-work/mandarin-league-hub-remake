@@ -26,7 +26,7 @@ export async function sendTemplateEmail(
   to: string,
   options: SendTemplateEmailOptions = {}
 ): Promise<SendTemplateEmailResult> {
-  const apiKey = process.env['RESEND_API_KEY'] || process.env['LOVABLE_API_KEY']
+  const apiKey = process.env['RESEND_API_KEY']
   if (!apiKey) {
     throw new Error('RESEND_API_KEY is not configured')
   }

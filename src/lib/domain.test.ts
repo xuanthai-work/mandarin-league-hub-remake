@@ -8,7 +8,7 @@ describe("home navigation", () => {
   it("member Home leaves member instead of reopening login", () => {
     expect(mainHomeUrl("member.themandarinleague.bond")).toBe("https://themandarinleague.bond/");
   });
-  it.each(["themandarinleague.bond", "www.themandarinleague.bond", "localhost:8080", "id-preview--x.lovable.app"])("keeps local Home on %s", (host) => {
+  it.each(["themandarinleague.bond", "www.themandarinleague.bond", "localhost:8080", "preview-deploy.test"])("keeps local Home on %s", (host) => {
     expect(mainHomeUrl(host)).toBeNull();
   });
 });
@@ -20,5 +20,5 @@ describe("domainRedirect", () => {
   it("main /login moves to member portal", () => expect(domainRedirect("www.themandarinleague.bond", "/login")).toBe("https://member.themandarinleague.bond/login"));
   it("join host sends other pages to main site", () => expect(domainRedirect("join.themandarinleague.bond", "/courses")).toBe("https://themandarinleague.bond/courses"));
   it("member host keeps dashboard", () => expect(domainRedirect("member.themandarinleague.bond", "/member/dashboard")).toBeNull());
-  it("preview host never redirects", () => expect(domainRedirect("id-preview--x.lovable.app", "/join")).toBeNull());
+  it("preview host never redirects", () => expect(domainRedirect("preview-deploy.test", "/join")).toBeNull());
 });

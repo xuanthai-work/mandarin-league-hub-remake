@@ -1,4 +1,4 @@
-// Shared domain types. Data modules return these so a Lovable Cloud source can replace demo data later.
+// Shared domain types. Data modules return these so a Supabase data source can replace demo data later.
 export type Person = {
   id: string;
   name: string;
