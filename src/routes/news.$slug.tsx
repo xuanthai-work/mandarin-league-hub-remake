@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/site/ui";
 import { fmtDate, usePublishedArticle } from "@/lib/news-db";
 import { pageMeta } from "@/lib/seo";
+import { useTr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/news/$slug")({ staticData: { sitemap: false },
   head: () => ({ meta: [...pageMeta("Bài viết", "Bài viết chính thức của The Mandarin League.").filter((m) => !("property" in m && m.property === "og:type")), { property: "og:type", content: "article" }] }),
@@ -9,11 +10,12 @@ export const Route = createFileRoute("/news/$slug")({ staticData: { sitemap: fal
 });
 
 function PArticle() {
+  const tr = useTr();
   const { slug } = Route.useParams();
   const q = usePublishedArticle(slug);
-  if (q.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang tải…</p>;
+  if (q.isLoading) return <p className="p-16 text-center text-muted-foreground">{tr("Đang tải…")}</p>;
   const a = q.data;
-  if (!a) return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy bài viết" /><div className="mt-6 text-center"><Link to="/news" className="font-semibold text-primary">← Tin tức</Link></div></div>;
+  if (!a) return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy bài viết" /><div className="mt-6 text-center"><Link to="/news" className="font-semibold text-primary">{tr("← Tin tức")}</Link></div></div>;
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 md:px-6">
       <title>{`${a.title} | The Mandarin League`}</title>

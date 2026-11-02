@@ -7,6 +7,7 @@ import { PARTNER_CATEGORIES } from "@/lib/data/partners";
 import type { PartnerCategory } from "@/lib/data/types";
 import { useActivePartners } from "@/lib/news-db";
 import { pageMeta } from "@/lib/seo";
+import { useTr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/partners")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Đối tác", "Các đối tác giáo dục, công nghệ và cộng đồng đồng hành cùng The Mandarin League.") }),
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/partners")({ staticData: { sitemap: true 
 });
 
 function PPartners() {
+  const tr = useTr();
   const [cat, setCat] = useState<PartnerCategory | "all">("all");
   const q = useActivePartners();
   const list = (q.data ?? []).filter((p) => cat === "all" || p.category === cat);
@@ -34,8 +36,8 @@ function PPartners() {
           ))}
         </div>
         <div className="mt-14 rounded-3xl bg-brand-gradient p-10 text-center text-primary-foreground">
-          <h2 className="text-2xl font-bold">Bạn muốn hợp tác cùng TML?</h2>
-          <a href={`mailto:${CONTACT.email}?subject=${encodeURIComponent("Hợp tác cùng TML")}`} className="mt-6 inline-flex rounded-full bg-background px-7 py-3 font-semibold text-primary-deep hover:opacity-90">TRỞ THÀNH ĐỐI TÁC</a>
+          <h2 className="text-2xl font-bold">{tr("Bạn muốn hợp tác cùng TML?")}</h2>
+          <a href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(tr("Hợp tác cùng TML"))}`} className="mt-6 inline-flex rounded-full bg-background px-7 py-3 font-semibold text-primary-deep hover:opacity-90">{tr("TRỞ THÀNH ĐỐI TÁC")}</a>
         </div>
       </section>
     </>
