@@ -13,6 +13,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-04-CLEAN-SUPABASE-DRIZZLE` | Chuẩn hóa Supabase client, preview auth & Drizzle config | 2026-11-02 | **PASS** | [task-04-clean-supabase-drizzle.md](tasks/task-04-clean-supabase-drizzle.md) |
 | `TASK-05-METADATA-CLEANUP` | Dọn dẹp Metadata, thư mục `.lovable/`, `.env.example` & docs | 2026-11-02 | **PASS** | [task-05-metadata-cleanup.md](tasks/task-05-metadata-cleanup.md) |
 | `TASK-06-SYNC-MEMBER-ACCOUNT-LIFECYCLE` | Đồng bộ vòng đời Thành viên và Tài khoản nội bộ | 2026-11-02 | **PASS** | [task-06-sync-member-account-lifecycle.md](tasks/task-06-sync-member-account-lifecycle.md) |
+| `TASK-07-REDESIGN-ADMIN-SIDEBAR` | Tái thiết kế Sidebar Admin theo phong cách Impeccable & Taste | 2026-11-02 | **PASS** | [task-07-redesign-admin-sidebar.md](tasks/task-07-redesign-admin-sidebar.md) |
 
 ---
 

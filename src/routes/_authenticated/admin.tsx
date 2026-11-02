@@ -3,7 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { LogOut, Menu, X, ShieldAlert, IdCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY } from "@/lib/admin-nav";
+import {
+  ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, navGroupsFor, type AdminNavGroup,
+} from "@/lib/admin-nav";
 import { allowedSections } from "@/lib/admin-permissions";
 
 export const Route = createFileRoute("/_authenticated/admin")({ staticData: { sitemap: false },
@@ -36,6 +38,98 @@ export function useAdminAccess() {
   });
 }
 
+const NAV_ITEM =
+  "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
+const NAV_ACTIVE =
+  "bg-primary/10 font-semibold text-primary-deep shadow-xs dark:bg-primary/15 dark:text-primary after:ml-auto after:h-1.5 after:w-1.5 after:shrink-0 after:rounded-full after:bg-primary after:content-['']";
+const ICON_BTN =
+  "grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-accent/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
+
+function SidebarPanel({ email, roleLabel, groups, onNavigate, onSignOut, onClose }: {
+  email: string;
+  roleLabel: string;
+  groups: AdminNavGroup[];
+  onNavigate: () => void;
+  onSignOut: () => void;
+  onClose?: () => void;
+}) {
+  const initials = (email.split("@")[0] ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "TML";
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-card">
+      <div className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-4">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gold/50 bg-background shadow-[0_2px_12px_-6px_color-mix(in_oklab,var(--gold)_70%,transparent)]">
+          <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full object-cover" />
+        </span>
+        <div className="min-w-0">
+          <p className="font-han truncate text-[13px] font-semibold leading-tight tracking-tight text-foreground">The Mandarin League</p>
+          <span className="mt-1 inline-block rounded bg-gold/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-[color:var(--metal-gold-lo)] dark:text-gold">
+            Admin Portal
+          </span>
+        </div>
+        {onClose && (
+          <button aria-label="Đóng menu" onClick={onClose} className={`${ICON_BTN} ml-auto`}>
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      <nav aria-label="Điều hướng quản trị" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
+        <Link
+          to="/admin"
+          activeOptions={{ exact: true }}
+          className={`${NAV_ITEM} mt-3`}
+          activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
+          onClick={onNavigate}
+        >
+          <OVERVIEW_ICON className="h-4 w-4 shrink-0" strokeWidth={1.75} /> Tổng quan
+        </Link>
+        {groups.map((g) => (
+          <div key={g.title ?? "group"}>
+            {g.title && (
+              <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{g.title}</p>
+            )}
+            <div className="space-y-0.5">
+              {g.sections.map((s) => (
+                <Link
+                  key={s.slug}
+                  to="/admin/$section"
+                  params={{ section: s.slug }}
+                  className={NAV_ITEM}
+                  activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
+                  onClick={onNavigate}
+                >
+                  <s.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                  <span className="truncate">{s.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="shrink-0 border-t border-border/60 bg-muted/20 p-3">
+        <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card p-2">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-bold text-primary ring-1 ring-primary/20">
+            {initials}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-foreground">{email}</p>
+            <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-primary-deep dark:text-gold">{roleLabel}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Link to="/member/dashboard" onClick={onNavigate} className={ICON_BTN} aria-label="Thẻ thành viên" title="Thẻ thành viên">
+              <IdCard className="h-4 w-4" />
+            </Link>
+            <button onClick={onSignOut} className={ICON_BTN} aria-label="Đăng xuất" title="Đăng xuất">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminLayout() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -60,12 +154,26 @@ function AdminLayout() {
     else if (d.hasAccount && !hasAny) navigate({ to: "/member/dashboard", replace: true });
   }, [access.data, hasAny, navigate]);
 
+  // Close the drawer on navigation; Escape closes it; body scroll stays locked while open.
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [open]);
+
   if (access.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
 
   const roles = access.data?.roles ?? [];
-  const sections = allowed === "all" ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => allowed.includes(s.slug));
+  const roleLabel = roles[0] ? ROLE_LABELS[roles[0]] : "Thành viên";
+  const groups = navGroupsFor(allowed);
   const current = pathname.replace(/^\/admin\/?/, "").split("/")[0];
   const blockedHere = !!current && allowed !== "all" && !allowed.includes(current);
+  const title = ADMIN_SECTIONS.find((s) => s.slug === current)?.label ?? "Tổng quan";
+
   if (!hasAny) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
@@ -77,58 +185,44 @@ function AdminLayout() {
     );
   }
 
-  const link = "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground";
-  const active = { className: "bg-primary/10 font-semibold text-primary" };
-
-  const nav = (
-    <nav className="space-y-1 p-3">
-      <Link to="/admin" activeOptions={{ exact: true }} className={link} activeProps={active} onClick={() => setOpen(false)}>
-        <OVERVIEW_ICON className="h-4 w-4" /> Tổng quan
-      </Link>
-      {sections.map((s) => (
-        <Link key={s.slug} to="/admin/$section" params={{ section: s.slug }} className={link} activeProps={active} onClick={() => setOpen(false)}>
-          <s.icon className="h-4 w-4" /> {s.label}
-        </Link>
-      ))}
-    </nav>
-  );
+  const email = access.data?.email ?? "";
 
   return (
     <div className="fixed inset-0 z-50 flex bg-muted/40">
-      <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:block">
-        <div className="portal-ai flex items-center gap-2 px-4 py-4">
-          <img src="/logo.svg" alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />
-          <span className="portal-ink font-bold">TML Admin</span>
-        </div>
-        {nav}
+      <aside className="hidden w-[272px] shrink-0 border-r border-border lg:block">
+        <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} onNavigate={() => setOpen(false)} onSignOut={signOut} />
       </aside>
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-foreground/40" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 overflow-y-auto bg-card shadow-xl">
-            <div className="flex items-center justify-between border-b border-border px-4 py-4">
-              <span className="font-bold text-primary-deep">TML Admin</span>
-              <button aria-label="Đóng menu" onClick={() => setOpen(false)}><X className="h-5 w-5" /></button>
-            </div>
-            {nav}
+          <div className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200" onClick={() => setOpen(false)} />
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Điều hướng quản trị"
+            className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
+          >
+            <SidebarPanel
+              email={email}
+              roleLabel={roleLabel}
+              groups={groups}
+              onNavigate={() => setOpen(false)}
+              onSignOut={signOut}
+              onClose={() => setOpen(false)}
+            />
           </aside>
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="portal-ai portal-ink flex items-center justify-between gap-3 px-4 py-3">
-          <button aria-label="Mở menu" className="lg:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
-          <div className="ml-auto flex items-center gap-3">
-            <Link to="/member/dashboard" className="inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20"><IdCard className="h-4 w-4" /><span className="hidden sm:inline">Thẻ thành viên của tôi</span></Link>
-            <div className="text-right">
-              <p className="max-w-[180px] truncate text-sm font-medium">{access.data?.email}</p>
-              <p className="text-xs text-gold">{ROLE_LABELS[roles[0]!]}</p>
-            </div>
-            <button onClick={signOut} className="inline-flex items-center gap-1 rounded-lg border border-gold/40 px-3 py-2 text-sm hover:bg-primary/20">
-              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Đăng xuất</span>
-            </button>
-          </div>
+        <header className="portal-ai portal-ink flex items-center gap-3 px-4 py-2.5">
+          <button aria-label="Mở menu" className="grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10 lg:hidden" onClick={() => setOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </button>
+          <h1 className="truncate text-sm font-semibold tracking-tight">{title}</h1>
+          <button onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất" className="ml-auto grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10 lg:hidden">
+            <LogOut className="h-4 w-4" />
+          </button>
         </header>
         <main className="flex-1 overflow-y-auto">
           {blockedHere ? (
