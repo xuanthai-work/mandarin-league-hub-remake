@@ -8,7 +8,6 @@ import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/tml-logo.png.asset.json";
 import { deptName } from "@/lib/recruitment";
 import { SubmitReportDialog } from "@/components/portal/SubmitReportDialog";
 import { TaskEvidence } from "@/components/portal/TaskEvidence";
@@ -159,7 +158,7 @@ function MemberDashboard() {
   return (
     <div className="portal-ai min-h-screen"><div className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="portal-ink flex items-center gap-2 text-2xl font-bold"><img src={logo.url} alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />Cổng thành viên
+        <h1 className="portal-ink flex items-center gap-2 text-2xl font-bold"><img src="/logo.svg" alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />Cổng thành viên
           <button type="button" onClick={() => setTab("card")} title="Mở thẻ thành viên" style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
             className="tml-pass relative ml-1 inline-flex items-center gap-1.5 overflow-hidden rounded-full py-1 pl-1 pr-3 text-xs font-semibold text-primary-deep">
             <span aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-gold/50" />
@@ -212,7 +211,7 @@ function MemberDashboard() {
             <DongSon className="-bottom-20 -left-14 h-60 w-60" />
             <LacBirds flock={FLOCK_H} />
             <div className="relative flex items-center gap-2 pl-4 pt-4">
-              <img src={logo.url} alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
+              <img src="/logo.svg" alt="TML" className="h-12 w-12 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
               <div className="min-w-0 leading-tight">
                 <p className="font-serif text-[15px] font-bold tracking-wide text-primary">普通话联盟</p>
                 <p className="text-[10px] font-semibold tracking-wide">The Mandarin League</p>
@@ -248,7 +247,7 @@ function MemberDashboard() {
                 <p className="text-[10px] font-semibold tracking-wide text-primary-foreground">THE MANDARIN LEAGUE</p>
                 <p className="text-[8px] tracking-[0.08em] text-gold">会员证 · THẺ THÀNH VIÊN</p>
               </div>
-              <img src={logo.url} alt="TML" className="h-11 w-11 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
+              <img src="/logo.svg" alt="TML" className="h-11 w-11 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5" />
             </div>
             <div className="relative flex min-h-0 flex-1 flex-col items-center px-4 pt-2 text-center">
               {avatarEl("h-[108px] w-[86px]")}

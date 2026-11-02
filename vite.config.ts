@@ -87,6 +87,12 @@ export default defineConfig(({ command, mode }) => {
     server: {
       host: "::",
       port: 8080,
+      watch: {
+        // Thư mục output không phải source. Nếu Vite watch chúng, mỗi lần
+        // `bun run build` xoá/tạo lại thư mục sẽ làm FSWatcher chết với
+        // "UNKNOWN: unknown error, scandir '...\.output'".
+        ignored: ["**/.output/**", "**/.nitro/**", "**/.wrangler/**", "**/dist/**"],
+      },
     },
     plugins,
   };

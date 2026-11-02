@@ -2,7 +2,6 @@ import { useTr as useTrHero } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { Menu, X, Mail, Facebook, Instagram, AtSign, MapPin, Lock, Music2, Linkedin, ChevronDown } from "lucide-react";
-import logo from "@/assets/tml-logo.png.asset.json";
 import logoClear from "@/assets/tml-logo-transparent.png";
 import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
@@ -129,7 +128,7 @@ function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-background p-1"><img src={logo.url} alt="" className="h-12 w-12 rounded-full object-cover" /></div>
+            <div className="rounded-full bg-background p-1"><img src="/logo.svg" alt="" className="h-12 w-12 rounded-full object-cover" /></div>
             <div>
               <div className="font-bold">THE MANDARIN LEAGUE</div>
               <div className="text-sm opacity-80">Liên Đoàn Hán Ngữ · 普通话联盟</div>

@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { LogOut, Menu, X, ShieldAlert, IdCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/tml-logo.png.asset.json";
 import { ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY } from "@/lib/admin-nav";
 import { allowedSections } from "@/lib/admin-permissions";
 
@@ -98,7 +97,7 @@ function AdminLayout() {
     <div className="fixed inset-0 z-50 flex bg-muted/40">
       <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-border bg-card lg:block">
         <div className="portal-ai flex items-center gap-2 px-4 py-4">
-          <img src={logo.url} alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />
+          <img src="/logo.svg" alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />
           <span className="portal-ink font-bold">TML Admin</span>
         </div>
         {nav}

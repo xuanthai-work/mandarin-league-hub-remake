@@ -56,14 +56,14 @@ export async function sendTemplateEmail(
   const resend = new Resend(apiKey)
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: fromEmail,
       to: recipient,
       subject,
       html,
       text,
-      replyTo: options.replyTo,
-      headers: options.idempotencyKey ? { 'X-Entity-Ref-ID': options.idempotencyKey } : undefined,
+      ...(options.replyTo ? { replyTo: options.replyTo } : {}),
+      ...(options.idempotencyKey ? { headers: { 'X-Entity-Ref-ID': options.idempotencyKey } } : {}),
     })
 
     if (error) {
