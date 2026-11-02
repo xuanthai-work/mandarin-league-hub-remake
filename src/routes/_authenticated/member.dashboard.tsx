@@ -315,7 +315,7 @@ function MemberDashboard() {
               </div>
             </div>
             {/* body — info left, portrait right (aligned to the same 16px content box) */}
-            <div className="relative flex min-h-0 flex-1 flex-col justify-between px-4 pb-1">
+            <div className="relative flex min-h-0 flex-1 flex-col justify-between px-4 pb-1 pt-2.5">
               <div className="grid min-h-0 grid-cols-[1fr_auto] items-center gap-4">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
