@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useState } from "react";
-import { ChevronDown, Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2, X } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deptName } from "@/lib/recruitment";
@@ -268,36 +269,59 @@ function MembersPage() {
           />
         </div>
 
-        <div className="relative">
-          <select
-            aria-label="Lọc theo ban"
-            className="cursor-pointer appearance-none rounded-xl border border-input bg-card py-2 pl-3 pr-8 text-xs font-medium text-foreground shadow-xs hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
-            value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value)}
-          >
-            <option value="">Ban: Tất cả ({all.length})</option>
+        <Select value={deptFilter || "all"} onValueChange={(v) => setDeptFilter(v === "all" ? "" : v)}>
+          <SelectTrigger aria-label="Lọc theo ban" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectValue>
+              {deptFilter
+                ? `Ban: ${deptName(deptFilter)} (${all.filter((x) => x.department === deptFilter).length})`
+                : `Ban: Tất cả (${all.length})`}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="font-medium">Ban: Tất cả</span>
+                <span className="text-muted-foreground">({all.length})</span>
+              </span>
+            </SelectItem>
             {deptList.map((d) => {
-              const count = all.filter((m) => m.department === d.id).length;
-              return <option key={d.id} value={d.id}>Ban: {d.name} ({count})</option>;
+              const count = all.filter((x) => x.department === d.id).length;
+              return (
+                <SelectItem key={d.id} value={d.id} className="text-xs">
+                  <span className="flex w-full items-center justify-between gap-2">
+                    <span className="truncate">{d.name}</span>
+                    <span className="text-muted-foreground">({count})</span>
+                  </span>
+                </SelectItem>
+              );
             })}
-          </select>
-          <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        </div>
+          </SelectContent>
+        </Select>
 
-        <div className="relative">
-          <select
-            aria-label="Lọc theo trạng thái"
-            className="cursor-pointer appearance-none rounded-xl border border-input bg-card py-2 pl-3 pr-8 text-xs font-medium text-foreground shadow-xs hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
-            value={tab}
-            onChange={(e) => setTab(e.target.value as "" | UnifiedStatus)}
-          >
-            <option value="">Trạng thái: Tất cả ({all.length})</option>
+        <Select value={tab || "all"} onValueChange={(v) => setTab(v === "all" ? "" : (v as UnifiedStatus))}>
+          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[210px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectValue>
+              {tab ? `${UNIFIED_STATUS_MAP[tab].label} (${cnt(tab)})` : `Trạng thái: Tất cả (${all.length})`}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="font-medium">Trạng thái: Tất cả</span>
+                <span className="text-muted-foreground">({all.length})</span>
+              </span>
+            </SelectItem>
             {FILTER_STATUS_ORDER.map((s) => (
-              <option key={s} value={s}>Trạng thái: {UNIFIED_STATUS_MAP[s].label} ({cnt(s)})</option>
+              <SelectItem key={s} value={s} className="text-xs">
+                <span className="flex w-full items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${UNIFIED_STATUS_MAP[s].dot}`} />
+                  <span>{UNIFIED_STATUS_MAP[s].label}</span>
+                  <span className="ml-auto text-muted-foreground">({cnt(s)})</span>
+                </span>
+              </SelectItem>
             ))}
-          </select>
-          <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        </div>
+          </SelectContent>
+        </Select>
 
         {(q || tab || deptFilter) && (
           <button
