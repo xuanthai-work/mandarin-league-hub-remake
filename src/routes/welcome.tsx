@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type React from "react";
-import logo from "@/assets/tml-logo.png.asset.json";
 import drum from "@/assets/dongson-drum-v2.png.asset.json";
 import crane from "@/assets/lac-crane.png.asset.json";
 import { DEPARTMENTS } from "@/lib/data/departments";
@@ -103,7 +102,7 @@ function WelcomePage() {
           <article className="wc-letter" aria-label="Thư chúc mừng trúng tuyển">
             <i className="wc-corner tl" /><i className="wc-corner tr" /><i className="wc-corner bl" /><i className="wc-corner br" />
             <header className="wc-head">
-              <img src={logo.url} alt="The Mandarin League" className="wc-logo" />
+              <img src="/logo.svg" alt="The Mandarin League" className="wc-logo" />
               <p className="wc-org">THE MANDARIN LEAGUE</p>
               <p className="wc-org2">LIÊN ĐOÀN HÁN NGỮ</p>
               <p className="wc-org3">Online Chinese Learning Community</p>

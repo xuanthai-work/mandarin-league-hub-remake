@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BookOpen, Users, CalendarDays, Mail, Facebook, Instagram, AtSign, Video } from "lucide-react";
-import logo from "@/assets/tml-logo.png.asset.json";
 import { useT, useTr } from "@/lib/i18n";
 import { useSiteContent } from "@/lib/site-content";
 import { usePublishedClasses, classFee } from "@/lib/hsk-classes";
@@ -64,7 +63,7 @@ function Home() {
           </div>
           <div className="relative mx-auto w-full max-w-sm">
             <div className="absolute inset-0 rounded-full bg-primary/15 blur-3xl" />
-            <img src={logo.url} alt="Logo The Mandarin League" className="relative w-full rounded-full bg-background p-4 shadow-2xl shadow-primary/20" />
+            <img src="/logo.svg" alt="Logo The Mandarin League" className="relative w-full rounded-full bg-background p-4 shadow-2xl shadow-primary/20" />
           </div>
         </div>
       </section>
