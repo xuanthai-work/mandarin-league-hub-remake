@@ -57,7 +57,7 @@ function LoginPage() {
 
   const inp = "w-full rounded-lg border border-input bg-background px-4 py-3";
   return (
-    <section className="portal-ai flex min-h-[80vh] items-center px-4 py-16">
+    <section className="portal-ai flex min-h-screen items-center justify-center px-4 py-16">
       <div className="portal-glass mx-auto w-full max-w-md rounded-2xl p-8">
         <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">TML · Internal Portal</p>
         <img src={logo.url} alt="TML" className="mx-auto h-16 w-16 rounded-full border-2 border-gold bg-background object-cover p-0.5 shadow-md" />
