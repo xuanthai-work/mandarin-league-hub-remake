@@ -281,7 +281,7 @@ function AdminLayout() {
             <LogOut className="h-4 w-4" />
           </button>
         </header>
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
           {blockedHere ? (
             <div className="mx-auto max-w-md px-4 py-20 text-center">
               <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />

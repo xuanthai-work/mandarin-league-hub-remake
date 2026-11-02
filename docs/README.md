@@ -23,6 +23,9 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-14-CLEANUP-DEPRECATION-WARNINGS` | Dọn dẹp cảnh báo deprecation TanStack Start & Vite | 2026-11-02 | **PASS** | [task-14-cleanup-deprecation-warnings.md](tasks/task-14-cleanup-deprecation-warnings.md) |
 | `TASK-15-REDESIGN-MEMBERS-TABLE-AND-DRAWER` | Nâng cấp Bảng thành viên phân nhóm theo Ban & Drawer trượt phải | 2026-11-02 | **PASS** | [task-15-redesign-members-table-and-drawer.md](tasks/task-15-redesign-members-table-and-drawer.md) |
 | `TASK-16-ALIGN-DEPARTMENT-TABLE-COLUMNS` | Khóa cố định độ rộng cột thẳng hàng giữa các bảng Ban | 2026-11-02 | **PASS** | [task-16-align-department-table-columns.md](tasks/task-16-align-department-table-columns.md) |
+| `TASK-18-UNIFIED-MEMBER-LIFECYCLE-AND-DRAWER` | Chuẩn hóa vòng đời trạng thái thành viên, Drawer hợp nhất & chống tràn ngang | 2026-11-02 | **PASS** | [task-18-unified-member-lifecycle-and-drawer.md](tasks/task-18-unified-member-lifecycle-and-drawer.md) |
+| `TASK-19-DRAWER-POLISH-SCROLLBAR-WIDTH-AND-BACKDROP` | Sleek Scrollbar, Standard 550px Width & Clean Backdrop | 2026-11-02 | **PASS** | [task-19-drawer-polish-scrollbar-width-and-backdrop.md](tasks/task-19-drawer-polish-scrollbar-width-and-backdrop.md) |
+| `TASK-20-COPY-MEMBER-CODE-AND-EMAIL-IN-DRAWER` | Copy mã thành viên & email, làm rõ text email trong Drawer | 2026-11-03 | **PASS** | [task-20-copy-member-code-and-email-in-drawer.md](tasks/task-20-copy-member-code-and-email-in-drawer.md) |
 
 ---
 

@@ -559,3 +559,32 @@
 @keyframes wc-in{from{opacity:0;transform:translateY(16px);filter:blur(4px)}}
 @media (max-width:480px){.wc-letter{padding:1.8rem 1.1rem 1.6rem}.wc-body{font-size:1rem}.wc-info dl{font-size:.92rem;gap:.4rem .7rem}.wc-seal{width:78px;height:78px}}
 @media (prefers-reduced-motion:reduce){.wc-root *,.wc-root *::after{animation:none!important;transition:none!important}}
+
+/* ---- Custom Sleek Scrollbar (Anti-slop / Dark Theme UI) ---- */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
