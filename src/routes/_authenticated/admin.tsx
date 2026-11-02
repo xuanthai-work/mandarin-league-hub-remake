@@ -215,12 +215,12 @@ function AdminLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="portal-ai portal-ink flex items-center gap-3 px-4 py-2.5">
-          <button aria-label="Mở menu" className="grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10 lg:hidden" onClick={() => setOpen(true)}>
+        <header className="portal-ai portal-ink flex items-center gap-3 px-4 py-2.5 lg:hidden">
+          <button aria-label="Mở menu" className="grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10" onClick={() => setOpen(true)}>
             <Menu className="h-5 w-5" />
           </button>
           <h1 className="truncate text-sm font-semibold tracking-tight">{title}</h1>
-          <button onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất" className="ml-auto grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10 lg:hidden">
+          <button onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất" className="ml-auto grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10">
             <LogOut className="h-4 w-4" />
           </button>
         </header>
