@@ -34,7 +34,7 @@ function Home() {
   const faculty = (usePublicTeachers().data ?? []).filter((x) => x.show_on_home).slice(0, 8);
   return (
     <>
-      {preview && <div className="bg-gold/20 py-2 text-center text-sm font-semibold text-primary-deep">Đang xem trước bản nháp — khách truy cập chưa thấy nội dung này.</div>}
+      {preview && <div className="bg-gold/20 py-2 text-center text-sm font-semibold text-primary-deep">{tr("Đang xem trước bản nháp — khách truy cập chưa thấy nội dung này.")}</div>}
       {/* Hero */}
       <section className="grid-lines relative overflow-hidden bg-secondary">
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 md:grid-cols-[1.2fr_1fr] md:px-6 md:py-24">
@@ -114,8 +114,8 @@ function Home() {
               <span className="w-fit rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">HSK {c.level}</span>
               <h3 className="mt-5 text-lg font-semibold">{c.name}</h3>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2"><Video className="h-4 w-4" />{c.format}</div>
-                <div className="font-semibold text-primary-deep">{classFee(c)}</div>
+                <div className="flex items-center gap-2"><Video className="h-4 w-4" />{tr(c.format)}</div>
+                <div className="font-semibold text-primary-deep">{tr(classFee(c))}</div>
               </div>
             </Link>
           ))}
@@ -154,8 +154,8 @@ function Home() {
                 {a.banner ? <img src={a.banner} alt={a.title} loading="lazy" className="h-40 w-full object-cover" /> : <div className="grid-lines flex h-40 items-center justify-center bg-accent"><CalendarDays className="h-10 w-10 text-primary/60" /></div>}
                 <div className="p-6">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold uppercase tracking-wider text-primary">{CATEGORY_LABEL[a.category]}</span>
-                    <span className="text-muted-foreground">{fmtDateTime(a.start_time)}</span>
+                    <span className="font-semibold uppercase tracking-wider text-primary">{tr(CATEGORY_LABEL[a.category])}</span>
+                    <span className="text-muted-foreground">{tr(fmtDateTime(a.start_time))}</span>
                   </div>
                   <h3 className="mt-3 font-semibold">{a.title}</h3>
                 </div>

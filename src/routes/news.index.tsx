@@ -7,6 +7,7 @@ import { NEWS_CATEGORIES } from "@/lib/data/news";
 import type { NewsCategory } from "@/lib/data/types";
 import { fmtDate, usePublishedNews } from "@/lib/news-db";
 import { pageMeta } from "@/lib/seo";
+import { useTr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/news/")({ staticData: { sitemap: true },
   head: () => ({ meta: pageMeta("Tin tức", "Tin tức chính thức của TML về tiếng Trung, HSK, giáo dục và văn hóa.") }),
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/news/")({ staticData: { sitemap: true },
 });
 
 function PNews() {
+  const tr = useTr();
   const [cat, setCat] = useState<NewsCategory | "all">("all");
   const news = usePublishedNews();
   const list = (news.data ?? []).filter((n) => cat === "all" || n.category === cat);
@@ -23,7 +25,7 @@ function PNews() {
       <section className="mx-auto max-w-7xl px-4 py-14 md:px-6">
         <Chips items={NEWS_CATEGORIES} value={cat} onChange={setCat} />
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {news.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
+          {news.isLoading && <p className="text-sm text-muted-foreground">{tr("Đang tải…")}</p>}
           {!news.isLoading && list.length === 0 && <div className="sm:col-span-2 lg:col-span-3"><EmptyState desc="Chưa có bài viết trong danh mục này." /></div>}
           {list.map((n) => (
             <Link key={n.id} to="/news/$slug" params={{ slug: n.slug }} className="overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10">

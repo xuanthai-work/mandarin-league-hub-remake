@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/site/ui";
 import { getMember } from "@/lib/data/members";
 import { getDepartment } from "@/lib/data/departments";
 import { pageMeta } from "@/lib/seo";
+import { useTr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/member/$memberId")({ staticData: { sitemap: false },
   loader: ({ params }) => {
@@ -19,10 +20,12 @@ export const Route = createFileRoute("/member/$memberId")({ staticData: { sitema
 });
 
 function MemberNotFound() {
-  return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy thành viên" desc="Hồ sơ này chưa được công bố hoặc không tồn tại." /><div className="mt-6 text-center"><Link to="/organization" className="font-semibold text-primary">← Cơ cấu tổ chức</Link></div></div>;
+  const tr = useTr();
+  return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy thành viên" desc="Hồ sơ này chưa được công bố hoặc không tồn tại." /><div className="mt-6 text-center"><Link to="/organization" className="font-semibold text-primary">{tr("← Cơ cấu tổ chức")}</Link></div></div>;
 }
 
 function PMember() {
+  const tr = useTr();
   const { member: m } = Route.useLoaderData();
   const dep = m.departmentId ? getDepartment(m.departmentId) : undefined;
   return (
@@ -31,8 +34,8 @@ function PMember() {
         {m.avatarUrl ? <img src={m.avatarUrl} alt={m.name} className="h-28 w-28 rounded-full object-cover" /> : <div className="flex h-28 w-28 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-12 w-12" /></div>}
         <div>
           <h1 className="text-2xl font-bold text-primary-deep">{m.name}</h1>
-          <div className="text-primary">{m.role}{dep ? ` · ${dep.name}` : ""}</div>
-          <div className="mt-2 text-sm text-muted-foreground">Mã thành viên {m.memberId} · Tham gia {m.joinedAt} · {m.status}</div>
+          <div className="text-primary">{tr(m.role)}{dep ? ` · ${tr(dep.name)}` : ""}</div>
+          <div className="mt-2 text-sm text-muted-foreground">{tr("Mã thành viên")} {m.memberId} · {tr("Tham gia")} {m.joinedAt} · {tr(m.status)}</div>
         </div>
       </div>
       {m.bio && <p className="mt-8 text-muted-foreground">{m.bio}</p>}

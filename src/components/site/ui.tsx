@@ -60,6 +60,7 @@ export function PersonSlot({ role, name }: { role: string; name?: string | undef
 }
 
 export function Chips<T extends string>({ items, value, onChange, allLabel = "Tất cả" }: { items: T[]; value: T | "all"; onChange: (v: T | "all") => void; allLabel?: string }) {
+  const tr = useTr();
   const all: (T | "all")[] = ["all", ...items];
   return (
     <div className="flex flex-wrap gap-2">
@@ -69,7 +70,7 @@ export function Chips<T extends string>({ items, value, onChange, allLabel = "T�
           onClick={() => onChange(i)}
           className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${value === i ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary/50"}`}
         >
-          {i === "all" ? allLabel : i}
+          {tr(i === "all" ? allLabel : i)}
         </button>
       ))}
     </div>
