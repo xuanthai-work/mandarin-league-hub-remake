@@ -49,6 +49,31 @@ export const listAccounts = createServerFn({ method: "GET" })
     }));
   });
 
+export const getAdminMemberAccounts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const db = await adminClient(context);
+    const [{ data: accts }, { data: roles }] = await Promise.all([
+      db.from("member_accounts").select("user_id, member_id, login_email, account_status, must_change_password, permissions"),
+      db.from("user_roles").select("user_id, role"),
+    ]);
+
+    const roleOf = new Map<string, string>();
+    for (const r of roles ?? []) {
+      if (!roleOf.has(r.user_id)) roleOf.set(r.user_id, r.role);
+    }
+
+    return (accts ?? []).map((a: any) => ({
+      userId: a.user_id as string,
+      memberId: a.member_id as string,
+      email: a.login_email as string,
+      status: a.account_status as string,
+      mustChange: a.must_change_password as boolean,
+      permissions: (a.permissions ?? []) as string[],
+      access: (roleOf.get(a.user_id) ?? "member") as "admin" | "department_head" | "deputy_head" | "member",
+    }));
+  });
+
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({

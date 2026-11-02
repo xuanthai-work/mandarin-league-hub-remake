@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deptName } from "@/lib/recruitment";
 import { type AdminRole } from "@/lib/admin-nav";
-import { createAccount, deleteAccount, deleteMember, resetAccountPassword, updateAccount } from "@/lib/accounts.functions";
+import { createAccount, deleteAccount, deleteMember, getAdminMemberAccounts, resetAccountPassword, updateAccount } from "@/lib/accounts.functions";
 import { ACCOUNT_DEPTS, ACCESS_LABELS, PERMISSION_TEMPLATES, PERMISSIONS, positionsFor, type AccessLevel, type AccountStatus } from "@/lib/accounts";
 import { useAdminAccess } from "./admin";
 
@@ -198,6 +198,7 @@ function MembersPage() {
   const [creating, setCreating] = useState(false);
   const qc = useQueryClient();
   const access = useAdminAccess();
+  const fetchAccounts = useServerFn(getAdminMemberAccounts);
   /** Account credentials and mutations are admin-only (server functions enforce the same rule). */
   const isAdmin = !!access.data?.roles.includes("admin");
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-members"] });
@@ -208,22 +209,19 @@ function MembersPage() {
   };
 
   const { data, isLoading } = useQuery({ queryKey: ["admin-members", isAdmin], enabled: !!access.data, queryFn: async () => {
-    const [m, a, r] = await Promise.all([
+    const [m, accountsList] = await Promise.all([
       supabase.from("members").select("*").order("created_at", { ascending: false }),
-      isAdmin ? supabase.from("member_accounts").select("user_id, member_id, login_email, account_status, must_change_password, permissions") : Promise.resolve(null),
-      isAdmin ? supabase.from("user_roles").select("user_id, role") : Promise.resolve(null),
+      isAdmin ? fetchAccounts() : Promise.resolve([]),
     ]);
-    const roleOf = new Map<string, AdminRole>();
-    for (const x of r?.data ?? []) if (!roleOf.has(x.user_id)) roleOf.set(x.user_id, x.role as AdminRole);
     const accounts = new Map<string, AccountInfo>();
-    for (const x of a?.data ?? []) {
-      accounts.set(x.member_id, {
-        userId: x.user_id,
-        email: x.login_email,
-        status: x.account_status,
-        mustChange: x.must_change_password,
-        permissions: x.permissions ?? [],
-        access: roleOf.get(x.user_id) ?? "member",
+    for (const a of accountsList ?? []) {
+      accounts.set(a.memberId, {
+        userId: a.userId,
+        email: a.email,
+        status: a.status,
+        mustChange: a.mustChange,
+        permissions: a.permissions,
+        access: a.access as AdminRole,
       });
     }
     return (m.data ?? []).map((x) => ({ ...x, account: accounts.get(x.id) ?? null })) as MemberRow[];
@@ -412,6 +410,9 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
           userId: m.account.userId, department, position, access, permissions,
           status: UNIFIED_ACCOUNT_STATUS[status],
         } });
+        // Keep the drawer's account snapshot in sync until the refetch lands.
+        m.account.access = access;
+        m.account.permissions = permissions;
       }
       setMsg("Đã lưu thay đổi."); toast.success("Đã lưu thay đổi"); onChanged();
     } catch (e) {
