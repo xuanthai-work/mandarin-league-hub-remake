@@ -412,7 +412,11 @@
 :root { --pass-bronze: #8a5a2b; --pass-amber: #a8641c; --pass-pink: #db2777; --pass-honor: #9c7a1e; --pass-blue: #245a91; --pass-green: #23765a; --pass-wine: #7d263a; --pass-purple: #514080; --pass-black: #242832; }
 .tml-pass { --pass-c: var(--pass-blue); --pass-accent: color-mix(in oklab, var(--gold) 60%, var(--pass-c));
   background: radial-gradient(120% 80% at 100% 0%, color-mix(in oklab, var(--pass-c) 16%, transparent), transparent 60%), linear-gradient(160deg, var(--background), color-mix(in oklab, var(--pass-c) 10%, var(--background)));
-  box-shadow: 0 30px 60px -24px color-mix(in oklab, var(--pass-c) 70%, transparent), 0 0 0 1.5px color-mix(in oklab, var(--pass-accent) 70%, transparent), 0 0 22px -4px color-mix(in oklab, var(--pass-c) 55%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--pass-c) 92%, transparent),
+    0 0 0 3.5px color-mix(in oklab, var(--gold) 34%, transparent),
+    0 26px 60px -20px color-mix(in oklab, var(--pass-c) 78%, transparent),
+    0 0 44px -8px color-mix(in oklab, var(--pass-c) 62%, transparent);
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px)); transition: transform .35s ease, box-shadow .6s ease, background .8s ease; will-change: transform; }
 .tml-pass[data-tone="black"] { --pass-accent: var(--gold); }
 .tml-pass::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, color-mix(in oklab, var(--gold-soft) 55%, transparent) 50%, transparent 65%); transform: translateX(-120%); animation: pass-shimmer 7s ease-in-out infinite; mix-blend-mode: soft-light; }
@@ -432,7 +436,10 @@
 
 /* White pass: porcelain body stays white; only ribbon, footer and key text follow the tier tone */
 .tml-pass { --pass-deep: color-mix(in oklab, var(--pass-c) 70%, oklch(0.14 0.02 260)); --pass-ink: oklch(0.99 0.004 90);
-  background: radial-gradient(90% 60% at 100% 0%, color-mix(in oklab, var(--pass-c) 7%, transparent), transparent 60%), linear-gradient(160deg, oklch(0.995 0.003 90), oklch(0.975 0.012 85));
+  background:
+    radial-gradient(90% 62% at 100% 0%, color-mix(in oklab, var(--pass-c) 9%, transparent), transparent 62%),
+    radial-gradient(70% 55% at 0% 100%, color-mix(in oklab, var(--gold) 7%, transparent), transparent 70%),
+    linear-gradient(160deg, oklch(0.995 0.003 90), oklch(0.968 0.014 85));
   color: oklch(0.25 0.02 260) !important; }
 .tml-pass .text-primary, .tml-pass .text-primary-deep, .tml-pass .font-bold.uppercase { color: var(--pass-c) !important; }
 .tml-pass dt { color: oklch(0.45 0.02 260); opacity: 1 !important; }
@@ -447,14 +454,50 @@
 .tml-pass-foot { position: relative; color: var(--gold); background: linear-gradient(90deg, var(--pass-deep), var(--pass-c) 50%, var(--pass-deep));
   box-shadow: 0 -1px 0 var(--gold), 0 -4px 0 color-mix(in oklab, var(--pass-c) 25%, transparent); }
 .tml-pass-foot::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; height: 9px; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--pass-c) 10%, transparent)); clip-path: polygon(0 100%, 6% 0, 94% 0, 100% 100%); }
-.tml-dongson { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .14; }
-.tml-crane { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .2; }
-.tml-pass[data-tone="black"] .tml-dongson, .tml-pass[data-tone="black"] .tml-crane { color: color-mix(in oklab, var(--gold) 70%, oklch(0.35 0.06 70)); opacity: .22; }
+.tml-dongson { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .1; }
+.tml-crane { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .12; }
+.tml-pass[data-tone="black"] .tml-dongson, .tml-pass[data-tone="black"] .tml-crane { color: color-mix(in oklab, var(--gold) 70%, oklch(0.35 0.06 70)); opacity: .16; }
 /* Cleaner card: drop busy microprint/geometric fill, keep drum + Lạc birds as the only motifs */
 .tml-pass .tml-microprint, .tml-pass .tml-pass-pattern { display: none; }
 .tml-pass-vframe { position: absolute; inset: 7px; border: 1px solid color-mix(in oklab, var(--gold) 55%, transparent); border-radius: 13px; pointer-events: none; }
 .tml-pass .tml-vhead { background: linear-gradient(180deg, var(--pass-deep), var(--pass-c)); border-bottom: 2px solid var(--gold); clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%); padding-bottom: 1.1rem; }
 .tml-pass .tml-vhead .text-gold { color: var(--gold) !important; }
+
+/* ===== Interactive 3D flip pass (member dashboard) ===== */
+.flip-scene { perspective: 1200px; }
+.flip-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
+  transition: transform .65s cubic-bezier(.4, .2, .2, 1);
+  will-change: transform;
+}
+.flip-inner.is-flipped { transform: rotateX(var(--rx, 0deg)) rotateY(calc(var(--ry, 0deg) + 180deg)) translateY(var(--lift, 0px)); }
+.flip-inner.is-flat, .flip-inner.is-flat.is-flipped { transform: none !important; transition: none !important; }
+.flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+/* Faces must not carry their own tilt: the wrapper owns rotation + flip. */
+.flip-face.tml-pass { transform: none; will-change: auto; }
+.flip-face.back { position: absolute; inset: 0; transform: rotateY(180deg); }
+
+/* Back face is porcelain too: force light form tokens so nothing is white-on-white. */
+.tml-pass-back {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.25 0.02 260);
+  --primary: var(--pass-c);
+  --primary-foreground: oklch(1 0 0);
+  --muted-foreground: oklch(0.5 0.02 260);
+  --border: oklch(0.9 0.01 240);
+  --input: oklch(0.88 0.01 240);
+  --destructive: oklch(0.577 0.245 27.325);
+}
+.tml-pass-back input { background: oklch(1 0 0); border-color: oklch(0.88 0.01 240); color: oklch(0.25 0.02 260); }
+.tml-pass-back input::placeholder { color: oklch(0.55 0.02 260); }
+.tml-pass-back .flip-back-form input { padding-block: .4rem; font-size: .78rem; }
+.tml-pass-back .flip-back-form button { padding-block: .45rem; font-size: .78rem; }
+.tml-pass-back .flip-back-form form > * + * { margin-top: .35rem; }
+@media (prefers-reduced-motion: reduce) {
+  .flip-inner, .flip-inner.is-flipped { transition: none !important; }
+}
 
 /* ===== /welcome cinematic card (scoped) — 11s timeline after "MỞ CÁNH CỔNG" ===== */
 .wc-root{--wc-red:oklch(0.38 0.15 27);--wc-deep:oklch(0.16 0.06 25);--wc-gold:oklch(0.83 0.13 85);--wc-gold2:oklch(0.68 0.13 70);--wc-ink:oklch(0.97 0.03 90);--wc-seal:oklch(0.5 0.2 27);
