@@ -242,7 +242,7 @@ function AdminLayout() {
   const email = access.data?.email ?? "";
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-muted/40">
+    <div className="fixed inset-0 z-50 flex admin-shell bg-background text-foreground">
       <aside className="hidden w-[272px] shrink-0 border-r border-border lg:block">
         <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} currentSlug={current} collapsed={collapsedGroups} onToggleGroup={toggleGroup} onNavigate={() => setOpen(false)} onSignOut={signOut} />
       </aside>
