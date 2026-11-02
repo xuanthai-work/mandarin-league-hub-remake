@@ -315,52 +315,54 @@ function MemberDashboard() {
               </div>
             </div>
             {/* body — info left, portrait right (aligned to the same 16px content box) */}
-            <div className="relative flex min-h-0 flex-1 flex-col justify-between px-4 pb-1 pt-2.5">
-              <div className="grid min-h-0 grid-cols-[1fr_auto] items-center gap-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="relative flex min-h-0 flex-1 px-4 pb-2 pt-1">
+              <div className="grid w-full grid-cols-[1fr_auto] gap-4">
+                <div className="flex min-w-0 flex-col">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <SmartChip className="h-6 w-8" />
                     <Nfc className="h-3.5 w-3.5 opacity-60" />
                     <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[10px] font-bold tracking-[0.16em] text-primary" title="Mã thành viên">{m.member_code}</button>
                     <span className="text-[9px] opacity-40">•</span>
                     <button type="button" onClick={() => setSheet("points_benefits")} className="text-[10px] font-semibold text-primary" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
                   </div>
-                  <div className="mt-2">
-                    <p className={labelCls}>姓名 · Họ và tên</p>
-                    <button type="button" onClick={() => setSheet("name")} className="group/name flex max-w-full items-center gap-1.5 text-left" title="Sửa họ tên">
-                      <span className="truncate text-[19px] font-bold uppercase leading-tight tracking-tight text-primary">{m.full_name}</span>
-                      <Pencil className="h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70" />
-                    </button>
+                  <div className="mt-2 flex min-h-0 flex-1 flex-col">
+                    <p className={`${labelCls} mt-3`}>姓名 · Họ và tên</p>
+                    <div className="flex min-h-0 flex-1 items-center">
+                      <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-start gap-1.5 text-left" title="Sửa họ tên">
+                        <span className={`min-w-0 whitespace-normal break-words hyphens-none font-bold uppercase leading-[1.2] tracking-tight text-primary ${m.full_name.length > 26 ? "text-[20px]" : m.full_name.length > 18 ? "text-[24px]" : m.full_name.length > 12 ? "text-[29px]" : "text-[34px]"}`}>{m.full_name}</span>
+                        <Pencil className="mt-2 h-3.5 w-3.5 shrink-0 opacity-0 transition group-hover/name:opacity-70" />
+                      </button>
+                    </div>
                   </div>
+                  <dl className="mt-auto flex flex-col gap-y-2.5 pb-0.5 text-[10px] leading-tight">
+                    <div className="min-w-0">
+                      <dt className={labelCls}>部门 · Ban</dt>
+                      <dd className="truncate">
+                        <button type="button" onClick={() => setSheet("dept_tasks")} title="Xem Ban & nhiệm vụ" className="max-w-full truncate text-left font-semibold hover:text-primary">{deptLabel}</button>
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className={labelCls}>职务 · Chức vụ</dt>
+                      <dd className="truncate">
+                        <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc, điểm & quyền lợi" className="max-w-full truncate text-left font-semibold hover:text-primary">{posLabel}</button>
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className={labelCls}>等级 · Hạng</dt>
+                      <dd>
+                        <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc, điểm & quyền lợi" className="flex items-center gap-1">{tierEl}</button>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className={labelCls}>入会 · Gia nhập</dt>
+                      <dd className="font-mono text-[9px]">{joined}</dd>
+                    </div>
+                  </dl>
                 </div>
                 <div className="flex items-start justify-center">
-                  {avatarEl("h-[176px] w-[132px]")}
+                  {avatarEl("h-[140px] w-[105px]")}
                 </div>
               </div>
-              <dl className="mt-1.5 grid shrink-0 grid-cols-[1.35fr_1fr] gap-x-5 gap-y-1 border-t border-gold/25 pt-2 text-[10px] leading-tight">
-                <div className="min-w-0">
-                  <dt className={labelCls}>部门 · Ban</dt>
-                  <dd className="truncate">
-                    <button type="button" onClick={() => setSheet("dept_tasks")} title="Ban & nhiệm vụ" className="max-w-full truncate text-left font-semibold underline-offset-2 hover:text-primary hover:underline">{deptLabel}</button>
-                  </dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className={labelCls}>职务 · Chức vụ</dt>
-                  <dd className="truncate">
-                    <button type="button" onClick={() => setSheet("points_benefits")} title="Cấp bậc, điểm & quyền lợi" className="max-w-full truncate text-left font-semibold underline-offset-2 hover:text-primary hover:underline">{posLabel}</button>
-                  </dd>
-                </div>
-                <div>
-                  <dt className={labelCls}>入会 · Gia nhập</dt>
-                  <dd className="font-mono">{joined}</dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className={labelCls}>等级 · Hạng</dt>
-                  <dd>
-                    <button type="button" onClick={() => setSheet("points_benefits")} title="Cấp bậc, điểm & quyền lợi" className="flex items-center gap-1">{tierEl}</button>
-                  </dd>
-                </div>
-              </dl>
             </div>
             <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-4 py-1 text-[8px] tracking-[0.08em]">
               <span className="truncate">THE MANDARIN LEAGUE · VERIFIED MEMBER PASS</span>
