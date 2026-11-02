@@ -56,6 +56,7 @@ import { Route as AuthenticatedAdminNewsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminPartnersRouteImport } from './routes/_authenticated/admin.partners'
 import { Route as AuthenticatedAdminPhotosRouteImport } from './routes/_authenticated/admin.photos'
 import { Route as AuthenticatedAdminRecruitmentRouteImport } from './routes/_authenticated/admin.recruitment'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authenticated/admin.tasks'
 import { Route as AuthenticatedAdminTeachersRouteImport } from './routes/_authenticated/admin.teachers'
 import { Route as AuthenticatedMemberDashboardRouteImport } from './routes/_authenticated/member.dashboard'
@@ -317,6 +318,12 @@ const AuthenticatedAdminRecruitmentRoute =
     path: '/recruitment',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminTasksRoute = AuthenticatedAdminTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -422,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/admin/partners': typeof AuthenticatedAdminPartnersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
@@ -478,6 +486,7 @@ export interface FileRoutesByTo {
   '/admin/partners': typeof AuthenticatedAdminPartnersRoute
   '/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
@@ -539,6 +548,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/partners': typeof AuthenticatedAdminPartnersRoute
   '/_authenticated/admin/photos': typeof AuthenticatedAdminPhotosRoute
   '/_authenticated/admin/recruitment': typeof AuthenticatedAdminRecruitmentRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/_authenticated/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/_authenticated/member/dashboard': typeof AuthenticatedMemberDashboardRoute
@@ -600,6 +610,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/photos'
     | '/admin/recruitment'
+    | '/admin/settings'
     | '/admin/tasks'
     | '/admin/teachers'
     | '/member/dashboard'
@@ -656,6 +667,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/photos'
     | '/admin/recruitment'
+    | '/admin/settings'
     | '/admin/tasks'
     | '/admin/teachers'
     | '/member/dashboard'
@@ -716,6 +728,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/partners'
     | '/_authenticated/admin/photos'
     | '/_authenticated/admin/recruitment'
+    | '/_authenticated/admin/settings'
     | '/_authenticated/admin/tasks'
     | '/_authenticated/admin/teachers'
     | '/_authenticated/member/dashboard'
@@ -1095,6 +1108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRecruitmentRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/tasks': {
       id: '/_authenticated/admin/tasks'
       path: '/tasks'
@@ -1192,6 +1212,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPartnersRoute: typeof AuthenticatedAdminPartnersRoute
   AuthenticatedAdminPhotosRoute: typeof AuthenticatedAdminPhotosRoute
   AuthenticatedAdminRecruitmentRoute: typeof AuthenticatedAdminRecruitmentRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminTasksRoute: typeof AuthenticatedAdminTasksRoute
   AuthenticatedAdminTeachersRoute: typeof AuthenticatedAdminTeachersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -1214,6 +1235,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminPartnersRoute: AuthenticatedAdminPartnersRoute,
   AuthenticatedAdminPhotosRoute: AuthenticatedAdminPhotosRoute,
   AuthenticatedAdminRecruitmentRoute: AuthenticatedAdminRecruitmentRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminTasksRoute: AuthenticatedAdminTasksRoute,
   AuthenticatedAdminTeachersRoute: AuthenticatedAdminTeachersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
