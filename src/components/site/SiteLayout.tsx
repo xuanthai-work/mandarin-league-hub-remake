@@ -5,8 +5,7 @@ import { Menu, X, Mail, Facebook, Instagram, AtSign, MapPin, Lock, Music2, Linke
 import logoClear from "@/assets/tml-logo-transparent.png";
 import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
-import { LanguageSwitcher } from "./LanguageSwitcher";
-import { ThemeToggle } from "./ThemeToggle";
+import { SitePreferences } from "./SitePreferences";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CrystalParticles } from "./CrystalParticles";
 import { useSiteContent } from "@/lib/site-content";
@@ -81,7 +80,7 @@ function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
-        <div className="hidden shrink-0 items-center gap-1 lg:flex"><LanguageSwitcher /><ThemeToggle /></div>
+        <div className="hidden shrink-0 items-center gap-1 lg:flex"><SitePreferences /></div>
         <Link
           to="/join"
           className="hidden whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 xl:px-5 xl:py-2.5 lg:inline-flex"
@@ -94,9 +93,8 @@ function Header() {
       </div>
       {open && (
         <nav className="border-t border-border bg-background px-4 py-3 lg:hidden">
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2">
-            <LanguageSwitcher />
-            <ThemeToggle />
+          <div className="mb-2 flex items-center rounded-xl border border-border bg-muted/40 px-3 py-2">
+            <SitePreferences className="w-full justify-between" />
           </div>
           {NAV.map((n) => (
             n.to === "/" ? <HomeLink key={n.to} onClick={() => setOpen(false)} className="block rounded-md px-3 py-2.5 text-sm font-medium">{t("nav./")}</HomeLink> : <Link
