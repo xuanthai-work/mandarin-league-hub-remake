@@ -15,10 +15,11 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-06-SYNC-MEMBER-ACCOUNT-LIFECYCLE` | Đồng bộ vòng đời Thành viên và Tài khoản nội bộ | 2026-11-02 | **PASS** | [task-06-sync-member-account-lifecycle.md](tasks/task-06-sync-member-account-lifecycle.md) |
 | `TASK-07-REDESIGN-ADMIN-SIDEBAR` | Tái thiết kế Sidebar Admin theo phong cách Impeccable & Taste | 2026-11-02 | **PASS** | [task-07-redesign-admin-sidebar.md](tasks/task-07-redesign-admin-sidebar.md) |
 | `TASK-08-CLEAN-ADMIN-TOPBAR` | Ẩn thanh topbar trùng lặp tiêu đề trên Desktop | 2026-11-02 | **PASS** | [task-08-clean-admin-topbar.md](tasks/task-08-clean-admin-topbar.md) |
+| `TASK-09-COLLAPSIBLE-ADMIN-NAV-GROUPS` | Thu gọn / Mở rộng nhóm danh mục điều hướng Sidebar | 2026-11-02 | **PASS** | [task-09-collapsible-admin-nav-groups.md](tasks/task-09-collapsible-admin-nav-groups.md) |
 
 ---
 
 ## 2. Status Overview
 
-- **Current Active Task**: `TASK-09-COLLAPSIBLE-ADMIN-NAV-GROUPS` (trong `justdoit.md`).
+- **Current Active Task**: `TASK-10-REDESIGN-ADMIN-OVERVIEW-DASHBOARD` (trong `justdoit.md`).
 - **Archive Directory**: [docs/tasks/](tasks/)
