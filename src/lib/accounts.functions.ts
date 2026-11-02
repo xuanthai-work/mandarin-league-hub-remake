@@ -51,7 +51,7 @@ export const listAccounts = createServerFn({ method: "GET" })
 
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     memberId: z.string().uuid().optional(),
     newMember: z.object({ full_name: z.string().trim().min(2).max(120), phone: z.string().max(30).default("") }).optional(),
     email: z.preprocess((v) => String(v ?? "").replace(/[\s\u200B-\u200D\uFEFF]/g, "").toLowerCase(), z.string().email("Email đăng nhập không hợp lệ.").max(200)),
@@ -91,7 +91,7 @@ export const createAccount = createServerFn({ method: "POST" })
 
 export const updateAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     userId: z.string().uuid(), department: z.string().min(2).max(40), position: z.string().min(2).max(40),
     access, permissions: perms, status,
   }).parse(d))
@@ -112,7 +112,7 @@ export const updateAccount = createServerFn({ method: "POST" })
 
 export const resetAccountPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     userId: z.string().uuid(), mode: z.enum(["temp", "link"]), password: z.string().min(8).max(72).optional(),
     redirectTo: z.string().url().max(300).optional(),
   }).parse(d))
@@ -134,7 +134,7 @@ export const resetAccountPassword = createServerFn({ method: "POST" })
 
 export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const db = await adminClient(context);
     if (data.userId === context.userId) throw new Error("Bạn không thể tự xóa tài khoản của chính mình.");
@@ -165,7 +165,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
 /** Xóa hẳn hồ sơ thành viên chưa có tài khoản (hồ sơ mồ côi/rác). */
 export const deleteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ memberId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const db = await adminClient(context);
     const { data: linked } = await db.from("member_accounts").select("user_id").eq("member_id", data.memberId).maybeSingle();
@@ -177,7 +177,7 @@ export const deleteMember = createServerFn({ method: "POST" })
 
 export const approveApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     applicationId: z.string().uuid(), department: z.string().min(2).max(40), position: z.string().min(2).max(40),
   }).parse(d))
   .handler(async ({ data, context }) => {

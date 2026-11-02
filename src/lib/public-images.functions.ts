@@ -3,7 +3,7 @@ import { z } from "zod";
 
 /** Signs images only for content that is publicly published; storage itself is not readable by visitors. */
 export const signPublicImages = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     bucket: z.enum(["activity-banners", "news-covers", "partner-logos"]),
     paths: z.array(z.string().min(1).max(300)).max(200),
   }).parse(d))

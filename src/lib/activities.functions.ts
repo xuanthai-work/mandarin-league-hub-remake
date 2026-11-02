@@ -14,7 +14,7 @@ const fmt = (d: Date | string) => new Intl.DateTimeFormat("vi-VN", { timeZone: "
 
 /** Public activity registration — every rule re-checked on the server. */
 export const submitActivityRegistration = createServerFn({ method: "POST" })
-  .inputValidator((d) => d as unknown)
+  .validator((d) => d as unknown)
   .handler(async ({ data: raw }) => {
     const parsed = schema.safeParse(raw);
     if (!parsed.success) {

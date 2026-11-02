@@ -14,7 +14,7 @@ const WINDOW = 10 * 60_000, LIMIT = 8;
 
 /** Public, minimal-field lookup by application code or email. Never returns contact data, answers, files or notes. */
 export const lookupApplication = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ query: z.string().trim().min(3).max(200), captcha: z.string().max(4000) }).parse(d))
+  .validator((d) => z.object({ query: z.string().trim().min(3).max(200), captcha: z.string().max(4000) }).parse(d))
   .handler(async ({ data }): Promise<{ ok: true; results: LookupResult[] } | { ok: false; error: string }> => {
     const { verifyRecaptcha, CAPTCHA_ERROR } = await import("./recaptcha.server");
     if (!(await verifyRecaptcha(data.captcha))) return { ok: false, error: CAPTCHA_ERROR };

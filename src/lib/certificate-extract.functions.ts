@@ -23,7 +23,7 @@ const outSchema = z.object({
 
 export const extractCertificate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     base64: z.string().min(10).max(1_500_000),
     mediaType: z.enum(["application/pdf", "image/png", "image/jpeg", "image/webp"]),
     allowedTypes: z.array(z.string().max(40)).max(20),

@@ -19,7 +19,7 @@ const planSchema = z.object({
 
 export const generateOnboardingPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     memberId: z.string().uuid(),
     role: z.string().trim().min(2).max(500),
     experience: z.string().trim().min(2).max(1500),

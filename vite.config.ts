@@ -7,7 +7,6 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, loadEnv } from "vite";
-import tsConfigPaths from "vite-tsconfig-paths";
 
 // Load all env vars into process.env for server routes only (VITE_* client
 // injection is handled by the `define` block below — do not add those there,
@@ -24,7 +23,6 @@ export default defineConfig(({ command, mode }) => {
 
   const plugins = [
     tailwindcss(),
-    tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tanstackStart({
       importProtection: {
         behavior: "error",
@@ -58,6 +56,7 @@ export default defineConfig(({ command, mode }) => {
       : {}),
     css: { transformer: "lightningcss" as const },
     resolve: {
+      tsconfigPaths: true,
       alias: {
         // Pin entities to the hoisted v4.5.0 copy; nested v7 copies break SSR.
         "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),

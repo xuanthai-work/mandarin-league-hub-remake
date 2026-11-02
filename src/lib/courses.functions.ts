@@ -18,7 +18,7 @@ const fmtTime = (d: Date) => new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/
 
 /** Public course registration — rules re-checked on the server. */
 export const submitEnrollment = createServerFn({ method: "POST" })
-  .inputValidator((d) => d as unknown)
+  .validator((d) => d as unknown)
   .handler(async ({ data: raw }) => {
     const parsed = submitSchema.safeParse(raw);
     if (!parsed.success) {
@@ -77,7 +77,7 @@ const reviewSchema = z.object({
 /** Admin / Ban Chuyên môn review. RLS limits who can update; approval emails the invite. */
 export const reviewEnrollment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => reviewSchema.parse(d))
+  .validator((d) => reviewSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (data.zaloLink && !/^https:\/\/(zalo\.me|chat\.zalo\.me)\//i.test(data.zaloLink))
       return { ok: false as const, error: "Link nhóm Zalo phải bắt đầu bằng https://zalo.me/" };

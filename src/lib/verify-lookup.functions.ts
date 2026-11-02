@@ -3,7 +3,7 @@ import { z } from "zod";
 
 /** Manual (typed-in) certificate/HSK lookups: require a valid reCAPTCHA before querying. */
 export const verifyLookup = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({
+  .validator((d) => z.object({
     kind: z.enum(["certificate", "hsk"]),
     code: z.string().trim().min(1).max(60),
     name: z.string().max(200),

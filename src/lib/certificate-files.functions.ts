@@ -3,7 +3,7 @@ import { z } from "zod";
 
 /** Issues a short-lived download link only after re-verifying code + name/token. */
 export const getCertificateFileUrl = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ code: z.string().min(3).max(50), name: z.string().max(120).default(""), token: z.string().max(40).default("") }).parse(d))
+  .validator((d) => z.object({ code: z.string().min(3).max(50), name: z.string().max(120).default(""), token: z.string().max(40).default("") }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows } = await supabaseAdmin.rpc("verify_certificate_v2", { _code: data.code, _name: data.name, _token: data.token });

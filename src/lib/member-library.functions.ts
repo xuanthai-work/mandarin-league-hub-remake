@@ -7,7 +7,7 @@ const COOKIE = "tml_library_access";
 
 export const verifyLibraryPass = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => passTokenSchema.parse(data))
+  .validator((data: unknown) => passTokenSchema.parse(data))
   .handler(async ({ data, context }) => {
     setResponseHeader("Cache-Control", "no-store");
     const { data: rows, error } = await context.supabase.rpc("verify_member_library_pass", { _pass: data });

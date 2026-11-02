@@ -8,7 +8,7 @@ const ext = (n: string) => n.split(".").pop()?.toLowerCase() ?? "";
 
 /** Signed upload slot for an applicant's CV or sample file (private bucket). */
 export const createApplicationUpload = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ filename: z.string().min(1).max(200), kind: z.enum(["cv", "file"]) }).parse(d))
+  .validator((d) => z.object({ filename: z.string().min(1).max(200), kind: z.enum(["cv", "file"]) }).parse(d))
   .handler(async ({ data }) => {
     const allowed = data.kind === "cv" ? CV_EXT : FILE_EXT;
     if (!allowed.includes(ext(data.filename))) throw new Error(`Chỉ chấp nhận tệp: ${allowed.join(", ").toUpperCase()}`);
@@ -38,7 +38,7 @@ const submitSchema = z.object({
 
 /** Public submission — every rule is re-checked here, never trusted from the browser. */
 export const submitApplication = createServerFn({ method: "POST" })
-  .inputValidator((d) => d as unknown)
+  .validator((d) => d as unknown)
   .handler(async ({ data: raw }) => {
     const { verifyRecaptcha, CAPTCHA_ERROR } = await import("./recaptcha.server");
     if (!(await verifyRecaptcha((raw as { captcha?: unknown } | null)?.captcha))) return { ok: false as const, error: CAPTCHA_ERROR };
@@ -118,7 +118,7 @@ export const submitApplication = createServerFn({ method: "POST" })
 /** Admin-only AI screening summary for a stored application or pasted text. */
 export const analyzeApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ applicationId: z.string().uuid().optional(), text: z.string().max(20000).optional() }).parse(d))
+  .validator((d) => z.object({ applicationId: z.string().uuid().optional(), text: z.string().max(20000).optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Bạn không có quyền.");
