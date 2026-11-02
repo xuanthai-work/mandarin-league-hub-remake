@@ -18,6 +18,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-09-COLLAPSIBLE-ADMIN-NAV-GROUPS` | Thu gọn / Mở rộng nhóm danh mục điều hướng Sidebar | 2026-11-02 | **PASS** | [task-09-collapsible-admin-nav-groups.md](tasks/task-09-collapsible-admin-nav-groups.md) |
 | `TASK-10-REDESIGN-ADMIN-OVERVIEW-DASHBOARD` | Tái thiết kế Tổng quan Quản trị thành Executive Command Center | 2026-11-02 | **PASS** | [task-10-redesign-admin-overview-dashboard.md](tasks/task-10-redesign-admin-overview-dashboard.md) |
 | `TASK-11-STANDARDIZE-ADMIN-PAGE-HEADERS` | Chuẩn hóa Container & Tiêu đề trang dùng chung AdminPageHeader | 2026-11-02 | **PASS** | [task-11-standardize-admin-page-headers.md](tasks/task-11-standardize-admin-page-headers.md) |
+| `TASK-12-MERGE-MEMBERS-AND-ACCOUNTS` | Hợp nhất quản lý Tài khoản nội bộ vào trang Thành viên | 2026-11-02 | **PASS** | [task-12-merge-members-and-accounts.md](tasks/task-12-merge-members-and-accounts.md) |
 
 ---
 

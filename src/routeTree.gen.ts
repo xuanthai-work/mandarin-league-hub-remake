@@ -41,7 +41,6 @@ import { Route as TeachersTeacherIdRouteImport } from './routes/teachers.$teache
 import { Route as VerifyIndexRouteImport } from './routes/verify.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminSectionRouteImport } from './routes/_authenticated/admin.$section'
-import { Route as AuthenticatedAdminAccountsRouteImport } from './routes/_authenticated/admin.accounts'
 import { Route as AuthenticatedAdminActivitiesRouteImport } from './routes/_authenticated/admin.activities'
 import { Route as AuthenticatedAdminBenefitsRouteImport } from './routes/_authenticated/admin.benefits'
 import { Route as AuthenticatedAdminCandidatesRouteImport } from './routes/_authenticated/admin.candidates'
@@ -230,12 +229,6 @@ const AuthenticatedAdminSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAccountsRoute =
-  AuthenticatedAdminAccountsRouteImport.update({
-    id: '/accounts',
-    path: '/accounts',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminActivitiesRoute =
   AuthenticatedAdminActivitiesRouteImport.update({
     id: '/activities',
@@ -414,7 +407,6 @@ export interface FileRoutesByFullPath {
   '/teachers/': typeof TeachersIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
-  '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/admin/activities': typeof AuthenticatedAdminActivitiesRoute
   '/admin/benefits': typeof AuthenticatedAdminBenefitsRoute
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
@@ -471,7 +463,6 @@ export interface FileRoutesByTo {
   '/teachers': typeof TeachersIndexRoute
   '/verify': typeof VerifyIndexRoute
   '/admin/$section': typeof AuthenticatedAdminSectionRoute
-  '/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/admin/activities': typeof AuthenticatedAdminActivitiesRoute
   '/admin/benefits': typeof AuthenticatedAdminBenefitsRoute
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
@@ -533,7 +524,6 @@ export interface FileRoutesById {
   '/teachers/': typeof TeachersIndexRoute
   '/verify/': typeof VerifyIndexRoute
   '/_authenticated/admin/$section': typeof AuthenticatedAdminSectionRoute
-  '/_authenticated/admin/accounts': typeof AuthenticatedAdminAccountsRoute
   '/_authenticated/admin/activities': typeof AuthenticatedAdminActivitiesRoute
   '/_authenticated/admin/benefits': typeof AuthenticatedAdminBenefitsRoute
   '/_authenticated/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
@@ -595,7 +585,6 @@ export interface FileRouteTypes {
     | '/teachers/'
     | '/verify/'
     | '/admin/$section'
-    | '/admin/accounts'
     | '/admin/activities'
     | '/admin/benefits'
     | '/admin/candidates'
@@ -652,7 +641,6 @@ export interface FileRouteTypes {
     | '/teachers'
     | '/verify'
     | '/admin/$section'
-    | '/admin/accounts'
     | '/admin/activities'
     | '/admin/benefits'
     | '/admin/candidates'
@@ -713,7 +701,6 @@ export interface FileRouteTypes {
     | '/teachers/'
     | '/verify/'
     | '/_authenticated/admin/$section'
-    | '/_authenticated/admin/accounts'
     | '/_authenticated/admin/activities'
     | '/_authenticated/admin/benefits'
     | '/_authenticated/admin/candidates'
@@ -1003,13 +990,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSectionRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/accounts': {
-      id: '/_authenticated/admin/accounts'
-      path: '/accounts'
-      fullPath: '/admin/accounts'
-      preLoaderRoute: typeof AuthenticatedAdminAccountsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/admin/activities': {
       id: '/_authenticated/admin/activities'
       path: '/activities'
@@ -1197,7 +1177,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminSectionRoute: typeof AuthenticatedAdminSectionRoute
-  AuthenticatedAdminAccountsRoute: typeof AuthenticatedAdminAccountsRoute
   AuthenticatedAdminActivitiesRoute: typeof AuthenticatedAdminActivitiesRoute
   AuthenticatedAdminBenefitsRoute: typeof AuthenticatedAdminBenefitsRoute
   AuthenticatedAdminCandidatesRoute: typeof AuthenticatedAdminCandidatesRoute
@@ -1220,7 +1199,6 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSectionRoute: AuthenticatedAdminSectionRoute,
-  AuthenticatedAdminAccountsRoute: AuthenticatedAdminAccountsRoute,
   AuthenticatedAdminActivitiesRoute: AuthenticatedAdminActivitiesRoute,
   AuthenticatedAdminBenefitsRoute: AuthenticatedAdminBenefitsRoute,
   AuthenticatedAdminCandidatesRoute: AuthenticatedAdminCandidatesRoute,

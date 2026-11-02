@@ -266,7 +266,7 @@ function Approve({ app }: { app: App }) {
               </div>
             </div>
           )}
-          <p className="mt-1 text-muted-foreground">Chưa tự động có tài khoản. Nếu cần, cấp tại <Link to="/admin/accounts" className="text-primary underline">Tài khoản nội bộ</Link>.</p></div>
+          <p className="mt-1 text-muted-foreground">Chưa tự động có tài khoản. Nếu cần, cấp tại <Link to="/admin/members" className="text-primary underline">Thành viên</Link>.</p></div>
       ) : (
         <div className="mt-2 space-y-2">
           <div className="grid grid-cols-2 gap-2">
