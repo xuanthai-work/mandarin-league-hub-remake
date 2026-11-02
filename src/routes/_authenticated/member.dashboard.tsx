@@ -166,10 +166,16 @@ function MemberDashboard() {
       <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
     </label>
   );
-  const watermark = (
+  /** Back face: same tier tint, kept a bit larger than the front seal. */
+  const watermarkBack = (
     <div aria-hidden className="tml-watermark-wrap select-none">
-      <div className="tml-hologram-halo" />
-      <div className="tml-hologram-logo h-56 w-56 sm:h-64 sm:w-64" />
+      <img src="/logo.svg" alt="" className="tml-watermark-front tml-watermark-back object-contain select-none" />
+    </div>
+  );
+  /** Front face: smaller seal, tinted by the member's tier with a breathing aura. */
+  const watermarkFront = (
+    <div aria-hidden className="tml-watermark-wrap select-none">
+      <img src="/logo.svg" alt="" className="tml-watermark-front object-contain select-none" />
     </div>
   );
   const downloadCard = async () => {
@@ -298,7 +304,7 @@ function MemberDashboard() {
             <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
-            {watermark}
+            {watermarkFront}
             <span aria-hidden className="pointer-events-none absolute inset-0 select-none opacity-40">
               <DongSon className="-bottom-24 -left-24 h-64 w-64" />
             </span>
@@ -380,7 +386,7 @@ function MemberDashboard() {
             aria-hidden={!isFlipped}
             className="flip-face back tml-pass tml-pass-back flex flex-col overflow-hidden rounded-[18px] text-primary-deep">
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
-            {watermark}
+            {watermarkBack}
             <div className="h-8 w-full shrink-0 border-y border-gold/30 bg-neutral-900 shadow-inner sm:h-9" />
             <div className="relative flex shrink-0 items-center gap-2 px-3 pt-1.5">
               <button type="button" onClick={() => setIsFlipped(false)} aria-label="Quay lại mặt trước" title="Quay lại mặt trước"

@@ -496,7 +496,7 @@
 .tml-pass-back .flip-back-form button { padding-block: .45rem; font-size: .78rem; }
 .tml-pass-back .flip-back-form form > * + * { margin-top: .35rem; }
 
-/* Watermark hologram sheen (option 2): oversized security seal with an iridescent sweep */
+/* Watermark line-art glow: multiply removes the logo's white plate, only strokes glow */
 .tml-watermark-wrap {
   position: absolute;
   left: 50%;
@@ -504,43 +504,63 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.tml-hologram-halo {
-  position: absolute;
-  inset: -15%;
-  border-radius: 9999px;
-  background: radial-gradient(circle, color-mix(in oklab, var(--gold) 35%, transparent) 0%, transparent 70%);
-  filter: blur(20px);
-  opacity: .4;
+/* Front watermark: smaller, tinted by tier, with a breathing tier aura + foil sheen */
+.tml-watermark-front {
+  width: 10.5rem;  /* ~168px */
+  height: 10.5rem;
+  mix-blend-mode: multiply;
+  opacity: .32;
+  animation: tier-lineart-pulse 5s ease-in-out infinite;
+  will-change: filter, opacity;
 }
-.tml-hologram-logo {
-  position: relative;
-  mask-image: url("/logo.svg");
-  -webkit-mask-image: url("/logo.svg");
-  mask-size: contain;
-  -webkit-mask-size: contain;
-  mask-repeat: no-repeat;
-  -webkit-mask-repeat: no-repeat;
-  mask-position: center;
-  -webkit-mask-position: center;
-  background: linear-gradient(135deg,
-    rgba(219, 234, 254, .4) 0%,
-    rgba(253, 230, 138, .6) 25%,
-    rgba(187, 247, 208, .5) 50%,
-    rgba(251, 207, 232, .6) 75%,
-    rgba(219, 234, 254, .4) 100%);
-  background-size: 250% 250%;
-  animation: hologram-shimmer 7s ease-in-out infinite;
-  filter: drop-shadow(0 0 10px rgba(253, 230, 138, .4));
-  opacity: .14;
+@media (min-width: 640px) {
+  .tml-watermark-front { width: 11.5rem; height: 11.5rem; }  /* ~184px */
 }
-@keyframes hologram-shimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* Back face keeps the tier tint but stays larger than the front seal. */
+.tml-watermark-back { width: 14rem; height: 14rem; }          /* ~224px */
+@media (min-width: 640px) {
+  .tml-watermark-back { width: 16rem; height: 16rem; }        /* ~256px */
+}
+/* Hue shift keeps the white plate achromatic (so multiply still erases it) while
+   rotating the drawn lines toward the member's tier colour. */
+.tml-pass[data-tone="bronze"] { --wm-hue: 190deg; }
+.tml-pass[data-tone="blue"] { --wm-hue: 0deg; }
+.tml-pass[data-tone="green"] { --wm-hue: 310deg; }
+.tml-pass[data-tone="wine"] { --wm-hue: 145deg; }
+.tml-pass[data-tone="pink"] { --wm-hue: 130deg; }
+.tml-pass[data-tone="purple"] { --wm-hue: 60deg; }
+.tml-pass[data-tone="honor"] { --wm-hue: 205deg; }
+.tml-pass[data-tone="black"] { --wm-hue: 205deg; }
+
+@keyframes tier-lineart-pulse {
+  0%, 100% {
+    filter:
+      hue-rotate(var(--wm-hue, 0deg)) saturate(1.15) contrast(150%) brightness(1)
+      drop-shadow(0 0 4px color-mix(in oklab, var(--pass-c) 75%, transparent))
+      drop-shadow(0 0 10px color-mix(in oklab, var(--gold) 45%, transparent));
+    opacity: .30;
+  }
+  45% {
+    filter:
+      hue-rotate(var(--wm-hue, 0deg)) saturate(1.3) contrast(165%) brightness(1.28)
+      drop-shadow(0 0 8px var(--pass-c))
+      drop-shadow(0 0 18px color-mix(in oklab, var(--gold) 65%, transparent));
+    opacity: .42;
+  }
+  60% {
+    filter:
+      hue-rotate(var(--wm-hue, 0deg)) saturate(1.15) contrast(150%) brightness(1)
+      drop-shadow(0 0 6px color-mix(in oklab, var(--pass-c) 85%, transparent))
+      drop-shadow(0 0 14px color-mix(in oklab, var(--gold) 55%, transparent));
+    opacity: .34;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tml-hologram-logo { animation: none !important; }
+  .tml-watermark-front { animation: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .flip-inner, .flip-inner.is-flipped { transition: none !important; }
