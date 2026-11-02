@@ -21,6 +21,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-12-MERGE-MEMBERS-AND-ACCOUNTS` | Hợp nhất quản lý Tài khoản nội bộ vào trang Thành viên | 2026-11-02 | **PASS** | [task-12-merge-members-and-accounts.md](tasks/task-12-merge-members-and-accounts.md) |
 | `TASK-13-ADD-GRANULAR-PERMISSIONS-TO-MEMBER-CREATE-MODAL` | Bổ sung Checkbox quyền chi tiết vào modal Thêm thành viên | 2026-11-02 | **PASS** | [task-13-add-granular-permissions-to-member-create-modal.md](tasks/task-13-add-granular-permissions-to-member-create-modal.md) |
 | `TASK-14-CLEANUP-DEPRECATION-WARNINGS` | Dọn dẹp cảnh báo deprecation TanStack Start & Vite | 2026-11-02 | **PASS** | [task-14-cleanup-deprecation-warnings.md](tasks/task-14-cleanup-deprecation-warnings.md) |
+| `TASK-15-REDESIGN-MEMBERS-TABLE-AND-DRAWER` | Nâng cấp Bảng thành viên phân nhóm theo Ban & Drawer trượt phải | 2026-11-02 | **PASS** | [task-15-redesign-members-table-and-drawer.md](tasks/task-15-redesign-members-table-and-drawer.md) |
 
 ---
 
