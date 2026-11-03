@@ -99,7 +99,23 @@ describe("filterQuestionBank", () => {
   });
 
   it("hides topics whose questions all fail the kind filter even when the topic matches", () => {
-    expect(run("cong nghe", "long")).toEqual([]);
+    expect(run("cong nghe", "file")).toEqual([]);
+  });
+
+  it("treats legacy kinds as their simplified replacement", () => {
+    const legacy: Record<string, Q[]> = {
+      t1: [{ prompt: "Bạn tên gì?", kind: "short", options: [] }],
+      t2: [{ prompt: "Chọn mức lương?", kind: "dropdown", options: ["Thấp", "Cao"] }],
+      t3: [],
+    };
+    const withLegacy = (search: string, kindFilter: string) =>
+      filterQuestionBank({ topics, questionsOf: (id) => legacy[id] ?? [], search, kindFilter });
+
+    expect(withLegacy("", "long").map((x) => x.topic.id)).toEqual(["t1"]);
+    expect(withLegacy("", "single").map((x) => x.topic.id)).toEqual(["t2"]);
+    // The kind label search follows the canonical kind too: "short" is now "Đoạn văn".
+    expect(withLegacy("doan van", "all").map((x) => x.topic.id)).toEqual(["t1"]);
+    expect(withLegacy("mot lua chon", "all").map((x) => x.topic.id)).toEqual(["t2"]);
   });
 
   it("shows all questions of the requested kind when the topic itself matches", () => {

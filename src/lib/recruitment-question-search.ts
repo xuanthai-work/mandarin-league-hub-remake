@@ -1,4 +1,4 @@
-import { QUESTION_KINDS } from "./recruitment";
+import { QUESTION_KINDS, canonicalKind } from "./recruitment";
 
 /** Minimal shapes the question-bank search needs (structurally compatible with the studio rows). */
 export type SearchableTopic = {
@@ -33,7 +33,8 @@ export function questionMatchesSearch(q: SearchableQuestion, normTerm: string): 
   if (!normTerm) return true;
   if (contains(q.prompt, normTerm)) return true;
   if (Array.isArray(q.options) && q.options.some((opt) => contains(opt, normTerm))) return true;
-  return contains(QUESTION_KINDS[q.kind] ?? q.kind, normTerm);
+  const kind = canonicalKind(q.kind);
+  return contains(QUESTION_KINDS[kind] ?? kind, normTerm);
 }
 
 /** A topic matches on its title, description or the position it applies to. */
@@ -81,7 +82,7 @@ export function filterQuestionBank<
       const topicHit = normTerm !== "" && topicMatchesSearch(topic, normTerm);
       const matchingQuestions = allQuestions.filter(
         (q) =>
-          (anyKind || q.kind === kindFilter) &&
+          (anyKind || canonicalKind(q.kind) === kindFilter) &&
           (!normTerm || topicHit || questionMatchesSearch(q, normTerm)),
       );
       return { topic, allQuestions, matchingQuestions };

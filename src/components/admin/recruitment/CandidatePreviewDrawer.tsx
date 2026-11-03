@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Paperclip, X } from "lucide-react";
-import { deptName, positionsFor } from "@/lib/recruitment";
+import { canonicalKind, deptName, positionsFor } from "@/lib/recruitment";
 import {
   Select,
   SelectContent,
@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ChoiceAnswerList } from "@/components/recruitment/ChoiceAnswerList";
 import { SELECT_CONTENT, SELECT_TRIGGER, type StudioQuestion, type StudioTopic } from "./types";
 
 /**
@@ -126,73 +127,32 @@ export function CandidatePreviewDrawer({
                   .filter((q) => q.topic_id === topic.id && q.visible)
                   .map((q) => {
                     const value = answers[q.id];
+                    const kind = canonicalKind(q.kind);
                     return (
                       <div key={q.id}>
                         <p className="text-sm font-medium text-foreground">
                           {q.prompt}
                           {q.required && <span className="ml-1 text-destructive">*</span>}
                         </p>
-                        {q.kind === "short" && (
-                          <input
-                            className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                            value={(value as string) ?? ""}
-                            onChange={(e) => setAnswer(q.id, e.target.value)}
-                          />
-                        )}
-                        {q.kind === "long" && (
+                        {kind === "long" && (
                           <textarea
                             rows={3}
                             className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                            placeholder="Nhập câu trả lời của bạn…"
                             value={(value as string) ?? ""}
                             onChange={(e) => setAnswer(q.id, e.target.value)}
                           />
                         )}
-                        {q.kind === "dropdown" && (
-                          <select
-                            className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                            value={(value as string) ?? ""}
-                            onChange={(e) => setAnswer(q.id, e.target.value)}
-                          >
-                            <option value="">— Chọn —</option>
-                            {q.options.map((o) => (
-                              <option key={o}>{o}</option>
-                            ))}
-                          </select>
+                        {(kind === "single" || kind === "multi") && (
+                          <ChoiceAnswerList
+                            multiple={kind === "multi"}
+                            options={q.options}
+                            value={value}
+                            onChange={(next) => setAnswer(q.id, next)}
+                            ariaLabel={q.prompt}
+                          />
                         )}
-                        {(q.kind === "single" || q.kind === "multi") && (
-                          <div className="mt-1.5 flex flex-wrap gap-2">
-                            {q.options.map((o) => {
-                              const selected =
-                                q.kind === "single"
-                                  ? value === o
-                                  : Array.isArray(value) && value.includes(o);
-                              return (
-                                <button
-                                  type="button"
-                                  key={o}
-                                  onClick={() =>
-                                    setAnswer(
-                                      q.id,
-                                      q.kind === "single"
-                                        ? o
-                                        : selected
-                                          ? (value as string[]).filter((x) => x !== o)
-                                          : [...((value as string[]) ?? []), o],
-                                    )
-                                  }
-                                  className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                                    selected
-                                      ? "border-primary bg-primary text-primary-foreground"
-                                      : "border-border hover:bg-accent"
-                                  }`}
-                                >
-                                  {o}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {q.kind === "file" && (
+                        {kind === "file" && (
                           <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-xs text-muted-foreground">
                             <Paperclip className="h-3.5 w-3.5" />
                             Ứng viên tải tệp lên tại đây

@@ -34,9 +34,24 @@ export function nextCandidateMessage(current: string, newStatus: string): string
   if (!isTemplate) return current;
   return STATUS_MESSAGE_TEMPLATES[newStatus] ?? (current.trim() ? "" : current);
 }
+/** The four question kinds admins can pick today. */
 export const QUESTION_KINDS: Record<string, string> = {
-  short: "Trả lời ngắn", long: "Đoạn văn", single: "Một lựa chọn", multi: "Nhiều lựa chọn", dropdown: "Danh sách lựa chọn", file: "Tải tệp",
+  long: "Đoạn văn", single: "Một lựa chọn", multi: "Nhiều lựa chọn", file: "Tải tệp",
 };
+
+export type QuestionKind = "long" | "single" | "multi" | "file";
+
+/**
+ * Maps every stored kind onto the four supported ones. Older rows may still hold
+ * `short` (now a paragraph) or `dropdown` (now a single choice), so every reader
+ * funnels kinds through here instead of testing raw values.
+ */
+export function canonicalKind(kind: string): QuestionKind {
+  if (kind === "short") return "long";
+  if (kind === "dropdown") return "single";
+  if (kind === "single" || kind === "multi" || kind === "file") return kind;
+  return "long";
+}
 
 export const CV_EXT = ["pdf", "doc", "docx"];
 export const FILE_EXT = ["pdf", "doc", "docx", "png", "jpg", "jpeg", "webp"];
@@ -64,7 +79,7 @@ export const QUESTION_BANK: BankEntry[] = [
     { title: "Tầm nhìn", description: "Định hướng phát triển TML.", questions: [req("Bạn mong muốn TML phát triển theo hướng nào trong thời gian tới?")] },
   ] },
   { department: "executive", position: "Thư ký", topics: [
-    { title: "Tổ chức và quản lý công việc", description: "Khả năng quản lý lịch, hồ sơ, tài liệu.", questions: [req("Bạn đã từng quản lý lịch làm việc, hồ sơ, tài liệu hoặc biên bản chưa?"), opt("Bạn thường sử dụng công cụ nào để quản lý công việc?", "short")] },
+    { title: "Tổ chức và quản lý công việc", description: "Khả năng quản lý lịch, hồ sơ, tài liệu.", questions: [req("Bạn đã từng quản lý lịch làm việc, hồ sơ, tài liệu hoặc biên bản chưa?"), opt("Bạn thường sử dụng công cụ nào để quản lý công việc?", "long")] },
     { title: "Xử lý công việc", description: "Cách sắp xếp ưu tiên.", questions: [req("Nếu có nhiều công việc phát sinh cùng lúc, bạn sẽ sắp xếp như thế nào?")] },
   ] },
   { department: "hr", position: null, topics: [
@@ -78,7 +93,7 @@ export const QUESTION_BANK: BankEntry[] = [
     { title: "Phát triển học liệu", description: "Khả năng biên soạn tài liệu.", questions: [{ prompt: "Bạn có thể tham gia biên soạn tài liệu, bài tập hoặc bài giảng không?", kind: "single", options: ["Có", "Có thể thử", "Chưa"] }, opt("Bạn có ý tưởng gì để nâng cao chất lượng các khóa học HSK của TML?")] },
   ] },
   { department: "comms", position: null, topics: [
-    { title: "Kinh nghiệm truyền thông", description: "Viết nội dung và quản lý kênh.", questions: [req("Bạn đã từng viết nội dung hoặc quản lý truyền thông chưa?"), opt("Bạn đã từng phụ trách kênh truyền thông nào?", "short")] },
+    { title: "Kinh nghiệm truyền thông", description: "Viết nội dung và quản lý kênh.", questions: [req("Bạn đã từng viết nội dung hoặc quản lý truyền thông chưa?"), opt("Bạn đã từng phụ trách kênh truyền thông nào?", "long")] },
     { title: "Công cụ & nền tảng", description: "Nền tảng bạn sử dụng thành thạo.", questions: [{ prompt: "Bạn thường sử dụng:", kind: "multi", options: ["Facebook", "TikTok", "Instagram", "LinkedIn", "Canva", "CapCut", "Công cụ AI", "Khác"] }] },
     { title: "Tư duy sáng tạo", description: "Ý tưởng truyền thông.", questions: [req("Hãy đề xuất một ý tưởng truyền thông ngắn cho TML.")] },
   ] },
@@ -88,14 +103,14 @@ export const QUESTION_BANK: BankEntry[] = [
     { title: "Sản phẩm thực tế", description: "Sản phẩm tiêu biểu (không bắt buộc).", questions: [opt("Tải lên một sản phẩm thiết kế tiêu biểu nếu có.", "file")] },
   ] },
   { department: "translation", position: null, topics: [
-    { title: "Trình độ ngôn ngữ", description: "Trình độ và chứng chỉ tiếng Trung.", questions: [req("Trình độ tiếng Trung hiện tại của bạn?", "short"), { prompt: "Bạn có chứng chỉ HSK không?", kind: "single", options: ["Có", "Chưa"] }] },
+    { title: "Trình độ ngôn ngữ", description: "Trình độ và chứng chỉ tiếng Trung.", questions: [req("Trình độ tiếng Trung hiện tại của bạn?", "long"), { prompt: "Bạn có chứng chỉ HSK không?", kind: "single", options: ["Có", "Chưa"] }] },
     { title: "Kinh nghiệm dịch thuật", description: "Kinh nghiệm biên – phiên dịch.", questions: [req("Bạn đã từng biên dịch hoặc phiên dịch chưa?"), { prompt: "Thế mạnh của bạn là:", kind: "single", options: ["Trung → Việt", "Việt → Trung", "Cả hai"], required: true }] },
     { title: "Sản phẩm thực tế", description: "Bản dịch mẫu (không bắt buộc).", questions: [opt("Tải lên một sản phẩm dịch mẫu nếu có.", "file")] },
   ] },
   { department: "postcard", position: null, topics: [
     { title: "Năng lực sáng tạo nội dung", description: "Kinh nghiệm viết, kể chuyện, thu âm.", questions: [req("Bạn có kinh nghiệm viết nội dung, kể chuyện, thu âm hoặc podcast không?")] },
     { title: "Mảng muốn tham gia", description: "Chọn mảng bạn quan tâm.", questions: [{ prompt: "Có thể chọn:", kind: "multi", options: ["Viết nội dung", "Viết kịch bản", "Thu âm", "Biên tập âm thanh", "Dẫn chương trình", "Khác"], required: true }] },
-    { title: "Ý tưởng nội dung", description: "Đề xuất chủ đề.", questions: [req("Hãy đề xuất một chủ đề podcast cho TML."), opt("Nếu đã có sản phẩm, dán liên kết (Google Drive, YouTube, Spotify...)", "short")] },
+    { title: "Ý tưởng nội dung", description: "Đề xuất chủ đề.", questions: [req("Hãy đề xuất một chủ đề podcast cho TML."), opt("Nếu đã có sản phẩm, dán liên kết (Google Drive, YouTube, Spotify...)", "long")] },
   ] },
   { department: "finance", position: null, topics: [
     { title: "Kinh nghiệm đối ngoại", description: "Làm việc với đối tác, tài trợ.", questions: [req("Bạn đã từng làm việc với đối tác, tài trợ hoặc hoạt động đối ngoại chưa?")] },
@@ -108,7 +123,7 @@ export const QUESTION_BANK: BankEntry[] = [
     { title: "Tư duy giải quyết vấn đề", description: "Cách tiếp cận vấn đề mới.", questions: [req("Nếu được giao sửa một chức năng trên website nhưng chưa biết cách làm, bạn sẽ xử lý như thế nào?")] },
   ] },
   { department: null, position: null, topics: [
-    { title: "Mức độ phù hợp & cam kết", description: "Áp dụng cho mọi ứng viên.", questions: [opt("Bạn biết đến THE MANDARIN LEAGUE từ đâu?", "short"), { prompt: "Bạn có thể dành khoảng bao nhiêu thời gian mỗi tuần cho TML?", kind: "dropdown", options: ["Dưới 3 giờ", "3–5 giờ", "5–10 giờ", "Trên 10 giờ"], required: true }, opt("Bạn mong muốn đạt được điều gì khi tham gia TML?")] },
+    { title: "Mức độ phù hợp & cam kết", description: "Áp dụng cho mọi ứng viên.", questions: [opt("Bạn biết đến THE MANDARIN LEAGUE từ đâu?", "long"), { prompt: "Bạn có thể dành khoảng bao nhiêu thời gian mỗi tuần cho TML?", kind: "single", options: ["Dưới 3 giờ", "3–5 giờ", "5–10 giờ", "Trên 10 giờ"], required: true }, opt("Bạn mong muốn đạt được điều gì khi tham gia TML?")] },
   ] },
 ];
 

@@ -5,7 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createApplicationUpload, submitApplication } from "@/lib/recruitment.functions";
-import { CV_EXT, FILE_EXT, MAX_FILE_MB, deptName, parseDob, topicApplies, type Answers } from "@/lib/recruitment";
+import { CV_EXT, FILE_EXT, MAX_FILE_MB, canonicalKind, deptName, parseDob, topicApplies, type Answers } from "@/lib/recruitment";
+import { ChoiceAnswerList } from "./ChoiceAnswerList";
 import { DobPicker } from "./DobPicker";
 
 type Topic = { id: string; department: string | null; position: string | null; period_id: string | null; title: string; description: string; sort_order: number };
@@ -153,22 +154,15 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
       <div className="mt-4 space-y-4">
         {qsFor(t.id).map((q) => {
           const v = answers[q.id];
+          const kind = canonicalKind(q.kind);
           return (
-            <label key={q.id} data-field={q.id} className={`block rounded-lg ${errs[q.id] ? "p-2 ring-2 ring-destructive/40 bg-destructive/5" : ""}`}>
+            <div key={q.id} data-field={q.id} className={`block rounded-lg ${errs[q.id] ? "p-2 ring-2 ring-destructive/40 bg-destructive/5" : ""}`}>
               <Label required={q.required}>{q.prompt}</Label><ErrMsg k={q.id} />
-              {q.kind === "short" && <input className={input} value={(v as string) ?? ""} onChange={(e) => setAns(q.id, e.target.value)} maxLength={500} />}
-              {q.kind === "long" && <textarea className={input} rows={3} value={(v as string) ?? ""} onChange={(e) => setAns(q.id, e.target.value)} maxLength={5000} />}
-              {q.kind === "dropdown" && <select className={input} value={(v as string) ?? ""} onChange={(e) => setAns(q.id, e.target.value)}><option value="">— Chọn —</option>{q.options.map((o) => <option key={o}>{o}</option>)}</select>}
-              {(q.kind === "single" || q.kind === "multi") && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {q.options.map((o) => {
-                    const sel = q.kind === "single" ? v === o : Array.isArray(v) && v.includes(o);
-                    return <button type="button" key={o} onClick={() => setAns(q.id, q.kind === "single" ? o : sel ? (v as string[]).filter((x) => x !== o) : [...((v as string[]) ?? []), o])}
-                      className={`rounded-full border px-3 py-1.5 text-sm ${sel ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-accent"}`}>{o}</button>;
-                  })}
-                </div>
+              {kind === "long" && <textarea className={input} rows={3} placeholder="Nhập câu trả lời của bạn…" value={(v as string) ?? ""} onChange={(e) => setAns(q.id, e.target.value)} maxLength={5000} />}
+              {(kind === "single" || kind === "multi") && (
+                <ChoiceAnswerList multiple={kind === "multi"} options={q.options} value={v} onChange={(next) => setAns(q.id, next)} ariaLabel={q.prompt} />
               )}
-              {q.kind === "file" && (
+              {kind === "file" && (
                 <div className="mt-2 flex items-center gap-3 text-sm">
                   <input type="file" accept={FILE_EXT.map((x) => "." + x).join(",")} onChange={async (e) => {
                     const f = e.target.files?.[0]; if (!f) return; setBusy(q.id); setError(null);
@@ -178,7 +172,7 @@ export function ApplicationForm({ onLookup, department }: { onLookup?: (code: st
                   {busy === q.id && <Loader2 className="h-4 w-4 animate-spin" />}{typeof v === "string" && v && <span className="text-success">Đã tải lên</span>}
                 </div>
               )}
-            </label>
+            </div>
           );
         })}
       </div>

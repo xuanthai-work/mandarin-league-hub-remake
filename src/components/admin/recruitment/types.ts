@@ -3,6 +3,8 @@
  * `recruitment_topics` / `recruitment_questions` rows are structurally compatible,
  * so the page can pass its query result straight through without type gymnastics.
  */
+import { canonicalKind } from "@/lib/recruitment";
+
 export type StudioTopic = {
   id: string;
   department: string | null;
@@ -41,8 +43,8 @@ export type Confirm = (opts: {
 }) => Promise<boolean>;
 
 /** Question kinds that carry a list of options the applicant picks from. */
-export const CHOICE_KINDS = ["single", "multi", "dropdown"];
-export const isChoiceKind = (kind: string) => CHOICE_KINDS.includes(kind);
+export const CHOICE_KINDS = ["single", "multi"];
+export const isChoiceKind = (kind: string) => CHOICE_KINDS.includes(canonicalKind(kind));
 
 /** Swaps `sort_order` of two rows of the same table (topics or questions). */
 export type Swap = (
@@ -56,3 +58,6 @@ export const FIELD = "w-full rounded-lg border border-input bg-background px-3 p
 export const SELECT_TRIGGER =
   "h-9 w-full rounded-lg border-input bg-background text-sm font-normal shadow-none";
 export const SELECT_CONTENT = "rounded-xl";
+
+/** Marks the free-text option in the position selects, so it never collides with a real title. */
+export const CUSTOM_POSITION = "__custom__";

@@ -22,8 +22,10 @@ import { CandidatePreviewDrawer } from "./CandidatePreviewDrawer";
 import { DepartmentRail } from "./DepartmentRail";
 import { TopicAccordionCard } from "./TopicAccordionCard";
 import {
+  CUSTOM_POSITION,
   SELECT_CONTENT,
   SELECT_TRIGGER,
+  isChoiceKind,
   type Confirm,
   type Run,
   type StudioData,
@@ -53,6 +55,8 @@ export function QuestionBankStudio({
   const [loadingBank, setLoadingBank] = useState<string | null>(null);
   const [topicDialogOpen, setTopicDialogOpen] = useState(false);
   const [newTopic, setNewTopic] = useState({ title: "", description: "", position: "" });
+  const [customPosition, setCustomPosition] = useState(false);
+  const [customPositionInput, setCustomPositionInput] = useState("");
 
   const deptKey = deptOf(selectedDept);
   const questionsOf = (topicId: string) =>
@@ -62,6 +66,17 @@ export function QuestionBankStudio({
   const deptTopics = data.topics
     .filter((t) => t.department === deptKey)
     .sort((a, b) => a.sort_order - b.sort_order);
+
+  /** Default titles plus every custom position already used by this department. */
+  const defaultPositions = deptKey ? positionsFor(deptKey) : [];
+  const availablePositions = Array.from(
+    new Set([
+      ...defaultPositions,
+      ...deptTopics
+        .map((t) => t.position)
+        .filter((p): p is string => Boolean(p && !defaultPositions.includes(p))),
+    ]),
+  );
 
   /** Both filters intersect: a question must pass the kind filter AND the search term. */
   const filteredTopics = filterQuestionBank({
@@ -83,7 +98,7 @@ export function QuestionBankStudio({
     topics: data.topics.length,
     questions: data.questions.length,
     required: data.questions.filter((q) => q.required).length,
-    choice: data.questions.filter((q) => ["single", "multi", "dropdown"].includes(q.kind)).length,
+    choice: data.questions.filter((q) => isChoiceKind(q.kind)).length,
   };
 
   const toggleTopic = (id: string) =>
@@ -150,24 +165,31 @@ export function QuestionBankStudio({
     );
   };
 
+  /** Resets the dialog so a half-typed custom position never leaks into the next topic. */
+  const closeTopicDialog = () => {
+    setTopicDialogOpen(false);
+    setCustomPosition(false);
+    setCustomPositionInput("");
+    setNewTopic({ title: "", description: "", position: "" });
+  };
+
   const addTopic = (e: FormEvent) => {
     e.preventDefault();
     const title = newTopic.title.trim();
     if (!title) return;
+    const position = (customPosition ? customPositionInput.trim() : newTopic.position) || null;
+    if (customPosition && !position) return;
     void run(
       supabase.from("recruitment_topics").insert({
         department: deptKey,
-        position: newTopic.position || null,
+        position,
         title,
         description: newTopic.description.trim(),
         sort_order: deptTopics.length,
       }),
       "Đã thêm chủ đề.",
     ).then((ok) => {
-      if (ok) {
-        setNewTopic({ title: "", description: "", position: "" });
-        setTopicDialogOpen(false);
-      }
+      if (ok) closeTopicDialog();
     });
   };
 
@@ -319,6 +341,7 @@ export function QuestionBankStudio({
                 topic={item.topic}
                 questions={item.matchingQuestions}
                 totalQuestionsCount={item.allQuestions.length}
+                availablePositions={availablePositions}
                 index={deptTopics.indexOf(item.topic)}
                 total={deptTopics.length}
                 expanded={!collapsed.has(item.topic.id)}
@@ -334,7 +357,13 @@ export function QuestionBankStudio({
           )}
         </div>
       </div>
-      <Dialog open={topicDialogOpen} onOpenChange={setTopicDialogOpen}>
+      <Dialog
+        open={topicDialogOpen}
+        onOpenChange={(open) => {
+          if (open) setTopicDialogOpen(true);
+          else closeTopicDialog();
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Chủ đề mới</DialogTitle>
@@ -374,29 +403,65 @@ export function QuestionBankStudio({
             <div>
               <p className="text-xs font-medium text-muted-foreground">Vị trí áp dụng</p>
               <Select
-                value={newTopic.position || "all"}
-                onValueChange={(v) => setNewTopic({ ...newTopic, position: v === "all" ? "" : v })}
+                value={customPosition ? CUSTOM_POSITION : newTopic.position || "all"}
+                onValueChange={(v) => {
+                  if (v === CUSTOM_POSITION) {
+                    setCustomPosition(true);
+                    setCustomPositionInput("");
+                    setNewTopic({ ...newTopic, position: "" });
+                    return;
+                  }
+                  setCustomPosition(false);
+                  setNewTopic({ ...newTopic, position: v === "all" ? "" : v });
+                }}
               >
                 <SelectTrigger aria-label="Vị trí áp dụng" className={`mt-1 ${SELECT_TRIGGER}`}>
-                  <SelectValue>{newTopic.position || "Mọi vị trí"}</SelectValue>
+                  <SelectValue>
+                    {customPosition ? "Vị trí tùy chỉnh" : newTopic.position || "Mọi vị trí"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className={SELECT_CONTENT}>
                   <SelectItem value="all" className="text-sm">
                     Mọi vị trí
                   </SelectItem>
-                  {(deptKey ? positionsFor(deptKey) : []).map((p) => (
+                  {availablePositions.map((p) => (
                     <SelectItem key={p} value={p} className="text-sm">
                       {p}
                     </SelectItem>
                   ))}
+                  <SelectItem value={CUSTOM_POSITION} className="text-sm">
+                    + Nhập vị trí mới…
+                  </SelectItem>
                 </SelectContent>
               </Select>
+              {customPosition && (
+                <div className="mt-1.5 space-y-1.5">
+                  <input
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="VD: Trưởng nhóm Frontend, CTV Sự kiện…"
+                    aria-label="Vị trí tùy chỉnh"
+                    required
+                    value={customPositionInput}
+                    onChange={(e) => setCustomPositionInput(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomPosition(false);
+                      setCustomPositionInput("");
+                    }}
+                    className="text-[11px] font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                  >
+                    Hủy / Chọn từ danh sách
+                  </button>
+                </div>
+              )}
             </div>
           </form>
           <DialogFooter>
             <button
               type="button"
-              onClick={() => setTopicDialogOpen(false)}
+              onClick={closeTopicDialog}
               className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
             >
               Hủy

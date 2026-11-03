@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
-import { QUESTION_KINDS } from "@/lib/recruitment";
+import { QUESTION_KINDS, canonicalKind } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -39,6 +39,7 @@ export function QuestionItemCard({
   onSwap: (i: number, j: number) => void;
 }) {
   const [draft, setDraft] = useState("");
+  const kind = canonicalKind(question.kind);
   const choice = isChoiceKind(question.kind);
 
   const save = (
@@ -76,12 +77,12 @@ export function QuestionItemCard({
             if (prompt && prompt !== question.prompt) void save({ prompt });
           }}
         />
-        <Select value={question.kind} onValueChange={(kind) => void save({ kind })}>
+        <Select value={kind} onValueChange={(next) => void save({ kind: next })}>
           <SelectTrigger
             aria-label="Loại câu hỏi"
             className="h-9 w-[150px] rounded-lg border-input bg-background text-xs font-medium shadow-none"
           >
-            <SelectValue>{QUESTION_KINDS[question.kind] ?? question.kind}</SelectValue>
+            <SelectValue>{QUESTION_KINDS[kind]}</SelectValue>
           </SelectTrigger>
           <SelectContent className={SELECT_CONTENT}>
             {Object.entries(QUESTION_KINDS).map(([k, v]) => (
@@ -199,25 +200,20 @@ export function QuestionItemCard({
           {question.options.length > 0 && (
             <div className="space-y-1 rounded-lg border border-dashed border-border p-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Xem trước ·{" "}
-                {question.kind === "multi"
-                  ? "chọn nhiều"
-                  : question.kind === "dropdown"
-                    ? "danh sách"
-                    : "chọn một"}
+                Xem trước · {kind === "multi" ? "chọn nhiều" : "chọn một"}
               </p>
               {question.options.slice(0, 3).map((option) => (
                 <span
                   key={option}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                  className="flex items-center justify-between gap-1.5 rounded-md border border-border/70 px-2 py-1 text-xs text-muted-foreground"
                 >
+                  {option}
                   <span
                     aria-hidden
-                    className={`h-3 w-3 shrink-0 border border-input ${
-                      question.kind === "multi" ? "rounded-[3px]" : "rounded-full"
+                    className={`h-3 w-3 shrink-0 border border-muted-foreground/30 ${
+                      kind === "multi" ? "rounded-[3px]" : "rounded-full"
                     }`}
                   />
-                  {option}
                 </span>
               ))}
               {question.options.length > 3 && (
