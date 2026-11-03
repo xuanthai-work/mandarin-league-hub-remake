@@ -107,7 +107,7 @@ function MemberDashboard() {
     QRCode.toDataURL(`https://member.themandarinleague.bond/library-access?pass=${t}`, { margin: 0, width: 200, errorCorrectionLevel: "M" }).then(setQr); }, [pass.data?.pass_token]);
   const [reporting, setReporting] = useState<{ id: string; title: string } | null>(null);
   const [savedImg, setSavedImg] = useState<string | null>(null);
-  const [tab, setTab] = useState<"card" | "tasks" | "points" | "dept" | "benefits">("card");
+  const [tab, setTab] = useState<"card" | "tasks" | "points" | "benefits">("card");
   const [layout, setLayout] = useState<"h" | "v">("h");
   const [name, setName] = useState("");
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
@@ -305,9 +305,8 @@ function MemberDashboard() {
       <div className="mt-4 flex gap-2 overflow-x-auto border-b border-primary/20 pb-0.5">
         {([
           ["card", "Thẻ & Hồ sơ"],
-          ["tasks", "Nhiệm vụ"],
+          ["tasks", "Ban & Nhiệm vụ"],
           ["points", "Lịch sử điểm"],
-          ["dept", "Ban của tôi"],
           ["benefits", "Quyền lợi"],
         ] as const).map(([k, l]) => (
           <button
@@ -459,62 +458,62 @@ function MemberDashboard() {
                 <div className="absolute h-[76%] aspect-square rounded-full border border-dashed border-gold/15" />
               </div>
 
-              {/* 2.1 Portrait */}
-              <div className="relative shrink-0">
-                {avatarEl("h-[148px] w-[111px]")}
+              {/* 2.1 Portrait — scales with the card so the body never looks hollow */}
+              <div className="relative flex w-full shrink-0 justify-center">
+                {avatarEl("w-[40%] max-w-[132px] aspect-[3/4]")}
               </div>
 
               {/* 2.2 Name + title */}
-              <div className="mt-1.5 w-full shrink-0">
+              <div className="mt-2 w-full shrink-0">
                 <div className="flex w-full items-center justify-center">
                   <button type="button" onClick={() => setSheet("name")} className="group/name relative min-w-0 max-w-full px-4" title="Sửa họ tên">
-                    <span className="block truncate text-center text-[17px] font-bold uppercase tracking-tight text-primary">{m.full_name}</span>
+                    <span className="block truncate text-center text-[19px] font-bold uppercase tracking-tight text-primary">{m.full_name}</span>
                     <Pencil className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 opacity-0 transition group-hover/name:opacity-70" />
                   </button>
                 </div>
-                <p className="text-[7.5px] font-semibold uppercase tracking-wider opacity-60">OFFICIAL MEMBER PASS · {tier.label}</p>
+                <p className="text-[8px] font-semibold uppercase tracking-wider opacity-60">OFFICIAL MEMBER PASS · {tier.label}</p>
               </div>
 
-              {/* 2.3 Smart chip module — anchored with the info block at the bottom */}
-              <div className="mt-1.5 flex w-full shrink-0 items-center justify-between rounded-lg border border-gold/40 bg-white/80 px-2.5 py-1.5 text-[8.5px] shadow-2xs backdrop-blur-xs">
+              {/* 2.3 Smart chip module */}
+              <div className="mt-2 flex w-full shrink-0 items-center justify-between rounded-lg border border-gold/40 bg-white/80 px-2.5 py-2 text-[9px] shadow-2xs backdrop-blur-xs">
                 <div className="flex items-center gap-2">
-                  <SmartChip className="h-5 w-7" />
-                  <Nfc className="h-3.5 w-3.5 opacity-60" />
+                  <SmartChip className="h-6 w-8" />
+                  <Nfc className="h-4 w-4 opacity-60" />
                 </div>
                 <div className="text-right leading-tight">
                   <button type="button" onClick={() => setSheet("qr")} className="block font-mono font-bold tracking-[0.14em] text-primary" title="Mã thành viên">{m.member_code}</button>
-                  <span className="font-mono text-[7px] uppercase text-muted-foreground">VALID: ID-1 PASS</span>
+                  <span className="font-mono text-[7.5px] uppercase text-muted-foreground">VALID: ID-1 PASS</span>
                 </div>
               </div>
 
-              {/* 2.4 2x2 info grid */}
-              <div className="mt-1.5 grid w-full shrink-0 grid-cols-2 gap-1.5 text-left text-[9px] leading-tight">
-                <div className="min-w-0 rounded-lg border border-gold/40 bg-white/80 p-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[6.5px] font-semibold uppercase tracking-wider text-muted-foreground">部门 · BAN</span>
-                  <button type="button" onClick={() => setSheet("dept_tasks")} title="Xem Ban & nhiệm vụ" className="block max-w-full truncate font-bold text-foreground hover:text-primary">{deptLabel}</button>
+              {/* 2.4 2x2 info grid — grows to fill the body, label on top and value at the bottom */}
+              <div className="mt-2 grid w-full min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-2 text-left text-[11px] leading-tight">
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">部门 · BAN</span>
+                  <button type="button" onClick={() => setSheet("dept_tasks")} title="Xem Ban & nhiệm vụ" className="block max-w-full truncate text-left font-bold text-foreground hover:text-primary">{deptLabel}</button>
                 </div>
-                <div className="min-w-0 rounded-lg border border-gold/40 bg-white/80 p-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[6.5px] font-semibold uppercase tracking-wider text-muted-foreground">职务 · CHỨC VỤ</span>
-                  <button type="button" onClick={() => setSheet("points_benefits")} title="Xem chức vụ & quyền lợi" className="block max-w-full truncate font-bold text-foreground hover:text-primary">{posLabel}</button>
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">职务 · CHỨC VỤ</span>
+                  <button type="button" onClick={() => setSheet("points_benefits")} title="Xem chức vụ & quyền lợi" className="block max-w-full truncate text-left font-bold text-foreground hover:text-primary">{posLabel}</button>
                 </div>
-                <div className="min-w-0 rounded-lg border border-gold/40 bg-white/80 p-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[6.5px] font-semibold uppercase tracking-wider text-muted-foreground">等级 · CẤP BẬC</span>
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">等级 · CẤP BẬC</span>
                   <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc & điểm" className="flex items-center gap-1 truncate font-bold text-primary">{tierEl}</button>
                 </div>
-                <div className="min-w-0 rounded-lg border border-gold/40 bg-white/80 p-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[6.5px] font-semibold uppercase tracking-wider text-muted-foreground">入会 · GIA NHẬP</span>
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">入会 · GIA NHẬP</span>
                   <span className="block font-mono font-bold text-foreground">{joined}</span>
                 </div>
               </div>
 
               {/* 2.5 QR + auth token */}
-              <div className="mt-auto flex w-full shrink-0 items-center justify-between gap-2 rounded-lg border border-gold/40 bg-white/80 px-2.5 py-1.5 shadow-2xs backdrop-blur-xs">
+              <div className="mt-2 flex w-full shrink-0 items-center justify-between gap-2 rounded-lg border border-gold/40 bg-white/80 px-2.5 py-2 shadow-2xs backdrop-blur-xs">
                 {qr ? (
                   <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Phóng to mã QR" className="shrink-0">
-                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[3px] border border-gold/60 bg-white p-0.5 shadow-2xs" />
+                    <img src={qr} alt={`QR ${m.member_code}`} className="h-11 w-11 rounded-[3px] border border-gold/60 bg-white p-0.5 shadow-2xs" />
                   </button>
-                ) : <div className="h-10 w-10 shrink-0" />}
-                <div className="min-w-0 flex-1 text-right font-mono text-[7px] leading-tight text-muted-foreground">
+                ) : <div className="h-11 w-11 shrink-0" />}
+                <div className="min-w-0 flex-1 text-right font-mono text-[8px] leading-tight text-muted-foreground">
                   <p className="uppercase tracking-wider">AUTH TOKEN</p>
                   <p className="truncate font-bold tracking-wider text-primary">{pass.data?.pass_token ? `SEC-TML-${pass.data.pass_token.slice(0, 6)}` : m.member_code}</p>
                 </div>
@@ -588,10 +587,13 @@ function MemberDashboard() {
       )}
 
       {tab === "tasks" && (
-        <section className="portal-glass mt-6 rounded-2xl p-5">
-          <h2 className="mb-3 font-semibold">Nhiệm vụ của tôi</h2>
-          {taskList}
-        </section>
+        <>
+          <MyDepartment canManage={canAdmin} />
+          <section className="portal-glass mt-6 rounded-2xl p-5">
+            <h2 className="mb-3 font-semibold">Nhiệm vụ của tôi</h2>
+            {taskList}
+          </section>
+        </>
       )}
 
       {tab === "points" && (
@@ -606,8 +608,6 @@ function MemberDashboard() {
           </div>
         </section>
       )}
-
-      {tab === "dept" && <MyDepartment canManage={canAdmin} />}
 
       {tab === "benefits" && <MyBenefits />}
 
