@@ -32,6 +32,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-25-DRAWER-REMOVE-CLOSE-ICON-AND-ADD-ESC-KEY` | Loại bỏ icon X Header, đồng bộ nút Hủy & thêm phím tắt Escape | 2026-11-03 | **PASS** | [task-25-drawer-remove-close-icon-and-add-esc-key.md](tasks/task-25-drawer-remove-close-icon-and-add-esc-key.md) |
 | `TASK-26-UNIFY-ADMIN-TOPBAR-AND-STRIP-PAGE-TITLE` | Thống nhất Top Header, khớp chiều cao 73px & đẩy Action lên Header | 2026-11-03 | **PASS** | [task-26-unify-admin-topbar-and-strip-page-title.md](tasks/task-26-unify-admin-topbar-and-strip-page-title.md) |
 | `TASK-27-REPLACE-DRAWER-SELECTS-WITH-CUSTOM-SHADCN-UI` | Thay thế toàn bộ Native Select bằng Custom Shadcn/UI trong Drawer | 2026-11-03 | **PASS** | [task-27-replace-drawer-selects-with-custom-shadcn-ui.md](tasks/task-27-replace-drawer-selects-with-custom-shadcn-ui.md) |
+| `TASK-28-REPLACE-PERMISSIONS-CHECKBOXES-WITH-SWITCH-ROWS` | Thay thế Checkbox Quyền chi tiết bằng Switch Rows tinh gọn | 2026-11-03 | **PASS** | [task-28-replace-permissions-checkboxes-with-switch-rows.md](tasks/task-28-replace-permissions-checkboxes-with-switch-rows.md) |
 
 ---
 

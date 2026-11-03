@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deptName } from "@/lib/recruitment";
@@ -117,6 +119,35 @@ const ACCOUNT_STATUS_OPTIONS = ACCOUNT_STATUS_ORDER
 function StatusPill({ m }: { m: MemberRow }) {
   const s = UNIFIED_STATUS_MAP[unifiedStatus(m)];
   return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold ${s.badge}`}><span className={`h-1.5 w-1.5 shrink-0 rounded-full ${s.dot}`} />{s.label}</span>;
+}
+
+/** 14 permission toggles rendered as compact switch rows; click anywhere on a row to toggle. */
+function PermissionSwitches({ selected, onToggle }: { selected: string[]; onToggle: (key: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <div>
+        <h4 className="text-xs font-semibold text-foreground">Quyền chi tiết</h4>
+        <p className="text-[11px] text-muted-foreground">Mặc định theo vai trò đã chọn — có thể bật hoặc tắt từng quyền.</p>
+      </div>
+      <div className="grid gap-x-4 sm:grid-cols-2">
+        {PERMISSIONS.map(([k, l]) => {
+          const on = selected.includes(k);
+          return (
+            <div
+              key={k}
+              onClick={() => onToggle(k)}
+              className="flex cursor-pointer select-none items-center justify-between gap-2 rounded px-1 py-0.5 transition-colors hover:bg-muted/50"
+            >
+              <span className={cn("truncate text-xs", on ? "font-medium text-foreground" : "text-muted-foreground")}>{l}</span>
+              <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                <Switch checked={on} onCheckedChange={() => onToggle(k)} className="scale-75" />
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 /** Email + the row's single status badge; members without an account get the quick-grant button. */
@@ -634,13 +665,7 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
                     </SelectContent>
                   </Select>
                 </div>
-                <fieldset className="rounded-lg border border-border p-3">
-                  <legend className="px-1 text-xs text-muted-foreground">Quyền chi tiết</legend>
-                  <p className="mb-2 text-[11px] text-muted-foreground">Mặc định theo vai trò đã chọn — có thể tick thêm hoặc bỏ bớt từng quyền.</p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {PERMISSIONS.map(([k, l]) => <label key={k} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={permissions.includes(k)} onChange={(e) => setPermissions(e.target.checked ? [...permissions, k] : permissions.filter((x) => x !== k))} />{l}</label>)}
-                  </div>
-                </fieldset>
+                <PermissionSwitches selected={permissions} onToggle={(k) => setPermissions(permissions.includes(k) ? permissions.filter((x) => x !== k) : [...permissions, k])} />
                 <div className="rounded-xl border border-border/70 p-3">
                   <h4 className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="h-4 w-4" />Mật khẩu</h4>
                   <div className="mt-2 flex gap-2">
@@ -763,12 +788,7 @@ function GrantAccount({ m, onChanged, onClose }: { m: MemberRow; onChanged: () =
           </Select>
         </div>
       </div>
-      <fieldset className="rounded-lg border border-border p-3">
-        <legend className="px-1 text-xs text-muted-foreground">Quyền chi tiết</legend>
-        <div className="grid grid-cols-2 gap-1.5">
-          {PERMISSIONS.map(([k, l]) => <label key={k} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={v.permissions.includes(k)} onChange={(e) => set({ permissions: e.target.checked ? [...v.permissions, k] : v.permissions.filter((x) => x !== k) })} />{l}</label>)}
-        </div>
-      </fieldset>
+      <PermissionSwitches selected={v.permissions} onToggle={(k) => set({ permissions: v.permissions.includes(k) ? v.permissions.filter((x) => x !== k) : [...v.permissions, k] })} />
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={v.mustChange} onChange={(e) => set({ mustChange: e.target.checked })} />Yêu cầu đổi mật khẩu khi đăng nhập lần đầu</label>
       {err && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
       <button disabled={busy} onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy && <Loader2 className="h-4 w-4 animate-spin" />}Cấp tài khoản</button>
@@ -959,13 +979,7 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
                   </SelectContent>
                 </Select>
               </div>
-              <fieldset className="rounded-lg border border-border p-3">
-                <legend className="px-1 text-xs text-muted-foreground">Quyền chi tiết</legend>
-                <p className="mb-2 text-[11px] text-muted-foreground">Mặc định theo vai trò đã chọn — có thể tick thêm hoặc bỏ bớt từng quyền.</p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {PERMISSIONS.map(([k, l]) => <label key={k} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={v.permissions.includes(k)} onChange={(e) => set({ permissions: e.target.checked ? [...v.permissions, k] : v.permissions.filter((x) => x !== k) })} />{l}</label>)}
-                </div>
-              </fieldset>
+              <PermissionSwitches selected={v.permissions} onToggle={(k) => set({ permissions: v.permissions.includes(k) ? v.permissions.filter((x) => x !== k) : [...v.permissions, k] })} />
             </section>
           )}
 
