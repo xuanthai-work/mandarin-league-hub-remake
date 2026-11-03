@@ -1,29 +1,18 @@
-import { Check, Globe, ListPlus } from "lucide-react";
-import { RAIL, RAIL_IDS, bankTopicCount, deptOf } from "./rail";
+import { Globe, ListPlus } from "lucide-react";
+import { RAIL, bankTopicCount, deptOf } from "./rail";
 import type { StudioData } from "./types";
 
-/**
- * Left column of the studio: pick one or more departments whose topics are being
- * edited. Selections are additive (checkbox style) and can be combined freely.
- */
+/** Left column of the studio: pick the department whose topics are being edited. */
 export function DepartmentRail({
   data,
-  selectedDepts,
-  onToggleDept,
-  onSelectAll,
-  onClearAll,
+  selected,
+  onSelect,
   onLoadBank,
   loadingBank,
 }: {
   data: StudioData;
-  /** Rail ids currently selected; may hold any number of buckets. */
-  selectedDepts: string[];
-  /** Adds the bucket to the selection, or removes it when already selected. */
-  onToggleDept: (id: string) => void;
-  /** Selects every bucket (shared questions + all departments). */
-  onSelectAll: () => void;
-  /** Clears the selection so the admin can start a fresh combination. */
-  onClearAll: () => void;
+  selected: string;
+  onSelect: (id: string) => void;
   onLoadBank: (id: string) => void;
   loadingBank: string | null;
 }) {
@@ -39,92 +28,31 @@ export function DepartmentRail({
     };
   };
 
-  const allSelected = RAIL_IDS.every((id) => selectedDepts.includes(id));
-  const totals = { topics: data.topics.length, questions: data.questions.length };
-
-  /** Checkbox marker: filled with a check when the bucket is part of the filter. */
-  const marker = (active: boolean) => (
-    <span
-      aria-hidden
-      className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-[4px] border transition-colors ${
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-muted-foreground/40 bg-background"
-      }`}
-    >
-      {active && <Check className="h-3 w-3" strokeWidth={3} />}
-    </span>
-  );
-
-  const rowClass = (active: boolean) =>
-    `flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors ${
-      active ? "bg-primary/10 text-primary ring-1 ring-primary/40 ring-inset" : "hover:bg-accent"
-    }`;
-
   return (
     <aside className="rounded-2xl border border-border bg-card p-2.5 lg:sticky lg:top-4 lg:self-start">
-      <div className="flex items-center justify-between gap-2 px-2 pb-1.5 pt-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Ban tuyển dụng
-        </p>
-        <div className="flex items-center gap-1.5">
-          <p className="text-[10px] font-medium text-muted-foreground">
-            {selectedDepts.length}/{RAIL_IDS.length} chọn
-          </p>
-          {selectedDepts.length > 0 && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="rounded-md px-1 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              Bỏ chọn
-            </button>
-          )}
-        </div>
-      </div>
+      <p className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Ban tuyển dụng
+      </p>
       {/* p-1 keeps the active ring inside the scroll box so its left edge is never clipped. */}
       <div className="max-h-[420px] space-y-1 overflow-y-auto p-1 lg:max-h-[calc(100vh-220px)]">
-        <button
-          type="button"
-          onClick={onSelectAll}
-          aria-pressed={allSelected}
-          title="Chọn tất cả các ban"
-          className={rowClass(allSelected)}
-        >
-          {marker(allSelected)}
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1.5 text-sm">
-              <Globe className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate font-semibold">Tất cả các ban</span>
-            </span>
-            <span className="block text-[11px] font-normal text-muted-foreground">
-              {totals.topics} chủ đề · {totals.questions} câu
-            </span>
-          </span>
-        </button>
-
-        <p className="px-2 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">
-          Chọn nhiều ban để lọc kết hợp
-        </p>
-
         {RAIL.map((item) => {
-          const active = selectedDepts.includes(item.id);
+          const active = selected === item.id;
           const s = stats(item.id);
           const seedable = s.topics === 0 && bankTopicCount(item.id) > 0;
           return (
             <div key={item.id}>
               <button
                 type="button"
-                onClick={() => onToggleDept(item.id)}
-                aria-pressed={active}
-                title={active ? `Bỏ chọn ${item.name}` : `Chọn ${item.name}`}
-                className={rowClass(active)}
+                onClick={() => onSelect(item.id)}
+                aria-current={active ? "true" : undefined}
+                className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors ${
+                  active ? "bg-primary/10 ring-1 ring-primary/40 ring-inset" : "hover:bg-accent"
+                }`}
               >
-                {marker(active)}
                 <span className="min-w-0 flex-1">
                   <span
                     className={`flex items-center gap-1.5 text-sm ${
-                      active ? "font-semibold" : "font-medium text-foreground"
+                      active ? "font-semibold text-primary" : "font-medium text-foreground"
                     }`}
                   >
                     {item.id === "common" && (
@@ -132,7 +60,7 @@ export function DepartmentRail({
                     )}
                     <span className="truncate">{item.name}</span>
                   </span>
-                  <span className="block text-[11px] font-normal text-muted-foreground">
+                  <span className="block text-[11px] text-muted-foreground">
                     {s.topics} chủ đề · {s.questions} câu
                     {item.hint && ` · ${item.hint}`}
                   </span>

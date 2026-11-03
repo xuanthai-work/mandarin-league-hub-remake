@@ -34,8 +34,12 @@ const questions: Record<string, Q[]> = {
 
 const questionsOf = (id: string) => questions[id] ?? [];
 
-const run = (search: string, kindFilter = "all") =>
-  filterQuestionBank({ topics, questionsOf, search, kindFilter });
+/** `kind` accepts "all", one canonical kind id, or several of them. */
+const kindsOf = (kind: string | string[]) =>
+  kind === "all" ? [] : Array.isArray(kind) ? kind : [kind];
+
+const run = (search: string, kind: string | string[] = "all") =>
+  filterQuestionBank({ topics, questionsOf, search, kinds: kindsOf(kind) });
 
 describe("normalizeText", () => {
   it("strips Vietnamese diacritics and lowercases", () => {
@@ -93,7 +97,7 @@ describe("filterQuestionBank", () => {
       topics: localTopics,
       questionsOf: (id) => localQuestions[id] ?? [],
       search: "công cụ",
-      kindFilter: "all",
+      kinds: [],
     });
     expect(out.map((x) => x.topic.id)).toEqual(["t9"]);
     expect(out[0]!.matchingQuestions.map((q) => q.prompt)).toEqual(["Bạn dùng công cụ nào?"]);
@@ -111,6 +115,13 @@ describe("filterQuestionBank", () => {
     const out = run("", "multi");
     expect(out.map((x) => x.topic.id)).toEqual(["t1", "t2"]);
     expect(out.every((x) => x.matchingQuestions.every((q) => q.kind === "multi"))).toBe(true);
+  });
+
+  it("supports selecting several kinds at once", () => {
+    // "short" canonicalises to "long", so t2 contributes both questions here.
+    const out = run("", ["multi", "long"]);
+    expect(out.map((x) => x.topic.id)).toEqual(["t1", "t2", "t3"]);
+    expect(out.map((x) => x.matchingQuestions.length)).toEqual([2, 2, 1]);
   });
 
   it("intersects kind and search term", () => {
@@ -131,8 +142,13 @@ describe("filterQuestionBank", () => {
       t2: [{ prompt: "Chọn mức lương?", kind: "dropdown", options: ["Thấp", "Cao"] }],
       t3: [],
     };
-    const withLegacy = (search: string, kindFilter: string) =>
-      filterQuestionBank({ topics, questionsOf: (id) => legacy[id] ?? [], search, kindFilter });
+    const withLegacy = (search: string, kind: string | string[]) =>
+      filterQuestionBank({
+        topics,
+        questionsOf: (id) => legacy[id] ?? [],
+        search,
+        kinds: kindsOf(kind),
+      });
 
     expect(withLegacy("", "long").map((x) => x.topic.id)).toEqual(["t1"]);
     expect(withLegacy("", "single").map((x) => x.topic.id)).toEqual(["t2"]);

@@ -6,9 +6,6 @@ export const RAIL = [
   ...RECRUIT_DEPTS.map((d) => ({ id: d.id, name: d.name, hint: "" })),
 ];
 
-/** Every rail bucket id — also the default "all selected" selection. */
-export const RAIL_IDS = RAIL.map((item) => item.id);
-
 /** Rail id → `recruitment_topics.department` value (null for the shared bucket). */
 export const deptOf = (railId: string) => (railId === "common" ? null : railId);
 

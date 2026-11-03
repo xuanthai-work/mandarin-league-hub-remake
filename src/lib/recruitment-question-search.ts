@@ -67,22 +67,23 @@ export function filterQuestionBank<
   topics,
   questionsOf,
   search,
-  kindFilter,
+  kinds,
 }: {
   topics: T[];
   questionsOf: (topicId: string) => Q[];
   search: string;
-  kindFilter: string;
+  /** Selected question kinds; an empty list means "every kind". */
+  kinds: string[];
 }): FilteredTopic<T, Q>[] {
   const normTerm = normalizeText(search);
-  const anyKind = kindFilter === "all";
+  const anyKind = kinds.length === 0;
 
   return topics
     .map((topic) => {
       const allQuestions = questionsOf(topic.id);
       const matchingQuestions = allQuestions.filter(
         (q) =>
-          (anyKind || canonicalKind(q.kind) === kindFilter) &&
+          (anyKind || kinds.includes(canonicalKind(q.kind))) &&
           (!normTerm || questionMatchesSearch(q, normTerm)),
       );
       return { topic, allQuestions, matchingQuestions };

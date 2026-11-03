@@ -23,7 +23,6 @@ export function TopicAccordionCard({
   questions,
   totalQuestionsCount,
   availablePositions,
-  departmentName,
   index,
   total,
   expanded,
@@ -39,8 +38,6 @@ export function TopicAccordionCard({
   totalQuestionsCount: number;
   /** Department titles plus custom positions already used, offered by the quick-edit select. */
   availablePositions: string[];
-  /** Shown next to the title when the studio displays several departments at once. */
-  departmentName?: string | undefined;
   index: number;
   total: number;
   expanded: boolean;
@@ -110,14 +107,6 @@ export function TopicAccordionCard({
             if (title && title !== topic.title) void save({ title });
           }}
         />
-        {departmentName && (
-          <span
-            title={`Chủ đề thuộc ${departmentName}`}
-            className="shrink-0 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-[11px] font-semibold text-primary"
-          >
-            {departmentName}
-          </span>
-        )}
         <button
           type="button"
           onClick={() => (editingPositions ? setEditingPositions(false) : openPositions())}
