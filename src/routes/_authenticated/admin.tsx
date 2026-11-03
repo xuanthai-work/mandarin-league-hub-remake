@@ -7,6 +7,14 @@ import {
   ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, navGroupsFor, type AdminNavGroup,
 } from "@/lib/admin-nav";
 import { allowedSections } from "@/lib/admin-permissions";
+import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
+import { useAdminHeader } from "@/components/admin/admin-header-context";
+
+/** Renders whatever the current page registered as its header actions. */
+function HeaderActions() {
+  const header = useAdminHeader();
+  return <div className="ml-auto flex shrink-0 items-center gap-2">{header?.headerActions}</div>;
+}
 
 export const Route = createFileRoute("/_authenticated/admin")({ staticData: { sitemap: false },
   head: () => ({
@@ -79,7 +87,7 @@ function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onTogg
   const initials = (email.split("@")[0] ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "TML";
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
-      <div className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-4">
+      <div className="flex h-[73px] shrink-0 items-center gap-3 border-b border-border/60 px-4">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gold/50 bg-background shadow-[0_2px_12px_-6px_color-mix(in_oklab,var(--gold)_70%,transparent)]">
           <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full object-cover" />
         </span>
@@ -242,55 +250,57 @@ function AdminLayout() {
   const email = access.data?.email ?? "";
 
   return (
-    <div className="fixed inset-0 z-50 flex admin-shell bg-background text-foreground">
-      <aside className="hidden w-[272px] shrink-0 border-r border-border lg:block">
-        <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} currentSlug={current} collapsed={collapsedGroups} onToggleGroup={toggleGroup} onNavigate={() => setOpen(false)} onSignOut={signOut} />
-      </aside>
+    <AdminHeaderProvider>
+      <div className="fixed inset-0 z-50 flex admin-shell bg-background text-foreground">
+        <aside className="hidden w-[272px] shrink-0 border-r border-border lg:block">
+          <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} currentSlug={current} collapsed={collapsedGroups} onToggleGroup={toggleGroup} onNavigate={() => setOpen(false)} onSignOut={signOut} />
+        </aside>
 
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200" onClick={() => setOpen(false)} />
-          <aside
-            role="dialog"
-            aria-modal="true"
-            aria-label="Điều hướng quản trị"
-            className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
-          >
-            <SidebarPanel
-              email={email}
-              roleLabel={roleLabel}
-              groups={groups}
-              currentSlug={current}
-              collapsed={collapsedGroups}
-              onToggleGroup={toggleGroup}
-              onNavigate={() => setOpen(false)}
-              onSignOut={signOut}
-              onClose={() => setOpen(false)}
-            />
-          </aside>
-        </div>
-      )}
+        {open && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200" onClick={() => setOpen(false)} />
+            <aside
+              role="dialog"
+              aria-modal="true"
+              aria-label="Điều hướng quản trị"
+              className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
+            >
+              <SidebarPanel
+                email={email}
+                roleLabel={roleLabel}
+                groups={groups}
+                currentSlug={current}
+                collapsed={collapsedGroups}
+                onToggleGroup={toggleGroup}
+                onNavigate={() => setOpen(false)}
+                onSignOut={signOut}
+                onClose={() => setOpen(false)}
+              />
+            </aside>
+          </div>
+        )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="portal-ai portal-ink flex items-center gap-3 px-4 py-2.5 lg:hidden">
-          <button aria-label="Mở menu" className="grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10" onClick={() => setOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </button>
-          <h1 className="truncate text-sm font-semibold tracking-tight">{title}</h1>
-          <button onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất" className="ml-auto grid h-9 w-9 place-items-center rounded-lg transition-colors hover:bg-white/10">
-            <LogOut className="h-4 w-4" />
-          </button>
-        </header>
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
-          {blockedHere ? (
-            <div className="mx-auto max-w-md px-4 py-20 text-center">
-              <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
-              <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.</p>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex h-[73px] shrink-0 items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-md sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <button aria-label="Mở menu" className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden" onClick={() => setOpen(true)}>
+                <Menu className="h-5 w-5" />
+              </button>
+              <h1 className="truncate text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h1>
             </div>
-          ) : <Outlet />}
-        </main>
+            <HeaderActions />
+          </header>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
+            {blockedHere ? (
+              <div className="mx-auto max-w-md px-4 py-20 text-center">
+                <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
+                <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
+                <p className="mt-2 text-sm text-muted-foreground">Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.</p>
+              </div>
+            ) : <Outlet />}
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminHeaderProvider>
   );
 }

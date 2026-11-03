@@ -1,21 +1,26 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { useAdminHeader } from "@/components/admin/admin-header-context";
 
 interface AdminPageHeaderProps {
-  title: string;
+  /** Kept for backward compatibility: the module title now lives in the admin top header. */
+  title?: string;
+  /** Kept for backward compatibility: descriptions are no longer rendered in the page body. */
   description?: string;
   actions?: ReactNode;
   className?: string;
 }
 
-/** One page header for every admin screen: same title rhythm, same left edge, actions on the right. */
-export function AdminPageHeader({ title, description, actions, className = "" }: AdminPageHeaderProps) {
-  return (
-    <div className={`mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border/50 pb-5 sm:mb-8 ${className}`}>
-      <div className="min-w-0 flex-1">
-        <h1 className="text-2xl font-bold tracking-tight text-primary-deep sm:text-3xl">{title}</h1>
-        {description && <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>}
-      </div>
-      {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
-    </div>
-  );
+/**
+ * Pages keep declaring their actions here; the component ports them to the admin top header
+ * and renders nothing in the page body, so tables and filters start right under the header.
+ */
+export function AdminPageHeader({ actions }: AdminPageHeaderProps) {
+  const setHeaderActions = useAdminHeader()?.setHeaderActions;
+
+  useEffect(() => {
+    setHeaderActions?.(actions ?? null);
+    return () => setHeaderActions?.(null);
+  }, [actions, setHeaderActions]);
+
+  return null;
 }

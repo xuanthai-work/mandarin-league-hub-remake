@@ -23,6 +23,11 @@ export const Route = createFileRoute("/_authenticated/admin/members")({ staticDa
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
 
+/** Shadcn select styled to match the drawer inputs (and float above the z-[60] drawer). */
+const DRAWER_SELECT_TRIGGER = "mt-1 flex h-9.5 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
+const DRAWER_SELECT_CONTENT = "z-[70] max-h-64 rounded-xl border-border bg-popover/95 backdrop-blur-md shadow-xl";
+const DRAWER_SELECT_ITEM = "rounded-lg text-sm cursor-pointer py-2 focus:bg-accent focus:text-accent-foreground";
+
 function randomPassword() {
   const c = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
   return Array.from(crypto.getRandomValues(new Uint32Array(12)), (n) => c[n % c.length]).join("");
@@ -128,14 +133,14 @@ function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }
   );
 }
 
-/** Shared fixed column widths so every department table lines up as one pixel-perfect grid (Total: 1150px). */
+/** Shared fixed column widths so every department table lines up as one pixel-perfect grid (Total: 1050px). */
 const MEMBER_COLS = [
   { label: "Mã thành viên", className: "w-[135px]" },
-  { label: "Họ tên", className: "w-[220px]" },
-  { label: "Tài khoản & Trạng thái", className: "w-[260px]" },
-  { label: "Chức vụ", className: "w-[180px]" },
-  { label: "Ngày gia nhập", className: "w-[125px]" },
-  { label: "Điểm", className: "w-[80px]" },
+  { label: "Họ tên", className: "w-[195px]" },
+  { label: "Tài khoản & Trạng thái", className: "w-[210px] pr-1.5" },
+  { label: "Chức vụ", className: "w-[180px] pl-1.5" },
+  { label: "Ngày gia nhập", className: "w-[115px]" },
+  { label: "Điểm", className: "w-[65px]" },
   { label: "Thao tác", className: "w-[150px]" },
 ] as const;
 
@@ -156,7 +161,7 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full min-w-[1150px] table-fixed text-sm">
+        <table className="w-full min-w-[1050px] table-fixed text-sm">
           <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
             <tr>{MEMBER_COLS.map((col) => <th key={col.label} className={`p-3 font-semibold ${col.className}`}>{col.label}</th>)}</tr>
           </thead>
@@ -172,8 +177,8 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
                     <span className="min-w-0 truncate font-medium text-foreground" title={m.full_name}>{m.full_name}</span>
                   </div>
                 </td>
-                <td className="p-3">{isAdmin ? <AccountStatusCell m={m} onGrant={() => onOpen(m)} /> : <StatusPill m={m} />}</td>
-                <td className="p-3">
+                <td className="p-3 pr-1.5">{isAdmin ? <AccountStatusCell m={m} onGrant={() => onOpen(m)} /> : <StatusPill m={m} />}</td>
+                <td className="p-3 pl-1.5">
                   <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 font-medium text-foreground">
                     <span className="truncate">{m.position}</span>
                     {m.account?.access === "admin" && <span className="shrink-0 rounded bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[color:var(--metal-gold-lo)] dark:text-gold">Admin</span>}
@@ -537,10 +542,28 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vị trí & tổ chức</h3>
             {isAdmin ? (
               <div className="grid gap-2 sm:grid-cols-2">
-                <label className="block text-xs text-muted-foreground">Ban
-                  <select className={`${inp} mt-1`} value={department} onChange={(e) => { setDepartment(e.target.value); setPosition(positionsFor(e.target.value)[0]!); }}>{ACCOUNT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
-                <label className="block text-xs text-muted-foreground">Chức vụ
-                  <select className={`${inp} mt-1`} value={position} onChange={(e) => setPosition(e.target.value)}>{positionsFor(department).map((p) => <option key={p}>{p}</option>)}</select></label>
+                <div>
+                  <span className="block text-xs text-muted-foreground">Ban</span>
+                  <Select value={department} onValueChange={(val) => { setDepartment(val); setPosition(positionsFor(val)[0]!); }}>
+                    <SelectTrigger aria-label="Ban" className={DRAWER_SELECT_TRIGGER}>
+                      <SelectValue placeholder="Chọn Ban" />
+                    </SelectTrigger>
+                    <SelectContent className={DRAWER_SELECT_CONTENT}>
+                      {ACCOUNT_DEPTS.map((d) => <SelectItem key={d.id} value={d.id} className={DRAWER_SELECT_ITEM}>{d.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <span className="block text-xs text-muted-foreground">Chức vụ</span>
+                  <Select value={position} onValueChange={setPosition}>
+                    <SelectTrigger aria-label="Chức vụ" className={DRAWER_SELECT_TRIGGER}>
+                      <SelectValue placeholder="Chọn chức vụ" />
+                    </SelectTrigger>
+                    <SelectContent className={DRAWER_SELECT_CONTENT}>
+                      {positionsFor(department).map((p) => <SelectItem key={p} value={p} className={DRAWER_SELECT_ITEM}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             ) : (
               <p className="text-sm">{deptName(department)} · {position}</p>
@@ -600,8 +623,17 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
                     {copiedEmail ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                   </button>
                 </div>
-                <label className="block text-xs text-muted-foreground">Vai trò hệ thống
-                  <select className={`${inp} mt-1`} value={access} onChange={(e) => { const a = e.target.value as AccessLevel; setAccess(a); setPermissions(PERMISSION_TEMPLATES[a]); }}>{Object.entries(ACCESS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+                <div>
+                  <span className="block text-xs text-muted-foreground">Vai trò hệ thống</span>
+                  <Select value={access} onValueChange={(val) => { const a = val as AccessLevel; setAccess(a); setPermissions(PERMISSION_TEMPLATES[a]); }}>
+                    <SelectTrigger aria-label="Vai trò hệ thống" className={DRAWER_SELECT_TRIGGER}>
+                      <SelectValue placeholder="Chọn vai trò" />
+                    </SelectTrigger>
+                    <SelectContent className={DRAWER_SELECT_CONTENT}>
+                      {Object.entries(ACCESS_LABELS).map(([k, l]) => <SelectItem key={k} value={k} className={DRAWER_SELECT_ITEM}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <fieldset className="rounded-lg border border-border p-3">
                   <legend className="px-1 text-xs text-muted-foreground">Quyền chi tiết</legend>
                   <p className="mb-2 text-[11px] text-muted-foreground">Mặc định theo vai trò đã chọn — có thể tick thêm hoặc bỏ bớt từng quyền.</p>
@@ -708,10 +740,28 @@ function GrantAccount({ m, onChanged, onClose }: { m: MemberRow; onChanged: () =
         <button type="button" onClick={() => set({ password: randomPassword() })} className="rounded-lg border border-border px-3 text-xs">Tạo ngẫu nhiên</button>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="block text-xs text-muted-foreground">Vai trò hệ thống
-          <select className={`${inp} mt-1`} value={v.access} onChange={(e) => { const a = e.target.value as AccessLevel; set({ access: a, permissions: PERMISSION_TEMPLATES[a] }); }}>{Object.entries(ACCESS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-        <label className="block text-xs text-muted-foreground">Trạng thái tài khoản
-          <select className={`${inp} mt-1`} value={v.status} onChange={(e) => set({ status: e.target.value as AccountStatus })}>{ACCOUNT_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
+        <div>
+          <span className="block text-xs text-muted-foreground">Vai trò hệ thống</span>
+          <Select value={v.access} onValueChange={(val) => { const a = val as AccessLevel; set({ access: a, permissions: PERMISSION_TEMPLATES[a] }); }}>
+            <SelectTrigger aria-label="Vai trò hệ thống" className={DRAWER_SELECT_TRIGGER}>
+              <SelectValue placeholder="Chọn vai trò" />
+            </SelectTrigger>
+            <SelectContent className={DRAWER_SELECT_CONTENT}>
+              {Object.entries(ACCESS_LABELS).map(([k, l]) => <SelectItem key={k} value={k} className={DRAWER_SELECT_ITEM}>{l}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <span className="block text-xs text-muted-foreground">Trạng thái tài khoản</span>
+          <Select value={v.status} onValueChange={(val) => set({ status: val as AccountStatus })}>
+            <SelectTrigger aria-label="Trạng thái tài khoản" className={DRAWER_SELECT_TRIGGER}>
+              <SelectValue placeholder="Chọn trạng thái" />
+            </SelectTrigger>
+            <SelectContent className={DRAWER_SELECT_CONTENT}>
+              {ACCOUNT_STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value} className={DRAWER_SELECT_ITEM}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <fieldset className="rounded-lg border border-border p-3">
         <legend className="px-1 text-xs text-muted-foreground">Quyền chi tiết</legend>
@@ -842,10 +892,28 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
             <div className="grid gap-2 sm:grid-cols-2">
             <label className="block text-xs text-muted-foreground">Họ và tên *<input className={`${inp} mt-1`} value={v.full_name} onChange={(e) => set({ full_name: e.target.value })} placeholder="Nguyễn Văn A" /></label>
             <label className="block text-xs text-muted-foreground">Số điện thoại<input className={`${inp} mt-1`} value={v.phone} onChange={(e) => set({ phone: e.target.value })} /></label>
-            <label className="block text-xs text-muted-foreground">Ban
-              <select className={`${inp} mt-1`} value={v.department} onChange={(e) => set({ department: e.target.value, position: positionsFor(e.target.value)[0]! })}>{ACCOUNT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
-            <label className="block text-xs text-muted-foreground">Chức vụ
-              <select className={`${inp} mt-1`} value={v.position} onChange={(e) => set({ position: e.target.value })}>{positionsFor(v.department).map((p) => <option key={p}>{p}</option>)}</select></label>
+            <div>
+              <span className="block text-xs text-muted-foreground">Ban</span>
+              <Select value={v.department} onValueChange={(val) => set({ department: val, position: positionsFor(val)[0]! })}>
+                <SelectTrigger aria-label="Ban" className={DRAWER_SELECT_TRIGGER}>
+                  <SelectValue placeholder="Chọn Ban" />
+                </SelectTrigger>
+                <SelectContent className={DRAWER_SELECT_CONTENT}>
+                  {ACCOUNT_DEPTS.map((d) => <SelectItem key={d.id} value={d.id} className={DRAWER_SELECT_ITEM}>{d.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <span className="block text-xs text-muted-foreground">Chức vụ</span>
+              <Select value={v.position} onValueChange={(val) => set({ position: val })}>
+                <SelectTrigger aria-label="Chức vụ" className={DRAWER_SELECT_TRIGGER}>
+                  <SelectValue placeholder="Chọn chức vụ" />
+                </SelectTrigger>
+                <SelectContent className={DRAWER_SELECT_CONTENT}>
+                  {positionsFor(v.department).map((p) => <SelectItem key={p} value={p} className={DRAWER_SELECT_ITEM}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             </div>
             <label className="block text-xs text-muted-foreground">Email liên hệ<input className={`${inp} mt-1`} type="email" value={v.email} onChange={(e) => set({ email: e.target.value })} placeholder="ten@gmail.com" /></label>
           </section>
@@ -864,15 +932,33 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
               </div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={v.mustChange} onChange={(e) => set({ mustChange: e.target.checked })} />Yêu cầu đổi mật khẩu khi đăng nhập lần đầu</label>
             </>}
-            <label className="block text-xs text-muted-foreground">Trạng thái thành viên
-              <select className={`${inp} mt-1`} value={v.status} onChange={(e) => set({ status: e.target.value as UnifiedStatus })}>{CREATE_MEMBER_STATUSES.map((s) => <option key={s} value={s}>{UNIFIED_STATUS_MAP[s].label}</option>)}</select></label>
+            <div>
+              <span className="block text-xs text-muted-foreground">Trạng thái thành viên</span>
+              <Select value={v.status} onValueChange={(val) => set({ status: val as UnifiedStatus })}>
+                <SelectTrigger aria-label="Trạng thái thành viên" className={DRAWER_SELECT_TRIGGER}>
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent className={DRAWER_SELECT_CONTENT}>
+                  {CREATE_MEMBER_STATUSES.map((s) => <SelectItem key={s} value={s} className={DRAWER_SELECT_ITEM}>{UNIFIED_STATUS_MAP[s].label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </section>
 
           {v.withAccount && (
             <section className="space-y-3 border-t border-border/60 pt-5">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quyền quản trị</h3>
-              <label className="block text-xs text-muted-foreground">Vai trò hệ thống
-                <select className={`${inp} mt-1`} value={v.access} onChange={(e) => { const a = e.target.value as AccessLevel; set({ access: a, permissions: PERMISSION_TEMPLATES[a] }); }}>{Object.entries(ACCESS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+              <div>
+                <span className="block text-xs text-muted-foreground">Vai trò hệ thống</span>
+                <Select value={v.access} onValueChange={(val) => { const a = val as AccessLevel; set({ access: a, permissions: PERMISSION_TEMPLATES[a] }); }}>
+                  <SelectTrigger aria-label="Vai trò hệ thống" className={DRAWER_SELECT_TRIGGER}>
+                    <SelectValue placeholder="Chọn vai trò" />
+                  </SelectTrigger>
+                  <SelectContent className={DRAWER_SELECT_CONTENT}>
+                    {Object.entries(ACCESS_LABELS).map(([k, l]) => <SelectItem key={k} value={k} className={DRAWER_SELECT_ITEM}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <fieldset className="rounded-lg border border-border p-3">
                 <legend className="px-1 text-xs text-muted-foreground">Quyền chi tiết</legend>
                 <p className="mb-2 text-[11px] text-muted-foreground">Mặc định theo vai trò đã chọn — có thể tick thêm hoặc bỏ bớt từng quyền.</p>
