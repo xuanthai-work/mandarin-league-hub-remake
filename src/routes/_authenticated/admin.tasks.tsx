@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import { PRIORITY, TASK_STATUS, fmtDate } from "@/lib/points";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/tasks")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Nhiệm vụ | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -14,6 +15,15 @@ export const Route = createFileRoute("/_authenticated/admin/tasks")({ staticData
 });
 
 type Task = { id: string; title: string; description: string; department: string; assignee_id: string; priority: string; due_on: string | null; points: number; status: string; evidence_url: string; report_note: string; review_note: string; assigned_by_name: string; assigned_by_note: string };
+
+/** Dot colour per task status for the filter dropdown (badge classes carry both background and text). */
+const STATUS_DOT: Record<string, string> = {
+  assigned: "bg-muted-foreground/50",
+  in_progress: "bg-primary",
+  submitted: "bg-gold",
+  revision: "bg-destructive",
+  done: "bg-success",
+};
 
 function TasksPage() {
   const qc = useQueryClient();
@@ -72,6 +82,9 @@ function TasksPage() {
   };
 
   const rows = (tasks.data ?? []).filter((t) => (filter === "all" || t.status === filter) && (!person || t.assignee_id === person) && (!giver || t.assigned_by_name === giver));
+  /** Status counts ignore the status filter itself, so every option stays reachable. */
+  const scopedForStatus = (tasks.data ?? []).filter((t) => (!person || t.assignee_id === person) && (!giver || t.assigned_by_name === giver));
+  const cntStatus = (s: string) => scopedForStatus.filter((t) => s === "all" || t.status === s).length;
   const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
@@ -86,10 +99,17 @@ function TasksPage() {
         <div className="space-y-2 rounded-lg border border-border p-3 sm:col-span-2">
           <p className="text-sm font-medium">Người thực hiện <span className="text-xs text-muted-foreground">(chọn được nhiều người — mỗi người nhận 1 nhiệm vụ riêng để nộp & cộng điểm)</span></p>
           <div className="grid gap-2 sm:grid-cols-[200px_1fr_auto]">
-            <select className={inp} value={dept} onChange={(e) => setDept(e.target.value)}>
-              <option value="">Tất cả các Ban</option>
-              {depts.map((d) => <option key={d} value={d}>{deptName(d)}</option>)}
-            </select>
+            <Select value={dept || "all"} onValueChange={(v) => setDept(v === "all" ? "" : v)}>
+              <SelectTrigger aria-label="Chọn Ban" className="h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+                <SelectValue>{dept ? deptName(dept) : "Tất cả các Ban"}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all" className="text-sm">Tất cả các Ban</SelectItem>
+                {depts.map((d) => (
+                  <SelectItem key={d} value={d} className="text-sm">{deptName(d)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <input className={inp} placeholder="Tìm theo tên hoặc mã thành viên…" value={q} onChange={(e) => setQ(e.target.value)} />
             <button type="button" onClick={() => setPicked((p) => [...new Set([...p, ...pool.map((m) => m.id)])])} className="rounded-lg border border-border px-3 text-xs">Chọn tất cả ({pool.length})</button>
           </div>
@@ -114,10 +134,19 @@ function TasksPage() {
           <input maxLength={200} className={`${inp} mt-1`} placeholder="Ghi chú người giao (tùy chọn), vd: Giao theo chỉ đạo của Ban Điều Hành – anh A" value={note} onChange={(e) => setNote(e.target.value)} /></label>
         <textarea maxLength={3000} className={`${inp} sm:col-span-2`} rows={3} placeholder="Mô tả / yêu cầu" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
         <div className="grid grid-cols-3 gap-3 sm:col-span-2">
-          <label className="text-xs text-muted-foreground">Ưu tiên
-            <select className={`${inp} mt-1`} value={f.priority} onChange={(e) => setF({ ...f, priority: e.target.value })}>
-              {Object.entries(PRIORITY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select></label>
+          <div className="text-xs text-muted-foreground">
+            <span className="block">Ưu tiên</span>
+            <Select value={f.priority} onValueChange={(val) => setF({ ...f, priority: val })}>
+              <SelectTrigger aria-label="Mức độ ưu tiên" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none">
+                <SelectValue>{PRIORITY[f.priority] ?? f.priority}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {Object.entries(PRIORITY).map(([k, v]) => (
+                  <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <label className="text-xs text-muted-foreground">Hạn chót
             <input type="date" className={`${inp} mt-1`} value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></label>
           <label className="text-xs text-muted-foreground">Điểm thưởng
@@ -129,16 +158,56 @@ function TasksPage() {
         <button disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60 sm:w-fit">{busy ? "Đang giao…" : picked.length > 1 ? `Giao cho ${picked.length} người` : "Giao nhiệm vụ"}</button>
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        {[["all", "Tất cả"], ...Object.entries(TASK_STATUS).map(([k, v]) => [k, v.label])].map(([k, l]) => (
-          <button key={k} onClick={() => setFilter(k!)} className={`rounded-full border px-3 py-1 text-xs ${filter === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>
-        ))}
-      </div>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Select value={filter} onValueChange={setFilter}>
+          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectValue>
+              {filter === "all" ? "Trạng thái: Tất cả" : (TASK_STATUS[filter]?.label ?? filter)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="font-medium">Trạng thái: Tất cả</span>
+                <span className="text-muted-foreground">({cntStatus("all")})</span>
+              </span>
+            </SelectItem>
+            {Object.entries(TASK_STATUS).map(([k, v]) => (
+              <SelectItem key={k} value={k} className="text-xs">
+                <span className="flex w-full items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[k] ?? "bg-primary/70"}`} />
+                  <span>{v.label}</span>
+                  <span className="ml-auto text-muted-foreground">({cntStatus(k)})</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <select className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm" value={giver} onChange={(e) => setGiver(e.target.value)}>
-        <option value="">Tất cả người giao</option>
-        {givers.map((g) => <option key={g} value={g}>{g}</option>)}
-      </select>
+        <Select value={giver || "all"} onValueChange={(v) => setGiver(v === "all" ? "" : v)}>
+          <SelectTrigger aria-label="Lọc theo người giao" className="h-9 min-w-[190px] max-w-[260px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectValue>{giver ? `Người giao: ${giver}` : "Người giao: Tất cả"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              <span className="font-medium">Người giao: Tất cả</span>
+            </SelectItem>
+            {givers.map((g) => (
+              <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {(filter !== "all" || giver || person) && (
+          <button
+            type="button"
+            onClick={() => { setFilter("all"); setGiver(""); setPerson(""); }}
+            className="h-9 rounded-xl border border-dashed border-border px-3 text-xs text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
+          >
+            Đặt lại
+          </button>
+        )}
+      </div>
       {person && <p className="text-sm">Đang xem nhiệm vụ của <b>{nameOf(person)}</b> · <button onClick={() => setPerson("")} className="text-primary underline">Xem tất cả</button></p>}
       <div className="space-y-3">
         {tasks.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
