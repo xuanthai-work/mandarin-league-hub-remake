@@ -411,6 +411,20 @@
 /* Member pass — tier colors (admin tier config maps to these tokens) */
 :root { --pass-bronze: #8a5a2b; --pass-amber: #a8641c; --pass-pink: #db2777; --pass-honor: #9c7a1e; --pass-blue: #245a91; --pass-green: #23765a; --pass-wine: #7d263a; --pass-purple: #514080; --pass-black: #242832; }
 .tml-pass { --pass-c: var(--pass-blue); --pass-accent: color-mix(in oklab, var(--gold) 60%, var(--pass-c));
+  /* The card is always porcelain: pin light tokens so utilities like
+     text-foreground / text-muted-foreground never turn white in dark mode. */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.25 0.02 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.02 260);
+  --muted: oklch(0.96 0.005 240);
+  --muted-foreground: oklch(0.5 0.02 260);
+  --border: oklch(0.9 0.01 240);
+  --input: oklch(0.88 0.01 240);
+  --accent: oklch(0.94 0.035 230);
+  --accent-foreground: oklch(0.35 0.1 240);
   background: radial-gradient(120% 80% at 100% 0%, color-mix(in oklab, var(--pass-c) 16%, transparent), transparent 60%), linear-gradient(160deg, var(--background), color-mix(in oklab, var(--pass-c) 10%, var(--background)));
   box-shadow:
     0 0 0 2px color-mix(in oklab, var(--pass-c) 92%, transparent),
@@ -460,7 +474,12 @@
 /* Cleaner card: drop busy microprint/geometric fill, keep drum + Lạc birds as the only motifs */
 .tml-pass .tml-microprint, .tml-pass .tml-pass-pattern { display: none; }
 .tml-pass-vframe { position: absolute; inset: 7px; border: 1px solid color-mix(in oklab, var(--gold) 55%, transparent); border-radius: 13px; pointer-events: none; }
-.tml-pass .tml-vhead { background: linear-gradient(180deg, var(--pass-deep), var(--pass-c)); border-bottom: 2px solid var(--gold); clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%); padding-bottom: 1.1rem; }
+.tml-pass .tml-vhead {
+  background: linear-gradient(180deg, var(--pass-deep), var(--pass-c));
+  border-bottom: 1.5px solid var(--gold);
+  border-top-left-radius: 17px;
+  border-top-right-radius: 17px;
+}
 .tml-pass .tml-vhead .text-gold { color: var(--gold) !important; }
 
 /* ===== Interactive 3D flip pass (member dashboard) ===== */
@@ -472,12 +491,36 @@
   transition: transform .65s cubic-bezier(.4, .2, .2, 1);
   will-change: transform;
 }
-.flip-inner.is-flipped { transform: rotateX(var(--rx, 0deg)) rotateY(calc(var(--ry, 0deg) + 180deg)) translateY(var(--lift, 0px)); }
+.flip-inner.is-flipped { transform: rotateX(var(--rx, 0deg)) rotateY(calc(var(--ry, 0deg) + 180deg)) translateY(var(--lift, 0px)); will-change: auto;
+  /* Hover tilt must never tilt the back face: keep it at an exact 180° for crisp text. */
+  --rx: 0deg !important;
+  --ry: 0deg !important;
+  --lift: 0px !important; }
 .flip-inner.is-flat, .flip-inner.is-flat.is-flipped { transform: none !important; transition: none !important; }
-.flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; -webkit-font-smoothing: antialiased; }
 /* Faces must not carry their own tilt: the wrapper owns rotation + flip. */
 .flip-face.tml-pass { transform: none; will-change: auto; }
-.flip-face.back { position: absolute; inset: 0; transform: rotateY(180deg); }
+.flip-face.back { position: absolute; inset: 0; transform: rotateY(180deg); -webkit-mask-image: none; }
+
+/* Phones: drop the 3D transform entirely (GPU rasterisation makes text soft there)
+   and cross-fade the two faces instead. */
+@media (max-width: 767px) {
+  .flip-inner, .flip-inner.is-flipped {
+    transform: none !important;
+    transition: none !important;
+    transform-style: flat;
+  }
+  .flip-face {
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+    transition: opacity .2s ease;
+  }
+  .flip-face.back { position: absolute; inset: 0; transform: none; opacity: 0; pointer-events: none; }
+  .flip-inner.is-flipped .flip-face.back { opacity: 1; pointer-events: auto; }
+  .flip-inner.is-flipped .flip-face:not(.back) { opacity: 0; pointer-events: none; }
+  /* backdrop-filter also softens glyphs on mobile GPUs */
+  .tml-pass .backdrop-blur-xs { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
 
 /* Back face is porcelain too: force light form tokens so nothing is white-on-white. */
 .tml-pass-back {
