@@ -1,10 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Camera, Check, Copy, Download, Home, Lock, LogOut, Nfc, Pencil, RotateCcw, RotateCw, ShieldCheck, X } from "lucide-react";
+import { Camera, Check, Copy, Download, Home, Lock, LogOut, Nfc, Pencil, RotateCcw, RotateCw, X } from "lucide-react";
 import { MyDepartment } from "@/components/portal/MyDepartment";
 import { MyBenefits } from "@/components/portal/MyBenefits";
-import { HomeLink } from "@/components/site/HomeLink";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
@@ -602,8 +601,7 @@ function MemberDashboard() {
           {/* ===== Floating dock ===== */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/15 bg-white/5 p-1.5 backdrop-blur">
             <button type="button" onClick={downloadCard} className={dockItem} title="Tải thẻ ảnh"><Download className="h-4 w-4" />Tải thẻ</button>
-            <HomeLink className={dockItem}><Home className="h-4 w-4" />Trang chủ</HomeLink>
-            {canAdmin && <Link to="/admin" className={dockItem}><ShieldCheck className="h-4 w-4" />Bàn Quản trị</Link>}
+            <Link to="/admin" className={dockItem}><Home className="h-4 w-4" />Trang chủ</Link>
             <button type="button" onClick={signOut} className={dockItem}><LogOut className="h-4 w-4" />Đăng xuất</button>
           </div>
         </>
