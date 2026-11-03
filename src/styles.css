@@ -562,6 +562,19 @@
 @media (prefers-reduced-motion: reduce) {
   .tml-watermark-front { animation: none !important; }
 }
+
+/* Đông Sơn drum watermark: one flat gold tone, static, blended into the porcelain */
+.tml-drum {
+  mix-blend-mode: multiply;
+  opacity: .34;
+}
+
+/* Back face on phones: keep the password form reachable without scrolling the card */
+@media (max-width: 639px) {
+  .tml-pass-back .flip-back-form input { padding-block: .28rem; font-size: .72rem; }
+  .tml-pass-back .flip-back-form button { padding-block: .35rem; font-size: .72rem; }
+  .tml-pass-back .flip-back-form form > * + * { margin-top: .25rem; }
+}
 @media (prefers-reduced-motion: reduce) {
   .flip-inner, .flip-inner.is-flipped { transition: none !important; }
 }

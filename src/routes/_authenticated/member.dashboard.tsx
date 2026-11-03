@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Camera, Check, Copy, Download, Lock, LogOut, Nfc, Pencil, RotateCcw, RotateCw, ShieldCheck, X } from "lucide-react";
+import { Camera, Check, Copy, Download, Home, Lock, LogOut, Nfc, Pencil, RotateCcw, RotateCw, ShieldCheck, X } from "lucide-react";
 import { MyDepartment } from "@/components/portal/MyDepartment";
 import { MyBenefits } from "@/components/portal/MyBenefits";
+import { HomeLink } from "@/components/site/HomeLink";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
@@ -99,6 +100,8 @@ function MemberDashboard() {
     QRCode.toDataURL(`https://member.themandarinleague.bond/library-access?pass=${t}`, { margin: 0, width: 200, errorCorrectionLevel: "M" }).then(setQr); }, [pass.data?.pass_token]);
   const [reporting, setReporting] = useState<{ id: string; title: string } | null>(null);
   const [savedImg, setSavedImg] = useState<string | null>(null);
+  const [tab, setTab] = useState<"card" | "tasks" | "points" | "dept" | "benefits">("card");
+  const [layout, setLayout] = useState<"h" | "v">("h");
   const [name, setName] = useState("");
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
 
@@ -166,16 +169,14 @@ function MemberDashboard() {
       <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
     </label>
   );
-  /** Back face: same tier tint, kept a bit larger than the front seal. */
-  const watermarkBack = (
-    <div aria-hidden className="tml-watermark-wrap select-none">
-      <img src="/logo.svg" alt="" className="tml-watermark-front tml-watermark-back object-contain select-none" />
-    </div>
-  );
-  /** Front face: smaller seal, tinted by the member's tier with a breathing aura. */
-  const watermarkFront = (
-    <div aria-hidden className="tml-watermark-wrap select-none">
-      <img src="/logo.svg" alt="" className="tml-watermark-front object-contain select-none" />
+  /** Đông Sơn drum watermark: the member-supplied photo, blended into the porcelain. */
+  const drumWatermark = (
+    <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+      <img
+        src="/dongson-gold.png"
+        alt=""
+        className={`tml-drum select-none rounded-full object-cover ${layout === "v" ? "h-48 w-48 sm:h-56 sm:w-56" : "h-44 w-44 sm:h-52 sm:w-52"}`}
+      />
     </div>
   );
   const downloadCard = async () => {
@@ -221,7 +222,7 @@ function MemberDashboard() {
   };
 
   const dockItem = "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white";
-  const labelCls = "text-[8px] uppercase tracking-wider opacity-60";
+  const labelCls = "text-[7px] sm:text-[8px] uppercase tracking-wider opacity-60";
 
   const taskList = (
     <div className="space-y-3">
@@ -266,7 +267,7 @@ function MemberDashboard() {
   return (
     <div className="portal-ai min-h-screen"><div className="mx-auto max-w-4xl px-4 py-8">
       <div className="flex items-center justify-center gap-2 text-center text-xl font-bold portal-ink sm:text-2xl">
-        <img src="/logo.svg" alt="TML" className="h-9 w-9 rounded-full border border-gold bg-background object-cover" />Cổng thành viên
+        <img src="/logo.svg" alt="TML" className="h-9 w-9 rounded-full border border-gold bg-white object-cover" />Cổng thành viên
       </div>
 
       {msg && <p className="mx-auto mt-4 max-w-xl rounded-lg bg-success/20 px-3 py-2 text-center text-sm text-success">{msg}</p>}
@@ -283,9 +284,47 @@ function MemberDashboard() {
         </div>
       )}
 
-      {/* ===== The pass: single horizontal ID-1 flip card ===== */}
-      <div className="flip-scene mt-6 flex justify-center">
-        <div className="w-full max-w-[520px] sm:max-w-[560px] lg:[zoom:1.2]">
+      {/* ===== Tab bar ===== */}
+      <div className="mt-4 flex gap-2 overflow-x-auto border-b border-primary/20 pb-0.5">
+        {([
+          ["card", "Thẻ & Hồ sơ"],
+          ["tasks", "Nhiệm vụ"],
+          ["points", "Lịch sử điểm"],
+          ["dept", "Ban của tôi"],
+          ["benefits", "Quyền lợi"],
+        ] as const).map(([k, l]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => { setTab(k); setIsFlipped(false); }}
+            className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
+              tab === k ? "border-gold text-gold" : "border-transparent portal-ink-muted hover:text-foreground"
+            }`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {tab === "card" && (
+        <>
+          {/* ===== Card layout toggle ===== */}
+          <div className="mt-4 flex justify-center sm:justify-start">
+            <div className="inline-flex rounded-full border border-gold/40 p-0.5 text-xs">
+              <button type="button" onClick={() => { setLayout("h"); setIsFlipped(false); }}
+                className={`rounded-full px-4 py-1 font-semibold transition ${layout === "h" ? "bg-gold text-primary-deep shadow-xs" : "portal-ink-muted hover:text-foreground"}`}>
+                Thẻ ngang
+              </button>
+              <button type="button" onClick={() => { setLayout("v"); setIsFlipped(false); }}
+                className={`rounded-full px-4 py-1 font-semibold transition ${layout === "v" ? "bg-gold text-primary-deep shadow-xs" : "portal-ink-muted hover:text-foreground"}`}>
+                Thẻ đứng
+              </button>
+            </div>
+          </div>
+
+          {/* ===== The pass: ID-1 flip card ===== */}
+          <div className={`flip-scene mt-4 flex justify-center`}>
+            <div className={layout === "v" ? "w-full max-w-[300px] sm:max-w-[340px] lg:[zoom:1.1]" : "w-full max-w-[520px] sm:max-w-[560px] lg:[zoom:1.2]"}>
         <div
           className={`flip-inner w-full ${isFlipped ? "is-flipped" : ""} ${flatten ? "is-flat" : ""}`}
           onPointerMove={(e) => {
@@ -300,49 +339,52 @@ function MemberDashboard() {
         >
           {/* ---------- FRONT ---------- */}
           <div ref={cardRef} data-tone={tone} style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
-            className="flip-face tml-pass relative flex aspect-[85.6/54] flex-col overflow-hidden rounded-[18px] text-primary-deep">
+            className={`flip-face tml-pass relative flex flex-col overflow-hidden rounded-[18px] text-primary-deep ${layout === "v" ? "aspect-[54/85.6]" : "aspect-[85.6/54]"}`}>
             <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
-            {watermarkFront}
-            <span aria-hidden className="pointer-events-none absolute inset-0 select-none opacity-40">
-              <DongSon className="-bottom-24 -left-24 h-64 w-64" />
-            </span>
+            {drumWatermark}
+            {layout === "h" && (
+              <span aria-hidden className="pointer-events-none absolute inset-0 select-none opacity-40">
+                <DongSon className="-bottom-24 -left-24 h-64 w-64" />
+              </span>
+            )}
             <LacBirds flock={FLOCK_H} />
+            {layout === "h" ? <>
             {/* header */}
-            <div className="relative flex shrink-0 items-center gap-2.5 px-4 pt-3">
-              <img src="/logo.svg" alt="TML" className="h-10 w-10 shrink-0 rounded-full border-2 border-gold bg-background object-cover p-0.5 shadow-sm" />
+            <div className="relative flex shrink-0 items-center gap-2 sm:gap-2.5 px-3 pt-2 sm:px-4 sm:pt-3">
+              <img src="/logo.svg" alt="TML" className="h-8 w-8 shrink-0 rounded-full border-2 border-gold bg-white object-cover p-0.5 shadow-sm sm:h-10 sm:w-10" />
               <div className="min-w-0 leading-tight">
-                <p className="font-serif text-[14px] font-bold tracking-wide text-primary">普通话联盟</p>
-                <p className="text-[10px] font-semibold tracking-wide">The Mandarin League</p>
-                <p className="text-[8px] uppercase tracking-[0.08em] opacity-70">Liên Đoàn Hán Ngữ</p>
+                <p className="font-serif text-[11px] font-bold tracking-wide text-primary sm:text-[14px]">普通话联盟</p>
+                <p className="text-[8px] font-semibold tracking-wide sm:text-[10px]">The Mandarin League</p>
+                <p className="text-[7px] uppercase tracking-[0.08em] opacity-70 sm:text-[8px]">Liên Đoàn Hán Ngữ</p>
               </div>
-              <div className="tml-banner ml-auto flex h-11 flex-1 flex-col items-end justify-center pb-1.5 pr-3 pt-1 sm:max-w-[46%]">
-                <p className="text-base font-bold leading-none tracking-[0.1em] text-primary-foreground sm:text-lg">会员证</p>
-                <p className="mt-1 text-[8px] font-semibold leading-none tracking-[0.1em] text-gold sm:text-[9px]">THẺ THÀNH VIÊN</p>
+              <div className="tml-banner ml-auto flex h-9 flex-1 flex-col items-end justify-center pb-1.5 pr-2.5 pt-1 sm:h-11 sm:max-w-[46%] sm:pr-3">
+                <p className="text-sm font-bold leading-none tracking-[0.1em] text-primary-foreground sm:text-lg">会员证</p>
+                <p className="mt-1 text-[7px] font-semibold leading-none tracking-[0.1em] text-gold sm:text-[9px]">THẺ THÀNH VIÊN</p>
               </div>
             </div>
             {/* body — info left, portrait right (aligned to the same 16px content box) */}
-            <div className="relative flex min-h-0 flex-1 px-4 pb-2 pt-1">
-              <div className="grid w-full grid-cols-[1fr_auto] gap-4">
+            <div className="relative flex min-h-0 flex-1 px-3 pb-1 pt-0.5 sm:px-4 sm:pb-2 sm:pt-1">
+              <div className="grid w-full grid-cols-[1fr_auto] gap-2.5 sm:gap-4">
                 <div className="flex min-w-0 flex-col">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <SmartChip className="h-6 w-8" />
-                    <Nfc className="h-3.5 w-3.5 opacity-60" />
-                    <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[10px] font-bold tracking-[0.16em] text-primary" title="Mã thành viên">{m.member_code}</button>
-                    <span className="text-[9px] opacity-40">•</span>
-                    <button type="button" onClick={() => setSheet("points_benefits")} className="text-[10px] font-semibold text-primary" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 sm:gap-x-2">
+                    <SmartChip className="h-5 w-7 sm:h-6 sm:w-8" />
+                    <Nfc className="h-3 w-3 opacity-60 sm:h-3.5 sm:w-3.5" />
+                    <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[8.5px] font-bold tracking-[0.14em] text-primary sm:text-[10px] sm:tracking-[0.16em]" title="Mã thành viên">{m.member_code}</button>
+                    <span className="text-[8px] opacity-40 sm:text-[9px]">•</span>
+                    <button type="button" onClick={() => setSheet("points_benefits")} className="text-[8.5px] font-semibold text-primary sm:text-[10px]" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
                   </div>
-                  <div className="mt-2 flex min-h-0 flex-1 flex-col">
-                    <p className={`${labelCls} mt-3`}>姓名 · Họ và tên</p>
+                  <div className="mt-1 flex min-h-0 flex-1 flex-col sm:mt-2">
+                    <p className={`${labelCls} mt-1 sm:mt-3`}>姓名 · Họ và tên</p>
                     <div className="flex min-h-0 flex-1 items-center">
-                      <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-start gap-1.5 text-left" title="Sửa họ tên">
-                        <span className={`min-w-0 whitespace-normal break-words hyphens-none font-bold uppercase leading-[1.2] tracking-tight text-primary ${m.full_name.length > 26 ? "text-[20px]" : m.full_name.length > 18 ? "text-[24px]" : m.full_name.length > 12 ? "text-[29px]" : "text-[34px]"}`}>{m.full_name}</span>
-                        <Pencil className="mt-2 h-3.5 w-3.5 shrink-0 opacity-0 transition group-hover/name:opacity-70" />
+                      <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-start gap-1 text-left sm:gap-1.5" title="Sửa họ tên">
+                        <span className="min-w-0 whitespace-normal break-words hyphens-none text-[14px] font-bold uppercase leading-tight tracking-tight text-primary sm:text-[18px] md:text-[20px] lg:text-[22px]">{m.full_name}</span>
+                        <Pencil className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70 sm:mt-2 sm:h-3.5 sm:w-3.5" />
                       </button>
                     </div>
                   </div>
-                  <dl className="mt-auto flex flex-col gap-y-2.5 pb-0.5 text-[10px] leading-tight">
+                  <dl className="mt-auto flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight sm:gap-y-2.5 sm:text-[10px]">
                     <div className="min-w-0">
                       <dt className={labelCls}>部门 · Ban</dt>
                       <dd className="truncate">
@@ -363,22 +405,91 @@ function MemberDashboard() {
                     </div>
                     <div>
                       <dt className={labelCls}>入会 · Gia nhập</dt>
-                      <dd className="font-mono text-[9px]">{joined}</dd>
+                      <dd className="font-mono text-[8px] sm:text-[9px]">{joined}</dd>
                     </div>
                   </dl>
                 </div>
-                <div className="flex items-start justify-center">
-                  {avatarEl("h-[140px] w-[105px]")}
+                <div className="flex flex-col items-center gap-1">
+                  {avatarEl("h-[88px] w-[66px] sm:h-[118px] sm:w-[88px] md:h-[132px] md:w-[99px]")}
+                  {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số">
+                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-0.5 sm:h-12 sm:w-12" />
+                  </button>}
                 </div>
               </div>
             </div>
-            <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-4 py-1 text-[8px] tracking-[0.08em]">
+            <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-3 py-1 text-[6.5px] tracking-[0.08em] sm:px-4 sm:text-[8px]">
               <span className="truncate">THE MANDARIN LEAGUE · VERIFIED MEMBER PASS</span>
               <button type="button" onClick={() => setIsFlipped(true)} aria-label="Xem mặt sau thẻ" title="Xem mặt sau thẻ"
-                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1.5 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white">
-                <RotateCw className="h-3.5 w-3.5" />
+                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white sm:p-1.5">
+                <RotateCw className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               </button>
             </div>
+            </> : <>
+            {/* ---------- VERTICAL LAYOUT ---------- */}
+            <div className="relative flex shrink-0 items-center gap-2 px-3 pt-3">
+              <img src="/logo.svg" alt="TML" className="h-9 w-9 shrink-0 rounded-full border-2 border-gold bg-white object-cover p-0.5 shadow-sm" />
+              <div className="min-w-0 leading-tight">
+                <p className="font-serif text-[12px] font-bold tracking-wide text-primary">普通话联盟</p>
+                <p className="text-[9px] font-semibold tracking-wide">The Mandarin League</p>
+                <p className="text-[7px] uppercase tracking-[0.08em] opacity-70">Liên Đoàn Hán Ngữ</p>
+              </div>
+              <div className="tml-banner ml-auto flex h-9 flex-1 flex-col items-end justify-center pb-1.5 pr-2.5 pt-1">
+                <p className="text-sm font-bold leading-none tracking-[0.1em] text-primary-foreground">会员证</p>
+                <p className="mt-1 text-[7px] font-semibold leading-none tracking-[0.1em] text-gold">THẺ THÀNH VIÊN</p>
+              </div>
+            </div>
+            <div className="relative flex min-h-0 flex-1 flex-col items-center px-4 pb-1 pt-2 text-center">
+              {avatarEl("h-[132px] w-[99px]")}
+              <p className={`${labelCls} mt-2`}>姓名 · Họ và tên</p>
+              <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-center justify-center gap-1.5" title="Sửa họ tên">
+                <span className="min-w-0 whitespace-normal break-words hyphens-none text-[18px] font-bold uppercase leading-tight tracking-tight text-primary">{m.full_name}</span>
+                <Pencil className="h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70" />
+              </button>
+              <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5">
+                <SmartChip className="h-5 w-7" />
+                <Nfc className="h-3 w-3 opacity-60" />
+                <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[9px] font-bold tracking-[0.14em] text-primary" title="Mã thành viên">{m.member_code}</button>
+                <span className="text-[8px] opacity-40">•</span>
+                <button type="button" onClick={() => setSheet("points_benefits")} className="text-[9px] font-semibold text-primary">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
+              </div>
+              <dl className="mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-1 text-left text-[9px] leading-tight">
+                <div className="min-w-0">
+                  <dt className={labelCls}>部门 · Ban</dt>
+                  <dd className="truncate">
+                    <button type="button" onClick={() => setSheet("dept_tasks")} title="Xem Ban & nhiệm vụ" className="max-w-full truncate text-left font-semibold hover:text-primary">{deptLabel}</button>
+                  </dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className={labelCls}>职务 · Chức vụ</dt>
+                  <dd className="truncate">
+                    <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc, điểm & quyền lợi" className="max-w-full truncate text-left font-semibold hover:text-primary">{posLabel}</button>
+                  </dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className={labelCls}>等级 · Hạng</dt>
+                  <dd>
+                    <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc, điểm & quyền lợi" className="flex items-center gap-1">{tierEl}</button>
+                  </dd>
+                </div>
+                <div>
+                  <dt className={labelCls}>入会 · Gia nhập</dt>
+                  <dd className="font-mono text-[8px]">{joined}</dd>
+                </div>
+              </dl>
+              <div className="mt-auto pb-1 pt-1">
+                {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số">
+                  <img src={qr} alt={`QR ${m.member_code}`} className="h-12 w-12 rounded-[4px] border border-gold/60 bg-white p-0.5" />
+                </button>}
+              </div>
+            </div>
+            <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-3 py-1 text-[6.5px] tracking-[0.08em]">
+              <span className="truncate">THE MANDARIN LEAGUE · VERIFIED</span>
+              <button type="button" onClick={() => setIsFlipped(true)} aria-label="Xem mặt sau thẻ" title="Xem mặt sau thẻ"
+                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white">
+                <RotateCw className="h-3 w-3" />
+              </button>
+            </div>
+            </>}
           </div>
 
           {/* ---------- BACK (luxury security & settings) ---------- */}
@@ -386,7 +497,7 @@ function MemberDashboard() {
             aria-hidden={!isFlipped}
             className="flip-face back tml-pass tml-pass-back flex flex-col overflow-hidden rounded-[18px] text-primary-deep">
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
-            {watermarkBack}
+            {drumWatermark}
             <div className="h-8 w-full shrink-0 border-y border-gold/30 bg-neutral-900 shadow-inner sm:h-9" />
             <div className="relative flex shrink-0 items-center gap-2 px-3 pt-1.5">
               <button type="button" onClick={() => setIsFlipped(false)} aria-label="Quay lại mặt trước" title="Quay lại mặt trước"
@@ -401,13 +512,16 @@ function MemberDashboard() {
                 style={{ background: "conic-gradient(from 0deg,#dbeafe,#fde68a,#bbf7d0,#fbcfe8,#dbeafe)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.18)" }} />
             </div>
             <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-1.5">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <div className="relative overflow-hidden rounded-md border border-neutral-300 bg-[repeating-linear-gradient(45deg,#ffffff_0_6px,#eef2f7_6px_12px)] px-2 py-1">
+              <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-2 sm:gap-3">
+                <div className="flip-back-form order-1 sm:order-none">
+                  <NewPasswordForm requireCurrent onDone={() => { setMsg("Đã đổi mật khẩu."); setIsFlipped(false); }} />
+                </div>
+                <div className="order-2 space-y-2 sm:order-none">
+                  <div className="relative hidden overflow-hidden rounded-md border border-neutral-300 bg-[repeating-linear-gradient(45deg,#ffffff_0_6px,#eef2f7_6px_12px)] px-2 py-1 sm:block">
                     <p className="font-mono text-[9px] font-bold tracking-[0.18em] text-neutral-700">{m.member_code}</p>
                     <p className="text-[7px] uppercase tracking-[0.14em] text-neutral-500">Authorized signature · TML</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="hidden items-center gap-2 sm:flex">
                     {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số">
                       <img src={qr} alt={`QR ${m.member_code}`} className="h-16 w-16 rounded-[6px] border border-gold/60 bg-white p-1" />
                     </button>}
@@ -417,7 +531,7 @@ function MemberDashboard() {
                       <button type="button" onClick={copyCode} className="mt-0.5 text-[8px] font-semibold text-primary underline-offset-2 hover:underline">{copied ? "Đã sao chép" : "Sao chép mã"}</button>
                     </div>
                   </div>
-                  <label className="flex items-start gap-2 text-[10px] font-semibold leading-snug">
+                  <label className="flex items-start gap-2 text-[9px] font-semibold leading-snug sm:text-[10px]">
                     <input type="checkbox" className="mt-0.5 h-3 w-3 shrink-0 accent-[var(--pass-c)]"
                       checked={(m as { is_public?: boolean }).is_public !== false}
                       onChange={async (e) => {
@@ -426,9 +540,6 @@ function MemberDashboard() {
                       }} />
                     Hiện tên trên trang Cơ cấu tổ chức (nếu là Trưởng/Phó Ban)
                   </label>
-                </div>
-                <div className="flip-back-form">
-                  <NewPasswordForm requireCurrent onDone={() => { setMsg("Đã đổi mật khẩu."); setIsFlipped(false); }} />
                 </div>
               </div>
             </div>
@@ -440,12 +551,39 @@ function MemberDashboard() {
         </div>
       </div>
 
-      {/* ===== Floating dock ===== */}
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/15 bg-white/5 p-1.5 backdrop-blur">
-        <button type="button" onClick={downloadCard} className={dockItem} title="Tải thẻ ảnh"><Download className="h-4 w-4" />Tải thẻ</button>
-        {canAdmin && <Link to="/admin" className={dockItem}><ShieldCheck className="h-4 w-4" />Bàn Quản trị</Link>}
-        <button type="button" onClick={signOut} className={dockItem}><LogOut className="h-4 w-4" />Đăng xuất</button>
-      </div>
+          {/* ===== Floating dock ===== */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/15 bg-white/5 p-1.5 backdrop-blur">
+            <button type="button" onClick={downloadCard} className={dockItem} title="Tải thẻ ảnh"><Download className="h-4 w-4" />Tải thẻ</button>
+            <HomeLink className={dockItem}><Home className="h-4 w-4" />Trang chủ</HomeLink>
+            {canAdmin && <Link to="/admin" className={dockItem}><ShieldCheck className="h-4 w-4" />Bàn Quản trị</Link>}
+            <button type="button" onClick={signOut} className={dockItem}><LogOut className="h-4 w-4" />Đăng xuất</button>
+          </div>
+        </>
+      )}
+
+      {tab === "tasks" && (
+        <section className="portal-glass mt-6 rounded-2xl p-5">
+          <h2 className="mb-3 font-semibold">Nhiệm vụ của tôi</h2>
+          {taskList}
+        </section>
+      )}
+
+      {tab === "points" && (
+        <section className="portal-glass mt-6 rounded-2xl p-5">
+          <div className="flex items-center justify-between rounded-xl border border-border p-4">
+            <div><p className="text-sm text-muted-foreground">Tổng điểm đóng góp</p><p className="text-3xl font-bold text-gold">{m.contribution_points}</p></div>
+            <span className={`rounded-full border px-3 py-1 text-sm font-semibold ${tier.className}`}>{tier.label}</span>
+          </div>
+          <div className="mt-4">
+            <h3 className="mb-2 font-semibold">Biến động điểm</h3>
+            {pointHistory}
+          </div>
+        </section>
+      )}
+
+      {tab === "dept" && <MyDepartment canManage={canAdmin} />}
+
+      {tab === "benefits" && <MyBenefits />}
 
       {/* ===== Sheets ===== */}
       {sheet === "name" && (
