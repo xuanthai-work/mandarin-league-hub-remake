@@ -270,24 +270,30 @@ function MembersPage() {
   } });
 
   const all = data ?? [];
-  const rows = all.filter((m) => {
-    if (tab && unifiedStatus(m) !== tab) return false;
-    if (deptFilter && m.department !== deptFilter) return false;
-    if (!q.trim()) return true;
-    const term = q.toLowerCase();
-    return (
-      m.full_name.toLowerCase().includes(term) ||
-      m.member_code.toLowerCase().includes(term) ||
-      m.email.toLowerCase().includes(term) ||
-      (m.account?.email.toLowerCase().includes(term) ?? false)
-    );
-  });
+  const term = q.trim().toLowerCase();
+  const matchesQuery = (m: MemberRow) =>
+    !term ||
+    m.full_name.toLowerCase().includes(term) ||
+    m.member_code.toLowerCase().includes(term) ||
+    m.email.toLowerCase().includes(term) ||
+    (m.account?.email.toLowerCase().includes(term) ?? false);
+
+  const rows = all.filter(
+    (m) => (!tab || unifiedStatus(m) === tab) && (!deptFilter || m.department === deptFilter) && matchesQuery(m),
+  );
   /** Every department the org knows about, plus any legacy id still present in member rows. */
   const deptList = [
     ...ACCOUNT_DEPTS,
     ...[...new Set(all.map((m) => m.department))].filter((id) => !ACCOUNT_DEPTS.some((d) => d.id === id)).map((id) => ({ id, name: deptName(id) })),
   ];
-  const cnt = (s: UnifiedStatus) => all.filter((m) => unifiedStatus(m) === s).length;
+  /**
+   * Faceted counts: each dropdown counts within the scope of the *other* filter (plus the search
+   * term), so the numbers always match what picking that option next would actually show.
+   */
+  const scopedForStatus = all.filter((m) => (!deptFilter || m.department === deptFilter) && matchesQuery(m));
+  const scopedForDept = all.filter((m) => (!tab || unifiedStatus(m) === tab) && matchesQuery(m));
+  const cntStatus = (s: UnifiedStatus) => scopedForStatus.filter((m) => unifiedStatus(m) === s).length;
+  const cntDept = (deptId: string) => scopedForDept.filter((m) => m.department === deptId).length;
   const selected = all.find((m) => m.id === selId);
   const open = (m: MemberRow) => setSelId(m.id);
 
@@ -314,19 +320,19 @@ function MembersPage() {
           <SelectTrigger aria-label="Lọc theo ban" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
             <SelectValue>
               {deptFilter
-                ? `Ban: ${deptName(deptFilter)} (${all.filter((x) => x.department === deptFilter).length})`
-                : `Ban: Tất cả (${all.length})`}
+                ? `Ban: ${deptName(deptFilter)} (${cntDept(deptFilter)})`
+                : `Ban: Tất cả (${scopedForDept.length})`}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             <SelectItem value="all" className="text-xs">
               <span className="flex w-full items-center justify-between gap-2">
                 <span className="font-medium">Ban: Tất cả</span>
-                <span className="text-muted-foreground">({all.length})</span>
+                <span className="text-muted-foreground">({scopedForDept.length})</span>
               </span>
             </SelectItem>
             {deptList.map((d) => {
-              const count = all.filter((x) => x.department === d.id).length;
+              const count = cntDept(d.id);
               return (
                 <SelectItem key={d.id} value={d.id} className="text-xs">
                   <span className="flex w-full items-center justify-between gap-2">
@@ -342,14 +348,14 @@ function MembersPage() {
         <Select value={tab || "all"} onValueChange={(v) => setTab(v === "all" ? "" : (v as UnifiedStatus))}>
           <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[210px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
             <SelectValue>
-              {tab ? `${UNIFIED_STATUS_MAP[tab].label} (${cnt(tab)})` : `Trạng thái: Tất cả (${all.length})`}
+              {tab ? `${UNIFIED_STATUS_MAP[tab].label} (${cntStatus(tab)})` : `Trạng thái: Tất cả (${scopedForStatus.length})`}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             <SelectItem value="all" className="text-xs">
               <span className="flex w-full items-center justify-between gap-2">
                 <span className="font-medium">Trạng thái: Tất cả</span>
-                <span className="text-muted-foreground">({all.length})</span>
+                <span className="text-muted-foreground">({scopedForStatus.length})</span>
               </span>
             </SelectItem>
             {FILTER_STATUS_ORDER.map((s) => (
@@ -357,7 +363,7 @@ function MembersPage() {
                 <span className="flex w-full items-center gap-2">
                   <span className={`h-2 w-2 shrink-0 rounded-full ${UNIFIED_STATUS_MAP[s].dot}`} />
                   <span>{UNIFIED_STATUS_MAP[s].label}</span>
-                  <span className="ml-auto text-muted-foreground">({cnt(s)})</span>
+                  <span className="ml-auto text-muted-foreground">({cntStatus(s)})</span>
                 </span>
               </SelectItem>
             ))}
