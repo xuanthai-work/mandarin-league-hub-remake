@@ -234,7 +234,7 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
 
 function MembersPage() {
   const [q, setQ] = useState("");
-  const [tab, setTab] = useState<"" | UnifiedStatus>("");
+  const [tab, setTab] = useState<UnifiedStatus>("active");
   const [deptFilter, setDeptFilter] = useState<string>("");
   const [selId, setSelId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -279,7 +279,7 @@ function MembersPage() {
     (m.account?.email.toLowerCase().includes(term) ?? false);
 
   const rows = all.filter(
-    (m) => (!tab || unifiedStatus(m) === tab) && (!deptFilter || m.department === deptFilter) && matchesQuery(m),
+    (m) => unifiedStatus(m) === tab && (!deptFilter || m.department === deptFilter) && matchesQuery(m),
   );
   /** Every department the org knows about, plus any legacy id still present in member rows. */
   const deptList = [
@@ -291,7 +291,7 @@ function MembersPage() {
    * term), so the numbers always match what picking that option next would actually show.
    */
   const scopedForStatus = all.filter((m) => (!deptFilter || m.department === deptFilter) && matchesQuery(m));
-  const scopedForDept = all.filter((m) => (!tab || unifiedStatus(m) === tab) && matchesQuery(m));
+  const scopedForDept = all.filter((m) => unifiedStatus(m) === tab && matchesQuery(m));
   const cntStatus = (s: UnifiedStatus) => scopedForStatus.filter((m) => unifiedStatus(m) === s).length;
   const cntDept = (deptId: string) => scopedForDept.filter((m) => m.department === deptId).length;
   const selected = all.find((m) => m.id === selId);
@@ -345,19 +345,13 @@ function MembersPage() {
           </SelectContent>
         </Select>
 
-        <Select value={tab || "all"} onValueChange={(v) => setTab(v === "all" ? "" : (v as UnifiedStatus))}>
+        <Select value={tab} onValueChange={(v) => setTab(v as UnifiedStatus)}>
           <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[210px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
             <SelectValue>
-              {tab ? `${UNIFIED_STATUS_MAP[tab].label} (${cntStatus(tab)})` : `Trạng thái: Tất cả (${scopedForStatus.length})`}
+              {`${UNIFIED_STATUS_MAP[tab].label} (${cntStatus(tab)})`}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="all" className="text-xs">
-              <span className="flex w-full items-center justify-between gap-2">
-                <span className="font-medium">Trạng thái: Tất cả</span>
-                <span className="text-muted-foreground">({scopedForStatus.length})</span>
-              </span>
-            </SelectItem>
             {FILTER_STATUS_ORDER.map((s) => (
               <SelectItem key={s} value={s} className="text-xs">
                 <span className="flex w-full items-center gap-2">
@@ -370,10 +364,10 @@ function MembersPage() {
           </SelectContent>
         </Select>
 
-        {(q || tab || deptFilter) && (
+        {(q || tab !== "active" || deptFilter) && (
           <button
             type="button"
-            onClick={() => { setQ(""); setTab(""); setDeptFilter(""); }}
+            onClick={() => { setQ(""); setTab("active"); setDeptFilter(""); }}
             className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
