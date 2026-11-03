@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { HSK_LEVELS, HSK_PREFIXES, hskRule, hskSkills } from "@/lib/hsk";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/hsk")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Kết quả HSK | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -141,8 +142,25 @@ function HskAdminPage() {
 
       <div className="mt-4 flex flex-wrap gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mã, tên, đợt thi…" className={`${inp} max-w-xs`} />
-        <select value={level} onChange={(e) => setLevel(e.target.value)} className={`${inp} w-auto`}><option value="">Mọi cấp độ</option>{Object.entries(HSK_LEVELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className={`${inp} w-auto`}><option value="">Mọi trạng thái</option><option value="VALID">Hợp lệ</option><option value="REVOKED">Đã hủy</option></select>
+        <Select value={level || "all"} onValueChange={(v) => setLevel(v === "all" ? "" : v)}>
+          <SelectTrigger aria-label="Lọc theo cấp độ" className="h-9 w-[150px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectValue>{level ? (HSK_LEVELS[level] ?? level) : "Mọi cấp độ"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">Mọi cấp độ</SelectItem>
+            {Object.entries(HSK_LEVELS).map(([k, v]) => <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={status || "all"} onValueChange={(v) => setStatus(v === "all" ? "" : v)}>
+          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[150px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectValue>{status === "VALID" ? "Hợp lệ" : status === "REVOKED" ? "Đã hủy" : "Mọi trạng thái"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">Mọi trạng thái</SelectItem>
+            <SelectItem value="VALID" className="text-xs">Hợp lệ</SelectItem>
+            <SelectItem value="REVOKED" className="text-xs">Đã hủy</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
@@ -188,19 +206,19 @@ function HskAdminPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="text-sm sm:col-span-2">Mã kết quả
                 <div className="mt-1 flex flex-wrap gap-2">
-                  {!edit.id && <select className={`${inp} w-auto`} value={prefix} onChange={async (e) => { setPrefix(e.target.value); setEdit({ ...edit, candidate_code: await genCode(e.target.value) }); }}>{HSK_PREFIXES.map((p) => <option key={p} value={p}>{p}</option>)}</select>}
+                  {!edit.id && <Select value={prefix} onValueChange={async (v) => { setPrefix(v); setEdit({ ...edit, candidate_code: await genCode(v) }); }}><SelectTrigger aria-label="Tiền tố mã" className="h-9.5 w-[110px] rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none"><SelectValue>{prefix}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{HSK_PREFIXES.map((p) => <SelectItem key={p} value={p} className="text-sm">{p}</SelectItem>)}</SelectContent></Select>}
                   <input readOnly={!customCode} className={`${inp} flex-1 font-mono uppercase ${customCode ? "" : "bg-muted"}`} value={edit.candidate_code} onChange={(e) => setEdit({ ...edit, candidate_code: e.target.value.replace(/[^A-Za-z0-9_-]/g, "").toUpperCase() })} />
                   {!edit.id && <button type="button" onClick={async () => setEdit({ ...edit, candidate_code: await genCode(prefix) })} className="rounded-lg border border-border px-3 text-xs">Tạo mã khác</button>}
                   <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" checked={customCode} onChange={(e) => setCustomCode(e.target.checked)} /> Tự nhập mã</label>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">Mã tự sinh ngẫu nhiên, không trùng (VD: TMLHSK2026K7P3QX9A). Chỉ bật "Tự nhập mã" khi có số báo danh đặc thù.</p>
               </div>
-              <label className="text-sm">Cấp độ<select className={`${inp} mt-1`} value={edit.level} onChange={(e) => setEdit({ ...edit, level: e.target.value })}>{Object.entries(HSK_LEVELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+              <div className="text-sm"><span className="block">Cấp độ</span><Select value={edit.level} onValueChange={(v) => setEdit({ ...edit, level: v })}><SelectTrigger aria-label="Cấp độ" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{HSK_LEVELS[edit.level] ?? edit.level}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(HSK_LEVELS).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
               <label className="text-sm">Họ và tên thí sinh<input className={`${inp} mt-1`} value={edit.candidate_name} onChange={(e) => setEdit({ ...edit, candidate_name: e.target.value })} /></label>
               <label className="text-sm">Tên chữ Hán (tuỳ chọn)<input className={`${inp} mt-1`} value={edit.candidate_name_zh} onChange={(e) => setEdit({ ...edit, candidate_name_zh: e.target.value })} /></label>
               <label className="text-sm">Ngày đánh giá / thi<input type="date" className={`${inp} mt-1`} value={edit.exam_date} onChange={(e) => setEdit({ ...edit, exam_date: e.target.value })} /></label>
-              <label className="text-sm">Lớp học (tự điền giáo viên, thời gian)<select className={`${inp} mt-1`} value={edit.hsk_class_id ?? ""} onChange={(e) => pickClass(e.target.value)}><option value="">— Không gắn lớp —</option>{(classes ?? []).map((c) => <option key={c.id} value={c.id}>HSK {c.level} · {c.name}</option>)}</select></label>
-              <label className="text-sm">Giáo viên giảng dạy<select className={`${inp} mt-1`} value={edit.teacher_id ?? ""} onChange={(e) => setEdit({ ...edit, teacher_id: e.target.value || null })}><option value="">— Chưa chọn —</option>{(teachers ?? []).map((t) => <option key={t.id} value={t.id}>{t.full_name}</option>)}</select></label>
+              <div className="text-sm"><span className="block">Lớp học (tự điền giáo viên, thời gian)</span><Select value={edit.hsk_class_id ?? "none"} onValueChange={(v) => pickClass(v === "none" ? "" : v)}><SelectTrigger aria-label="Lớp học" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{(classes ?? []).find((c) => c.id === edit.hsk_class_id)?.name ?? "— Không gắn lớp —"}</SelectValue></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="none" className="text-sm">— Không gắn lớp —</SelectItem>{(classes ?? []).map((c) => <SelectItem key={c.id} value={c.id} className="text-sm">HSK {c.level} · {c.name}</SelectItem>)}</SelectContent></Select></div>
+              <div className="text-sm"><span className="block">Giáo viên giảng dạy</span><Select value={edit.teacher_id ?? "none"} onValueChange={(v) => setEdit({ ...edit, teacher_id: v === "none" ? null : v })}><SelectTrigger aria-label="Giáo viên giảng dạy" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{(teachers ?? []).find((t) => t.id === edit.teacher_id)?.full_name ?? "— Chưa chọn —"}</SelectValue></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="none" className="text-sm">— Chưa chọn —</SelectItem>{(teachers ?? []).map((t) => <SelectItem key={t.id} value={t.id} className="text-sm">{t.full_name}</SelectItem>)}</SelectContent></Select></div>
               <label className="text-sm">Khóa học<input className={`${inp} mt-1`} value={edit.course_name} onChange={(e) => setEdit({ ...edit, course_name: e.target.value })} placeholder="VD: HSK 4" /></label>
               <label className="text-sm">Đợt đánh giá<input className={`${inp} mt-1`} value={edit.exam_session} onChange={(e) => setEdit({ ...edit, exam_session: e.target.value })} placeholder="VD: Cuối khóa 11/2026" /></label>
               <label className="text-sm">Học từ ngày<input type="date" className={`${inp} mt-1`} value={edit.study_start ?? ""} onChange={(e) => setEdit({ ...edit, study_start: e.target.value || null })} /></label>

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirm } from "@/components/admin/Trash";
 import { COURSE_ROLE_LABEL, resolveTeacherPhotos, type CourseTeacherRole } from "@/lib/teachers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { COURSE_BUCKET, programFee, slugify, STATUS_LABEL, TYPE_LABEL, withThumbs, type CourseType, type Program, type ProgramStatus } from "@/lib/programs";
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
@@ -125,9 +126,9 @@ function ProgramForm({ init, teachers, initLinks, onClose, onSaved }: { init: Pa
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm sm:col-span-2">Tên chương trình *<input required className={inp} value={f.title} onChange={s("title")} /></label>
           <label className="text-sm">Đường dẫn (slug)<input placeholder="tự tạo từ tên" className={inp} value={f.slug} onChange={s("slug")} /></label>
-          <label className="text-sm">Loại chương trình<select className={inp} value={f.course_type} onChange={(e) => setF({ ...f, course_type: e.target.value as CourseType })}>{Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
+          <div className="text-sm"><span className="block">Loại chương trình</span><Select value={f.course_type ?? "FREE_COMMUNITY"} onValueChange={(v) => setF({ ...f, course_type: v as CourseType })}><SelectTrigger aria-label="Loại chương trình" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{TYPE_LABEL[f.course_type ?? "FREE_COMMUNITY"]?.label ?? "—"}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(TYPE_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v.label}</SelectItem>)}</SelectContent></Select></div>
           {f.course_type !== "FREE_COMMUNITY" && <label className="text-sm">Học phí (VNĐ, 0 = liên hệ)<input type="number" min={0} step={10000} className={inp} value={f.price} onChange={(e) => setF({ ...f, price: Number(e.target.value) })} /></label>}
-          <label className="text-sm">Trạng thái<select className={inp} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value as ProgramStatus })}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+          <div className="text-sm"><span className="block">Trạng thái</span><Select value={f.status ?? "upcoming"} onValueChange={(v) => setF({ ...f, status: v as ProgramStatus })}><SelectTrigger aria-label="Trạng thái" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{STATUS_LABEL[f.status ?? "upcoming"] ?? f.status}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
           <label className="text-sm">Trình độ<input placeholder="VD: HSK 1, Mọi trình độ" className={inp} value={f.level} onChange={s("level")} /></label>
           <label className="text-sm">Hình thức<input className={inp} value={f.format} onChange={s("format")} /></label>
           <label className="text-sm">Thời lượng<input placeholder="VD: 8 buổi" className={inp} value={f.duration} onChange={s("duration")} /></label>
@@ -164,9 +165,10 @@ function TeacherPicker({ teachers, picks, onChange }: { teachers: TeacherOpt[]; 
           <div key={p.teacher_id} className="flex flex-wrap items-center gap-2 rounded-lg bg-secondary p-2">
             {t?.photo ? <img src={t.photo} alt="" className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-accent" />}
             <span className="flex-1 font-medium">{t?.full_name ?? "—"}{t && t.status !== "visible" && <span className="ml-1 text-xs text-muted-foreground">(chưa công khai)</span>}</span>
-            <select className="rounded-md border border-input bg-background px-2 py-1 text-xs" value={p.role} onChange={(e) => onChange(picks.map((x, k) => k === i ? { ...x, role: e.target.value as CourseTeacherRole } : x))}>
-              {Object.entries(COURSE_ROLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            <Select value={p.role} onValueChange={(v) => onChange(picks.map((x, k) => k === i ? { ...x, role: v as CourseTeacherRole } : x))}>
+              <SelectTrigger aria-label="Vai trò giáo viên" className="h-8 w-[130px] rounded-lg border-input bg-background text-xs shadow-none"><SelectValue>{COURSE_ROLE_LABEL[p.role] ?? p.role}</SelectValue></SelectTrigger>
+              <SelectContent className="rounded-xl">{Object.entries(COURSE_ROLE_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>)}</SelectContent>
+            </Select>
             <button type="button" onClick={() => move(i, -1)} className="rounded px-1.5 hover:bg-muted" aria-label="Lên">↑</button>
             <button type="button" onClick={() => move(i, 1)} className="rounded px-1.5 hover:bg-muted" aria-label="Xuống">↓</button>
             <button type="button" onClick={() => onChange(picks.filter((_, k) => k !== i))} className="rounded p-1 text-destructive hover:bg-muted" aria-label="Gỡ"><X className="h-4 w-4" /></button>

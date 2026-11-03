@@ -1,4 +1,5 @@
 import path from "node:path";
+import { existsSync } from "node:fs";
 
 // Standalone Vite config: every plugin is imported directly from its package,
 // so the build no longer depends on any @lovable.dev/* helper.
@@ -13,6 +14,27 @@ import { defineConfig, loadEnv } from "vite";
 // or secrets would leak into the client bundle).
 const serverEnv = loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), "");
 Object.assign(process.env, serverEnv);
+
+/**
+ * Pin `entities` to the copy installed at the project root so SSR never pulls a second,
+ * nested copy. Layout differs by version (v4: lib/esm, v6: dist/esm) and package managers
+ * that do not hoist may not expose it at the root at all — in that case we alias nothing and
+ * let normal resolution handle it.
+ */
+const entitiesEsmDir = ["dist/esm", "lib/esm"]
+  .map((dir) => path.resolve(process.cwd(), "node_modules/entities", dir))
+  .find((dir) => existsSync(path.join(dir, "decode.js")));
+const entitiesAlias = entitiesEsmDir
+  ? {
+      "entities/lib/decode.js": path.join(entitiesEsmDir, "decode.js"),
+      "entities/lib/decode": path.join(entitiesEsmDir, "decode.js"),
+      "entities/lib/encode.js": path.join(entitiesEsmDir, "escape.js"),
+      "entities/lib/escape.js": path.join(entitiesEsmDir, "escape.js"),
+      "entities/decode": path.join(entitiesEsmDir, "decode.js"),
+      "entities/escape": path.join(entitiesEsmDir, "escape.js"),
+      entities: path.join(entitiesEsmDir, "index.js"),
+    }
+  : {};
 
 export default defineConfig(({ command, mode }) => {
   // Mirror VITE_* vars onto import.meta.env.* so the client bundle gets them.
@@ -58,13 +80,7 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       tsconfigPaths: true,
       alias: {
-        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/dist/esm/decode.js"),
-        "entities/lib/decode": path.resolve(__dirname, "node_modules/entities/dist/esm/decode.js"),
-        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/dist/esm/escape.js"),
-        "entities/lib/escape.js": path.resolve(__dirname, "node_modules/entities/dist/esm/escape.js"),
-        "entities/decode": path.resolve(__dirname, "node_modules/entities/dist/esm/decode.js"),
-        "entities/escape": path.resolve(__dirname, "node_modules/entities/dist/esm/escape.js"),
-        entities: path.resolve(__dirname, "node_modules/entities/dist/esm/index.js"),
+        ...entitiesAlias,
         "@": path.resolve(__dirname, "src"),
       },
       dedupe: [

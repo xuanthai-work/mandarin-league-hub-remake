@@ -11,6 +11,7 @@ import { classFee, type HskClass } from "@/lib/hsk-classes";
 import { reviewEnrollment } from "@/lib/courses.functions";
 import { TrashList } from "@/components/admin/Trash";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAdminAccess } from "./admin";
 import { ENROLL_STATUS, formatFee, useCourseSettings, type CourseSetting } from "@/lib/course-settings";
 
@@ -73,9 +74,33 @@ function CoursesAdmin() {
         <div className="flex flex-wrap gap-2">
           <input placeholder="Tìm mã, tên, email, SĐT…" className={`${inp} max-w-xs`} value={q} onChange={(e) => setQ(e.target.value)} />
           {cid && <button onClick={() => setCid("")} className="rounded-full bg-accent px-3 text-xs font-semibold text-primary">Đang lọc theo chương trình ✕</button>}
-          <select className={`${inp} w-auto`} value={kid} onChange={(e) => setKid(e.target.value)}><option value="">Mọi lớp HSK cụ thể</option>{(classes ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-          <select className={`${inp} w-auto`} value={lv} onChange={(e) => setLv(Number(e.target.value))}><option value={0}>Mọi cấp độ</option>{[1, 2, 3, 4, 5, 6].map((l) => <option key={l} value={l}>HSK {l}</option>)}</select>
-          <select className={`${inp} w-auto`} value={stF} onChange={(e) => setStF(e.target.value)}><option value="">Mọi trạng thái</option>{Object.entries(ENROLL_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select>
+          <Select value={kid || "all"} onValueChange={(v) => setKid(v === "all" ? "" : v)}>
+            <SelectTrigger aria-label="Lọc theo lớp HSK" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+              <SelectValue>{kid ? (classes?.find((c) => c.id === kid)?.name ?? "Lớp HSK") : "Mọi lớp HSK cụ thể"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="text-xs">Mọi lớp HSK cụ thể</SelectItem>
+              {(classes ?? []).map((c) => <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
+            <SelectTrigger aria-label="Lọc theo cấp độ" className="h-9 w-[130px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+              <SelectValue>{lv ? `HSK ${lv}` : "Mọi cấp độ"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="0" className="text-xs">Mọi cấp độ</SelectItem>
+              {[1, 2, 3, 4, 5, 6].map((l) => <SelectItem key={l} value={String(l)} className="text-xs">HSK {l}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={stF || "all"} onValueChange={(v) => setStF(v === "all" ? "" : v)}>
+            <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+              <SelectValue>{stF ? (ENROLL_STATUS[stF]?.label ?? stF) : "Mọi trạng thái"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="text-xs">Mọi trạng thái</SelectItem>
+              {Object.entries(ENROLL_STATUS).map(([k, v]) => <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
@@ -112,12 +137,22 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
         </button>
       </div>
       <div className="mt-2 text-xs text-muted-foreground">{pending} chờ duyệt · {approved}/{s.capacity} trúng tuyển · {formatFee(s)}</div>
-      <label className="mt-3 block text-xs text-muted-foreground">Giảng viên phụ trách chính (hiện trên trang khóa)
-        <select className={`${inp} mt-1`} value={s.lead_teacher_id ?? ""} onChange={(e) => onSave({ lead_teacher_id: e.target.value || null })}>
-          <option value="">Tự động (nổi bật / xếp đầu)</option>
-          {(teachers ?? []).map((t) => <option key={t.id} value={t.id}>{t.full_name}{(t.teaching_levels ?? []).includes(s.level) ? "" : " (chưa gán cấp này)"}</option>)}
-        </select>
-      </label>
+      <div className="mt-3 text-xs text-muted-foreground">
+        <span className="block">Giảng viên phụ trách chính (hiện trên trang khóa)</span>
+        <Select value={s.lead_teacher_id ?? "auto"} onValueChange={(v) => onSave({ lead_teacher_id: v === "auto" ? null : v })}>
+          <SelectTrigger aria-label="Giảng viên phụ trách chính" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none">
+            <SelectValue>{(teachers ?? []).find((t) => t.id === s.lead_teacher_id)?.full_name ?? "Tự động (nổi bật / xếp đầu)"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="auto" className="text-sm">Tự động (nổi bật / xếp đầu)</SelectItem>
+            {(teachers ?? []).map((t) => (
+              <SelectItem key={t.id} value={t.id} className="text-sm">
+                {t.full_name}{(t.teaching_levels ?? []).includes(s.level) ? "" : " (chưa gán cấp này)"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       {([["co_teacher_ids", "Giảng viên đồng hành"], ["assistant_ids", "Trợ giảng"]] as const).map(([key, label]) => {
         const ids: string[] = Array.isArray(s[key]) ? (s[key] as string[]) : [];
         return (
@@ -132,7 +167,15 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
         );
       })}
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <select className={inp} value={fee.fee_type} onChange={(e) => setFee({ ...fee, fee_type: e.target.value as "free" | "paid" })}><option value="free">Miễn phí</option><option value="paid">Có phí</option></select>
+        <Select value={fee.fee_type} onValueChange={(v) => setFee({ ...fee, fee_type: v as "free" | "paid" })}>
+          <SelectTrigger aria-label="Loại học phí" className="h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+            <SelectValue>{fee.fee_type === "free" ? "Miễn phí" : "Có phí"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="free" className="text-sm">Miễn phí</SelectItem>
+            <SelectItem value="paid" className="text-sm">Có phí</SelectItem>
+          </SelectContent>
+        </Select>
         <input type="number" min={1} className={inp} title="Sĩ số tối đa" value={fee.capacity} onChange={(e) => setFee({ ...fee, capacity: Number(e.target.value) })} />
         {fee.fee_type === "paid" && <input type="number" min={0} step={10000} placeholder="Học phí (VNĐ)" className={`${inp} col-span-2`} value={fee.fee_amount} onChange={(e) => setFee({ ...fee, fee_amount: Number(e.target.value) })} />}
       </div>
@@ -172,7 +215,17 @@ function ReviewDialog({ r, setting, onClose, onDone }: { r: Enrollment; setting:
           <button onClick={() => { navigator.clipboard.writeText(r.phone); toast.success("Đã sao chép SĐT"); }} className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"><Copy className="h-3.5 w-3.5" />Sao chép SĐT</button>
         </div>
         <div className="mt-5 space-y-3 border-t border-border pt-4">
-          <label className="block text-sm">Kết quả<select className={inp} value={status} onChange={(e) => setStatus(e.target.value)}>{Object.entries(ENROLL_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
+          <div className="block text-sm">
+            <span className="block">Kết quả</span>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger aria-label="Kết quả duyệt đơn" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+                <SelectValue>{ENROLL_STATUS[status]?.label ?? status}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {Object.entries(ENROLL_STATUS).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           {status === "approved" && <>
             <label className="block text-sm">Link nhóm Zalo lớp học *<input placeholder="https://zalo.me/g/..." className={inp} value={zalo} onChange={(e) => setZalo(e.target.value)} /></label>
             {setting?.fee_type === "paid" && <label className="block text-sm">Hướng dẫn đóng học phí ({classFee(setting)})<textarea rows={3} className={inp} value={feeNote} onChange={(e) => setFeeNote(e.target.value)} /></label>}

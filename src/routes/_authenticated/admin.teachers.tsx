@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PROGRAM_OPTIONS, resolveTeacherPhotos, TEACHER_BUCKET, TEACHER_STATUS_LABEL, TEACHER_TYPE_LABEL, type TeacherStatus, type TeacherType } from "@/lib/teachers";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/teachers")({ staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Giáo viên | TML Admin" }, { name: "robots", content: "noindex" }] }),
@@ -71,9 +72,15 @@ function TeachersPage() {
       />
       <div className="flex flex-wrap gap-2">
         <input className={`${inp} max-w-xs`} placeholder="Tìm tên hoặc chức danh…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <select className={`${inp} max-w-[160px]`} value={lv} onChange={(e) => setLv(Number(e.target.value))}>
-          <option value={0}>Tất cả cấp HSK</option>{LEVELS.map((l) => <option key={l} value={l}>HSK {l}</option>)}
-        </select>
+        <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
+          <SelectTrigger aria-label="Lọc theo cấp HSK" className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectValue>{lv ? `HSK ${lv}` : "Tất cả cấp HSK"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="0" className="text-xs">Tất cả cấp HSK</SelectItem>
+            {LEVELS.map((l) => <SelectItem key={l} value={String(l)} className="text-xs">HSK {l}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full min-w-[720px] text-sm">
@@ -141,8 +148,8 @@ function TeachersPage() {
               })}</div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-sm">Loại giáo viên<select className={inp} value={edit.teacher_type} onChange={(e) => setEdit({ ...edit, teacher_type: e.target.value as TeacherType })}>{Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-              <label className="block text-sm">Trạng thái hồ sơ<select className={inp} value={edit.status} onChange={(e) => setEdit({ ...edit, status: e.target.value as TeacherStatus })}>{Object.entries(TEACHER_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+              <div className="text-sm"><span className="block">Loại giáo viên</span><Select value={edit.teacher_type} onValueChange={(v) => setEdit({ ...edit, teacher_type: v as TeacherType })}><SelectTrigger aria-label="Loại giáo viên" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{TEACHER_TYPE_LABEL[edit.teacher_type] ?? edit.teacher_type}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
+              <div className="text-sm"><span className="block">Trạng thái hồ sơ</span><Select value={edit.status} onValueChange={(v) => setEdit({ ...edit, status: v as TeacherStatus })}><SelectTrigger aria-label="Trạng thái hồ sơ" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{TEACHER_STATUS_LABEL[edit.status] ?? edit.status}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(TEACHER_STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
               <label className="block text-sm">Thứ tự<input type="number" className={inp} value={edit.sort_order} onChange={(e) => setEdit({ ...edit, sort_order: Number(e.target.value) })} /></label>
             </div>
             <div className="flex flex-wrap gap-4">

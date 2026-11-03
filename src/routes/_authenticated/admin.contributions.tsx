@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import { POINT_KIND, isLeader, tierOf } from "@/lib/points";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({ staticData: { sitemap: false },
@@ -108,9 +109,15 @@ function PointsPage() {
             ))}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <select className={inp} value={f.dept} onChange={(e) => setF({ ...f, dept: e.target.value, picked: [] })}>
-              <option value="">Tất cả Ban</option>{depts.map((d) => <option key={d} value={d}>{deptName(d)}</option>)}
-            </select>
+            <Select value={f.dept || "all"} onValueChange={(v) => setF({ ...f, dept: v === "all" ? "" : v, picked: [] })}>
+              <SelectTrigger aria-label="Lọc theo Ban" className="h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+                <SelectValue>{f.dept ? deptName(f.dept) : "Tất cả Ban"}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all" className="text-sm">Tất cả Ban</SelectItem>
+                {depts.map((d) => <SelectItem key={d} value={d} className="text-sm">{deptName(d)}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <input className={inp} placeholder="Tìm tên / mã" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
           </div>
           <div className="rounded-lg border border-input">
@@ -130,9 +137,14 @@ function PointsPage() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <select className={inp} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value, amount: e.target.value === "attendance" ? 5 : 20 })}>
-              {kinds.map((k) => <option key={k} value={k}>{POINT_KIND[k]}</option>)}
-            </select>
+            <Select value={f.kind} onValueChange={(v) => setF({ ...f, kind: v, amount: v === "attendance" ? 5 : 20 })}>
+              <SelectTrigger aria-label="Loại điểm" className="h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+                <SelectValue>{POINT_KIND[f.kind] ?? f.kind}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {kinds.map((k) => <SelectItem key={k} value={k} className="text-sm">{POINT_KIND[k]}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <input type="number" min={1} max={f.kind === "attendance" ? 10 : 100} className={inp} value={f.amount} onChange={(e) => setF({ ...f, amount: Number(e.target.value) })} />
           </div>
           <input required minLength={3} maxLength={300} className={inp} placeholder="Lý do (bắt buộc), vd: Họp Ban tuần 1 tháng 10" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} />
@@ -146,18 +158,42 @@ function PointsPage() {
       <section className="overflow-x-auto rounded-xl border border-border bg-card">
         <div className="flex flex-wrap items-center gap-2 p-4">
           <h2 className="mr-auto font-semibold">Lịch sử điểm</h2>
-          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.dept} onChange={(e) => setHf({ ...hf, dept: e.target.value })}>
-            <option value="">Tất cả Ban</option>{[...new Set((members.data ?? []).map((m) => m.department))].map((d) => <option key={d} value={d}>{deptName(d)}</option>)}
-          </select>
-          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.member} onChange={(e) => setHf({ ...hf, member: e.target.value })}>
-            <option value="">Tất cả thành viên</option>{(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
-          </select>
-          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.kind} onChange={(e) => setHf({ ...hf, kind: e.target.value })}>
-            <option value="">Tất cả loại</option>{Object.entries(POINT_KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-          <select className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs" value={hf.actor} onChange={(e) => setHf({ ...hf, actor: e.target.value })}>
-            <option value="">Tất cả người duyệt</option>{[...new Set((history.data ?? []).map((t) => t.actor_name).filter(Boolean))].map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
+          <Select value={hf.dept || "all"} onValueChange={(v) => setHf({ ...hf, dept: v === "all" ? "" : v })}>
+            <SelectTrigger aria-label="Lọc theo Ban" className="h-9 w-[150px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+              <SelectValue>{hf.dept ? deptName(hf.dept) : "Ban: Tất cả"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="text-xs">Ban: Tất cả</SelectItem>
+              {[...new Set((members.data ?? []).map((m) => m.department))].map((d) => <SelectItem key={d} value={d} className="text-xs">{deptName(d)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={hf.member || "all"} onValueChange={(v) => setHf({ ...hf, member: v === "all" ? "" : v })}>
+            <SelectTrigger aria-label="Lọc theo thành viên" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+              <SelectValue>{hf.member ? (nameOf(hf.member)?.full_name ?? "Thành viên") : "Thành viên: Tất cả"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="text-xs">Thành viên: Tất cả</SelectItem>
+              {(members.data ?? []).map((m) => <SelectItem key={m.id} value={m.id} className="text-xs">{m.full_name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={hf.kind || "all"} onValueChange={(v) => setHf({ ...hf, kind: v === "all" ? "" : v })}>
+            <SelectTrigger aria-label="Lọc theo loại điểm" className="h-9 w-[140px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+              <SelectValue>{hf.kind ? (POINT_KIND[hf.kind] ?? hf.kind) : "Loại: Tất cả"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="text-xs">Loại: Tất cả</SelectItem>
+              {Object.entries(POINT_KIND).map(([k, v]) => <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={hf.actor || "all"} onValueChange={(v) => setHf({ ...hf, actor: v === "all" ? "" : v })}>
+            <SelectTrigger aria-label="Lọc theo người duyệt" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+              <SelectValue>{hf.actor || "Người duyệt: Tất cả"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="text-xs">Người duyệt: Tất cả</SelectItem>
+              {[...new Set((history.data ?? []).map((t) => t.actor_name).filter(Boolean))].map((a) => <SelectItem key={a} value={a} className="text-xs">{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <p className="px-4 pb-2 text-xs text-muted-foreground">Tháng này: <b className="text-success">+{monthPlus}</b> · <b className="text-destructive">{monthMinus}</b> điểm · {monthTasks} nhiệm vụ được duyệt</p>
         <table className="w-full min-w-[860px] text-sm">
