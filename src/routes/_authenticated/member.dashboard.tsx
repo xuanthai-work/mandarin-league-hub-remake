@@ -168,7 +168,7 @@ function MemberDashboard() {
   const posLabel = mainAdvisor ? <span className="text-gold">Cố vấn chuyên môn</span>
     : advNames.length ? <>{m.position} · <span className="text-gold">Cố vấn {advNames.join(" · ")}</span></> : m.position;
   const joined = new Date(m.joined_on).toLocaleDateString("vi-VN");
-  const tierEl = <><span key={tier.key} className="tml-pass-pop inline-flex"><TierBadge tierKey={tone === "black" ? "leader" : tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold ${tier.className}`}>{tier.label}</span></>;
+  const tierEl = <><span key={tier.key} className="tml-pass-pop inline-flex [&_svg]:h-[22px] [&_svg]:w-[22px] md:[&_svg]:h-8 md:[&_svg]:w-8"><TierBadge tierKey={tone === "black" ? "leader" : tier.key} size={22} /></span><span className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold md:text-[13px] ${tier.className}`}>{tier.label}</span></>;
   const avatarEl = (size: string) => (
     <label className={`group relative block ${size} shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60`}>
       {avatar.data ? <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-3xl font-bold text-primary">{m.full_name.charAt(0)}</span>}
@@ -182,7 +182,7 @@ function MemberDashboard() {
       <img
         src="/dongson-gold.png"
         alt=""
-        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[92%] aspect-square" : "h-44 w-44"}`}
+        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[92%] aspect-square" : "h-44 w-44 md:h-[22rem] md:w-[22rem]"}`}
       />
     </div>
   );
@@ -192,7 +192,7 @@ function MemberDashboard() {
       <img
         src="/dongson-gold.png"
         alt=""
-        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[100%] aspect-square" : "h-64 w-64"}`}
+        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[100%] aspect-square" : "h-64 w-64 md:h-[32rem] md:w-[32rem]"}`}
       />
     </div>
   );
@@ -239,7 +239,7 @@ function MemberDashboard() {
   };
 
   const dockItem = "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white";
-  const labelCls = "text-[7px] uppercase tracking-wider opacity-60";
+  const labelCls = "text-[7px] uppercase tracking-wider opacity-60 md:text-[11px]";
 
   const taskList = (
     <div className="space-y-3">
@@ -340,7 +340,9 @@ function MemberDashboard() {
 
           {/* ===== The pass: ID-1 flip card ===== */}
           <div className={`flip-scene mt-4 flex w-full min-w-0 justify-center`}>
-            <div className={layout === "v" ? "w-full min-w-0 max-w-[min(24rem,calc(100vw-2rem))]" : "w-full min-w-0 max-w-[min(26rem,calc(100vw-2rem))]"}>
+            <div className={layout === "v"
+              ? "w-full min-w-0 max-w-[min(24rem,calc(100vw-2rem))] md:max-w-[36rem]"
+              : "w-full min-w-0 max-w-[min(26rem,calc(100vw-2rem))] md:max-w-[52rem]"}>
         {/* The pass no longer tilts or rotates in 3D (desktop mirrors the phone
             cross-fade), so the old hover-tilt pointer handlers are gone. */}
         <div
@@ -356,45 +358,45 @@ function MemberDashboard() {
             {drumWatermark}
             {layout === "h" && (
               <span aria-hidden className="pointer-events-none absolute inset-0 select-none opacity-40">
-                <DongSon className="-bottom-24 -left-24 h-64 w-64" />
+                <DongSon className="-bottom-24 -left-24 h-64 w-64 md:-bottom-48 md:-left-48 md:h-[32rem] md:w-[32rem]" />
               </span>
             )}
-            <LacBirds flock={FLOCK_H} />
+            <LacBirds flock={FLOCK_H} className="md:scale-[1.8]" />
             {layout === "h" ? <>
             {/* header */}
-            <div className="relative flex shrink-0 items-center gap-2 px-3 pt-2">
-              <img src="/logo.svg" alt="TML" className="h-8 w-8 shrink-0 rounded-full border-2 border-gold bg-white object-cover p-0.5 shadow-sm" />
+            <div className="relative flex shrink-0 items-center gap-2 px-3 pt-2 md:gap-3 md:px-6 md:pt-4">
+              <img src="/logo.svg" alt="TML" className="h-8 w-8 shrink-0 rounded-full border-2 border-gold bg-white object-cover p-0.5 shadow-sm md:h-14 md:w-14" />
               <div className="min-w-0 leading-tight">
-                <p className="font-serif text-[11px] font-bold tracking-wide text-primary">普通话联盟</p>
-                <p className="text-[8px] font-semibold tracking-wide">The Mandarin League</p>
-                <p className="text-[7px] uppercase tracking-[0.08em] opacity-70">Liên Đoàn Hán Ngữ</p>
+                <p className="font-serif text-[11px] font-bold tracking-wide text-primary md:text-[20px]">普通话联盟</p>
+                <p className="text-[8px] font-semibold tracking-wide md:text-[14px]">The Mandarin League</p>
+                <p className="text-[7px] uppercase tracking-[0.08em] opacity-70 md:text-[12px]">Liên Đoàn Hán Ngữ</p>
               </div>
-              <div className="tml-banner ml-auto flex h-9 flex-1 flex-col items-end justify-center pb-1.5 pr-2.5 pt-1">
-                <p className="text-sm font-bold leading-none tracking-[0.1em] text-primary-foreground">会员证</p>
-                <p className="mt-1 text-[7px] font-semibold leading-none tracking-[0.1em] text-gold">THẺ THÀNH VIÊN</p>
+              <div className="tml-banner ml-auto flex h-9 flex-1 flex-col items-end justify-center pb-1.5 pr-2.5 pt-1 md:h-16 md:pb-3 md:pr-5 md:pt-2">
+                <p className="text-sm font-bold leading-none tracking-[0.1em] text-primary-foreground md:text-2xl">会员证</p>
+                <p className="mt-1 text-[7px] font-semibold leading-none tracking-[0.1em] text-gold md:text-[12px]">THẺ THÀNH VIÊN</p>
               </div>
             </div>
             {/* body — info left, portrait right (aligned to the same 16px content box) */}
-            <div className="relative flex min-h-0 flex-1 px-3 pb-1 pt-0.5">
-              <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2.5">
+            <div className="relative flex min-h-0 flex-1 px-3 pb-1 pt-0.5 md:px-6 md:pb-3 md:pt-2">
+              <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2.5 md:gap-6">
                 <div className="flex min-w-0 flex-col">
-                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                    <SmartChip className="h-5 w-7" />
-                    <Nfc className="h-3 w-3 opacity-60" />
-                    <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[8.5px] font-bold tracking-[0.14em] text-primary" title="Mã thành viên">{m.member_code}</button>
-                    <span className="text-[8px] opacity-40">•</span>
-                    <button type="button" onClick={() => setSheet("points_benefits")} className="text-[8.5px] font-semibold text-primary" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 md:gap-x-2">
+                    <SmartChip className="h-5 w-7 md:h-9 md:w-13" />
+                    <Nfc className="h-3 w-3 opacity-60 md:h-5 md:w-5" />
+                    <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[8.5px] font-bold tracking-[0.14em] text-primary md:text-[15px]" title="Mã thành viên">{m.member_code}</button>
+                    <span className="text-[8px] opacity-40 md:text-[14px]">•</span>
+                    <button type="button" onClick={() => setSheet("points_benefits")} className="text-[8.5px] font-semibold text-primary md:text-[15px]" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
                   </div>
-                  <div className="mt-1 flex min-h-0 flex-1 flex-col">
-                    <p className={`${labelCls} mt-1`}>姓名 · Họ và tên</p>
-                    <div className="flex min-h-0 flex-1 items-center">
+                  <div className="mt-1 flex min-h-0 flex-1 flex-col md:mt-2 md:justify-center">
+                    <p className="mt-1 text-[7px] uppercase tracking-wider opacity-60 md:text-[12px]">姓名 · Họ và tên</p>
+                    <div className="flex min-h-0 flex-1 items-center md:flex-none">
                       <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-start gap-1 text-left" title="Sửa họ tên">
-                        <span className="min-w-0 whitespace-normal break-words hyphens-none text-[14px] font-bold uppercase leading-tight tracking-tight text-primary">{m.full_name}</span>
-                        <Pencil className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70" />
+                        <span className="min-w-0 whitespace-normal break-words hyphens-none text-[14px] font-bold uppercase leading-tight tracking-tight text-primary md:text-[26px]">{m.full_name}</span>
+                        <Pencil className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70 md:h-5 md:w-5" />
                       </button>
                     </div>
                   </div>
-                  <dl className="mt-auto flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight">
+                  <dl className="mt-auto flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight md:gap-y-1.5 md:text-[15px]">
                     <div className="min-w-0">
                       <dt className={labelCls}>部门 · Ban</dt>
                       <dd className="truncate">
@@ -410,28 +412,28 @@ function MemberDashboard() {
                     <div className="min-w-0">
                       <dt className={labelCls}>等级 · Hạng</dt>
                       <dd>
-                        <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc, điểm & quyền lợi" className="flex items-center gap-1">{tierEl}</button>
+                        <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc, điểm & quyền lợi" className="flex items-center gap-1 md:gap-1.5">{tierEl}</button>
                       </dd>
                     </div>
                     <div>
                       <dt className={labelCls}>入会 · Gia nhập</dt>
-                      <dd className="font-mono text-[8px]">{joined}</dd>
+                      <dd className="font-mono text-[8px] md:text-[14px]">{joined}</dd>
                     </div>
                   </dl>
                 </div>
-                <div className="flex flex-col items-center gap-1">
-                  {avatarEl("h-[88px] w-[66px]")}
-                  {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số">
-                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-0.5" />
+                <div className="flex h-full flex-col items-center justify-between pb-0.5 pt-0.5">
+                  {avatarEl("h-[88px] w-[66px] md:h-[160px] md:w-[120px]")}
+                  {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số" className="mt-auto">
+                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-0.5 md:h-20 md:w-20 md:rounded-lg md:p-1" />
                   </button>}
                 </div>
               </div>
             </div>
-            <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-3 py-1 text-[6.5px] tracking-[0.08em]">
+            <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-3 py-1 text-[6.5px] tracking-[0.08em] md:px-6 md:py-2 md:text-[12px]">
               <span className="truncate">THE MANDARIN LEAGUE · VERIFIED MEMBER PASS</span>
               <button type="button" onClick={() => flipTo(true)} aria-label="Xem mặt sau thẻ" title="Xem mặt sau thẻ"
-                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white">
-                <RotateCw className="h-3 w-3" />
+                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white md:p-1.5">
+                <RotateCw className="h-3 w-3 md:h-5 md:w-5" />
               </button>
             </div>
             </> : <>
@@ -439,19 +441,19 @@ function MemberDashboard() {
             <div aria-hidden className="tml-pass-vframe pointer-events-none absolute inset-2 z-10 rounded-[13px] border border-gold/45" />
 
             {/* 1. Royal header */}
-            <div className="tml-vhead relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 py-3">
+            <div className="tml-vhead relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 py-3 md:px-6 md:py-4">
               <div className="min-w-0 leading-tight">
-                <p className="font-serif text-[13px] font-bold tracking-wide text-gold">普通话联盟</p>
-                <p className="text-[8.5px] font-bold tracking-wider text-primary-foreground">THE MANDARIN LEAGUE</p>
-                <p className="text-[7px] tracking-[0.1em] text-gold">会员证 · THẺ THÀNH VIÊN</p>
+                <p className="font-serif text-[13px] font-bold tracking-wide text-gold md:text-[18px]">普通话联盟</p>
+                <p className="text-[8.5px] font-bold tracking-wider text-primary-foreground md:text-[12px]">THE MANDARIN LEAGUE</p>
+                <p className="text-[7px] tracking-[0.1em] text-gold md:text-[10px]">会员证 · THẺ THÀNH VIÊN</p>
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-gold bg-white p-0.5 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-gold bg-white p-0.5 shadow-sm md:h-14 md:w-14">
                 <img src="/logo.svg" alt="TML" className="h-full w-full rounded-full object-cover" />
               </div>
             </div>
 
             {/* 2. Compact body — every block is shrink-0 so nothing is pushed out */}
-            <div className="relative z-20 flex min-h-0 flex-1 flex-col items-center px-3.5 pb-1 pt-1 text-center">
+            <div className="relative z-20 flex min-h-0 flex-1 flex-col items-center px-3.5 pb-1 pt-1 text-center md:px-6 md:pb-2 md:pt-2">
               {/* concentric security rings behind the content */}
               <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="absolute h-[54%] aspect-square rounded-full border border-dashed border-gold/25" />
@@ -460,60 +462,60 @@ function MemberDashboard() {
 
               {/* 2.1 Portrait — scales with the card so the body never looks hollow */}
               <div className="relative flex w-full shrink-0 justify-center">
-                {avatarEl("w-[40%] max-w-[132px] aspect-[3/4]")}
+                {avatarEl("w-[40%] max-w-[132px] aspect-[3/4] md:max-w-[190px]")}
               </div>
 
               {/* 2.2 Name + title */}
-              <div className="mt-2 w-full shrink-0">
+              <div className="mt-2 w-full shrink-0 md:mt-4">
                 <div className="flex w-full items-center justify-center">
                   <button type="button" onClick={() => setSheet("name")} className="group/name relative min-w-0 max-w-full px-4" title="Sửa họ tên">
-                    <span className="block truncate text-center text-[19px] font-bold uppercase tracking-tight text-primary">{m.full_name}</span>
-                    <Pencil className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 opacity-0 transition group-hover/name:opacity-70" />
+                    <span className="block truncate text-center text-[19px] font-bold uppercase tracking-tight text-primary md:text-[27px]">{m.full_name}</span>
+                    <Pencil className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 opacity-0 transition group-hover/name:opacity-70 md:h-5 md:w-5" />
                   </button>
                 </div>
-                <p className="text-[8px] font-semibold uppercase tracking-wider opacity-60">OFFICIAL MEMBER PASS · {tier.label}</p>
+                <p className="text-[8px] font-semibold uppercase tracking-wider opacity-60 md:text-[11px]">OFFICIAL MEMBER PASS · {tier.label}</p>
               </div>
 
               {/* 2.3 Smart chip module */}
-              <div className="mt-2 flex w-full shrink-0 items-center justify-between rounded-lg border border-gold/40 bg-white/80 px-2.5 py-2 text-[9px] shadow-2xs backdrop-blur-xs">
-                <div className="flex items-center gap-2">
-                  <SmartChip className="h-6 w-8" />
-                  <Nfc className="h-4 w-4 opacity-60" />
+              <div className="mt-2 flex w-full shrink-0 items-center justify-between rounded-lg border border-gold/40 bg-white/80 px-2.5 py-2 text-[9px] shadow-2xs backdrop-blur-xs md:mt-4 md:px-4 md:py-3 md:text-[12px]">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <SmartChip className="h-6 w-8 md:h-9 md:w-11" />
+                  <Nfc className="h-4 w-4 opacity-60 md:h-5 md:w-5" />
                 </div>
                 <div className="text-right leading-tight">
                   <button type="button" onClick={() => setSheet("qr")} className="block font-mono font-bold tracking-[0.14em] text-primary" title="Mã thành viên">{m.member_code}</button>
-                  <span className="font-mono text-[7.5px] uppercase text-muted-foreground">VALID: ID-1 PASS</span>
+                  <span className="font-mono text-[7.5px] uppercase text-muted-foreground md:text-[10px]">VALID: ID-1 PASS</span>
                 </div>
               </div>
 
               {/* 2.4 2x2 info grid — grows to fill the body, label on top and value at the bottom */}
-              <div className="mt-2 grid w-full min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-2 text-left text-[11px] leading-tight">
-                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">部门 · BAN</span>
+              <div className="mt-2 grid w-full min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-2 text-left text-[11px] leading-tight md:mt-4 md:gap-3 md:text-[14px]">
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs md:px-3 md:py-2.5">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground md:text-[11px]">部门 · BAN</span>
                   <button type="button" onClick={() => setSheet("dept_tasks")} title="Xem Ban & nhiệm vụ" className="block max-w-full truncate text-left font-bold text-foreground hover:text-primary">{deptLabel}</button>
                 </div>
-                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">职务 · CHỨC VỤ</span>
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs md:px-3 md:py-2.5">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground md:text-[11px]">职务 · CHỨC VỤ</span>
                   <button type="button" onClick={() => setSheet("points_benefits")} title="Xem chức vụ & quyền lợi" className="block max-w-full truncate text-left font-bold text-foreground hover:text-primary">{posLabel}</button>
                 </div>
-                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">等级 · CẤP BẬC</span>
-                  <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc & điểm" className="flex items-center gap-1 truncate font-bold text-primary">{tierEl}</button>
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs md:px-3 md:py-2.5">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground md:text-[11px]">等级 · CẤP BẬC</span>
+                  <button type="button" onClick={() => setSheet("points_benefits")} title="Xem cấp bậc & điểm" className="flex items-center gap-1 truncate font-bold text-primary md:gap-1.5">{tierEl}</button>
                 </div>
-                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs">
-                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">入会 · GIA NHẬP</span>
+                <div className="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-gold/40 bg-white/80 px-2 py-1.5 shadow-2xs backdrop-blur-xs md:px-3 md:py-2.5">
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground md:text-[11px]">入会 · GIA NHẬP</span>
                   <span className="block font-mono font-bold text-foreground">{joined}</span>
                 </div>
               </div>
 
               {/* 2.5 QR + auth token */}
-              <div className="mt-2 flex w-full shrink-0 items-center justify-between gap-2 rounded-lg border border-gold/40 bg-white/80 px-2.5 py-2 shadow-2xs backdrop-blur-xs">
+              <div className="mt-2 flex w-full shrink-0 items-center justify-between gap-2 rounded-lg border border-gold/40 bg-white/80 px-2.5 py-2 shadow-2xs backdrop-blur-xs md:mt-4 md:px-4 md:py-3">
                 {qr ? (
                   <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Phóng to mã QR" className="shrink-0">
-                    <img src={qr} alt={`QR ${m.member_code}`} className="h-11 w-11 rounded-[3px] border border-gold/60 bg-white p-0.5 shadow-2xs" />
+                    <img src={qr} alt={`QR ${m.member_code}`} className="h-11 w-11 rounded-[3px] border border-gold/60 bg-white p-0.5 shadow-2xs md:h-16 md:w-16" />
                   </button>
-                ) : <div className="h-11 w-11 shrink-0" />}
-                <div className="min-w-0 flex-1 text-right font-mono text-[8px] leading-tight text-muted-foreground">
+                ) : <div className="h-11 w-11 shrink-0 md:h-16 md:w-16" />}
+                <div className="min-w-0 flex-1 text-right font-mono text-[8px] leading-tight text-muted-foreground md:text-[11px]">
                   <p className="uppercase tracking-wider">AUTH TOKEN</p>
                   <p className="truncate font-bold tracking-wider text-primary">{pass.data?.pass_token ? `SEC-TML-${pass.data.pass_token.slice(0, 6)}` : m.member_code}</p>
                 </div>
@@ -521,11 +523,11 @@ function MemberDashboard() {
             </div>
 
             {/* 3. Footer + flip */}
-            <div className="tml-pass-foot relative z-20 flex shrink-0 items-center justify-between gap-2 px-3.5 py-1.5 text-[7px] tracking-[0.08em]">
+            <div className="tml-pass-foot relative z-20 flex shrink-0 items-center justify-between gap-2 px-3.5 py-1.5 text-[7px] tracking-[0.08em] md:px-6 md:py-2 md:text-[11px]">
               <span className="truncate">THE MANDARIN LEAGUE · VERIFIED</span>
               <button type="button" onClick={() => flipTo(true)} aria-label="Xem mặt sau thẻ" title="Xem mặt sau thẻ"
-                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white">
-                <RotateCw className="h-3.5 w-3.5" />
+                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white md:p-1.5">
+                <RotateCw className="h-3.5 w-3.5 md:h-5 md:w-5" />
               </button>
             </div>
             </>}
@@ -537,27 +539,27 @@ function MemberDashboard() {
             className="flip-face back tml-pass tml-pass-back flex flex-col overflow-hidden rounded-[18px] text-primary-deep">
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {drumWatermarkBack}
-            <div className="h-8 w-full shrink-0 border-y border-gold/30 bg-neutral-900 shadow-inner" />
-            <div className="relative flex shrink-0 items-center justify-between gap-2 px-3 pt-1.5">
+            <div className="h-8 w-full shrink-0 border-y border-gold/30 bg-neutral-900 shadow-inner md:h-14" />
+            <div className="relative flex shrink-0 items-center justify-between gap-2 px-3 pt-1.5 md:px-6 md:pt-3">
               <button type="button" onClick={() => flipTo(false)} aria-label="Quay lại mặt trước" title="Quay lại mặt trước"
-                className="relative z-10 rounded-full border border-gold/50 bg-white/80 p-1 text-primary-deep transition hover:bg-white">
-                <RotateCcw className="h-3 w-3" />
+                className="relative z-10 rounded-full border border-gold/50 bg-white/80 p-1 text-primary-deep transition hover:bg-white md:p-1.5">
+                <RotateCcw className="h-3 w-3 md:h-5 md:w-5" />
               </button>
               <div className="pointer-events-none absolute left-1/2 top-1/2 w-[62%] -translate-x-1/2 -translate-y-1/2 text-center">
-                <p className="truncate text-[9px] font-bold uppercase tracking-[0.08em]">Cài đặt &amp; bảo mật tài khoản</p>
-                <p className="truncate font-mono text-[8px] opacity-70">{m.member_code} · {tier.label}</p>
+                <p className="truncate text-[9px] font-bold uppercase tracking-[0.08em] md:text-sm">Cài đặt &amp; bảo mật tài khoản</p>
+                <p className="truncate font-mono text-[8px] opacity-70 md:text-[11px]">{m.member_code} · {tier.label}</p>
               </div>
-              <span aria-label="Tem bảo an TML" title="Tem bảo an TML" className="relative z-10 inline-block h-6 w-6 shrink-0 rounded-full"
+              <span aria-label="Tem bảo an TML" title="Tem bảo an TML" className="relative z-10 inline-block h-6 w-6 shrink-0 rounded-full md:h-10 md:w-10"
                 style={{ background: "conic-gradient(from 0deg,#dbeafe,#fde68a,#bbf7d0,#fbcfe8,#dbeafe)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.18)" }} />
             </div>
-            <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-1.5">
-              <div className="flex flex-col gap-1.5">
+            <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-1.5 md:px-6 md:pb-3 md:pt-3">
+              <div className="mx-auto flex w-full max-w-xl flex-col gap-1.5 md:gap-3">
                 <div className="flip-back-form order-1">
                   <NewPasswordForm requireCurrent onDone={() => { setMsg("Đã đổi mật khẩu."); flipTo(false); }} />
                 </div>
                 <div className="order-2 space-y-2">
-                  <label className="flex items-start gap-2 text-[9px] font-semibold leading-snug">
-                    <input type="checkbox" className="mt-0.5 h-3 w-3 shrink-0 accent-[var(--pass-c)]"
+                  <label className="flex items-start gap-2 text-[9px] font-semibold leading-snug md:text-sm">
+                    <input type="checkbox" className="mt-0.5 h-3 w-3 shrink-0 accent-[var(--pass-c)] md:h-4 md:w-4"
                       checked={(m as { is_public?: boolean }).is_public !== false}
                       onChange={async (e) => {
                         const { error } = await supabase.rpc("set_my_visibility", { _public: e.target.checked });
@@ -568,7 +570,7 @@ function MemberDashboard() {
                 </div>
               </div>
             </div>
-            <div className="tml-pass-foot shrink-0 px-3 py-1 text-center text-[7px] leading-tight tracking-[0.06em]">
+            <div className="tml-pass-foot shrink-0 px-3 py-1 text-center text-[7px] leading-tight tracking-[0.06em] md:px-6 md:py-2 md:text-[11px]">
               Bảo mật TML · Hỗ trợ kỹ thuật: Ban Công nghệ &amp; Hệ thống · community@themandarinleague.bond
             </div>
           </div>
