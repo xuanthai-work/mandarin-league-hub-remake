@@ -20,7 +20,7 @@ export const ACCOUNT_STATUS: Record<AccountStatus, string> = {
 
 export const PERMISSIONS = [
   ["members.view", "Xem thành viên"],
-  ["members.edit", "Chỉnh sửa thành viên"],
+  ["members.edit", "Tạo & Chỉnh sửa thành viên"],
   ["candidates.view", "Xem ứng viên"],
   ["candidates.process", "Xử lý ứng viên"],
   ["tasks.create", "Tạo nhiệm vụ"],

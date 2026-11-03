@@ -50,6 +50,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-44-MINIMALIST-UNDERLINE-ATTACHMENT-TRIGGER` | Tối giản nút thêm tài liệu thành text link gạch chân, bỏ tiêu đề & viền | 2026-11-03 | **PASS** | [task-44-minimalist-underline-attachment-trigger.md](tasks/task-44-minimalist-underline-attachment-trigger.md) |
 | `TASK-45-FIX-DATE-PICKER-POPOVER-OVERFLOW` | Khắc phục tràn màn hình của DatePicker Popover (w-auto, collisionPadding) | 2026-11-03 | **PASS** | [task-45-fix-date-picker-popover-overflow.md](tasks/task-45-fix-date-picker-popover-overflow.md) |
 | `TASK-46-REMOVE-MODAL-FOOTER-CLOSE-BUTTON` | Tinh gọn footer modal, loại bỏ nút Đóng và giữ lại nút X ở header | 2026-11-03 | **PASS** | [task-46-remove-modal-footer-close-button.md](tasks/task-46-remove-modal-footer-close-button.md) |
+| `TASK-47-MEMBER-PROFILE-CREATE-AND-EDIT-PERMISSION` | Mở rộng quyền "Chỉnh sửa thành viên" thành "Tạo & Chỉnh sửa thành viên" | 2026-11-03 | **PASS** | [task-47-member-profile-create-and-edit-permission.md](tasks/task-47-member-profile-create-and-edit-permission.md) |
 
 ---
 

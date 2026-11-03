@@ -31,3 +31,4 @@
 - Shared HomeLink uses the domain helper for full-document navigation from satellite portals to the main homepage, so root landing redirects cannot trap Home clicks; main and preview hosts retain local router navigation.
 - Professional advisors live in `department_advisors` + per-department `department_advisor_settings` (admin-only writes), public reads via definer `public_dept_advisors()`, so advisor assignments never alter member profiles or grant permissions.
 - Course–teacher assignments live in `course_teachers` (role + sort_order); `courses.teacher_id` is deprecated and only mirrors the lead, and teacher `status` drives `visible` via trigger so old readers keep working.
+- `members.edit` is a profile-level permission: the DB helper `has_permission(text)` + members RLS policies let holders create/update `members` rows, while login accounts, roles, passwords and account deletion stay admin-only server functions.

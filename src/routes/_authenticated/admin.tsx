@@ -36,12 +36,13 @@ export function useAdminAccess() {
     queryKey: ["admin-access"],
     queryFn: async () => {
       const { data } = await supabase.rpc("my_account");
-      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean } | null; member: { department: string; full_name: string } | null };
+      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean; permissions?: string[] } | null; member: { department: string; full_name: string } | null };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
       const department = blocked ? null : me.member?.department ?? null;
-      const allowed = allowedSections(roles, department);
-      return { email: me.email ?? "", name: blocked ? "" : me.member?.full_name ?? "", roles, department, allowed, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
+      const permissions = blocked ? [] : me.account?.permissions ?? [];
+      const allowed = allowedSections(roles, department, permissions);
+      return { email: me.email ?? "", name: blocked ? "" : me.member?.full_name ?? "", roles, department, allowed, permissions, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
     },
   });
 }

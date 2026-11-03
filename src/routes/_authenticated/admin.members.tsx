@@ -243,6 +243,9 @@ function MembersPage() {
   const fetchAccounts = useServerFn(getAdminMemberAccounts);
   /** Account credentials and mutations are admin-only (server functions enforce the same rule). */
   const isAdmin = !!access.data?.roles.includes("admin");
+  /** The fine-grained permission opens member profile creation/editing without granting account rights. */
+  const permissions: string[] = access.data?.permissions ?? [];
+  const canEditMembers = isAdmin || permissions.includes("members.edit");
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-members"] });
 
   const rotate = async (m: MemberRow) => {
@@ -302,7 +305,7 @@ function MembersPage() {
       <AdminPageHeader
         title="Thành viên"
         description="Hồ sơ nhân sự và tài khoản đăng nhập của thành viên. Bấm vào một dòng để xem hồ sơ và quản lý tài khoản."
-        actions={isAdmin ? <button onClick={() => setCreating(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Thêm thành viên</button> : null}
+        actions={canEditMembers ? <button onClick={() => setCreating(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Thêm thành viên</button> : null}
       />
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
         <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
@@ -404,13 +407,14 @@ function MembersPage() {
             key={selected.id}
             m={selected}
             isAdmin={isAdmin}
+            canEdit={canEditMembers}
             onClose={() => setSelId(null)}
             onChanged={refresh}
           />
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {isAdmin && creating && <NewMemberDrawer onClose={() => setCreating(false)} onChanged={refresh} />}
+        {canEditMembers && creating && <NewMemberDrawer canCreateAccount={isAdmin} onClose={() => setCreating(false)} onChanged={refresh} />}
       </AnimatePresence>
     </div>
   );
@@ -418,7 +422,7 @@ function MembersPage() {
 
 // ---------------------------------------------------------------- detail drawer
 
-function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmin: boolean; onClose: () => void; onChanged: () => void }) {
+function MemberDrawer({ m, isAdmin, canEdit, onClose, onChanged }: { m: MemberRow; isAdmin: boolean; canEdit: boolean; onClose: () => void; onChanged: () => void }) {
   const update = useServerFn(updateAccount);
   const delAccount = useServerFn(deleteAccount);
   const delProfile = useServerFn(deleteMember);
@@ -482,7 +486,8 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
         left_on: status === "left" ? (m.left_on ?? today) : status === "suspended" ? m.left_on : null,
       }).eq("id", m.id);
       if (error) throw new Error(error.message);
-      if (m.account) {
+      // Account role/permission changes stay admin-only (the server function enforces it too).
+      if (isAdmin && m.account) {
         await update({ data: {
           userId: m.account.userId, department, position, access, permissions,
           status: UNIFIED_ACCOUNT_STATUS[status],
@@ -571,7 +576,7 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto custom-scrollbar px-6 py-5">
           <section className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vị trí & tổ chức</h3>
-            {isAdmin ? (
+            {canEdit ? (
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <span className="block text-xs text-muted-foreground">Ban</span>
@@ -613,13 +618,13 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal normal-case text-muted-foreground">(Chưa kích hoạt)</span>
                 )}
               </h3>
-              <button type="button" onClick={rotate} className="group inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold hover:bg-accent"><QrCode className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45" />Làm mới mã QR</button>
+              {isAdmin && <button type="button" onClick={rotate} className="group inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold hover:bg-accent"><QrCode className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45" />Làm mới mã QR</button>}
             </div>
             <div className="grid grid-cols-3 gap-2">
               {statusOptions.map((o) => {
                 const isSelected = status === o.value;
                 return (
-                  <button key={o.value} type="button" onClick={() => setStatus(o.value)} aria-pressed={isSelected} className={`relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg border px-2 py-2 text-xs font-semibold transition-colors ${isSelected ? "border-primary text-primary-foreground shadow-xs" : "border-border text-foreground hover:bg-accent/50"}`}>
+                  <button key={o.value} type="button" disabled={!canEdit} onClick={() => setStatus(o.value)} aria-pressed={isSelected} className={`relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg border px-2 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary text-primary-foreground shadow-xs" : "border-border text-foreground hover:bg-accent/50"}`}>
                     {isSelected && (
                       <motion.span
                         layoutId="active-status-pill"
@@ -633,15 +638,15 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
                 );
               })}
             </div>
-            {status === "left" && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Hồ sơ đang ở trạng thái <strong>Đã rời</strong> vì tài khoản nội bộ đã bị xóa. Cấp lại tài khoản ở mục bên dưới sẽ đưa hồ sơ về <strong>Đang hoạt động</strong>.</p>}
-            {status === "inactive" && !m.account && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Hồ sơ chưa có tài khoản đăng nhập nên luôn ở trạng thái <strong>Chưa kích hoạt</strong>. Cấp tài khoản ở mục bên dưới để kích hoạt.</p>}
-            {status === "inactive" && m.account && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Tài khoản chưa được kích hoạt. Chọn <strong>Đang hoạt động</strong> ở trên rồi bấm <strong>Lưu thay đổi</strong> để mở quyền đăng nhập.</p>}
+            {isAdmin && status === "left" && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Hồ sơ đang ở trạng thái <strong>Đã rời</strong> vì tài khoản nội bộ đã bị xóa. Cấp lại tài khoản ở mục bên dưới sẽ đưa hồ sơ về <strong>Đang hoạt động</strong>.</p>}
+            {isAdmin && status === "inactive" && !m.account && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Hồ sơ chưa có tài khoản đăng nhập nên luôn ở trạng thái <strong>Chưa kích hoạt</strong>. Cấp tài khoản ở mục bên dưới để kích hoạt.</p>}
+            {isAdmin && status === "inactive" && m.account && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Tài khoản chưa được kích hoạt. Chọn <strong>Đang hoạt động</strong> ở trên rồi bấm <strong>Lưu thay đổi</strong> để mở quyền đăng nhập.</p>}
             {status === "on_leave" && <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-muted-foreground">Bắt đầu nghỉ<input type="date" className={`${inp} mt-1`} value={leaveFrom} onChange={(e) => setLeaveFrom(e.target.value)} /></label>
-              <label className="text-xs text-muted-foreground">Quay lại ngày *<input type="date" className={`${inp} mt-1`} value={leaveUntil} min={leaveFrom} onChange={(e) => setLeaveUntil(e.target.value)} /></label>
+              <label className="text-xs text-muted-foreground">Bắt đầu nghỉ<input type="date" className={`${inp} mt-1`} value={leaveFrom} disabled={!canEdit} onChange={(e) => setLeaveFrom(e.target.value)} /></label>
+              <label className="text-xs text-muted-foreground">Quay lại ngày *<input type="date" className={`${inp} mt-1`} value={leaveUntil} min={leaveFrom} disabled={!canEdit} onChange={(e) => setLeaveUntil(e.target.value)} /></label>
             </div>}
             {status !== "active" && <label className="block text-xs text-muted-foreground">{status === "on_leave" ? "Lý do xin nghỉ" : "Lý do / ghi chú"}
-              <textarea rows={3} maxLength={500} className={`${inp} mt-1`} value={note} onChange={(e) => setNote(e.target.value)} /></label>}
+              <textarea rows={3} maxLength={500} className={`${inp} mt-1`} value={note} disabled={!canEdit} onChange={(e) => setNote(e.target.value)} /></label>}
           </section>
 
           {isAdmin && (
@@ -714,10 +719,12 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
 
         <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
           <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent">Hủy</button>
-          <button disabled={busy} onClick={save} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            Lưu thay đổi
-          </button>
+          {canEdit && (
+            <button disabled={busy} onClick={save} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              Lưu thay đổi
+            </button>
+          )}
         </div>
       </motion.div>
     </div>
@@ -798,7 +805,7 @@ function GrantAccount({ m, onChanged, onClose }: { m: MemberRow; onChanged: () =
 
 // ---------------------------------------------------------------- add member
 
-function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChanged: () => void }) {
+function NewMemberDrawer({ canCreateAccount, onClose, onChanged }: { canCreateAccount: boolean; onClose: () => void; onChanged: () => void }) {
   const create = useServerFn(createAccount);
   const [v, setV] = useState({
     full_name: "", phone: "", email: "", department: "executive", position: positionsFor("executive")[0]!,
@@ -822,7 +829,7 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
     const email = cleanEmail(v.email);
     setBusy(true);
     try {
-      if (v.withAccount) {
+      if (canCreateAccount && v.withAccount) {
         if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) throw new Error("Email đăng nhập không hợp lệ.");
         if (v.password.length < 8) throw new Error("Mật khẩu tạm thời cần ít nhất 8 ký tự.");
         await create({ data: { newMember: { full_name: v.full_name.trim(), phone: v.phone.trim() }, email, password: v.password, department: v.department, position: v.position, access: v.access, permissions: v.permissions, status: UNIFIED_ACCOUNT_STATUS[v.status], mustChange: v.mustChange } });
@@ -903,7 +910,7 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/70 px-6 py-4">
           <div>
             <h2 className="text-lg font-bold">Thêm thành viên</h2>
-            <p className="text-xs text-muted-foreground">Tạo hồ sơ nhân sự, tuỳ chọn cấp tài khoản đăng nhập ngay.</p>
+            <p className="text-xs text-muted-foreground">{canCreateAccount ? "Tạo hồ sơ nhân sự, tuỳ chọn cấp tài khoản đăng nhập ngay." : "Tạo hồ sơ nhân sự. Tài khoản đăng nhập do Quản trị viên cấp sau."}</p>
           </div>
         </div>
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto custom-scrollbar px-6 py-5">
@@ -940,12 +947,14 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
 
           <section className="space-y-3 border-t border-border/60 pt-5">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tài khoản & Trạng thái</h3>
-            <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
-              <input type="checkbox" checked={v.withAccount} onChange={(e) => set({ withAccount: e.target.checked })} />
-              Cấp luôn tài khoản đăng nhập nội bộ
-            </label>
+            {canCreateAccount && (
+              <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
+                <input type="checkbox" checked={v.withAccount} onChange={(e) => set({ withAccount: e.target.checked })} />
+                Cấp luôn tài khoản đăng nhập nội bộ
+              </label>
+            )}
 
-            {v.withAccount && <>
+            {canCreateAccount && v.withAccount && <>
               <div className="flex gap-2">
                 <input className={`${inp} flex-1 font-mono`} placeholder="Mật khẩu tạm thời" value={v.password} onChange={(e) => set({ password: e.target.value })} />
                 <button type="button" onClick={() => set({ password: randomPassword() })} className="whitespace-nowrap rounded-lg border border-border px-3 text-xs">Tạo ngẫu nhiên</button>
@@ -965,7 +974,7 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
             </div>
           </section>
 
-          {v.withAccount && (
+          {canCreateAccount && v.withAccount && (
             <section className="space-y-3 border-t border-border/60 pt-5">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quyền quản trị</h3>
               <div>

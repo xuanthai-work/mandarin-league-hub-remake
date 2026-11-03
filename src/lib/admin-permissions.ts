@@ -1,11 +1,13 @@
 import type { AdminRole } from "./admin-nav";
 
 /** Admin sections a user may see. RLS enforces the same rules on the backend. */
-export function allowedSections(roles: AdminRole[], department: string | null): string[] | "all" {
+export function allowedSections(roles: AdminRole[], department: string | null, permissions: string[] = []): string[] | "all" {
   if (roles.includes("admin")) return "all";
   const isHead = roles.includes("department_head") || roles.includes("deputy_head");
   const s = new Set<string>();
   if (isHead) ["members", "tasks", "contributions"].forEach((x) => s.add(x));
+  // The fine-grained member permission opens the members section on its own (profile data only).
+  if (permissions.includes("members.edit")) s.add("members");
   if (department === "comms") ["news", "activities", "partners"].forEach((x) => s.add(x));
   if (department === "comms" && isHead) s.add("content");
   if (department === "finance") s.add("partners");
