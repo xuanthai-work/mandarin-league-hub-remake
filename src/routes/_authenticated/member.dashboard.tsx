@@ -178,21 +178,21 @@ function MemberDashboard() {
   );
   /** Đông Sơn drum watermark: the member-supplied photo, blended into the porcelain. */
   const drumWatermark = (
-    <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+    <div aria-hidden className="pointer-events-none absolute inset-0 flex select-none items-center justify-center">
       <img
         src="/dongson-gold.png"
         alt=""
-        className={`tml-drum select-none rounded-full object-cover ${layout === "v" ? "h-48 w-48" : "h-44 w-44"}`}
+        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[92%] aspect-square" : "h-44 w-44"}`}
       />
     </div>
   );
   /** Back face: same drum, noticeably larger so it still reads behind the settings blocks. */
   const drumWatermarkBack = (
-    <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+    <div aria-hidden className="pointer-events-none absolute inset-0 flex select-none items-center justify-center">
       <img
         src="/dongson-gold.png"
         alt=""
-        className={`tml-drum select-none rounded-full object-cover ${layout === "v" ? "h-72 w-72" : "h-64 w-64"}`}
+        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[100%] aspect-square" : "h-64 w-64"}`}
       />
     </div>
   );
