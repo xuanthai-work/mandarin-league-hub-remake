@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -126,15 +128,15 @@ function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }
   );
 }
 
-/** Shared column widths so every department table lines up as one grid. */
+/** Shared fixed column widths so every department table lines up as one pixel-perfect grid (Total: 1150px). */
 const MEMBER_COLS = [
-  { label: "Mã thành viên", className: "w-[130px]" },
-  { label: "Họ tên", className: "w-[240px] sm:w-[26%]" },
-  { label: "Tài khoản & Trạng thái", className: "w-[220px] sm:w-[21%]" },
-  { label: "Chức vụ", className: "w-[150px] sm:w-[12%]" },
-  { label: "Ngày gia nhập", className: "w-[105px]" },
-  { label: "Điểm", className: "w-[60px]" },
-  { label: "Thao tác", className: "w-[120px]" },
+  { label: "Mã thành viên", className: "w-[135px]" },
+  { label: "Họ tên", className: "w-[220px]" },
+  { label: "Tài khoản & Trạng thái", className: "w-[260px]" },
+  { label: "Chức vụ", className: "w-[180px]" },
+  { label: "Ngày gia nhập", className: "w-[125px]" },
+  { label: "Điểm", className: "w-[80px]" },
+  { label: "Thao tác", className: "w-[150px]" },
 ] as const;
 
 /** One department's members in their own table; the group header replaces a "Ban" column. */
@@ -145,6 +147,7 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
   onOpen: (m: MemberRow) => void;
   onRotate: (m: MemberRow) => void;
 }) {
+  const [tableBodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   return (
     <div>
       <div className="mb-2 flex items-center gap-2.5 px-1">
@@ -152,12 +155,12 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
         <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">{members.length} thành viên</span>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-        <div className="overflow-x-auto">
-        <table className="w-full min-w-[920px] table-fixed text-sm">
+        <div className="overflow-x-auto custom-scrollbar">
+        <table className="w-full min-w-[1150px] table-fixed text-sm">
           <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
             <tr>{MEMBER_COLS.map((col) => <th key={col.label} className={`p-3 font-semibold ${col.className}`}>{col.label}</th>)}</tr>
           </thead>
-          <tbody>
+          <tbody ref={tableBodyRef}>
             {members.length === 0 ? (
               <tr><td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">Chưa có thành viên nào trong ban này.</td></tr>
             ) : members.map((m) => (
@@ -166,7 +169,7 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
                 <td className="p-3">
                   <div className="flex min-w-0 items-center gap-2.5">
                     <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{initials(m.full_name)}</span>
-                    <span className="whitespace-nowrap font-medium text-foreground" title={m.full_name}>{m.full_name}</span>
+                    <span className="min-w-0 truncate font-medium text-foreground" title={m.full_name}>{m.full_name}</span>
                   </div>
                 </td>
                 <td className="p-3">{isAdmin ? <AccountStatusCell m={m} onGrant={() => onOpen(m)} /> : <StatusPill m={m} />}</td>
@@ -179,7 +182,9 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
                 <td className="whitespace-nowrap p-3 text-muted-foreground">{fmt(m.joined_on)}</td>
                 <td className="p-3 font-mono tabular-nums">{m.contribution_points}</td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                  <button className="whitespace-nowrap rounded-lg border border-border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-accent" onClick={() => onRotate(m)}>Làm mới mã QR</button>
+                  <button className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-accent" onClick={() => onRotate(m)}>
+                    <QrCode className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45" />Làm mới mã QR
+                  </button>
                 </td>
               </tr>
             ))}
@@ -357,16 +362,20 @@ function MembersPage() {
         </div>
       )}
 
-      {selected && (
-        <MemberDrawer
-          key={selected.id}
-          m={selected}
-          isAdmin={isAdmin}
-          onClose={() => setSelId(null)}
-          onChanged={refresh}
-        />
-      )}
-      {isAdmin && creating && <NewMemberDrawer onClose={() => setCreating(false)} onChanged={refresh} />}
+      <AnimatePresence>
+        {selected && (
+          <MemberDrawer
+            key={selected.id}
+            m={selected}
+            isAdmin={isAdmin}
+            onClose={() => setSelId(null)}
+            onChanged={refresh}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isAdmin && creating && <NewMemberDrawer onClose={() => setCreating(false)} onChanged={refresh} />}
+      </AnimatePresence>
     </div>
   );
 }
@@ -395,6 +404,14 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
   const [pwBusy, setPwBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   const statusOptions = EDIT_DRAWER_STATUS_BUTTONS;
 
@@ -480,12 +497,23 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
-      <div className="fixed inset-0 animate-in fade-in backdrop-blur-sm bg-black/15 duration-300" onClick={onClose} />
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="fixed inset-0 backdrop-blur-sm bg-black/15"
+        onClick={onClose}
+      />
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-label={`Chi tiết thành viên ${m.full_name}`}
-        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-300 ease-out"
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 32, stiffness: 320 }}
+        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -502,7 +530,6 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
               </div>
             </div>
           </div>
-          <button aria-label="Đóng" onClick={onClose} className="rounded-lg p-1 hover:bg-accent"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto custom-scrollbar px-6 py-5">
@@ -532,15 +559,22 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal normal-case text-muted-foreground">(Chưa kích hoạt)</span>
                 )}
               </h3>
-              <button type="button" onClick={rotate} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold hover:bg-accent"><QrCode className="h-3.5 w-3.5" />Làm mới mã QR</button>
+              <button type="button" onClick={rotate} className="group inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold hover:bg-accent"><QrCode className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45" />Làm mới mã QR</button>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {statusOptions.map((o) => {
                 const isSelected = status === o.value;
                 return (
-                  <button key={o.value} type="button" onClick={() => setStatus(o.value)} aria-pressed={isSelected} className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-semibold transition-colors ${isSelected ? "border-primary bg-primary text-primary-foreground shadow-xs" : "border-border text-foreground hover:bg-accent/50"}`}>
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${isSelected ? "bg-primary-foreground" : o.dot}`} />
-                    {o.label}
+                  <button key={o.value} type="button" onClick={() => setStatus(o.value)} aria-pressed={isSelected} className={`relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg border px-2 py-2 text-xs font-semibold transition-colors ${isSelected ? "border-primary text-primary-foreground shadow-xs" : "border-border text-foreground hover:bg-accent/50"}`}>
+                    {isSelected && (
+                      <motion.span
+                        layoutId="active-status-pill"
+                        className="absolute inset-0 rounded-[7px] bg-primary"
+                        transition={{ type: "spring", damping: 26, stiffness: 350 }}
+                      />
+                    )}
+                    <span className={`relative z-10 h-1.5 w-1.5 shrink-0 rounded-full ${isSelected ? "bg-primary-foreground" : o.dot}`} />
+                    <span className="relative z-10">{o.label}</span>
                   </button>
                 );
               })}
@@ -621,14 +655,14 @@ function MemberDrawer({ m, isAdmin, onClose, onChanged }: { m: MemberRow; isAdmi
           {err && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
         </div>
 
-        <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-between border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent">Đóng</button>
+        <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
+          <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent">Hủy</button>
           <button disabled={busy} onClick={save} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             Lưu thay đổi
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -704,6 +738,14 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [done, setDone] = useState(false);
   const set = (p: Partial<typeof v>) => setV((s) => ({ ...s, ...p }));
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const submit = async () => {
     setErr("");
     if (v.full_name.trim().length < 2) return setErr("Vui lòng nhập họ và tên (ít nhất 2 ký tự).");
@@ -735,11 +777,26 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
   if (done) {
     return (
       <div className="fixed inset-0 z-[60] flex justify-end">
-        <div className="fixed inset-0 animate-in fade-in backdrop-blur-sm bg-black/15 duration-300" onClick={onClose} />
-        <div role="dialog" aria-modal="true" aria-label="Đã thêm thành viên" className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-300 ease-out">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="fixed inset-0 backdrop-blur-sm bg-black/15"
+          onClick={onClose}
+        />
+        <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Đã thêm thành viên"
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "spring", damping: 32, stiffness: 320 }}
+          className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
+        >
           <div className="flex shrink-0 items-start justify-between border-b border-border/70 px-6 py-4">
             <h2 className="text-lg font-bold">Đã thêm thành viên</h2>
-            <button aria-label="Đóng" onClick={onClose} className="rounded-lg p-1 hover:bg-accent"><X className="h-5 w-5" /></button>
           </div>
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto custom-scrollbar px-6 py-5">
             <p className="text-sm">Gửi thông tin đăng nhập cho thành viên qua kênh riêng. Mật khẩu này sẽ không hiển thị lại.</p>
@@ -748,21 +805,36 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
           <div className="flex shrink-0 justify-end border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
             <button onClick={() => { onChanged(); onClose(); }} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Xong</button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
-      <div className="fixed inset-0 animate-in fade-in backdrop-blur-sm bg-black/15 duration-300" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-label="Thêm thành viên" className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-300 ease-out">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="fixed inset-0 backdrop-blur-sm bg-black/15"
+        onClick={onClose}
+      />
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Thêm thành viên"
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 32, stiffness: 320 }}
+        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
+      >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/70 px-6 py-4">
           <div>
             <h2 className="text-lg font-bold">Thêm thành viên</h2>
             <p className="text-xs text-muted-foreground">Tạo hồ sơ nhân sự, tuỳ chọn cấp tài khoản đăng nhập ngay.</p>
           </div>
-          <button aria-label="Đóng" onClick={onClose} className="rounded-lg p-1 hover:bg-accent"><X className="h-5 w-5" /></button>
         </div>
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto custom-scrollbar px-6 py-5">
           <section className="space-y-3">
@@ -818,7 +890,7 @@ function NewMemberDrawer({ onClose, onChanged }: { onClose: () => void; onChange
           <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent">Hủy</button>
           <button disabled={busy} onClick={submit} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">{busy && <Loader2 className="h-4 w-4 animate-spin" />}Thêm thành viên</button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

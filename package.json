@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.84",
+    "@formkit/auto-animate": "^0.10.0",
     "@hookform/resolvers": "^5.2.2",
     "resend": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.12",
