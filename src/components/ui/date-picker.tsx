@@ -73,17 +73,17 @@ export function DatePicker({
           disabled={disabled}
           data-empty={!selectedDate}
           className={cn(
-            "h-9 w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground",
+            "h-8 w-full justify-between px-3 text-left text-xs font-normal data-[empty=true]:text-muted-foreground",
             className,
           )}
         >
           {selectedDate ? toDisplay(selectedDate) : <span>{placeholder || "Chọn ngày"}</span>}
-          <ChevronDownIcon className="h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="z-[70] w-auto rounded-lg border border-border bg-popover p-0 shadow-xl"
+        className="z-[70] w-auto overflow-hidden rounded-lg border border-border bg-popover p-0 shadow-xl"
       >
         <Calendar
           mode="single"
