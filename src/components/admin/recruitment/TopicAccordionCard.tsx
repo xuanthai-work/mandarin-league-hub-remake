@@ -1,26 +1,21 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { formatTopicPositions, parseTopicPositions } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { QuestionItemCard } from "./QuestionItemCard";
-import {
-  CUSTOM_POSITION,
-  SELECT_CONTENT,
-  type Confirm,
-  type Run,
-  type StudioQuestion,
-  type StudioTopic,
-} from "./types";
+import { type Confirm, type Run, type StudioQuestion, type StudioTopic } from "./types";
 
 const iconBtn =
   "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30";
+
+/** Pill style for the topic's multi-select position editor. */
+const positionPill = (active: boolean) =>
+  `rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors ${
+    active
+      ? "border-primary bg-primary text-primary-foreground"
+      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+  }`;
 
 /** A topic card: collapsible header with inline rename/toggle/reorder and its question list. */
 export function TopicAccordionCard({
@@ -55,23 +50,39 @@ export function TopicAccordionCard({
   run: Run;
   confirm: Confirm;
 }) {
-  const [customPosition, setCustomPosition] = useState(false);
-  const [positionDraft, setPositionDraft] = useState("");
+  const [editingPositions, setEditingPositions] = useState(false);
+  const [positionDraft, setPositionDraft] = useState<string[]>([]);
+  const [customDraft, setCustomDraft] = useState("");
   const save = (
     patch: Partial<Pick<StudioTopic, "title" | "description" | "position" | "visible">>,
     ok?: string,
   ) => run(supabase.from("recruitment_topics").update(patch).eq("id", topic.id), ok);
   const filtered = questions.length !== totalQuestionsCount;
-  // Keep the topic's own title selectable even if it is not in the department list yet.
-  const positionOptions =
-    topic.position && !availablePositions.includes(topic.position)
-      ? [...availablePositions, topic.position]
-      : availablePositions;
+  const positions = parseTopicPositions(topic.position);
+  // Keep the topic's own positions selectable even if they are not in the department list yet.
+  const positionOptions = Array.from(new Set([...availablePositions, ...positions]));
 
-  const savePosition = (position: string | null) => {
-    setCustomPosition(false);
-    setPositionDraft("");
-    void save({ position }, "Đã cập nhật vị trí.");
+  const openPositions = () => {
+    setPositionDraft(positions);
+    setCustomDraft("");
+    setEditingPositions(true);
+  };
+
+  const toggleDraft = (position: string) =>
+    setPositionDraft((prev) =>
+      prev.includes(position) ? prev.filter((p) => p !== position) : [...prev, position],
+    );
+
+  const addCustomDraft = () => {
+    const next = customDraft.trim();
+    if (!next) return;
+    setPositionDraft((prev) => (prev.includes(next) ? prev : [...prev, next]));
+    setCustomDraft("");
+  };
+
+  const savePositions = () => {
+    setEditingPositions(false);
+    void save({ position: formatTopicPositions(positionDraft) }, "Đã cập nhật vị trí.");
   };
 
   return (
@@ -99,39 +110,27 @@ export function TopicAccordionCard({
             if (title && title !== topic.title) void save({ title });
           }}
         />
-        <Select
-          value={customPosition ? CUSTOM_POSITION : (topic.position ?? "all")}
-          onValueChange={(v) => {
-            if (v === CUSTOM_POSITION) {
-              setPositionDraft("");
-              setCustomPosition(true);
-              return;
-            }
-            savePosition(v === "all" ? null : v);
-          }}
+        <button
+          type="button"
+          onClick={() => (editingPositions ? setEditingPositions(false) : openPositions())}
+          aria-label="Chỉnh sửa vị trí áp dụng"
+          aria-expanded={editingPositions}
+          title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+          className={`flex max-w-[240px] items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+            editingPositions
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-transparent bg-secondary text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+          }`}
         >
-          <SelectTrigger
-            aria-label="Vị trí áp dụng"
-            className="h-6 w-auto gap-1 rounded-full border-0 bg-secondary px-2.5 py-0 text-[11px] font-medium text-muted-foreground shadow-none [&>svg]:h-3 [&>svg]:w-3"
-          >
-            <SelectValue>
-              {customPosition ? "Vị trí mới…" : (topic.position ?? "Mọi vị trí")}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className={SELECT_CONTENT}>
-            <SelectItem value="all" className="text-xs">
-              Mọi vị trí
-            </SelectItem>
-            {positionOptions.map((p) => (
-              <SelectItem key={p} value={p} className="text-xs">
-                {p}
-              </SelectItem>
-            ))}
-            <SelectItem value={CUSTOM_POSITION} className="text-xs">
-              + Nhập vị trí mới…
-            </SelectItem>
-          </SelectContent>
-        </Select>
+          <span className="min-w-0 truncate">
+            {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+          </span>
+          <ChevronDown
+            aria-hidden
+            className={`h-3 w-3 shrink-0 transition-transform ${editingPositions ? "rotate-180" : ""}`}
+          />
+        </button>
+
         <span
           className={`rounded-full px-2 py-0.5 text-[11px] ${
             filtered ? "bg-primary/10 font-medium text-primary" : "bg-muted text-muted-foreground"
@@ -189,41 +188,70 @@ export function TopicAccordionCard({
         </button>
       </div>
 
-      {customPosition && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-2">
-          <input
-            autoFocus
-            className="min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 py-1 text-xs"
-            placeholder="VD: Trưởng nhóm Frontend, CTV Sự kiện…"
-            aria-label="Vị trí tùy chỉnh"
-            value={positionDraft}
-            onChange={(e) => setPositionDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setCustomPosition(false);
-                return;
-              }
-              if (e.key !== "Enter") return;
-              e.preventDefault();
-              const next = positionDraft.trim();
-              if (next) savePosition(next);
-            }}
-          />
-          <button
-            type="button"
-            disabled={!positionDraft.trim()}
-            onClick={() => savePosition(positionDraft.trim())}
-            className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            Lưu
-          </button>
-          <button
-            type="button"
-            onClick={() => setCustomPosition(false)}
-            className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Hủy
-          </button>
+      {editingPositions && (
+        <div className="mt-2 space-y-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-2">
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              aria-pressed={positionDraft.length === 0}
+              onClick={() => setPositionDraft([])}
+              className={positionPill(positionDraft.length === 0)}
+            >
+              Mọi vị trí
+            </button>
+            {positionOptions.map((p) => (
+              <button
+                key={p}
+                type="button"
+                aria-pressed={positionDraft.includes(p)}
+                onClick={() => toggleDraft(p)}
+                className={positionPill(positionDraft.includes(p))}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <input
+              autoFocus
+              className="min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 py-1 text-xs"
+              placeholder="Thêm vị trí mới… (VD: Trưởng nhóm Frontend)"
+              aria-label="Thêm vị trí mới"
+              value={customDraft}
+              onChange={(e) => setCustomDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setEditingPositions(false);
+                  return;
+                }
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                addCustomDraft();
+              }}
+            />
+            <button
+              type="button"
+              disabled={!customDraft.trim()}
+              onClick={addCustomDraft}
+              className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-40"
+            >
+              Thêm
+            </button>
+            <button
+              type="button"
+              onClick={savePositions}
+              className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Lưu vị trí
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingPositions(false)}
+              className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Hủy
+            </button>
+          </div>
         </div>
       )}
 

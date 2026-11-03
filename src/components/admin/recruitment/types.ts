@@ -58,6 +58,3 @@ export const FIELD = "w-full rounded-lg border border-input bg-background px-3 p
 export const SELECT_TRIGGER =
   "h-9 w-full rounded-lg border-input bg-background text-sm font-normal shadow-none";
 export const SELECT_CONTENT = "rounded-xl";
-
-/** Marks the free-text option in the position selects, so it never collides with a real title. */
-export const CUSTOM_POSITION = "__custom__";

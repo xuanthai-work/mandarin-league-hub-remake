@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Paperclip, X } from "lucide-react";
-import { canonicalKind, deptName, positionsFor } from "@/lib/recruitment";
+import { canonicalKind, deptName, parseTopicPositions, positionsFor } from "@/lib/recruitment";
 import {
   Select,
   SelectContent,
@@ -10,6 +10,15 @@ import {
 } from "@/components/ui/select";
 import { ChoiceAnswerList } from "@/components/recruitment/ChoiceAnswerList";
 import { SELECT_CONTENT, SELECT_TRIGGER, type StudioQuestion, type StudioTopic } from "./types";
+
+/** What the simulated file picker stores for a question of kind `file`. */
+type PreviewFile = { name: string; size: number };
+type PreviewAnswer = string | string[] | PreviewFile;
+
+const formatFileSize = (bytes: number) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
 /**
  * Slide-over that renders the topic/question set exactly the way an applicant sees it,
@@ -30,9 +39,14 @@ export function CandidatePreviewDrawer({
   questions: StudioQuestion[];
 }) {
   const isCommon = dept === "common";
-  const positions = isCommon ? [] : positionsFor(dept);
+  // Custom positions typed by admins have to be previewable too, so merge both sources.
+  const positions = isCommon
+    ? []
+    : Array.from(
+        new Set([...positionsFor(dept), ...topics.flatMap((t) => parseTopicPositions(t.position))]),
+      );
   const [position, setPosition] = useState(positions[0] ?? "");
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [answers, setAnswers] = useState<Record<string, PreviewAnswer>>({});
 
   // A fresh department starts on its default position with an empty form.
   useEffect(() => {
@@ -43,10 +57,13 @@ export function CandidatePreviewDrawer({
 
   if (!open) return null;
 
-  const applicable = topics.filter(
-    (t) => t.visible && (t.position == null || t.position === position),
-  );
-  const setAnswer = (id: string, value: string | string[]) =>
+  const applicable = topics.filter((t) => {
+    if (!t.visible) return false;
+    if (isCommon) return true;
+    const targets = parseTopicPositions(t.position);
+    return targets.length === 0 || (position ? targets.includes(position) : true);
+  });
+  const setAnswer = (id: string, value: PreviewAnswer) =>
     setAnswers((prev) => ({ ...prev, [id]: value }));
 
   return (
@@ -128,6 +145,11 @@ export function CandidatePreviewDrawer({
                   .map((q) => {
                     const value = answers[q.id];
                     const kind = canonicalKind(q.kind);
+                    // Answers can also hold the preview file object, so narrow before feeding choices.
+                    const choiceValue =
+                      typeof value === "string" || Array.isArray(value) ? value : undefined;
+                    const fileValue =
+                      value && typeof value === "object" && !Array.isArray(value) ? value : null;
                     return (
                       <div key={q.id}>
                         <p className="text-sm font-medium text-foreground">
@@ -147,15 +169,53 @@ export function CandidatePreviewDrawer({
                           <ChoiceAnswerList
                             multiple={kind === "multi"}
                             options={q.options}
-                            value={value}
+                            value={choiceValue}
                             onChange={(next) => setAnswer(q.id, next)}
                             ariaLabel={q.prompt}
                           />
                         )}
                         {kind === "file" && (
-                          <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-xs text-muted-foreground">
-                            <Paperclip className="h-3.5 w-3.5" />
-                            Ứng viên tải tệp lên tại đây
+                          <div className="mt-1.5">
+                            {fileValue ? (
+                              <div className="flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 text-sm">
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                  <Paperclip className="h-4 w-4 shrink-0 text-primary" />
+                                  <div className="min-w-0">
+                                    <p className="truncate font-medium text-foreground">
+                                      {fileValue.name}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {formatFileSize(fileValue.size)}
+                                    </p>
+                                  </div>
+                                  <span className="shrink-0 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
+                                    Đã chọn tệp (Xem trước)
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setAnswer(q.id, "")}
+                                  className="ml-2 shrink-0 text-xs text-muted-foreground transition-colors hover:text-destructive"
+                                >
+                                  Gỡ tệp
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-input p-4 text-xs text-muted-foreground transition-colors hover:bg-accent/40">
+                                <Paperclip className="h-4 w-4 text-primary" />
+                                <span>
+                                  Bấm để chọn tệp từ máy tính (Mô phỏng trải nghiệm ứng viên)
+                                </span>
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) setAnswer(q.id, { name: f.name, size: f.size });
+                                  }}
+                                />
+                              </label>
+                            )}
                           </div>
                         )}
                       </div>

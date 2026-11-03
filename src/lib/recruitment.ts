@@ -60,9 +60,27 @@ export const MAX_FILE_MB = 10;
 export type Choice = { position_id: string; department: string; position: string };
 export type Answers = Record<string, string | string[]>;
 
-/** A topic applies to a choice when department matches and position is unset or equal. */
-export const topicApplies = (t: { department: string | null; position: string | null }, c: { department: string; position: string }) =>
-  t.department === c.department && (t.position == null || t.position === c.position);
+/** Splits the comma-separated `recruitment_topics.position` column into a list. */
+export function parseTopicPositions(raw: string | null | undefined): string[] {
+  if (!raw || !raw.trim()) return [];
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+/** Joins a position list back into the stored form; `null` means "every position". */
+export function formatTopicPositions(positions: string[]): string | null {
+  const clean = Array.from(new Set(positions.map((s) => s.trim()).filter(Boolean)));
+  return clean.length > 0 ? clean.join(", ") : null;
+}
+
+/**
+ * A topic applies to a choice when the department matches and the topic targets
+ * either every position or one of the positions stored in its comma-separated list.
+ */
+export const topicApplies = (t: { department: string | null; position: string | null }, c: { department: string; position: string }) => {
+  if (t.department !== c.department) return false;
+  const positions = parseTopicPositions(t.position);
+  return positions.length === 0 || positions.includes(c.position);
+};
 
 // ---- TML question bank provided by the organisation (loaded by admins on demand) ----
 type Q = { prompt: string; kind?: string; options?: string[]; required?: boolean };
