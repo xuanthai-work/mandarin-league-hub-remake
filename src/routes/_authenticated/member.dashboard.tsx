@@ -364,7 +364,7 @@ function MemberDashboard() {
         >
           {/* ---------- FRONT ---------- */}
           <div ref={cardRef} data-tone={tone} style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
-            className={`flip-face tml-pass relative flex flex-col overflow-hidden rounded-[18px] text-primary-deep ${layout === "v" ? "aspect-[54/85.6]" : "aspect-[85.6/54]"}`}>
+            className={`flip-face tml-pass relative flex flex-col overflow-hidden rounded-[18px] text-primary-deep ${layout === "v" ? "aspect-[54/85.6]" : "aspect-[85.6/54] md:aspect-auto"}`}>
             <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
@@ -408,16 +408,16 @@ function MemberDashboard() {
                     <span className="text-[8px] opacity-40 md:text-[14px]">•</span>
                     <button type="button" onClick={() => setSheet("points_benefits")} className="text-[8.5px] font-semibold text-primary md:text-[15px]" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
                   </div>
-                  <div className="mt-1 flex min-h-0 flex-1 flex-col md:mt-2 md:justify-center">
+                  <div className="mt-1 flex flex-col md:mt-3">
                     <p className="mt-1 text-[7px] uppercase tracking-wider opacity-60 md:text-[12px]">姓名 · Họ và tên</p>
-                    <div className="flex min-h-0 flex-1 items-center md:flex-none">
+                    <div className="flex items-center">
                       <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-start gap-1 text-left" title="Sửa họ tên">
                         <span className="min-w-0 whitespace-normal break-words hyphens-none text-[14px] font-bold uppercase leading-tight tracking-tight text-primary md:text-[26px]">{m.full_name}</span>
                         <Pencil className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70 md:h-5 md:w-5" />
                       </button>
                     </div>
                   </div>
-                  <dl className="mt-auto flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight md:gap-y-1.5 md:text-[15px]">
+                  <dl className="mt-2 flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight md:mt-4 md:gap-y-1.5 md:text-[15px]">
                     <div className="min-w-0">
                       <dt className={labelCls}>部门 · Ban</dt>
                       <dd className="truncate">
@@ -442,10 +442,10 @@ function MemberDashboard() {
                     </div>
                   </dl>
                 </div>
-                <div className="flex h-full flex-col items-center justify-between pb-0.5 pt-0.5">
+                <div className="flex h-full flex-col items-center justify-between pb-0.5 pt-0.5 md:justify-start md:gap-4 md:pb-0 md:pt-0">
                   {avatarEl("h-[88px] w-[66px] md:h-[160px] md:w-[120px]")}
-                  {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số" className="mt-auto">
-                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-0.5 md:h-20 md:w-20 md:rounded-lg md:p-1" />
+                  {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số" className="mt-auto md:mt-0">
+                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-1 md:h-20 md:w-20 md:rounded-lg md:p-2" />
                   </button>}
                 </div>
               </div>
