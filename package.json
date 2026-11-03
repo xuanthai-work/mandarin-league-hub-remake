@@ -3,6 +3,7 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -12,10 +13,6 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest"
-  },
-  "overrides": {
-    "rolldown": "1.2.1",
-    "parse5": "7.2.1"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.84",
@@ -63,6 +60,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "entities": "^6.0.1",
     "fflate": "^0.8.3",
     "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
@@ -89,7 +87,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "^16.0.0",
     "@types/node": "^22.16.5",
     "@types/qrcode": "^1.5.6",
@@ -116,7 +114,15 @@
   },
   "pnpm": {
     "overrides": {
-      "entities": "4.5.0"
-    }
+      "entities": "^6.0.1"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "ocache": ">=0.1.5"
+      }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

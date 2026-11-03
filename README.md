@@ -18,10 +18,10 @@ Stack: TanStack Start v1 (React 19, TypeScript), Vite 7, Tailwind CSS v4, Supaba
 ## Installation & local development
 ```sh
 git clone <repo-url> && cd <repo>
-npm install            # hoặc bun install
+pnpm install           # pnpm là package manager duy nhất
 cp .env.example .env.local   # điền giá trị
-npm run dev            # http://localhost:8080
-npm run build          # bản production
+pnpm run dev           # http://localhost:8080
+pnpm run build         # bản production
 ```
 
 ## Environment variables
@@ -48,7 +48,7 @@ Logic backend dùng TanStack server functions (`src/lib/*.functions.ts`) chạy 
 Mẫu email: `src/lib/email-templates/*` (React Email), render bằng `@react-email/render` và gửi qua Resend (`RESEND_API_KEY`) trong `src/lib/email-templates/send-email.ts`. Domain gửi cần được xác thực SPF/DKIM trong Resend. Auth emails: cấu hình SMTP trong Supabase Auth (có thể dùng SMTP của Resend).
 
 ## Deployment
-Mặc định build cho Cloudflare Workers (`npm run build`, deploy bằng `wrangler`). Có thể chuyển sang Vercel/Netlify/Node bằng cách đổi preset deploy của TanStack Start trong `vite.config.ts`. Đặt các biến môi trường tại hosting.
+Mặc định build cho Cloudflare Workers (`pnpm run build`, deploy bằng `wrangler`). Có thể chuyển sang Vercel/Netlify/Node bằng cách đổi preset deploy của TanStack Start trong `vite.config.ts`. Đặt các biến môi trường tại hosting.
 
 ## Backup & recovery
 - Code: GitHub.
@@ -60,7 +60,7 @@ Build và email đã tách khỏi nền tảng cũ: `vite.config.ts` dùng plugi
 1. Tạo Supabase project riêng, chạy migrations trong `drizzle/migrations`, tạo buckets (mục Supabase setup).
 2. `pg_dump` dữ liệu từ project hiện tại rồi import sang project mới.
 3. Điền `.env`/biến môi trường hosting (Supabase, `RESEND_API_KEY`, `DATABASE_URL`/`DIRECT_URL` cho Drizzle CLI) và xác thực domain gửi email.
-4. `bun run build` rồi deploy lên Cloudflare Workers/Vercel/Node; trỏ DNS `themandarinleague.bond`.
+4. `pnpm run build` rồi deploy lên Cloudflare Workers/Vercel/Node; trỏ DNS `themandarinleague.bond`.
 5. Cấu hình SMTP cho Supabase Auth (email xác nhận, reset mật khẩu).
 
 Thành phần còn phụ thuộc nền tảng cũ: AI Gateway (`LOVABLE_API_KEY`) dùng bởi trích xuất chứng nhận, onboarding và AI tuyển dụng — sẽ chuyển sang provider riêng khi có API key.
