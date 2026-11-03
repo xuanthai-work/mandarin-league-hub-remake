@@ -464,10 +464,10 @@
 .tml-pass .tml-banner p:first-child { color: var(--pass-ink) !important; }
 .tml-pass .tml-microprint { color: var(--pass-c); opacity: .05; }
 .tml-pass .tml-pass-pattern { opacity: .06; }
-/* Footer: layered gold thread + tier band + Dong Son drum watermark */
+/* Footer: gold thread + tier band. No shadow above it — it used to darken the QR
+   and the last info rows sitting just above the band. */
 .tml-pass-foot { position: relative; color: var(--gold); background: linear-gradient(90deg, var(--pass-deep), var(--pass-c) 50%, var(--pass-deep));
-  box-shadow: 0 -1px 0 var(--gold), 0 -4px 0 color-mix(in oklab, var(--pass-c) 25%, transparent); }
-.tml-pass-foot::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; height: 9px; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--pass-c) 10%, transparent)); clip-path: polygon(0 100%, 6% 0, 94% 0, 100% 100%); }
+  box-shadow: 0 -1px 0 var(--gold); }
 .tml-dongson { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .1; }
 .tml-crane { position: absolute; pointer-events: none; color: var(--pass-c); opacity: .12; }
 .tml-pass[data-tone="black"] .tml-dongson, .tml-pass[data-tone="black"] .tml-crane { color: color-mix(in oklab, var(--gold) 70%, oklch(0.35 0.06 70)); opacity: .16; }
