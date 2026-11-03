@@ -9,8 +9,14 @@ export const positionsFor = (dept: string) => (dept === "executive" ? ["Thư ký
 export const defaultPosition = (dept: string, wanted?: string | null) => { const l = positionsFor(dept); return wanted && l.includes(wanted) ? wanted : l[0]!; };
 
 export const PERIOD_STATUS: Record<string, string> = {
-  draft: "Nháp", scheduled: "Chờ mở", open: "Đang mở", paused: "Tạm đóng", ended: "Đã kết thúc", cancelled: "Đã hủy",
+  draft: "Nháp", open: "Đang mở", paused: "Tạm đóng", ended: "Đã kết thúc", cancelled: "Đã hủy",
 };
+/**
+ * A period has a single "not open yet" state. The legacy `scheduled` value is
+ * folded into `draft` so admins never see two labels that mean the same thing.
+ */
+export const periodStatus = (status: string) => (status === "scheduled" ? "draft" : status);
+export const periodStatusLabel = (status: string) => PERIOD_STATUS[periodStatus(status)] ?? status;
 export const APP_STATUS: Record<string, string> = {
   submitted: "Đã gửi", reviewing: "Đang xem xét", needs_info: "Cần bổ sung", interview: "Phỏng vấn",
   approved: "Được chấp thuận", rejected: "Chưa phù hợp đợt này", withdrawn: "Rút đơn",

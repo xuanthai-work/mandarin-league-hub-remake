@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ADMIN_SECTIONS, ROLE_LABELS } from "@/lib/admin-nav";
-import { PERIOD_STATUS, deptName } from "@/lib/recruitment";
+import { periodStatusLabel, deptName } from "@/lib/recruitment";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminAccess } from "./admin";
 
@@ -90,7 +90,7 @@ async function loadRecruitment(): Promise<RecruitmentBlock | null> {
   const pendingRows = apps.filter((a) => a.status === "submitted");
   return {
     latestName: latest?.name ?? null,
-    latestStatus: latest ? PERIOD_STATUS[latest.status] ?? latest.status : null,
+    latestStatus: latest ? periodStatusLabel(latest.status) : null,
     open: (periods.data ?? []).some((p) => p.status === "open"),
     appsInLatest: latest ? apps.filter((a) => a.period_id === latest.id).length : 0,
     pending: pendingRows.length,

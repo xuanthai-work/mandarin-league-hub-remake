@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đợt tuyển đang mở — ba hướng responsive · TML</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+<style>
+/* ─────────────────────────────────────────────── document
+   Palette + type lifted from src/styles.css so the sheet and the
+   product speak the same language. */
+:root{
+  --app-bg: oklch(0.99 0.003 230);
+  --card: #fff;
+  --ink: oklch(0.22 0.03 245);
+  --ink-soft: oklch(0.47 0.02 245);
+  --stroke: oklch(0.915 0.01 240);
+  --primary: oklch(0.68 0.16 235);
+  --primary-strong: oklch(0.55 0.15 240);
+  --deep: oklch(0.42 0.12 245);
+  --sapphire: oklch(0.38 0.12 250);
+  --gold: oklch(0.74 0.14 80);
+  --gold-ink: oklch(0.52 0.11 70);
+  --success: oklch(0.55 0.14 155);
+
+  --paper: oklch(0.975 0.006 230);
+  --paper-2: oklch(0.956 0.009 230);
+  --rule: oklch(0.888 0.012 230);
+  --sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:oklch(0.74 0.14 80 / .32);color:var(--ink)}
+a{color:inherit;text-decoration:none}
+code{font-family:var(--mono);font-size:.86em;letter-spacing:-.01em;background:oklch(0.94 0.008 95);padding:.1em .34em;border-radius:3px}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+svg{display:block}
+:focus-visible{outline:2px solid var(--primary-strong);outline-offset:3px;border-radius:4px}
+
+.sheet{max-width:1280px;margin:0 auto;padding:0 24px 120px}
+
+/* ── masthead */
+.masthead{padding:56px 0 28px;border-bottom:1px solid var(--rule)}
+.masthead h1{
+  margin:0;font-size:clamp(1.9rem,3.4vw,3rem);line-height:1.06;font-weight:800;
+  letter-spacing:-.032em;max-width:22ch;text-wrap:balance;
+}
+.lede{margin:16px 0 0;max-width:64ch;font-size:1.0625rem;line-height:1.62;color:var(--ink-soft)}
+.lede b{color:var(--ink);font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:12px 40px;margin:26px 0 0;padding:0}
+.facts div{display:flex;flex-direction:column;gap:3px}
+.facts dt{font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--gold-ink)}
+.facts dd{margin:0;font-size:.8125rem;color:var(--ink)}
+
+/* ── body grid */
+.layout{display:grid;grid-template-columns:180px minmax(0,1fr);gap:52px;margin-top:44px}
+.index{position:sticky;top:28px;align-self:start;display:flex;flex-direction:column;gap:2px}
+.index p{margin:0 0 10px;font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--gold-ink)}
+.index a{
+  display:grid;grid-template-columns:14px 1fr;gap:10px;align-items:baseline;
+  padding:7px 0;font-size:.8125rem;line-height:1.35;color:var(--ink-soft);
+  transition:color .18s ease;
+}
+.index a::before{content:"";height:1px;background:var(--rule);transform:translateY(-3px);transition:background .18s ease,height .18s ease}
+.index a:hover{color:var(--ink)}
+.index a:hover::before{background:var(--gold)}
+.index a[aria-current="true"]{color:var(--ink);font-weight:600}
+.index a[aria-current="true"]::before{background:var(--gold);height:2px}
+
+section{scroll-margin-top:24px}
+section + section{margin-top:76px;padding-top:40px;border-top:1px solid var(--rule)}
+h2{margin:0;font-size:clamp(1.5rem,2.4vw,2rem);line-height:1.1;font-weight:800;letter-spacing:-.03em;text-wrap:balance}
+.thesis{margin:14px 0 0;max-width:68ch;font-size:1rem;line-height:1.65;color:var(--ink-soft)}
+.thesis strong{color:var(--ink);font-weight:600}
+
+/* ── defect list */
+.defects{margin:26px 0 0;padding:0;list-style:none;border-top:1px solid var(--rule)}
+.defects li{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:24px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--rule)}
+.defects p{margin:0;font-size:.9375rem;line-height:1.55}
+.defects p b{font-weight:600}
+.defects p span{display:block;margin-top:3px;font-size:.8125rem;color:var(--ink-soft)}
+.defects em{
+  font-family:var(--mono);font-style:normal;font-size:.75rem;text-align:right;
+  color:var(--ink-soft);letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+}
+.defects li.fail em{color:oklch(0.46 0.16 25)}
+
+/* ── render stage */
+.stage{margin-top:30px;display:grid;grid-template-columns:minmax(0,1fr);gap:20px;padding-bottom:4px}
+.frame{display:flex;flex-direction:column;gap:9px;min-width:0}
+.frame figcaption{display:flex;align-items:baseline;gap:8px;font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--gold-ink)}
+.frame figcaption span{font-family:var(--mono);letter-spacing:0;font-size:.75rem;color:var(--ink)}
+.frame figcaption i{font-style:normal;font-weight:500;color:var(--ink-soft);text-transform:none;letter-spacing:0}
+.m-frame{width:390px;max-width:100%;justify-self:start}
+.d-frame{width:100%;max-width:1010px}
+.viewport{
+  container-type:inline-size;background:var(--app-bg);
+  border:1px dashed oklch(0.855 0.016 230);border-radius:10px;padding:16px;
+}
+
+/* ── shared card atoms (product register: 10–16px radii, 1px strokes) */
+.p-card{background:var(--card);border:1px solid var(--stroke);border-radius:16px;box-shadow:0 1px 2px oklch(0.3 0.05 250 / .05)}
+.p-cta{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--primary-strong);color:#fff;font-size:.875rem;font-weight:600;
+  min-height:44px;padding:0 16px;border-radius:10px;
+  transition:transform .18s cubic-bezier(.16,1,.3,1),background .18s ease,box-shadow .18s ease;
+  box-shadow:0 1px 2px oklch(0.35 0.1 250 / .2);
+}
+.p-cta:hover{background:oklch(0.5 0.15 242);box-shadow:0 8px 18px -12px oklch(0.35 0.1 250 / .6)}
+.p-cta:active{transform:translateY(1px)}
+.p-cta svg{width:16px;height:16px;stroke-width:2;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.p-status{
+  display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;
+  border:1px solid var(--stroke);border-radius:10px;background:var(--card);
+  font-size:.8125rem;font-weight:600;transition:border-color .18s ease,background .18s ease;
+}
+.p-status:hover{border-color:oklch(0.86 0.03 240);background:oklch(0.985 0.005 235)}
+.p-status .dot{width:6px;height:6px;border-radius:99px;background:var(--success);box-shadow:0 0 0 3px oklch(0.55 0.14 155 / .16)}
+.p-status svg{width:14px;height:14px;stroke-width:2;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;color:var(--ink-soft);margin-left:2px}
+.p-title{font-weight:800;letter-spacing:-.028em;line-height:1.12;color:var(--deep);text-wrap:balance;margin:0}
+.p-desc{margin:0;font-size:.8438rem;line-height:1.6;color:var(--ink-soft);max-width:60ch;text-wrap:pretty}
+.p-stat{display:flex;align-items:baseline;gap:6px;font-size:.8125rem;color:var(--ink-soft);white-space:nowrap}
+.p-stat b{font-family:var(--mono);font-size:.9375rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.p-track{height:6px;border-radius:99px;background:oklch(0.94 0.008 240);overflow:hidden}
+.p-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary-strong),var(--primary))}
+.p-meta{font-size:.7812rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.p-meta b{font-weight:600;color:var(--ink)}
+
+/* ═══════════════════════════════════════════════ NOW ── as shipped */
+.n-card{position:relative;overflow:hidden;border-color:oklch(0.74 0.14 80 / .3);padding:24px}
+.n-card::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,oklch(0.74 0.14 80 / .7),transparent)}
+.n-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px}
+.n-id{min-width:0;flex:1}
+.n-titlerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.n-title{margin:0;font-size:1.5rem;font-weight:700;letter-spacing:-.025em;color:var(--deep)}
+.n-status{
+  width:140px;height:32px;flex:none;display:inline-flex;align-items:center;gap:8px;
+  border:1px solid oklch(0.92 0.01 240);border-radius:8px;padding:0 8px;
+  font-size:.75rem;font-weight:500;
+}
+.n-status .dot{width:6px;height:6px;border-radius:99px;background:var(--success);animation:beacon 2.6s ease-in-out infinite}
+@keyframes beacon{0%,100%{box-shadow:0 0 0 0 oklch(0.55 0.14 155 / .5)}50%{box-shadow:0 0 0 5px oklch(0.55 0.14 155 / 0)}}
+.n-status svg{width:14px;height:14px;margin-left:auto;stroke:var(--ink-soft);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.n-desc{margin:6px 0 0;font-size:.875rem;line-height:1.5;color:var(--ink-soft)}
+.n-cta{
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  background:var(--primary);color:#fff;font-size:.875rem;font-weight:600;
+  padding:9px 16px;border-radius:8px;
+}
+.n-cta svg{width:16px;height:16px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.n-prog{margin-top:24px}
+.n-prog-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:.75rem;color:var(--ink-soft)}
+.n-prog-row b{font-weight:500;color:var(--ink)}
+.n-prog .p-track{height:8px;margin-top:8px}
+.n-prog .p-track i{background:var(--primary)}
+.n-cap{margin:6px 0 0;font-size:.6875rem;color:var(--ink-soft)}
+.n-metrics{margin-top:24px;display:grid;gap:12px}
+.n-metric{border:1px solid oklch(0.915 0.01 240 / .7);background:oklch(0.96 0.01 235 / .4);border-radius:12px;padding:16px}
+.n-metric p{margin:0;display:flex;align-items:center;gap:6px;font-size:.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.n-metric p svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.n-metric div{margin-top:6px;display:flex;align-items:baseline;gap:6px}
+.n-metric strong{font-family:var(--mono);font-size:1.5rem;line-height:1;color:var(--deep)}
+.n-metric span{font-size:.75rem;color:var(--ink-soft)}
+@container (min-width:640px){ .n-metrics{grid-template-columns:repeat(3,1fr)} }
+
+/* ═══════════════════════════════════════════════ HƯỚNG 1 · DOCK */
+.d1-card{padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.d1-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;min-width:0}
+.d1-title{flex:1 1 100%;font-size:1.25rem}
+.d1-days{margin-left:auto}
+.d1-desc{flex:1 1 100%;margin:2px 0 0;font-size:.8438rem;line-height:1.6;color:var(--ink-soft);max-width:60ch;text-wrap:pretty}
+.d1-prog{display:flex;flex-direction:column;gap:6px}
+.d1-prog > div:first-child{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.d1-dates{font-size:.7812rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.d1-dates b{color:var(--ink);font-weight:600}
+.d1-pct{font-size:.7812rem;font-weight:600;color:var(--deep);font-variant-numeric:tabular-nums}
+.d1-strip{display:flex;align-items:center;gap:16px;padding-top:12px;border-top:1px solid oklch(0.93 0.008 240)}
+.d1-strip .p-stat + .p-stat{padding-left:16px;border-left:1px solid oklch(0.93 0.008 240)}
+.d1-dock .p-cta{width:100%;min-height:48px;border-radius:12px}
+
+@container (min-width:640px){
+  .d1-card{
+    padding:20px 22px 16px;gap:18px 20px;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"top cta" "bar bar" "strip strip";
+  }
+  .d1-top{grid-area:top}
+  .d1-dock{grid-area:cta;align-self:start}
+  .d1-prog{grid-area:bar}
+  .d1-strip{grid-area:strip}
+  .d1-title{flex:0 1 auto;font-size:1.5rem}
+  .d1-days{margin-left:0}
+  .d1-dock .p-cta{width:auto;min-height:40px;padding:0 18px}
+}
+@container (min-width:860px){
+  .d1-card{grid-template-areas:"top cta" "bar strip";padding:22px 24px 18px}
+  .d1-title{font-size:1.6875rem}
+  .d1-strip{justify-self:end;align-self:end;border-top:0;padding-top:0}
+  .d1-prog{align-self:end}
+}
+
+/* ═══════════════════════════════════════════════ HƯỚNG 2 · COMPACT */
+.d2-card{padding:14px 14px 0}
+.d2-grid{display:block}
+.d2-top{display:flex;align-items:flex-start;gap:12px}
+.d2-top .p-title{font-size:1.125rem;flex:1;min-width:0}
+.d2-icon{
+  flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;
+  border:1px solid var(--stroke);background:var(--card);color:var(--deep);
+  transition:background .18s ease,border-color .18s ease;
+}
+.d2-icon:hover{background:oklch(0.97 0.01 235);border-color:oklch(0.86 0.03 240)}
+.d2-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.d2-state{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}
+.d2-state button{display:inline-flex;align-items:center;gap:7px;min-height:40px;font-size:.7812rem;font-weight:600;color:var(--deep);border-radius:8px}
+.d2-state button svg{width:13px;height:13px;stroke:var(--ink-soft);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.d2-state .dot{width:6px;height:6px;border-radius:99px;background:var(--success);box-shadow:0 0 0 3px oklch(0.55 0.14 155 / .15)}
+.d2-state .sep{width:1px;height:11px;background:oklch(0.89 0.01 240)}
+.d2-mid{margin-top:2px;display:flex;flex-direction:column;gap:12px}
+.d2-inline{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.75rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.d2-inline b{color:var(--ink);font-weight:600}
+.d2-more{
+  width:100%;display:flex;align-items:center;gap:8px;min-height:48px;margin-top:4px;
+  border-top:1px solid oklch(0.93 0.008 240);font-size:.7812rem;font-weight:600;color:var(--ink-soft);
+  transition:color .18s ease;
+}
+.d2-more:hover{color:var(--deep)}
+.d2-more svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:transform .28s cubic-bezier(.16,1,.3,1)}
+.d2-more[aria-expanded="true"] svg{transform:rotate(180deg)}
+.d2-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s cubic-bezier(.16,1,.3,1)}
+.d2-panel[data-open="true"]{grid-template-rows:1fr}
+.d2-panel > div{overflow:hidden}
+.d2-panel .inner{padding:0 0 12px;display:flex;flex-direction:column;gap:12px}
+.d2-rows{display:grid}
+.d2-rows div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid oklch(0.945 0.006 240);font-size:.7812rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.d2-rows div:last-child{border-bottom:0}
+.d2-rows b{color:var(--ink);font-weight:600;font-family:var(--mono);font-size:.8125rem;letter-spacing:-.02em}
+.d2-rail{padding:0 0 14px}
+.d2-rail .d2-rows{display:none}
+.d2-cta .p-cta{width:100%;min-height:48px;border-radius:12px}
+
+@container (min-width:640px){
+  .d2-card{padding:18px 20px}
+  .d2-grid{display:grid;grid-template-columns:minmax(0,1fr) 232px;grid-template-areas:"main rail" "panel rail";gap:0 24px;align-items:start}
+  .d2-main{grid-area:main}
+  .d2-rail{grid-area:rail}
+  .d2-panel{grid-area:panel}
+  .d2-more{display:none}
+  .d2-panel{grid-template-rows:1fr}
+  .d2-panel .inner{padding:10px 0 0}
+  .d2-panel .d2-rows{display:none}
+  .d2-rail .d2-rows{display:grid}
+  .d2-rail{padding:0;display:flex;flex-direction:column;gap:14px}
+  .d2-cta .p-cta{min-height:40px;border-radius:10px}
+  .d2-top .p-title{font-size:1.375rem}
+  .d2-icon{display:none}
+  .d2-state{margin-top:6px}
+  .d2-state .sep,.d2-state .p-meta{display:none}
+  .d2-mid{margin-top:8px;gap:12px}
+}
+@container (min-width:860px){
+  .d2-card{padding:20px 24px}
+  .d2-grid{grid-template-columns:minmax(0,1fr) 260px;gap:0 32px}
+  .d2-top .p-title{font-size:1.5rem}
+  .d2-rail{border-left:1px solid oklch(0.93 0.008 240);padding-left:24px;gap:16px}
+  .d2-rows div{padding:9px 0}
+  .d2-rows b{font-size:.875rem}
+}
+
+/* ═══════════════════════════════════════════════ HƯỚNG 3 · BAND */
+.d3-card{padding:0;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr)}
+.d3-band{
+  position:relative;padding:18px 16px 0;
+  background:
+    radial-gradient(110% 120% at 94% -34%, oklch(0.47 0.13 238 / .36), transparent 56%),
+    linear-gradient(160deg, var(--sapphire), oklch(0.33 0.11 252));
+  color:#fff;
+}
+.d3-band::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 12% 120%, oklch(0.74 0.14 80 / .16), transparent 60%)}
+.d3-band > *{position:relative;z-index:1}
+.d3-title{font-size:1.25rem;color:#fff}
+.d3-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.d3-state{
+  display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;
+  border:1px solid oklch(1 0 0 / .26);border-radius:10px;background:oklch(0.33 0.09 250);
+  color:#fff;font-size:.8125rem;font-weight:600;
+  transition:background .18s ease,border-color .18s ease;
+}
+.d3-state:hover{background:oklch(0.3 0.09 250);border-color:oklch(1 0 0 / .4)}
+.d3-state .dot{width:6px;height:6px;border-radius:99px;background:oklch(0.85 0.17 155);box-shadow:0 0 0 3px oklch(0.85 0.17 155 / .22)}
+.d3-state svg{width:14px;height:14px;stroke:oklch(1 0 0 / .75);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;margin-left:2px}
+.d3-note{margin:12px 0 0;font-size:.8125rem;line-height:1.5;color:oklch(0.87 0.035 230);font-variant-numeric:tabular-nums}
+.d3-note b{color:#fff;font-weight:600}
+.d3-desc{margin:8px 0 0;font-size:.8125rem;line-height:1.55;color:oklch(0.87 0.035 230);max-width:56ch}
+.d3-prog{position:relative;margin-top:18px;height:3px;background:oklch(1 0 0 / .16);overflow:hidden}
+.d3-prog i{display:block;height:100%;background:linear-gradient(90deg,oklch(0.86 0.12 88),var(--gold))}
+.d3-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:14px;justify-content:space-between}
+.d3-strip{display:flex;align-items:stretch;gap:0}
+.d3-strip .p-stat{flex:1;flex-direction:column;align-items:flex-start;gap:2px;padding:0 10px}
+.d3-strip .p-stat:first-child{padding-left:0}
+.d3-strip .p-stat + .p-stat{border-left:1px solid oklch(0.93 0.008 240)}
+.d3-strip .p-stat b{font-size:1.125rem}
+
+@container (min-width:640px){
+  .d3-card{grid-template-columns:minmax(0,1fr) 268px}
+  .d3-band{padding:22px 24px;display:flex;flex-direction:column}
+  .d3-title{font-size:1.5rem}
+  .d3-note{margin-top:auto;padding-top:20px}
+  .d3-prog{position:absolute;left:0;right:0;bottom:0;margin:0;height:3px}
+  .d3-body{padding:18px 20px;border-left:1px solid oklch(0.93 0.008 240);gap:16px}
+  .d3-strip{flex-direction:column;gap:12px}
+  .d3-strip .p-stat{flex-direction:row;align-items:baseline;gap:8px;padding:0}
+  .d3-strip .p-stat + .p-stat{border-left:0;padding-top:12px;border-top:1px solid oklch(0.945 0.006 240)}
+}
+@container (min-width:860px){
+  .d3-card{grid-template-columns:minmax(0,1fr) 300px}
+  .d3-band{padding:26px 28px 28px}
+  .d3-title{font-size:1.6875rem}
+  .d3-body{padding:22px 24px}
+  .d3-strip .p-stat b{font-size:1.375rem}
+}
+
+/* ── spec tables */
+.spec{width:100%;border-collapse:collapse;margin-top:32px;font-size:.875rem}
+.spec caption{text-align:left;font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--gold-ink);padding-bottom:10px}
+.spec th{text-align:left;font-size:.6875rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;padding:9px 16px 9px 0;border-bottom:1px solid var(--ink);white-space:nowrap}
+.spec td{padding:12px 16px 12px 0;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.5}
+.spec td:first-child{font-family:var(--mono);font-size:.8125rem;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.spec td:last-child{color:var(--ink-soft)}
+.spec tr:hover td{background:oklch(0.992 0.004 95)}
+
+.cost{margin:20px 0 0;display:grid;gap:0;font-size:.875rem}
+.cost div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:20px;padding:10px 0;border-top:1px solid var(--rule)}
+.cost dt{font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--gold-ink);padding-top:3px}
+.cost dd{margin:0;color:var(--ink-soft);line-height:1.6}
+.cost dd b{color:var(--ink);font-weight:600}
+
+.verdict{margin-top:56px;padding-top:36px;border-top:1px solid var(--ink)}
+.verdict h2{max-width:24ch}
+.verdict ol{margin:22px 0 0;padding:0;list-style:none;counter-reset:step}
+.verdict ol li{
+  counter-increment:step;position:relative;
+  padding:12px 0 12px 42px;border-bottom:1px solid var(--rule);
+  font-size:.9375rem;line-height:1.6;color:var(--ink-soft);
+}
+.verdict ol li::before{
+  content:counter(step,decimal-leading-zero);position:absolute;left:0;top:14px;
+  font-family:var(--mono);font-size:.75rem;color:var(--gold-ink);
+}
+.verdict ol li b{color:var(--ink);font-weight:600}
+
+.note{margin-top:24px;padding:16px 18px;background:var(--paper-2);border-radius:2px;font-size:.875rem;line-height:1.65;color:var(--ink-soft)}
+.note b{color:var(--ink);font-weight:600}
+footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:12px 32px;font-size:.75rem;color:var(--ink-soft)}
+footer span{font-family:var(--mono);letter-spacing:-.01em}
+
+@media (max-width:1000px){
+  .m-frame,.d-frame{width:100%;justify-self:stretch;max-width:none}
+  .layout{grid-template-columns:1fr;gap:30px}
+  .index{position:static;flex-direction:row;flex-wrap:wrap;gap:4px 18px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+  .index p{flex:0 0 100%;margin-bottom:4px}
+  .index a{grid-template-columns:1fr;padding:3px 0}
+  .index a::before{display:none}
+}
+@media (max-width:720px){
+  .defects li{grid-template-columns:1fr;gap:4px}
+  .defects em{text-align:left}
+  .spec th:nth-child(3),.spec td:nth-child(3){display:none}
+  .cost div{grid-template-columns:1fr;gap:2px}
+  .m-frame{width:100%;min-width:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <h1>Một thẻ đợt tuyển, ba cách sống ở màn hình hẹp</h1>
+    <p class="lede">
+      Thẻ trong ảnh là <b>ActiveCampaignHero</b> của cổng quản trị tuyển dụng. Ở 390px, tiêu đề, nút
+      <b>Cấu hình đợt tuyển</b> và ô trạng thái chen nhau trên hai dòng, không theo thứ tự đọc nào, và
+      nút chính đang mất tương phản. Dưới đây là hiện trạng dựng lại từ mã nguồn, rồi ba hướng bố cục lại.
+    </p>
+    <dl class="facts">
+      <div><dt>Màn hình</dt><dd>Operate · admin tuyển dụng</dd></div>
+      <div><dt>Nguồn</dt><dd><code>admin.recruitment.tsx</code> · dòng 375–453</dd></div>
+      <div><dt>Mốc kiểm</dt><dd>390 · 768 · 1024+</dd></div>
+      <div><dt>Dữ liệu dùng</dt><dd>01/10 → 30/11/2026 · 8 vị trí · 42 hồ sơ</dd></div>
+    </dl>
+  </header>
+
+  <div class="layout">
+    <nav class="index" aria-label="Mục lục">
+      <p>Trong tài liệu</p>
+      <a href="#now">Hiện trạng</a>
+      <a href="#d1">Hướng 1 · Dock</a>
+      <a href="#d2">Hướng 2 · Gọn</a>
+      <a href="#d3">Hướng 3 · Dải sapphire</a>
+      <a href="#chon">Nên chọn gì</a>
+    </nav>
+
+    <main>
+
+      <!-- ═══════════════════════════ NOW -->
+      <section id="now">
+        <h2>Hiện trạng ở 390px</h2>
+        <p class="thesis">
+          Dựng lại đúng mã hiện tại: <code>flex-wrap</code> + <code>flex-1</code> cho khối tiêu đề, ô trạng thái
+          rộng cố định <code>140px</code>, nút chính là phần tử anh em. Khi không đủ chỗ, ô trạng thái bị đẩy xuống
+          dưới còn nút vẫn bám dòng tiêu đề — nên thứ tự đọc thành <strong>tên → nút → trạng thái</strong>,
+          ngược với mạch ra quyết định.
+        </p>
+
+        <div class="stage">
+          <figure class="frame m-frame">
+            <figcaption>390<span>px</span><i>hiện tại</i></figcaption>
+            <div class="viewport">
+              <article class="p-card n-card">
+                <div class="n-head">
+                  <div class="n-id">
+                    <div class="n-titlerow">
+                      <h3 class="n-title">Con mèo</h3>
+                      <button class="n-status" type="button">
+                        <span class="dot"></span>Đang mở
+                        <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                    </div>
+                    <p class="n-desc">Tuyển thành viên cho các ban chuyên môn, nhận hồ sơ đến hết 30/11.</p>
+                  </div>
+                  <button class="n-cta" type="button">
+                    <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                    Cấu hình đợt tuyển
+                  </button>
+                </div>
+                <div class="n-prog">
+                  <div class="n-prog-row"><span><b>01/10/2026</b> → <b>30/11/2026</b></span><span>Còn 27 ngày</span></div>
+                  <div class="p-track"><i style="width:55%"></i></div>
+                  <p class="n-cap">Đã trôi qua 55% thời gian nhận hồ sơ</p>
+                </div>
+                <div class="n-metrics">
+                  <div class="n-metric">
+                    <p><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Vị trí mở tuyển</p>
+                    <div><strong>8</strong><span>vị trí</span></div>
+                  </div>
+                  <div class="n-metric">
+                    <p><svg viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/></svg>Hồ sơ đã nộp</p>
+                    <div><strong>42</strong><span>hồ sơ</span></div>
+                  </div>
+                  <div class="n-metric">
+                    <p><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Thời hạn còn lại</p>
+                    <div><strong>27</strong><span>ngày</span></div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </figure>
+        </div>
+
+        <ul class="defects">
+          <li class="fail">
+            <p><b>Nút chính fail tương phản.</b><span>Trắng trên <code>--primary</code> chỉ đạt 2.77:1 — dưới ngưỡng AA 4.5:1 cho chữ 14px.</span></p>
+            <em>2.77 : 1</em>
+          </li>
+          <li>
+            <p><b>Thứ tự đọc bị đảo.</b><span>“Cấu hình” đứng cạnh tiêu đề, còn “Đang mở” — dữ kiện quan trọng nhất — rơi xuống dòng riêng, cao 32px.</span></p>
+            <em>flex-wrap</em>
+          </li>
+          <li>
+            <p><b>Nút bóp mô tả còn ~122px.</b><span>Vì nút là phần tử anh em trong cùng hàng flex, mô tả co lại thành một cột chữ 6 dòng — đúng như khung bên trên.</span></p>
+            <em>358 − 208 − 12</em>
+          </li>
+          <li>
+            <p><b>Ô trạng thái chiếm 40% bề ngang.</b><span><code>w-[140px]</code> cố định cho hai chữ, đúng lúc tiêu đề cần chỗ nhất.</span></p>
+            <em>140 / 358px</em>
+          </li>
+          <li>
+            <p><b>Mục tiêu chạm dưới chuẩn.</b><span>Trạng thái 32px, nút chính 36px — dưới 44px nên bấm hụt trên điện thoại.</span></p>
+            <em>32 · 36 px</em>
+          </li>
+          <li>
+            <p><b>“Còn 27 ngày” xuất hiện hai lần.</b><span>Một lần trên thanh tiến độ, một lần trong thẻ số thứ ba — và ba thẻ số xếp dọc tốn ~300px.</span></p>
+            <em>≈ 300 px</em>
+          </li>
+          <li>
+            <p><b>Nhãn 11px viết hoa, giãn chữ.</b><span>Dấu tiếng Việt ở cỡ đó rất khó đọc trên màn hình điện thoại.</span></p>
+            <em>11 px</em>
+          </li>
+          <li>
+            <p><b>Chấm trạng thái nhấp nháy.</b><span>Đợt tuyển mở hàng tháng nhưng chấm vẫn pulse liên tục, tranh sự chú ý với nút chính. Ba hướng dưới dùng chấm tĩnh, chỉ đổi màu theo trạng thái.</span></p>
+            <em>animate-pulse</em>
+          </li>
+        </ul>
+      </section>
+
+      <!-- ═══════════════════════════ D1 -->
+      <section id="d1">
+        <h2>Hướng 1 · Dock hành động</h2>
+        <p class="thesis">
+          Đảo lại thứ bậc cho đúng việc người quản trị làm: <strong>đọc trạng thái trước, ra lệnh sau</strong>.
+          Trạng thái trở thành một điều khiển thật 44px ngay dưới tiêu đề; nút cấu hình rời khỏi dòng tiêu đề và
+          xuống thành một dock toàn chiều rộng ở đáy thẻ — chỗ ngón tay cái với tới. Ba thẻ số nén thành một dải
+          số có vạch chia, hết lồng thẻ trong thẻ.
+        </p>
+
+        <div class="stage">
+          <figure class="frame m-frame">
+            <figcaption>390<span>px</span><i>dock ở đáy</i></figcaption>
+            <div class="viewport">
+              <article class="p-card d1-card">
+                <div class="d1-top">
+                  <h3 class="p-title d1-title">Con mèo</h3>
+                  <button class="p-status" type="button">
+                    <span class="dot"></span>Đang mở
+                    <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                  <span class="p-meta d1-days">còn <b>27</b> ngày</span>
+                  <p class="d1-desc">Tuyển thành viên cho các ban chuyên môn, nhận hồ sơ đến hết 30/11.</p>
+                </div>
+                <div class="d1-prog">
+                  <div>
+                    <span class="d1-dates"><b>01/10</b> → <b>30/11/2026</b></span>
+                    <span class="d1-pct">55%</span>
+                  </div>
+                  <div class="p-track"><i style="width:55%"></i></div>
+                </div>
+                <div class="d1-strip">
+                  <span class="p-stat"><b>8</b> vị trí mở</span>
+                  <span class="p-stat"><b>42</b> hồ sơ</span>
+                </div>
+                <div class="d1-dock">
+                  <button class="p-cta" type="button">
+                    <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                    Cấu hình đợt tuyển
+                  </button>
+                </div>
+              </article>
+            </div>
+          </figure>
+
+          <figure class="frame d-frame">
+            <figcaption>≥1024<span>px</span><i>vùng nội dung ~976 — một dòng đầu, số liệu canh phải</i></figcaption>
+            <div class="viewport">
+              <article class="p-card d1-card">
+                <div class="d1-top">
+                  <h3 class="p-title d1-title">Con mèo</h3>
+                  <button class="p-status" type="button">
+                    <span class="dot"></span>Đang mở
+                    <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                  <span class="p-meta d1-days">còn <b>27</b> ngày</span>
+                  <p class="d1-desc">Tuyển thành viên cho các ban chuyên môn và Ban Điều hành, nhận hồ sơ đến hết 30/11.</p>
+                </div>
+                <div class="d1-prog">
+                  <div>
+                    <span class="d1-dates"><b>01/10/2026</b> → <b>30/11/2026</b></span>
+                    <span class="d1-pct">55%</span>
+                  </div>
+                  <div class="p-track"><i style="width:55%"></i></div>
+                </div>
+                <div class="d1-strip">
+                  <span class="p-stat"><b>8</b> vị trí mở</span>
+                  <span class="p-stat"><b>42</b> hồ sơ</span>
+                </div>
+                <div class="d1-dock">
+                  <button class="p-cta" type="button">
+                    <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                    Cấu hình đợt tuyển
+                  </button>
+                </div>
+              </article>
+            </div>
+          </figure>
+        </div>
+
+        <table class="spec">
+          <caption>Đặc tả theo mốc</caption>
+          <thead><tr><th>Mốc</th><th>Bố cục</th><th>Hành động</th><th>Kiểu chữ</th></tr></thead>
+          <tbody>
+            <tr><td>320–639</td><td>Một cột: tên → trạng thái + số ngày → mô tả → tiến độ → dải số → dock.</td><td>Dock toàn chiều rộng 48px sát đáy thẻ; trạng thái 44px.</td><td>Tên 20/800, mô tả 13.5/1.6, số 12.5 tabular.</td></tr>
+            <tr><td>640–1023</td><td>Nút về góc phải cùng dòng tên; dock tan thành nút inline 40px.</td><td>Hai vùng chạm tách ≥8px.</td><td>Tên 24/800, mô tả 13.5.</td></tr>
+            <tr><td>≥1024</td><td>Hai cột ở hàng cuối: tiến độ trái, dải số canh phải, cùng đường chân.</td><td>Nút 40px, cao bằng ô trạng thái.</td><td>Tên 27/800, tracking −0.028em.</td></tr>
+          </tbody>
+        </table>
+        <dl class="cost">
+          <div><dt>Được</dt><dd><b>Đúng thứ bậc đọc, mọi thứ chạm được, bỏ được một thẻ số dư.</b> Chỉ sửa trong <code>ActiveCampaignHero</code>: không đổi dữ liệu, không đổi luồng.</dd></div>
+          <div><dt>Mất</dt><dd>Dock thêm ~14px chiều cao ở mobile so với nút inline; dải số cần quy ước “số đứng trước chữ”.</dd></div>
+        </dl>
+      </section>
+
+      <!-- ═══════════════════════════ D2 -->
+      <section id="d2">
+        <h2>Hướng 2 · Gọn, mở dần</h2>
+        <p class="thesis">
+          Đặt cược vào <strong>ngân sách cuộn</strong>: trên điện thoại, thẻ chỉ giữ ba dòng (tên, trạng thái kèm
+          số ngày, thanh tiến độ) cộng một nút cấu hình dạng icon 44px. Mô tả, ngày và số liệu nằm sau một hàng
+          “Chi tiết đợt tuyển”. Thẻ co từ ~600px xuống ~285px, đủ để thấy cả bảng “Các đợt tuyển khác” trong một
+          lần vuốt. Trên desktop, mọi thứ mở sẵn và số liệu dời sang rail phải.
+        </p>
+
+        <div class="stage">
+          <figure class="frame m-frame">
+            <figcaption>390<span>px</span><i>bấm hàng cuối để mở</i></figcaption>
+            <div class="viewport">
+              <article class="p-card d2-card">
+                <div class="d2-grid">
+                  <div class="d2-main">
+                    <div class="d2-top">
+                      <h3 class="p-title">Con mèo</h3>
+                      <button class="d2-icon" type="button" aria-label="Cấu hình đợt tuyển">
+                        <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                      </button>
+                    </div>
+                    <div class="d2-state">
+                      <button type="button"><span class="dot"></span>Đang mở<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+                      <span class="sep"></span>
+                      <span class="p-meta">còn <b>27</b> ngày</span>
+                    </div>
+                    <div class="d2-mid">
+                      <div class="p-track"><i style="width:55%"></i></div>
+                      <div class="d2-inline"><span><b>8</b> vị trí</span><span><b>42</b> hồ sơ</span><span><b>55%</b> thời gian</span></div>
+                    </div>
+                  </div>
+                  <button class="d2-more" type="button" aria-expanded="false" aria-controls="d2-panel">
+                    <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                    Chi tiết đợt tuyển
+                  </button>
+                  <div class="d2-panel" id="d2-panel" data-open="false">
+                    <div>
+                      <div class="inner">
+                        <p class="p-desc">Tuyển thành viên cho các ban chuyên môn, nhận hồ sơ đến hết 30/11.</p>
+                        <div class="d2-rows">
+                          <div><span>Bắt đầu</span><b>01/10/2026</b></div>
+                          <div><span>Kết thúc</span><b>30/11/2026</b></div>
+                          <div><span>Vị trí đang mở</span><b>8</b></div>
+                          <div><span>Hồ sơ đã nộp</span><b>42</b></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d2-rail">
+                    <div class="d2-rows">
+                      <div><span>Vị trí đang mở</span><b>8</b></div>
+                      <div><span>Hồ sơ đã nộp</span><b>42</b></div>
+                      <div><span>Ngày còn lại</span><b>27</b></div>
+                    </div>
+                    <div class="d2-cta">
+                      <button class="p-cta" type="button">
+                        <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                        Cấu hình đợt tuyển
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </figure>
+
+          <figure class="frame d-frame">
+            <figcaption>≥1024<span>px</span><i>mở sẵn — số liệu thành rail phải có vạch chia</i></figcaption>
+            <div class="viewport">
+              <article class="p-card d2-card">
+                <div class="d2-grid">
+                  <div class="d2-main">
+                    <div class="d2-top">
+                      <h3 class="p-title">Con mèo</h3>
+                      <button class="d2-icon" type="button" aria-label="Cấu hình đợt tuyển">
+                        <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                      </button>
+                    </div>
+                    <div class="d2-state">
+                      <button type="button"><span class="dot"></span>Đang mở<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+                      <span class="sep"></span>
+                      <span class="p-meta">còn <b>27</b> ngày</span>
+                    </div>
+                    <div class="d2-mid">
+                      <div class="p-track"><i style="width:55%"></i></div>
+                      <div class="d2-inline" style="margin-top:8px"><span><b>01/10/2026</b> → <b>30/11/2026</b></span><span><b>55%</b> thời gian</span></div>
+                    </div>
+                  </div>
+                  <button class="d2-more" type="button" aria-expanded="false" aria-controls="d2-panel-b">
+                    <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                    Chi tiết đợt tuyển
+                  </button>
+                  <div class="d2-panel" id="d2-panel-b" data-open="false">
+                    <div>
+                      <div class="inner">
+                        <p class="p-desc">Tuyển thành viên cho các ban chuyên môn và Ban Điều hành, nhận hồ sơ đến hết 30/11.</p>
+                        <div class="d2-rows">
+                          <div><span>Bắt đầu</span><b>01/10/2026</b></div>
+                          <div><span>Kết thúc</span><b>30/11/2026</b></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d2-rail">
+                    <div class="d2-rows">
+                      <div><span>Vị trí đang mở</span><b>8</b></div>
+                      <div><span>Hồ sơ đã nộp</span><b>42</b></div>
+                      <div><span>Ngày còn lại</span><b>27</b></div>
+                    </div>
+                    <div class="d2-cta">
+                      <button class="p-cta" type="button">
+                        <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                        Cấu hình đợt tuyển
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </figure>
+        </div>
+
+        <table class="spec">
+          <caption>Đặc tả theo mốc</caption>
+          <thead><tr><th>Mốc</th><th>Bố cục</th><th>Hành động</th><th>Kiểu chữ</th></tr></thead>
+          <tbody>
+            <tr><td>320–639</td><td>Ba dòng + disclosure. Mô tả, ngày và số liệu nằm trong panel mở dần.</td><td>Icon 44×44 góc phải; hàng disclosure 48px toàn ngang; CTA 48px dưới cùng.</td><td>Tên 18/800, meta 12.5, số 12 tabular.</td></tr>
+            <tr><td>640–1023</td><td>Hai cột: nội dung trái, rail số 232px phải, panel mở sẵn.</td><td>Icon biến mất; CTA về rail 40px.</td><td>Tên 22/800, số 13 tabular.</td></tr>
+            <tr><td>≥1024</td><td>Rail 260px có vạch chia dọc; mỗi dòng số padding 9px.</td><td>CTA cuối rail, không rời mắt khỏi số liệu.</td><td>Tên 24/800, số 14.</td></tr>
+          </tbody>
+        </table>
+        <dl class="cost">
+          <div><dt>Được</dt><dd><b>Tiết kiệm ~310px chiều cao ở mobile</b>, đủ để bảng đợt khác lọt vào màn hình đầu. Trạng thái và số ngày vẫn đọc được ngay, không phải mở gì.</dd></div>
+          <div><dt>Mất</dt><dd>Mô tả và ngày bị ẩn sau một lần chạm (mặc định <b>đóng</b> nên phải nhớ đường quay lại). Icon-only cần <code>aria-label</code> và tooltip; người mới chưa chắc đoán ra icon nào là cấu hình.</dd></div>
+        </dl>
+      </section>
+
+      <!-- ═══════════════════════════ D3 -->
+      <section id="d3">
+        <h2>Hướng 3 · Dải sapphire</h2>
+        <p class="thesis">
+          Giữ nguyên bố cục nhưng đổi <strong>chất liệu</strong>: phần danh tính của đợt tuyển thành một dải
+          sapphire đậm, chữ trắng, vạch vàng kim chạy dọc đáy dải chính là thanh tiến độ. Đây là hướng duy nhất
+          biến thẻ thành một khoảnh khắc thương hiệu — đúng tinh thần “Executive Command Center” trong PRODUCT.md —
+          và là hướng duy nhất cần đổi token, không chỉ đổi class.
+        </p>
+
+        <div class="stage">
+          <figure class="frame m-frame">
+            <figcaption>390<span>px</span><i>dải trên, số liệu dưới</i></figcaption>
+            <div class="viewport">
+              <article class="p-card d3-card">
+                <div class="d3-band">
+                  <h3 class="p-title d3-title">Con mèo</h3>
+                  <div class="d3-row">
+                    <button class="d3-state" type="button">
+                      <span class="dot"></span>Đang mở
+                      <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                  </div>
+                  <p class="d3-note"><b>còn 27 ngày</b> · 01/10 → 30/11/2026</p>
+                  <p class="d3-desc">Tuyển thành viên cho các ban chuyên môn, nhận hồ sơ đến hết 30/11.</p>
+                  <div class="d3-prog" aria-hidden="true"><i style="width:55%"></i></div>
+                </div>
+                <div class="d3-body">
+                  <div class="d3-strip">
+                    <span class="p-stat"><b>8</b> vị trí mở</span>
+                    <span class="p-stat"><b>42</b> hồ sơ</span>
+                    <span class="p-stat"><b>55%</b> thời gian</span>
+                  </div>
+                  <button class="p-cta" type="button">
+                    <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                    Cấu hình đợt tuyển
+                  </button>
+                </div>
+              </article>
+            </div>
+          </figure>
+
+          <figure class="frame d-frame">
+            <figcaption>≥1024<span>px</span><i>dải trái, cột số phải — vạch vàng nằm ở đáy dải</i></figcaption>
+            <div class="viewport">
+              <article class="p-card d3-card">
+                <div class="d3-band">
+                  <h3 class="p-title d3-title">Con mèo</h3>
+                  <div class="d3-row">
+                    <button class="d3-state" type="button">
+                      <span class="dot"></span>Đang mở
+                      <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                  </div>
+                  <p class="d3-desc">Tuyển thành viên cho các ban chuyên môn và Ban Điều hành, nhận hồ sơ đến hết 30/11.</p>
+                  <p class="d3-note">01/10/2026 → 30/11/2026</p>
+                  <div class="d3-prog" aria-hidden="true"><i style="width:55%"></i></div>
+                </div>
+                <div class="d3-body">
+                  <div class="d3-strip">
+                    <span class="p-stat"><b>8</b> vị trí mở</span>
+                    <span class="p-stat"><b>42</b> hồ sơ</span>
+                    <span class="p-stat"><b>27</b> ngày còn lại</span>
+                  </div>
+                  <button class="p-cta" type="button">
+                    <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                    Cấu hình đợt tuyển
+                  </button>
+                </div>
+              </article>
+            </div>
+          </figure>
+        </div>
+
+        <table class="spec">
+          <caption>Đặc tả theo mốc</caption>
+          <thead><tr><th>Mốc</th><th>Bố cục</th><th>Hành động</th><th>Kiểu chữ</th></tr></thead>
+          <tbody>
+            <tr><td>320–639</td><td>Dải sapphire trên (tên, trạng thái, số ngày, mô tả, vạch vàng); thân trắng dưới.</td><td>Chip trạng thái 40px trên dải; CTA 48px ở thân.</td><td>Tên 20/800 trắng; phụ 13 trên nền đậm = 5.8:1.</td></tr>
+            <tr><td>640–1023</td><td>Hai cột: dải 1fr, cột số 268px có vạch chia dọc.</td><td>CTA dời vào cột phải, giữ nguyên nút chính của hệ thống.</td><td>Tên 24/800, số 18.</td></tr>
+            <tr><td>≥1024</td><td>Cột số 300px; vạch vàng dính đáy dải, đóng vai trò mép phân cách.</td><td>CTA 44px cuối cột phải, ngang hàng đáy.</td><td>Tên 27/800, số 22 tabular.</td></tr>
+          </tbody>
+        </table>
+        <dl class="cost">
+          <div><dt>Được</dt><dd><b>Một khoảnh khắc thương hiệu thật.</b> Chữ trắng trên sapphire đạt 9.9:1 và lớp chữ phụ 5.8:1, nên vấn đề tương phản tự hết; thanh tiến độ vàng thôi làm thanh xám vô danh.</dd></div>
+          <div><dt>Mất</dt><dd>Cần thêm token (<code>--sapphire</code>, màu chữ trên dải) và một biến thể thẻ — nếu chỉ dùng ở một thẻ thì bảng màu bị phân mảnh. Nền đậm cũng làm mô tả khó đọc hơn nền trắng, nên mô tả dài sẽ bất lợi.</dd></div>
+        </dl>
+      </section>
+
+      <!-- ═══════════════════════════ RECOMMEND -->
+      <section id="chon" class="verdict">
+        <h2>Nên chọn gì</h2>
+        <p class="thesis">
+          <strong>Hướng 1</strong> cho bản sửa sắp tới: nó sửa đúng ba lỗi đo được (thứ bậc, vùng chạm, thẻ lồng thẻ)
+          mà không đụng vào luồng nghiệp vụ, và trông vẫn là chính cổng quản trị này. Giữ <strong>Hướng 2</strong>
+          cho lúc bảng “Các đợt tuyển khác” trở nên quan trọng hơn thẻ tóm tắt; giữ <strong>Hướng 3</strong> cho
+          trang tổng quan tuyển dụng cấp cao, nơi có nhiều hơn một thẻ để so sánh.
+        </p>
+        <ol>
+          <li><b>Sửa token trước, bất kể chọn hướng nào.</b> Thêm <code>--primary-strong: oklch(.55 .15 240)</code> cho nền nút đặc (4.68:1) và <code>--gold-ink: oklch(.52 .11 70)</code> cho nhãn nhỏ (5.62:1). <code>--primary</code> hiện tại chỉ nên dùng cho viền, icon và thanh tiến độ.</li>
+          <li><b>Đưa mọi điều khiển lên 44px.</b> Ô trạng thái 32 → 44, nút 36 → 44 (mobile) / 40 (desktop); bỏ <code>w-[140px]</code> cứng, thay bằng <code>min-w-[7rem] w-auto</code>.</li>
+          <li><b>Bỏ chữ 11px.</b> Sàn 12px cho nhãn, 12.5px cho số liệu; bỏ <code>tracking-wide uppercase</code> ở nội dung tiếng Việt.</li>
+          <li><b>Xoá dòng “Đã trôi qua 55%…” và thẻ “Thời hạn còn lại”.</b> Cùng một dữ kiện, ba lần xuất hiện.</li>
+          <li><b>Đổi <code>flex-wrap</code> thành hai hàng có chủ đích</b> (<code>grid</code> + <code>minmax(0,1fr) auto</code>) để ở 390px không phần tử nào tự quyết định rơi xuống đâu.</li>
+        </ol>
+        <p class="note">
+          <b>Kiểm chứng đã làm:</b> mọi khung hình trên là HTML thật, chạy <code>@container</code> theo đúng bề rộng
+          khung — không phải ảnh chụp. Tương phản tính bằng công thức WCAG trên giá trị oklch trong
+          <code>src/styles.css</code>. Chưa kiểm bằng thiết bị thật: cần một lượt chạm trên iOS/Android cho ô trạng
+          thái trước khi chốt.
+        </p>
+      </section>
+
+      <footer>
+        <span>docs/design/recruitment-hero-responsive.html</span>
+        <span>Mốc: 390 / 768 / 1024+</span>
+        <span>Token theo src/styles.css</span>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.d2-more').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var panel = document.getElementById(btn.getAttribute('aria-controls'));
+    var open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!open));
+    if (panel) panel.setAttribute('data-open', String(!open));
+  });
+});
+
+var links = Array.prototype.slice.call(document.querySelectorAll('.index a'));
+var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+
+function syncIndex() {
+  var y = window.scrollY + 160;
+  var current = targets.length ? targets[0].id : null;
+  targets.forEach(function (t) {
+    var top = t.getBoundingClientRect().top + window.scrollY;
+    if (top <= y) current = t.id;
+  });
+  if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 4 && targets.length) {
+    current = targets[targets.length - 1].id;
+  }
+  links.forEach(function (a) {
+    if (a.getAttribute('href') === '#' + current) a.setAttribute('aria-current', 'true');
+    else a.removeAttribute('aria-current');
+  });
+}
+if (targets.length) {
+  var queued = false;
+  window.addEventListener('scroll', function () {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; syncIndex(); });
+  }, { passive: true });
+  syncIndex();
+}
+</script>
+</body>
+</html>

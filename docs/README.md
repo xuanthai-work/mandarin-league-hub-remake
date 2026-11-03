@@ -33,6 +33,12 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-26-UNIFY-ADMIN-TOPBAR-AND-STRIP-PAGE-TITLE` | Thống nhất Top Header, khớp chiều cao 73px & đẩy Action lên Header | 2026-11-03 | **PASS** | [task-26-unify-admin-topbar-and-strip-page-title.md](tasks/task-26-unify-admin-topbar-and-strip-page-title.md) |
 | `TASK-27-REPLACE-DRAWER-SELECTS-WITH-CUSTOM-SHADCN-UI` | Thay thế toàn bộ Native Select bằng Custom Shadcn/UI trong Drawer | 2026-11-03 | **PASS** | [task-27-replace-drawer-selects-with-custom-shadcn-ui.md](tasks/task-27-replace-drawer-selects-with-custom-shadcn-ui.md) |
 | `TASK-28-REPLACE-PERMISSIONS-CHECKBOXES-WITH-SWITCH-ROWS` | Thay thế Checkbox Quyền chi tiết bằng Switch Rows tinh gọn | 2026-11-03 | **PASS** | [task-28-replace-permissions-checkboxes-with-switch-rows.md](tasks/task-28-replace-permissions-checkboxes-with-switch-rows.md) |
+| `TASK-29-REDESIGN-RECRUITMENT-CAMPAIGNS-TAB-AND-DRAWER` | Tái thiết kế Tab Đợt tuyển dụng & Drawer Ma trận Ban | 2026-11-03 | **PASS** | [task-29-redesign-recruitment-campaigns-tab-and-drawer.md](tasks/task-29-redesign-recruitment-campaigns-tab-and-drawer.md) |
+| `TASK-30-RESPONSIVE-ACTIVE-CAMPAIGN-HERO-ENHANCEMENT` | Hero đợt tuyển: 2 cột trên desktop, quick actions & metric tương tác | 2026-11-03 | **PASS** | [task-30-responsive-active-campaign-hero-enhancement.md](tasks/task-30-responsive-active-campaign-hero-enhancement.md) |
+| `TASK-30-FIX-MOBILE-AND-CALENDAR` | Tinh gọn hero trên mobile (bỏ nút xanh, metric 2 cột) & chốt DatePicker | 2026-11-03 | **PASS** | [task-30-fix-mobile-and-calendar.md](tasks/task-30-fix-mobile-and-calendar.md) |
+| `TASK-31-CUSTOM-DATE-PICKER-COMPONENT` | DatePicker Shadcn/UI dùng chung, thay input date native trong 2 drawer | 2026-11-03 | **PASS** | [task-31-custom-date-picker-component.md](tasks/task-31-custom-date-picker-component.md) |
+| `TASK-31-MINIMALIST-CIRCULAR-DATE-PICKER` | DatePicker tối giản: ô ngày tròn, ngày chọn "ink", hôm nay có chấm | 2026-11-03 | **PASS** | [task-31-minimalist-circular-date-picker.md](tasks/task-31-minimalist-circular-date-picker.md) |
+| `TASK-32-EXECUTIVE-HORIZONTAL-STRIP-HERO-AND-DATEPICKER-POLISH` | Hero 2 tầng ngang: CTA tầng 1, dải 3 chỉ số full-width, badge Ban đang mở | 2026-11-03 | **PASS** | [task-32-executive-horizontal-strip-hero-and-datepicker-polish.md](tasks/task-32-executive-horizontal-strip-hero-and-datepicker-polish.md) |
 
 ---
 

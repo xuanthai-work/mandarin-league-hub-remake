@@ -58,10 +58,13 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       tsconfigPaths: true,
       alias: {
-        // Pin entities to the hoisted v4.5.0 copy; nested v7 copies break SSR.
-        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
-        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/lib/encode.js"),
-        entities: path.resolve(__dirname, "node_modules/entities"),
+        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/dist/esm/decode.js"),
+        "entities/lib/decode": path.resolve(__dirname, "node_modules/entities/dist/esm/decode.js"),
+        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/dist/esm/escape.js"),
+        "entities/lib/escape.js": path.resolve(__dirname, "node_modules/entities/dist/esm/escape.js"),
+        "entities/decode": path.resolve(__dirname, "node_modules/entities/dist/esm/decode.js"),
+        "entities/escape": path.resolve(__dirname, "node_modules/entities/dist/esm/escape.js"),
+        entities: path.resolve(__dirname, "node_modules/entities/dist/esm/index.js"),
         "@": path.resolve(__dirname, "src"),
       },
       dedupe: [
