@@ -71,10 +71,33 @@ describe("filterQuestionBank", () => {
     expect(out.map((x) => x.matchingQuestions.length)).toEqual([2, 2, 1]);
   });
 
-  it("matches diacritic-free topic searches", () => {
+  it("keeps a topic whose own title matches but shows no unrelated questions", () => {
     const out = run("cong nghe");
     expect(out.map((x) => x.topic.id)).toEqual(["t2"]);
-    expect(out[0]!.matchingQuestions).toHaveLength(2);
+    expect(out[0]!.matchingQuestions).toEqual([]);
+    expect(out[0]!.allQuestions).toHaveLength(2);
+  });
+
+  it("never leaks unrelated questions when the topic title contains the keyword", () => {
+    const localTopics: T[] = [
+      { id: "t9", title: "Công cụ & quy trình", description: "", position: null },
+    ];
+    const localQuestions: Record<string, Q[]> = {
+      t9: [
+        { prompt: "Bạn dùng công cụ nào?", kind: "long", options: [] },
+        { prompt: "Mô tả quy trình làm việc", kind: "long", options: [] },
+        { prompt: "Câu hỏi mới", kind: "short", options: [] },
+      ],
+    };
+    const out = filterQuestionBank({
+      topics: localTopics,
+      questionsOf: (id) => localQuestions[id] ?? [],
+      search: "công cụ",
+      kindFilter: "all",
+    });
+    expect(out.map((x) => x.topic.id)).toEqual(["t9"]);
+    expect(out[0]!.matchingQuestions.map((q) => q.prompt)).toEqual(["Bạn dùng công cụ nào?"]);
+    expect(out[0]!.allQuestions).toHaveLength(3);
   });
 
   it("matches words that only exist inside choice options", () => {
@@ -118,11 +141,8 @@ describe("filterQuestionBank", () => {
     expect(withLegacy("mot lua chon", "all").map((x) => x.topic.id)).toEqual(["t2"]);
   });
 
-  it("shows all questions of the requested kind when the topic itself matches", () => {
-    const out = run("thiet ke", "multi");
-    expect(out.map((x) => x.topic.id)).toEqual(["t1"]);
-    expect(out[0]!.matchingQuestions).toHaveLength(1);
-    expect(out[0]!.allQuestions).toHaveLength(2);
+  it("hides a topic whose questions miss the search term even when the topic title matches", () => {
+    expect(run("thiet ke", "multi")).toEqual([]);
   });
 
   it("finds questions by their kind label", () => {

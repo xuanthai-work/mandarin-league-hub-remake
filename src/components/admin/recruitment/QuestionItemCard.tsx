@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { QUESTION_KINDS, canonicalKind } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -22,21 +22,17 @@ import {
 const iconBtn =
   "grid h-7 w-7 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30";
 
-/** One editable question: prompt, kind, required flag, order/visibility actions and option tags. */
+/** One editable question: prompt, kind, required flag, visibility/delete actions and option tags. */
 export function QuestionItemCard({
   question,
   index,
-  total,
   run,
   confirm,
-  onSwap,
 }: {
   question: StudioQuestion;
   index: number;
-  total: number;
   run: Run;
   confirm: Confirm;
-  onSwap: (i: number, j: number) => void;
 }) {
   const [draft, setDraft] = useState("");
   const kind = canonicalKind(question.kind);
@@ -101,24 +97,6 @@ export function QuestionItemCard({
           Bắt buộc
         </label>
         <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            className={iconBtn}
-            aria-label="Đưa câu hỏi lên"
-            disabled={index === 0}
-            onClick={() => onSwap(index, index - 1)}
-          >
-            <ArrowUp className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            className={iconBtn}
-            aria-label="Đưa câu hỏi xuống"
-            disabled={index === total - 1}
-            onClick={() => onSwap(index, index + 1)}
-          >
-            <ArrowDown className="h-3.5 w-3.5" />
-          </button>
           <button
             type="button"
             className={iconBtn}

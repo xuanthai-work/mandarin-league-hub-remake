@@ -54,10 +54,11 @@ export type FilteredTopic<T, Q> = {
 };
 
 /**
- * Two-level filter for the question bank: keeps a topic only when it has a
- * question passing both filters (or, with just a search term, when the topic
- * itself matches), and trims each topic's question list to the matches so the
- * card never shows unrelated questions.
+ * Two-level filter for the question bank: trims each topic's question list to
+ * the questions passing both filters (a topic-title match never pulls unrelated
+ * questions in), then keeps a topic only when it still has a matching question —
+ * or, with just a search term, when the topic itself matches — so searching a
+ * topic name still surfaces that topic, but with an honest empty list.
  */
 export function filterQuestionBank<
   T extends SearchableTopic & { id: string },
@@ -79,11 +80,10 @@ export function filterQuestionBank<
   return topics
     .map((topic) => {
       const allQuestions = questionsOf(topic.id);
-      const topicHit = normTerm !== "" && topicMatchesSearch(topic, normTerm);
       const matchingQuestions = allQuestions.filter(
         (q) =>
           (anyKind || canonicalKind(q.kind) === kindFilter) &&
-          (!normTerm || topicHit || questionMatchesSearch(q, normTerm)),
+          (!normTerm || questionMatchesSearch(q, normTerm)),
       );
       return { topic, allQuestions, matchingQuestions };
     })

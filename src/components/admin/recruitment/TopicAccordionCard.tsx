@@ -28,7 +28,6 @@ export function TopicAccordionCard({
   expanded,
   onToggle,
   onMove,
-  onMoveQuestion,
   run,
   confirm,
 }: {
@@ -45,8 +44,6 @@ export function TopicAccordionCard({
   onToggle: () => void;
   /** Moves this topic to another index inside the department's topic list. */
   onMove: (from: number, to: number) => void;
-  /** Moves a question inside this topic. */
-  onMoveQuestion: (from: number, to: number) => void;
   run: Run;
   confirm: Confirm;
 }) {
@@ -279,10 +276,8 @@ export function TopicAccordionCard({
                 key={question.id}
                 question={question}
                 index={i}
-                total={questions.length}
                 run={run}
                 confirm={confirm}
-                onSwap={onMoveQuestion}
               />
             ))}
           </div>

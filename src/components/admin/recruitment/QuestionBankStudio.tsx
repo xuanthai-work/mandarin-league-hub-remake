@@ -368,9 +368,6 @@ export function QuestionBankStudio({
                 expanded={!collapsed.has(item.topic.id)}
                 onToggle={() => toggleTopic(item.topic.id)}
                 onMove={(from, to) => swap(deptTopics, from, to, "recruitment_topics")}
-                onMoveQuestion={(from, to) =>
-                  swap(item.matchingQuestions, from, to, "recruitment_questions")
-                }
                 run={run}
                 confirm={confirm}
               />
