@@ -473,10 +473,12 @@ function MemberDashboard() {
 
               {/* 2.2 Name + title */}
               <div className="mt-1.5 w-full shrink-0">
-                <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full items-center justify-center gap-1" title="Sửa họ tên">
-                  <span className="truncate text-[17px] font-bold uppercase tracking-tight text-primary sm:text-[18px]">{m.full_name}</span>
-                  <Pencil className="h-3.5 w-3.5 shrink-0 opacity-0 transition group-hover/name:opacity-70" />
-                </button>
+                <div className="flex w-full items-center justify-center">
+                  <button type="button" onClick={() => setSheet("name")} className="group/name relative min-w-0 max-w-full px-4" title="Sửa họ tên">
+                    <span className="block truncate text-center text-[17px] font-bold uppercase tracking-tight text-primary sm:text-[18px]">{m.full_name}</span>
+                    <Pencil className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 opacity-0 transition group-hover/name:opacity-70" />
+                  </button>
+                </div>
                 <p className="text-[7.5px] font-semibold uppercase tracking-wider opacity-60">OFFICIAL MEMBER PASS · {tier.label}</p>
               </div>
 
@@ -544,16 +546,16 @@ function MemberDashboard() {
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {drumWatermarkBack}
             <div className="h-8 w-full shrink-0 border-y border-gold/30 bg-neutral-900 shadow-inner sm:h-9" />
-            <div className="relative flex shrink-0 items-center gap-2 px-3 pt-1.5">
+            <div className="relative flex shrink-0 items-center justify-between gap-2 px-3 pt-1.5">
               <button type="button" onClick={() => flipTo(false)} aria-label="Quay lại mặt trước" title="Quay lại mặt trước"
-                className="rounded-full border border-gold/50 bg-white/80 p-1 text-primary-deep transition hover:bg-white">
+                className="relative z-10 rounded-full border border-gold/50 bg-white/80 p-1 text-primary-deep transition hover:bg-white">
                 <RotateCcw className="h-3 w-3" />
               </button>
-              <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-[0.08em]">Cài đặt &amp; bảo mật tài khoản</p>
+              <div className="pointer-events-none absolute left-1/2 top-1/2 w-[62%] -translate-x-1/2 -translate-y-1/2 text-center">
+                <p className="truncate text-[9px] font-bold uppercase tracking-[0.08em]">Cài đặt &amp; bảo mật tài khoản</p>
                 <p className="truncate font-mono text-[8px] opacity-70">{m.member_code} · {tier.label}</p>
               </div>
-              <span aria-label="Tem bảo an TML" title="Tem bảo an TML" className="ml-auto inline-block h-6 w-6 shrink-0 rounded-full"
+              <span aria-label="Tem bảo an TML" title="Tem bảo an TML" className="relative z-10 inline-block h-6 w-6 shrink-0 rounded-full"
                 style={{ background: "conic-gradient(from 0deg,#dbeafe,#fde68a,#bbf7d0,#fbcfe8,#dbeafe)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.18)" }} />
             </div>
             <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-1.5">
