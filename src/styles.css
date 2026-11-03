@@ -502,25 +502,24 @@
 .flip-face.tml-pass { transform: none; will-change: auto; }
 .flip-face.back { position: absolute; inset: 0; transform: rotateY(180deg); -webkit-mask-image: none; }
 
-/* Phones: drop the 3D transform entirely (GPU rasterisation makes text soft there)
-   and cross-fade the two faces instead. */
-@media (max-width: 767px) {
-  .flip-inner, .flip-inner.is-flipped {
-    transform: none !important;
-    transition: none !important;
-    transform-style: flat;
-  }
-  .flip-face {
-    backface-visibility: visible;
-    -webkit-backface-visibility: visible;
-    transition: opacity .2s ease;
-  }
-  .flip-face.back { position: absolute; inset: 0; transform: none; opacity: 0; pointer-events: none; }
-  .flip-inner.is-flipped .flip-face.back { opacity: 1; pointer-events: auto; }
-  .flip-inner.is-flipped .flip-face:not(.back) { opacity: 0; pointer-events: none; }
-  /* backdrop-filter also softens glyphs on mobile GPUs */
-  .tml-pass .backdrop-blur-xs { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+/* All screens: drop the 3D transform entirely and cross-fade the two faces instead.
+   The pass is one fixed design (it now renders identically on desktop), so the
+   phone behaviour — which also keeps glyphs crisp — applies at every width. */
+.flip-inner, .flip-inner.is-flipped {
+  transform: none !important;
+  transition: none !important;
+  transform-style: flat;
 }
+.flip-face {
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  transition: opacity .2s ease;
+}
+.flip-face.back { position: absolute; inset: 0; transform: none; opacity: 0; pointer-events: none; }
+.flip-inner.is-flipped .flip-face.back { opacity: 1; pointer-events: auto; }
+.flip-inner.is-flipped .flip-face:not(.back) { opacity: 0; pointer-events: none; }
+/* backdrop-filter softens glyphs: off everywhere, exactly like on the phone */
+.tml-pass .backdrop-blur-xs { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 
 /* Back face is porcelain too: force light form tokens so nothing is white-on-white. */
 .tml-pass-back {
@@ -612,12 +611,11 @@
   opacity: .34;
 }
 
-/* Back face on phones: keep the password form reachable without scrolling the card */
-@media (max-width: 639px) {
-  .tml-pass-back .flip-back-form input { padding-block: .28rem; font-size: .72rem; }
-  .tml-pass-back .flip-back-form button { padding-block: .35rem; font-size: .72rem; }
-  .tml-pass-back .flip-back-form form > * + * { margin-top: .25rem; }
-}
+/* Back face: keep the password form reachable without scrolling the card (same
+   compact metrics on every screen so desktop matches the phone pass). */
+.tml-pass-back .flip-back-form input { padding-block: .28rem; font-size: .72rem; }
+.tml-pass-back .flip-back-form button { padding-block: .35rem; font-size: .72rem; }
+.tml-pass-back .flip-back-form form > * + * { margin-top: .25rem; }
 @media (prefers-reduced-motion: reduce) {
   .flip-inner, .flip-inner.is-flipped { transition: none !important; }
 }

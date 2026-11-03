@@ -182,7 +182,7 @@ function MemberDashboard() {
       <img
         src="/dongson-gold.png"
         alt=""
-        className={`tml-drum select-none rounded-full object-cover ${layout === "v" ? "h-48 w-48 sm:h-56 sm:w-56" : "h-44 w-44 sm:h-52 sm:w-52"}`}
+        className={`tml-drum select-none rounded-full object-cover ${layout === "v" ? "h-48 w-48" : "h-44 w-44"}`}
       />
     </div>
   );
@@ -192,7 +192,7 @@ function MemberDashboard() {
       <img
         src="/dongson-gold.png"
         alt=""
-        className={`tml-drum select-none rounded-full object-cover ${layout === "v" ? "h-72 w-72 sm:h-80 sm:w-80" : "h-64 w-64 sm:h-80 sm:w-80"}`}
+        className={`tml-drum select-none rounded-full object-cover ${layout === "v" ? "h-72 w-72" : "h-64 w-64"}`}
       />
     </div>
   );
@@ -239,7 +239,7 @@ function MemberDashboard() {
   };
 
   const dockItem = "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white";
-  const labelCls = "text-[7px] sm:text-[8px] uppercase tracking-wider opacity-60";
+  const labelCls = "text-[7px] uppercase tracking-wider opacity-60";
 
   const taskList = (
     <div className="space-y-3">
@@ -326,7 +326,7 @@ function MemberDashboard() {
       {tab === "card" && (
         <>
           {/* ===== Card layout toggle ===== */}
-          <div className="mt-4 flex justify-center sm:justify-start">
+          <div className="mt-4 flex justify-center">
             <div className="inline-flex rounded-full border border-gold/40 p-0.5 text-xs">
               <button type="button" onClick={() => { setLayout("h"); flipTo(false); }}
                 className={`rounded-full px-4 py-1 font-semibold transition ${layout === "h" ? "bg-gold text-primary-deep shadow-xs" : "portal-ink-muted hover:text-foreground"}`}>
@@ -341,19 +341,12 @@ function MemberDashboard() {
 
           {/* ===== The pass: ID-1 flip card ===== */}
           <div className={`flip-scene mt-4 flex w-full min-w-0 justify-center`}>
-            <div className={layout === "v" ? "w-full min-w-0 max-w-[min(21rem,calc(100vw-2rem))] sm:max-w-[360px] lg:max-w-[380px]" : "w-full min-w-0 max-w-[min(32.5rem,calc(100vw-2rem))] sm:max-w-[560px] lg:max-w-[640px]"}>
+            <div className={layout === "v" ? "w-full min-w-0 max-w-[min(24rem,calc(100vw-2rem))]" : "w-full min-w-0 max-w-[min(26rem,calc(100vw-2rem))]"}>
+        {/* The pass no longer tilts or rotates in 3D (desktop mirrors the phone
+            cross-fade), so the old hover-tilt pointer handlers are gone. */}
         <div
           ref={flipRef}
           className={`flip-inner w-full min-w-0 max-w-full ${isFlipped ? "is-flipped" : ""} ${flatten ? "is-flat" : ""}`}
-          onPointerMove={(e) => {
-            if (e.pointerType !== "mouse" || isFlipped) return;
-            const r = e.currentTarget.getBoundingClientRect();
-            const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-            e.currentTarget.style.setProperty("--ry", `${(x * 8).toFixed(2)}deg`);
-            e.currentTarget.style.setProperty("--rx", `${(-y * 6).toFixed(2)}deg`);
-            e.currentTarget.style.setProperty("--lift", "-4px");
-          }}
-          onPointerLeave={(e) => { ["--rx", "--ry", "--lift"].forEach((p) => e.currentTarget.style.removeProperty(p)); }}
         >
           {/* ---------- FRONT ---------- */}
           <div ref={cardRef} data-tone={tone} style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
@@ -370,39 +363,39 @@ function MemberDashboard() {
             <LacBirds flock={FLOCK_H} />
             {layout === "h" ? <>
             {/* header */}
-            <div className="relative flex shrink-0 items-center gap-2 sm:gap-2.5 px-3 pt-2 sm:px-4 sm:pt-3">
-              <img src="/logo.svg" alt="TML" className="h-8 w-8 shrink-0 rounded-full border-2 border-gold bg-white object-cover p-0.5 shadow-sm sm:h-10 sm:w-10" />
+            <div className="relative flex shrink-0 items-center gap-2 px-3 pt-2">
+              <img src="/logo.svg" alt="TML" className="h-8 w-8 shrink-0 rounded-full border-2 border-gold bg-white object-cover p-0.5 shadow-sm" />
               <div className="min-w-0 leading-tight">
-                <p className="font-serif text-[11px] font-bold tracking-wide text-primary sm:text-[14px]">普通话联盟</p>
-                <p className="text-[8px] font-semibold tracking-wide sm:text-[10px]">The Mandarin League</p>
-                <p className="text-[7px] uppercase tracking-[0.08em] opacity-70 sm:text-[8px]">Liên Đoàn Hán Ngữ</p>
+                <p className="font-serif text-[11px] font-bold tracking-wide text-primary">普通话联盟</p>
+                <p className="text-[8px] font-semibold tracking-wide">The Mandarin League</p>
+                <p className="text-[7px] uppercase tracking-[0.08em] opacity-70">Liên Đoàn Hán Ngữ</p>
               </div>
-              <div className="tml-banner ml-auto flex h-9 flex-1 flex-col items-end justify-center pb-1.5 pr-2.5 pt-1 sm:h-11 sm:max-w-[46%] sm:pr-3">
-                <p className="text-sm font-bold leading-none tracking-[0.1em] text-primary-foreground sm:text-lg">会员证</p>
-                <p className="mt-1 text-[7px] font-semibold leading-none tracking-[0.1em] text-gold sm:text-[9px]">THẺ THÀNH VIÊN</p>
+              <div className="tml-banner ml-auto flex h-9 flex-1 flex-col items-end justify-center pb-1.5 pr-2.5 pt-1">
+                <p className="text-sm font-bold leading-none tracking-[0.1em] text-primary-foreground">会员证</p>
+                <p className="mt-1 text-[7px] font-semibold leading-none tracking-[0.1em] text-gold">THẺ THÀNH VIÊN</p>
               </div>
             </div>
             {/* body — info left, portrait right (aligned to the same 16px content box) */}
-            <div className="relative flex min-h-0 flex-1 px-3 pb-1 pt-0.5 sm:px-4 sm:pb-2 sm:pt-1">
-              <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2.5 sm:gap-4">
+            <div className="relative flex min-h-0 flex-1 px-3 pb-1 pt-0.5">
+              <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2.5">
                 <div className="flex min-w-0 flex-col">
-                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 sm:gap-x-2">
-                    <SmartChip className="h-5 w-7 sm:h-6 sm:w-8" />
-                    <Nfc className="h-3 w-3 opacity-60 sm:h-3.5 sm:w-3.5" />
-                    <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[8.5px] font-bold tracking-[0.14em] text-primary sm:text-[10px] sm:tracking-[0.16em]" title="Mã thành viên">{m.member_code}</button>
-                    <span className="text-[8px] opacity-40 sm:text-[9px]">•</span>
-                    <button type="button" onClick={() => setSheet("points_benefits")} className="text-[8.5px] font-semibold text-primary sm:text-[10px]" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    <SmartChip className="h-5 w-7" />
+                    <Nfc className="h-3 w-3 opacity-60" />
+                    <button type="button" onClick={() => setSheet("qr")} className="font-mono text-[8.5px] font-bold tracking-[0.14em] text-primary" title="Mã thành viên">{m.member_code}</button>
+                    <span className="text-[8px] opacity-40">•</span>
+                    <button type="button" onClick={() => setSheet("points_benefits")} className="text-[8.5px] font-semibold text-primary" title="Cấp bậc, điểm & quyền lợi">{m.contribution_points.toLocaleString("vi-VN")} điểm</button>
                   </div>
-                  <div className="mt-1 flex min-h-0 flex-1 flex-col sm:mt-2">
-                    <p className={`${labelCls} mt-1 sm:mt-3`}>姓名 · Họ và tên</p>
+                  <div className="mt-1 flex min-h-0 flex-1 flex-col">
+                    <p className={`${labelCls} mt-1`}>姓名 · Họ và tên</p>
                     <div className="flex min-h-0 flex-1 items-center">
-                      <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-start gap-1 text-left sm:gap-1.5" title="Sửa họ tên">
-                        <span className="min-w-0 whitespace-normal break-words hyphens-none text-[14px] font-bold uppercase leading-tight tracking-tight text-primary sm:text-[18px] md:text-[20px] lg:text-[22px]">{m.full_name}</span>
-                        <Pencil className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70 sm:mt-2 sm:h-3.5 sm:w-3.5" />
+                      <button type="button" onClick={() => setSheet("name")} className="group/name flex w-full min-w-0 items-start gap-1 text-left" title="Sửa họ tên">
+                        <span className="min-w-0 whitespace-normal break-words hyphens-none text-[14px] font-bold uppercase leading-tight tracking-tight text-primary">{m.full_name}</span>
+                        <Pencil className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition group-hover/name:opacity-70" />
                       </button>
                     </div>
                   </div>
-                  <dl className="mt-auto flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight sm:gap-y-2.5 sm:text-[10px]">
+                  <dl className="mt-auto flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight">
                     <div className="min-w-0">
                       <dt className={labelCls}>部门 · Ban</dt>
                       <dd className="truncate">
@@ -423,23 +416,23 @@ function MemberDashboard() {
                     </div>
                     <div>
                       <dt className={labelCls}>入会 · Gia nhập</dt>
-                      <dd className="font-mono text-[8px] sm:text-[9px]">{joined}</dd>
+                      <dd className="font-mono text-[8px]">{joined}</dd>
                     </div>
                   </dl>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  {avatarEl("h-[88px] w-[66px] sm:h-[118px] sm:w-[88px] md:h-[132px] md:w-[99px]")}
+                  {avatarEl("h-[88px] w-[66px]")}
                   {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số">
-                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-0.5 sm:h-12 sm:w-12" />
+                    <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-0.5" />
                   </button>}
                 </div>
               </div>
             </div>
-            <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-3 py-1 text-[6.5px] tracking-[0.08em] sm:px-4 sm:text-[8px]">
+            <div className="tml-pass-foot relative flex shrink-0 items-center justify-between gap-2 px-3 py-1 text-[6.5px] tracking-[0.08em]">
               <span className="truncate">THE MANDARIN LEAGUE · VERIFIED MEMBER PASS</span>
               <button type="button" onClick={() => flipTo(true)} aria-label="Xem mặt sau thẻ" title="Xem mặt sau thẻ"
-                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white sm:p-1.5">
-                <RotateCw className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                className="inline-flex shrink-0 items-center justify-center rounded-full border border-gold/60 bg-white/80 p-1 text-primary-deep shadow-sm transition hover:scale-105 hover:bg-white">
+                <RotateCw className="h-3 w-3" />
               </button>
             </div>
             </> : <>
@@ -468,14 +461,14 @@ function MemberDashboard() {
 
               {/* 2.1 Portrait */}
               <div className="relative shrink-0">
-                {avatarEl("h-[148px] w-[111px] sm:h-[158px] sm:w-[118px]")}
+                {avatarEl("h-[148px] w-[111px]")}
               </div>
 
               {/* 2.2 Name + title */}
               <div className="mt-1.5 w-full shrink-0">
                 <div className="flex w-full items-center justify-center">
                   <button type="button" onClick={() => setSheet("name")} className="group/name relative min-w-0 max-w-full px-4" title="Sửa họ tên">
-                    <span className="block truncate text-center text-[17px] font-bold uppercase tracking-tight text-primary sm:text-[18px]">{m.full_name}</span>
+                    <span className="block truncate text-center text-[17px] font-bold uppercase tracking-tight text-primary">{m.full_name}</span>
                     <Pencil className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 opacity-0 transition group-hover/name:opacity-70" />
                   </button>
                 </div>
@@ -545,7 +538,7 @@ function MemberDashboard() {
             className="flip-face back tml-pass tml-pass-back flex flex-col overflow-hidden rounded-[18px] text-primary-deep">
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {drumWatermarkBack}
-            <div className="h-8 w-full shrink-0 border-y border-gold/30 bg-neutral-900 shadow-inner sm:h-9" />
+            <div className="h-8 w-full shrink-0 border-y border-gold/30 bg-neutral-900 shadow-inner" />
             <div className="relative flex shrink-0 items-center justify-between gap-2 px-3 pt-1.5">
               <button type="button" onClick={() => flipTo(false)} aria-label="Quay lại mặt trước" title="Quay lại mặt trước"
                 className="relative z-10 rounded-full border border-gold/50 bg-white/80 p-1 text-primary-deep transition hover:bg-white">
@@ -559,26 +552,12 @@ function MemberDashboard() {
                 style={{ background: "conic-gradient(from 0deg,#dbeafe,#fde68a,#bbf7d0,#fbcfe8,#dbeafe)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.18)" }} />
             </div>
             <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-1.5">
-              <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-2 sm:gap-3">
-                <div className="flip-back-form order-1 sm:order-none">
+              <div className="flex flex-col gap-1.5">
+                <div className="flip-back-form order-1">
                   <NewPasswordForm requireCurrent onDone={() => { setMsg("Đã đổi mật khẩu."); flipTo(false); }} />
                 </div>
-                <div className="order-2 space-y-2 sm:order-none">
-                  <div className="relative hidden overflow-hidden rounded-md border border-neutral-300 bg-[repeating-linear-gradient(45deg,#ffffff_0_6px,#eef2f7_6px_12px)] px-2 py-1 sm:block">
-                    <p className="font-mono text-[9px] font-bold tracking-[0.18em] text-neutral-700">{m.member_code}</p>
-                    <p className="text-[7px] uppercase tracking-[0.14em] text-neutral-500">Authorized signature · TML</p>
-                  </div>
-                  <div className="hidden items-center gap-2 sm:flex">
-                    {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số">
-                      <img src={qr} alt={`QR ${m.member_code}`} className="h-16 w-16 rounded-[6px] border border-gold/60 bg-white p-1" />
-                    </button>}
-                    <div className="min-w-0">
-                      <p className="text-[7px] uppercase tracking-[0.14em] opacity-60">QR thư viện số</p>
-                      <p className="truncate font-mono text-[8px] font-bold tracking-[0.12em]">{m.member_code}</p>
-                      <button type="button" onClick={copyCode} className="mt-0.5 text-[8px] font-semibold text-primary underline-offset-2 hover:underline">{copied ? "Đã sao chép" : "Sao chép mã"}</button>
-                    </div>
-                  </div>
-                  <label className="flex items-start gap-2 text-[9px] font-semibold leading-snug sm:text-[10px]">
+                <div className="order-2 space-y-2">
+                  <label className="flex items-start gap-2 text-[9px] font-semibold leading-snug">
                     <input type="checkbox" className="mt-0.5 h-3 w-3 shrink-0 accent-[var(--pass-c)]"
                       checked={(m as { is_public?: boolean }).is_public !== false}
                       onChange={async (e) => {
