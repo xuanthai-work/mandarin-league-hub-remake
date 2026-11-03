@@ -197,6 +197,9 @@ export function QuestionItemCard({
               Thêm
             </button>
           </div>
+          <p className="text-[11px] text-muted-foreground">
+            Mục “Khác” luôn có sẵn khi ứng viên trả lời, không cần thêm vào danh sách.
+          </p>
           {question.options.length > 0 && (
             <div className="space-y-1 rounded-lg border border-dashed border-border p-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
