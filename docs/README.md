@@ -51,6 +51,12 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-45-FIX-DATE-PICKER-POPOVER-OVERFLOW` | Khắc phục tràn màn hình của DatePicker Popover (w-auto, collisionPadding) | 2026-11-03 | **PASS** | [task-45-fix-date-picker-popover-overflow.md](tasks/task-45-fix-date-picker-popover-overflow.md) |
 | `TASK-46-REMOVE-MODAL-FOOTER-CLOSE-BUTTON` | Tinh gọn footer modal, loại bỏ nút Đóng và giữ lại nút X ở header | 2026-11-03 | **PASS** | [task-46-remove-modal-footer-close-button.md](tasks/task-46-remove-modal-footer-close-button.md) |
 | `TASK-47-MEMBER-PROFILE-CREATE-AND-EDIT-PERMISSION` | Mở rộng quyền "Chỉnh sửa thành viên" thành "Tạo & Chỉnh sửa thành viên" | 2026-11-03 | **PASS** | [task-47-member-profile-create-and-edit-permission.md](tasks/task-47-member-profile-create-and-edit-permission.md) |
+| `TASK-48-UNIFY-TASK-CREATE-MODAL` | Đồng nhất giao diện "Giao nhiệm vụ mới" sang Modal Popup 2 cột căn giữa | 2026-11-03 | **PASS** | [task-48-unify-task-create-modal.md](tasks/task-48-unify-task-create-modal.md) |
+| `TASK-49-WIDEN-TASK-MODALS-ON-LAPTOP` | Tăng chiều rộng cho TaskCreateModal và TaskDetailModal trên màn hình Laptop/Desktop | 2026-11-03 | **PASS** | [task-49-widen-task-modals-on-laptop.md](tasks/task-49-widen-task-modals-on-laptop.md) |
+| `TASK-50-POINT-PRESETS-ONLY-SEGMENTED-BUTTONS` | Chuẩn hóa Điểm cống hiến dạng 3 nút chọn (5, 10, 20) | 2026-11-03 | **PASS** | [task-50-point-presets-only-segmented-buttons.md](tasks/task-50-point-presets-only-segmented-buttons.md) |
+| `TASK-51-MULTI-ASSIGNEE-TASK-CREATION` | Cho phép chọn nhiều người cùng lúc khi giao nhiệm vụ mới | 2026-11-04 | **PASS** | [task-51-multi-assignee-task-creation.md](tasks/task-51-multi-assignee-task-creation.md) |
+| `TASK-52-SPLIT-KANBAN-CARDS-PER-ASSIGNEE` | Hiển thị mỗi người 1 thẻ riêng biệt trên bảng Kanban (Bỏ auto-grouping) | 2026-11-04 | **PASS** | [task-52-split-kanban-cards-per-assignee.md](tasks/task-52-split-kanban-cards-per-assignee.md) |
+| `TASK-53-APPLY-CUSTOM-SCROLLBAR-TO-ADMIN-LAYOUT` | Áp dụng thanh cuộn tùy chỉnh (custom-scrollbar) cho layout Admin và trang Nhiệm vụ | 2026-11-04 | **PASS** | [task-53-apply-custom-scrollbar-to-admin-layout.md](tasks/task-53-apply-custom-scrollbar-to-admin-layout.md) |
 
 ---
 

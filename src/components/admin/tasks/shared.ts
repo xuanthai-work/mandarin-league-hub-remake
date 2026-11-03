@@ -84,12 +84,7 @@ export function initials(name: string) {
  * Kanban board model
  * ------------------------------------------------------------------------- */
 
-/** Legacy bulk-assignment marker that used to be appended to the description. */
-const GROUP_MARKER = "[Nhiệm vụ nhóm cùng";
-
-const hasGroupMarker = (text: string) => text.includes(GROUP_MARKER);
-
-/** Trim leftover `[Nhiệm vụ nhóm cùng: …]` tail so grouped cards read cleanly. */
+/** Trim leftover `[Nhiệm vụ nhóm cùng: …]` tail so legacy card descriptions read cleanly. */
 export function cleanDescription(text: string) {
   return text
     .replace(/\[Nhiệm vụ nhóm cùng:[^\]]*\]/gi, "")
@@ -97,7 +92,7 @@ export function cleanDescription(text: string) {
     .trim();
 }
 
-/** One member contributing to a grouped task, with their own progress. */
+/** The single member responsible for a card, with their own progress. */
 export type GroupedAssignee = TaskMember & {
   taskId: string;
   status: string;
@@ -106,8 +101,8 @@ export type GroupedAssignee = TaskMember & {
 };
 
 /**
- * A single Kanban card. Personal tasks hold one raw task; tasks fanned out to a
- * team in one action are collapsed into one card with stacked assignees.
+ * A single Kanban card. One task row per member, so every card holds exactly one
+ * assignee and tracks that member's own status and evidence.
  */
 export type GroupedTask = {
   id: string;
@@ -268,99 +263,56 @@ export const BOARD_COLUMNS: {
   },
 ];
 
-/** How "advanced" a status is, used to place a mixed group in the most actionable column. */
-const STATUS_RANK: Record<string, number> = {
-  submitted: 4,
-  in_progress: 3,
-  revision: 2,
-  assigned: 1,
-  done: 0,
-};
-
-const GROUP_WINDOW_MS = 10_000;
-
 function timeOf(value: { created_at?: string }) {
   const parsed = Date.parse(value.created_at ?? "");
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
 /**
- * Collapse tasks that were fanned out to several members in one action into a single card.
+ * Map every task row to its own Kanban card (1 task → 1 card).
  *
- * Rows only group when they share title + department + assigner AND were created
- * within ten seconds of each other (or still carry the legacy group marker), so
- * unrelated future tasks with the same title are never merged.
+ * A fan-out assigns one row per member, so each person's card carries a single assignee
+ * and moves between columns independently: one member submitting never drags the rest
+ * of the team along with them.
  */
 export function groupTasks(tasks: Task[], members: TaskMember[]): GroupedTask[] {
   const memberById = new Map(members.map((m) => [m.id, m]));
-  const ordered = [...tasks].sort((a, b) => timeOf(a) - timeOf(b));
-  const buckets = new Map<string, Task[][]>();
 
-  for (const task of ordered) {
-    const key = `${task.title.trim().toLowerCase()}|${task.department}|${task.assigned_by_name ?? ""}`;
-    const groups = buckets.get(key) ?? [];
-    const current = groups[groups.length - 1];
-    const previous = current?.[current.length - 1];
-    const sameBurst =
-      !!previous &&
-      (hasGroupMarker(task.description) ||
-        hasGroupMarker(previous.description) ||
-        (timeOf(task) > 0 &&
-          timeOf(previous) > 0 &&
-          timeOf(task) - timeOf(previous) <= GROUP_WINDOW_MS));
+  return tasks
+    .map((task) => {
+      const member = memberById.get(task.assignee_id);
+      const assignee: GroupedAssignee = {
+        id: task.assignee_id,
+        full_name: member?.full_name ?? "Thành viên",
+        member_code: member?.member_code ?? "—",
+        department: member?.department ?? task.department,
+        taskId: task.id,
+        status: task.status,
+        evidenceUrl: task.evidence_url,
+        reportNote: task.report_note,
+      };
 
-    if (!current || !sameBurst) groups.push([task]);
-    else current.push(task);
-    buckets.set(key, groups);
-  }
-
-  const result: GroupedTask[] = [];
-
-  for (const [key, groups] of buckets) {
-    for (const raw of groups) {
-      const head = raw[0]!;
-      const assignees: GroupedAssignee[] = raw.map((task) => {
-        const member = memberById.get(task.assignee_id);
-        return {
-          id: task.assignee_id,
-          full_name: member?.full_name ?? "Thành viên đã rời Ban",
-          member_code: member?.member_code ?? "—",
-          department: member?.department ?? task.department,
-          taskId: task.id,
-          status: task.status,
-          evidenceUrl: task.evidence_url,
-          reportNote: task.report_note,
-        };
-      });
-      const status = raw.reduce(
-        (best, task) =>
-          (STATUS_RANK[task.status] ?? 0) > (STATUS_RANK[best] ?? 0) ? task.status : best,
-        head.status,
-      );
-
-      result.push({
-        id: head.id,
-        key: `${key}|${head.id}`,
-        title: head.title,
-        description: raw.map((t) => cleanDescription(t.description)).find(Boolean) ?? "",
-        department: head.department,
-        priority: head.priority,
-        due_on: raw.find((t) => t.due_on)?.due_on ?? null,
-        points: head.points,
-        status,
-        assigned_by_name: head.assigned_by_name,
-        assigned_by_note: raw.find((t) => t.assigned_by_note)?.assigned_by_note ?? "",
-        created_at: head.created_at,
-        assignees,
-        rawTasks: raw,
-      });
-    }
-  }
-
-  return result.sort((a, b) => timeOf(b) - timeOf(a));
+      return {
+        id: task.id,
+        key: task.id,
+        title: task.title,
+        description: cleanDescription(task.description),
+        department: task.department,
+        priority: task.priority,
+        due_on: task.due_on,
+        points: task.points,
+        status: task.status,
+        assigned_by_name: task.assigned_by_name,
+        assigned_by_note: task.assigned_by_note,
+        created_at: task.created_at,
+        assignees: [assignee],
+        rawTasks: [task],
+      };
+    })
+    .sort((a, b) => timeOf(b) - timeOf(a));
 }
 
-/** Cards still awaiting review inside a (possibly grouped) task. */
+/** Cards still awaiting review inside a task. */
 export const submittedTasks = (group: GroupedTask) =>
   group.rawTasks.filter((task) => task.status === "submitted");
 

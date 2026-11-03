@@ -32,3 +32,4 @@
 - Professional advisors live in `department_advisors` + per-department `department_advisor_settings` (admin-only writes), public reads via definer `public_dept_advisors()`, so advisor assignments never alter member profiles or grant permissions.
 - Course–teacher assignments live in `course_teachers` (role + sort_order); `courses.teacher_id` is deprecated and only mirrors the lead, and teacher `status` drives `visible` via trigger so old readers keep working.
 - `members.edit` is a profile-level permission: the DB helper `has_permission(text)` + members RLS policies let holders create/update `members` rows, while login accounts, roles, passwords and account deletion stay admin-only server functions.
+- One task fan-out creates one `tasks` row per assignee (each reports evidence and earns points independently); each task is displayed as an individual card per assignee on the Kanban board so each member's status and progress can be moved and tracked independently.

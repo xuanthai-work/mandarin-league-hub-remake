@@ -105,7 +105,7 @@ function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onTogg
         )}
       </div>
 
-      <nav aria-label="Điều hướng quản trị" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
+      <nav aria-label="Điều hướng quản trị" className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-3 pb-4">
         <Link
           to="/admin"
           activeOptions={{ exact: true }}
@@ -291,7 +291,7 @@ function AdminLayout() {
             </div>
             <HeaderActions />
           </header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <main className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
             {blockedHere ? (
               <div className="mx-auto max-w-md px-4 py-20 text-center">
                 <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />

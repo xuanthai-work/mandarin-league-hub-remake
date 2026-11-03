@@ -55,10 +55,10 @@ type Priority = "low" | "medium" | "high";
 const toPriority = (value: string): Priority =>
   value === "high" || value === "low" ? value : "medium";
 
-const POINT_PRESETS = [
-  { value: 5, hint: "Việc nhỏ" },
-  { value: 15, hint: "Việc vừa" },
-  { value: 30, hint: "Dự án lớn" },
+const POINT_OPTIONS = [
+  { value: 5, label: "5đ", hint: "Việc nhỏ" },
+  { value: 10, label: "10đ", hint: "Việc vừa" },
+  { value: 20, label: "20đ", hint: "Dự án lớn" },
 ];
 
 const field =
@@ -110,12 +110,13 @@ export function TaskDetailModal({
   const [docErr, setDocErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  /** Legacy tasks may carry a point value outside the standard 5/10/20 scale. */
+  const isCustomPoints = !POINT_OPTIONS.some((opt) => opt.value === points);
   const textRef = useAutoGrow(description);
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   /** The assignee is read-only here: a task keeps its single responsible member. */
   const assigneeId = primary.assignee_id;
-  const assignee = memberById.get(assigneeId) ?? null;
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -211,7 +212,7 @@ export function TaskDetailModal({
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.97, opacity: 0 }}
         transition={{ type: "spring", damping: 26, stiffness: 320 }}
-        className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl lg:max-w-5xl xl:max-w-6xl"
       >
         <header className="flex shrink-0 items-start gap-2 border-b border-border/70 px-5 py-4">
           <div className="min-w-0 flex-1">
@@ -409,21 +410,53 @@ export function TaskDetailModal({
           {/* Right: attributes */}
           <aside className="space-y-4 lg:col-span-5 lg:border-l lg:border-border/70 lg:pl-6">
             <div className="space-y-1.5">
-              <span className={label}>Người phụ trách</span>
-              <div className="flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/5 p-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {initials(assignee?.full_name ?? "—")}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {assignee?.full_name ?? "Chưa rõ"}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    <span className="font-mono">{assignee?.member_code ?? "—"}</span> ·{" "}
-                    {deptName(group.department)}
-                  </p>
-                </div>
-              </div>
+              <span className={label}>
+                Người phụ trách
+                {group.assignees.length > 1 && (
+                  <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary">
+                    {group.assignees.length} người
+                  </span>
+                )}
+              </span>
+              <ul className="space-y-1.5">
+                {group.assignees.map((person) => (
+                  <li
+                    key={person.taskId}
+                    className="flex items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/5 p-2.5"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      {initials(person.full_name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {person.full_name}
+                      </p>
+                      <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="font-mono">{person.member_code}</span>
+                        <span className="text-border">·</span>
+                        <span
+                          className={cn(
+                            "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                            deptTone(person.department).tag,
+                          )}
+                        >
+                          {deptName(person.department)}
+                        </span>
+                      </p>
+                    </div>
+                    {group.assignees.length > 1 && (
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                          TASK_STATUS[person.status]?.className ?? "bg-secondary text-foreground",
+                        )}
+                      >
+                        {TASK_STATUS[person.status]?.label ?? person.status}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div className="space-y-1.5">
@@ -448,31 +481,46 @@ export function TaskDetailModal({
             </div>
 
             <div className="space-y-1.5">
-              <span className={label}>Điểm thưởng cống hiến</span>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={points}
-                onChange={(e) => setPoints(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
-                className={field}
-              />
               <div className="flex flex-wrap items-center gap-1.5">
-                {POINT_PRESETS.map((preset) => (
-                  <button
-                    key={preset.value}
-                    type="button"
-                    onClick={() => setPoints(preset.value)}
-                    className={cn(
-                      "rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
-                      points === preset.value
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
-                    )}
-                  >
-                    {preset.value}đ · {preset.hint}
-                  </button>
-                ))}
+                <span className={label}>Điểm thưởng cống hiến</span>
+                {isCustomPoints && (
+                  <span className="rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-semibold normal-case text-warning-foreground">
+                    Hiện tại: {points}đ
+                  </span>
+                )}
+              </div>
+              <div
+                role="group"
+                aria-label="Điểm thưởng cống hiến"
+                className="grid grid-cols-3 gap-1.5"
+              >
+                {POINT_OPTIONS.map((opt) => {
+                  const active = points === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPoints(opt.value)}
+                      aria-pressed={active}
+                      className={cn(
+                        "flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2 text-xs transition-colors",
+                        active
+                          ? "border-primary bg-primary font-semibold text-primary-foreground shadow-xs"
+                          : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      <span className="font-semibold">{opt.label}</span>
+                      <span
+                        className={cn(
+                          "text-[10px]",
+                          active ? "text-primary-foreground/80" : "text-muted-foreground",
+                        )}
+                      >
+                        {opt.hint}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

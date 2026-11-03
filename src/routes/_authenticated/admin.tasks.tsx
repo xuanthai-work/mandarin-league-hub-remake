@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useConfirm } from "@/components/admin/Trash";
-import { CreateTaskDrawer } from "@/components/admin/tasks/CreateTaskDrawer";
+import { TaskCreateModal } from "@/components/admin/tasks/TaskCreateModal";
 import { TaskDetailModal } from "@/components/admin/tasks/TaskDetailModal";
 import { TaskFilterToolbar } from "@/components/admin/tasks/TaskFilterToolbar";
 import { TaskKanbanBoard } from "@/components/admin/tasks/TaskKanbanBoard";
@@ -262,7 +262,7 @@ function TasksPage() {
 
       <AnimatePresence>
         {creating && (
-          <CreateTaskDrawer
+          <TaskCreateModal
             key="create-task"
             members={memberList}
             meLabel={me.data ?? ""}
