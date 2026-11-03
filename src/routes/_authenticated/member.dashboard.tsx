@@ -369,6 +369,19 @@ function MemberDashboard() {
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {drumWatermark}
+            {layout === "h" && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 flex select-none items-center justify-center"
+              >
+                <img
+                  src="/lac-bird-gold.png"
+                  alt=""
+                  draggable={false}
+                  className="tml-emblem h-auto w-24 max-w-[45%] select-none object-contain md:w-64"
+                />
+              </div>
+            )}
             <LacBirds flock={FLOCK_H} className="md:scale-[1.8]" />
             {layout === "h" ? <>
             {/* header */}

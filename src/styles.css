@@ -611,6 +611,12 @@
   opacity: .34;
 }
 
+/* Small centred Lạc bird emblem on the pass front: transparent PNG, porcelain blend */
+.tml-emblem {
+  mix-blend-mode: multiply;
+  opacity: .5;
+}
+
 /* Back face: keep the password form reachable without scrolling the card (same
    compact metrics on every screen so desktop matches the phone pass). */
 .tml-pass-back .flip-back-form input { padding-block: .28rem; font-size: .72rem; }
