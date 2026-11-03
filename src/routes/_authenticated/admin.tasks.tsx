@@ -2,15 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { ClipboardList, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useConfirm } from "@/components/admin/Trash";
 import { CreateTaskDrawer } from "@/components/admin/tasks/CreateTaskDrawer";
-import { TaskCard } from "@/components/admin/tasks/TaskCard";
-import { TaskFilterToolbar, type TaskView } from "@/components/admin/tasks/TaskFilterToolbar";
+import { TaskDetailModal } from "@/components/admin/tasks/TaskDetailModal";
+import { TaskFilterToolbar } from "@/components/admin/tasks/TaskFilterToolbar";
 import { TaskKanbanBoard } from "@/components/admin/tasks/TaskKanbanBoard";
-import { TaskMetricsStrip } from "@/components/admin/tasks/TaskMetricsStrip";
 import { TaskReviewDialog } from "@/components/admin/tasks/TaskReviewDialog";
 import {
   EMPTY_TASK_FILTERS,
@@ -30,8 +29,6 @@ export const Route = createFileRoute("/_authenticated/admin/tasks")({
   }),
   component: TasksPage,
 });
-
-const STATUS_KEYS = ["assigned", "in_progress", "submitted", "revision", "done"];
 
 /** A review action applies to one raw task or to every member of a grouped task. */
 interface ReviewTarget {
@@ -71,9 +68,9 @@ function TasksPage() {
   });
 
   const [filters, setFilters] = useState<TaskFilters>(EMPTY_TASK_FILTERS);
-  const [view, setView] = useState<TaskView>("board");
   const [person, setPerson] = useState("");
   const [creating, setCreating] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<GroupedTask | null>(null);
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -122,17 +119,6 @@ function TasksPage() {
 
   /** Board cards: tasks fanned out to a team collapse into one card with stacked avatars. */
   const groups = useMemo(() => groupTasks(scoped, memberList), [scoped, memberList]);
-
-  const counts = useMemo(() => {
-    const map: Record<string, number> = { all: scoped.length };
-    for (const key of STATUS_KEYS) map[key] = scoped.filter((t) => t.status === key).length;
-    return map;
-  }, [scoped]);
-
-  const rows = useMemo(
-    () => scoped.filter((t) => filters.status === "all" || t.status === filters.status),
-    [scoped, filters.status],
-  );
 
   const reviewTasks = async (targets: Task[], approve: boolean, note = "") => {
     setErr("");
@@ -195,6 +181,20 @@ function TasksPage() {
       group.rawTasks.filter((task) => task.status !== "done"),
     );
 
+  /** Modal actions close the detail view first so the board reflects the new state. */
+  const approveFromModal = (group: GroupedTask) => {
+    setSelectedGroup(null);
+    approveGroup(group);
+  };
+  const reviseFromModal = (group: GroupedTask) => {
+    setSelectedGroup(null);
+    reviseGroup(group);
+  };
+  const removeFromModal = (group: GroupedTask) => {
+    setSelectedGroup(null);
+    removeGroup(group);
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6 sm:py-8">
       {dialog}
@@ -215,17 +215,12 @@ function TasksPage() {
         }
       />
 
-      <TaskMetricsStrip tasks={all} />
-
       <TaskFilterToolbar
         filters={filters}
-        counts={counts}
         depts={depts}
         givers={givers}
-        shown={view === "board" ? groups.length : rows.length}
+        shown={groups.length}
         total={all.length}
-        view={view}
-        onViewChange={setView}
         onChange={setFilters}
         onReset={() => {
           setFilters(EMPTY_TASK_FILTERS);
@@ -254,42 +249,15 @@ function TasksPage() {
         <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
           Đang tải nhiệm vụ…
         </div>
-      ) : view === "board" ? (
+      ) : (
         <TaskKanbanBoard
           groups={groups}
-          onCreate={() => setCreating(true)}
+          onSelectGroup={(group) => setSelectedGroup(group)}
           onApprove={approveGroup}
           onRequestRevision={reviseGroup}
           onRemove={removeGroup}
           onFilterPerson={(id) => setPerson(id)}
         />
-      ) : rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-12 text-center">
-          <ClipboardList aria-hidden className="h-6 w-6 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground">
-            {all.length === 0 ? "Chưa có nhiệm vụ nào" : "Không tìm thấy nhiệm vụ phù hợp"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {all.length === 0
-              ? "Bấm “Giao nhiệm vụ” để tạo việc đầu tiên cho thành viên."
-              : "Thử đổi bộ lọc hoặc đặt lại để xem toàn bộ nhiệm vụ."}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {rows.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              member={memberById.get(task.assignee_id) ?? null}
-              onApprove={(t) => void reviewTasks([t], true)}
-              onRequestRevision={(t) => openRevision(t.title, [t])}
-              onRemove={(t) => void removeTasks(t.title, [t])}
-              onFilterPerson={(id) => setPerson(id)}
-              onFilterGiver={(giver) => setFilters((f) => ({ ...f, giver }))}
-            />
-          ))}
-        </div>
       )}
 
       <AnimatePresence>
@@ -300,6 +268,18 @@ function TasksPage() {
             meLabel={me.data ?? ""}
             onClose={() => setCreating(false)}
             onCreated={refresh}
+          />
+        )}
+        {selectedGroup && (
+          <TaskDetailModal
+            key={`detail-${selectedGroup.key}`}
+            group={selectedGroup}
+            members={memberList}
+            onClose={() => setSelectedGroup(null)}
+            onUpdated={refresh}
+            onApprove={approveFromModal}
+            onRequestRevision={reviseFromModal}
+            onRemove={removeFromModal}
           />
         )}
       </AnimatePresence>

@@ -83,7 +83,10 @@ export function DatePicker({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="z-[70] w-(--radix-popover-trigger-width) min-w-[15rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-border bg-popover p-0 shadow-xl"
+        sideOffset={6}
+        collisionPadding={12}
+        avoidCollisions
+        className="z-[90] w-auto overflow-hidden rounded-xl border border-border bg-popover p-0 shadow-2xl"
       >
         <Calendar
           mode="single"
@@ -96,7 +99,7 @@ export function DatePicker({
           }}
           defaultMonth={selectedDate ?? fromDate ?? new Date()}
           disabled={matchers}
-          className="w-full p-2 [--cell-size:1.75rem] [&_.rdp-caption_label]:text-xs [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:text-[0.7rem]"
+          className="w-auto p-2.5 [--cell-size:2rem] [&_.rdp-caption_label]:text-xs [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:text-[0.7rem]"
         />
       </PopoverContent>
     </Popover>

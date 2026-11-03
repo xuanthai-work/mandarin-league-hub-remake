@@ -1,4 +1,4 @@
-import { Eye, Inbox, Plus, Trophy, Zap } from "lucide-react";
+import { Eye, Inbox, Trophy, Zap } from "lucide-react";
 import type { ComponentType } from "react";
 
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { BOARD_COLUMNS, dueDiff, type GroupedTask } from "./shared";
 
 interface TaskKanbanBoardProps {
   groups: GroupedTask[];
-  onCreate: () => void;
+  onSelectGroup: (group: GroupedTask) => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
   onRemove: (group: GroupedTask) => void;
@@ -33,7 +33,7 @@ function byDeadline(a: GroupedTask, b: GroupedTask) {
 
 export function TaskKanbanBoard({
   groups,
-  onCreate,
+  onSelectGroup,
   onApprove,
   onRequestRevision,
   onRemove,
@@ -81,18 +81,9 @@ export function TaskKanbanBoard({
                 )}
                 {items.length}
               </span>
-              <button
-                type="button"
-                onClick={onCreate}
-                aria-label="Giao nhiệm vụ mới"
-                title="Giao nhiệm vụ mới"
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Plus aria-hidden className="h-3.5 w-3.5" />
-              </button>
             </header>
 
-            <div className="custom-scrollbar max-h-[calc(100vh-280px)] space-y-3 overflow-y-auto p-1">
+            <div className="custom-scrollbar max-h-[calc(100vh-230px)] space-y-3 overflow-y-auto p-1">
               {items.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-border/80 px-3 py-8 text-center text-[11px] text-muted-foreground">
                   Chưa có việc ở bước này
@@ -103,6 +94,7 @@ export function TaskKanbanBoard({
                     key={group.key}
                     group={group}
                     inReview={column.key === "review"}
+                    onOpen={() => onSelectGroup(group)}
                     onApprove={onApprove}
                     onRequestRevision={onRequestRevision}
                     onRemove={onRemove}

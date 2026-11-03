@@ -5,6 +5,7 @@ import {
   PRIORITY_TONE,
   deptTag,
   deptTone,
+  descriptionBody,
   dueBadgeTone,
   dueLabel,
   initials,
@@ -17,6 +18,7 @@ interface TaskKanbanCardProps {
   group: GroupedTask;
   /** True inside the "Chờ duyệt báo cáo" column: evidence + fast review actions. */
   inReview: boolean;
+  onOpen: () => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
   onRemove: (group: GroupedTask) => void;
@@ -28,6 +30,7 @@ const MAX_AVATARS = 3;
 export function TaskKanbanCard({
   group,
   inReview,
+  onOpen,
   onApprove,
   onRequestRevision,
   onRemove,
@@ -44,11 +47,24 @@ export function TaskKanbanCard({
   const names = group.assignees.map((a) => a.full_name);
   const visible = group.assignees.slice(0, MAX_AVATARS);
   const overflow = group.assignees.length - visible.length;
+  /** Documents live inside the description; keep them out of the card preview. */
+  const preview = descriptionBody(group.description);
 
   return (
     <article
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      aria-label={`Xem chi tiết nhiệm vụ ${group.title}`}
       className={cn(
-        "rounded-2xl border p-3.5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md",
+        "cursor-pointer rounded-2xl border p-3.5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
         tone.card,
       )}
     >
@@ -74,9 +90,9 @@ export function TaskKanbanCard({
 
       <h3 className="mt-2 text-sm font-semibold leading-snug text-foreground">{group.title}</h3>
 
-      {group.description && (
+      {preview && (
         <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
-          {group.description}
+          {preview}
         </p>
       )}
 
@@ -102,7 +118,10 @@ export function TaskKanbanCard({
       )}
 
       {inReview && (
-        <div className="mt-2.5 space-y-2 rounded-xl border border-amber-300/50 bg-amber-500/5 p-2.5 dark:border-amber-400/25">
+        <div
+          className="mt-2.5 space-y-2 rounded-xl border border-amber-300/50 bg-amber-500/5 p-2.5 dark:border-amber-400/25"
+          onClick={(e) => e.stopPropagation()}
+        >
           {evidence ? (
             isZalo ? (
               <p className="flex items-center gap-1.5 text-[11px] text-foreground">
@@ -148,7 +167,10 @@ export function TaskKanbanCard({
         </div>
       )}
 
-      <div className="mt-2.5 flex items-center justify-between gap-2">
+      <div
+        className="mt-2.5 flex items-center justify-between gap-2"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex min-w-0 items-center gap-1.5" title={names.join(", ")}>
           <div className="flex -space-x-2">
             {visible.map((assignee) => (

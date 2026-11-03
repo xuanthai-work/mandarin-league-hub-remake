@@ -42,6 +42,14 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-34-IMPLEMENT-SHADCN-POPOVER-DATE-PICKER` | Chuẩn hóa DatePicker dạng Popover & Calendar Shadcn UI | 2026-11-03 | **PASS** | [task-34-implement-shadcn-popover-date-picker.md](tasks/task-34-implement-shadcn-popover-date-picker.md) |
 | `TASK-36-REDESIGN-CANDIDATES-TALENT-CENTER` | Redesign trang Quản lý Ứng viên thành Candidate Talent Center | 2026-11-03 | **PASS** | [task-36-redesign-candidates-talent-center.md](tasks/task-36-redesign-candidates-talent-center.md) |
 | `TASK-38-KANBAN-BOARD-REDESIGN-FOR-ADMIN-TASKS` | Redesign trang Quản lý Nhiệm vụ sang Bảng Kanban 4 cột & Stacked Avatars | 2026-11-03 | **PASS** | [task-38-kanban-board-redesign-for-admin-tasks.md](tasks/task-38-kanban-board-redesign-for-admin-tasks.md) |
+| `TASK-39-SIMPLIFY-TASKS-KANBAN-UI-CLEANUP` | Tinh gọn Bảng Kanban: Bỏ thẻ metrics trên cùng, bỏ nút dấu cộng & bỏ List view | 2026-11-03 | **PASS** | [task-39-simplify-tasks-kanban-ui-cleanup.md](tasks/task-39-simplify-tasks-kanban-ui-cleanup.md) |
+| `TASK-40-EXPAND-DEPARTMENT-PALETTE-DETERMINISTIC-MAPPING` | Mở rộng bảng màu nhận diện pastel riêng cho 9 Ban và 16 màu dự phòng | 2026-11-03 | **PASS** | [task-40-expand-department-palette-deterministic-mapping.md](tasks/task-40-expand-department-palette-deterministic-mapping.md) |
+| `TASK-41-TASK-DETAIL-AND-EDIT-MODAL-POPUP` | Modal Popup căn giữa xem & chỉnh sửa chi tiết nhiệm vụ trên Kanban | 2026-11-03 | **PASS** | [task-41-task-detail-and-edit-modal-popup.md](tasks/task-41-task-detail-and-edit-modal-popup.md) |
+| `TASK-42-POLISH-TASK-DETAIL-MODAL-LAYOUT-AND-FIELDS` | Tinh gọn trường thông tin, bỏ Select/Gỡ hạn chót & cân bằng bố cục 2 cột | 2026-11-03 | **PASS** | [task-42-polish-task-detail-modal-layout-and-fields.md](tasks/task-42-polish-task-detail-modal-layout-and-fields.md) |
+| `TASK-43-ADD-RELATED-DOCUMENTS-TO-TASK-DETAIL-MODAL` | Thêm tài liệu liên quan, tự động parse/serialize mô tả & form inline | 2026-11-03 | **PASS** | [task-43-add-related-documents-to-task-detail-modal.md](tasks/task-43-add-related-documents-to-task-detail-modal.md) |
+| `TASK-44-MINIMALIST-UNDERLINE-ATTACHMENT-TRIGGER` | Tối giản nút thêm tài liệu thành text link gạch chân, bỏ tiêu đề & viền | 2026-11-03 | **PASS** | [task-44-minimalist-underline-attachment-trigger.md](tasks/task-44-minimalist-underline-attachment-trigger.md) |
+| `TASK-45-FIX-DATE-PICKER-POPOVER-OVERFLOW` | Khắc phục tràn màn hình của DatePicker Popover (w-auto, collisionPadding) | 2026-11-03 | **PASS** | [task-45-fix-date-picker-popover-overflow.md](tasks/task-45-fix-date-picker-popover-overflow.md) |
+| `TASK-46-REMOVE-MODAL-FOOTER-CLOSE-BUTTON` | Tinh gọn footer modal, loại bỏ nút Đóng và giữ lại nút X ở header | 2026-11-03 | **PASS** | [task-46-remove-modal-footer-close-button.md](tasks/task-46-remove-modal-footer-close-button.md) |
 
 ---
 

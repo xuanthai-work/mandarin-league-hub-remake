@@ -27,8 +27,6 @@ export type TaskMember = {
 };
 
 export type TaskFilters = {
-  /** "all" | task status */
-  status: string;
   q: string;
   dept: string;
   priority: string;
@@ -36,27 +34,10 @@ export type TaskFilters = {
 };
 
 export const EMPTY_TASK_FILTERS: TaskFilters = {
-  status: "all",
   q: "",
   dept: "",
   priority: "",
   giver: "",
-};
-
-export const STATUS_TONE: Record<string, string> = {
-  assigned: "bg-secondary text-secondary-foreground",
-  in_progress: "bg-primary/10 text-primary",
-  submitted: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  revision: "bg-destructive/10 text-destructive",
-  done: "bg-success/15 text-success",
-};
-
-export const STATUS_DOT: Record<string, string> = {
-  assigned: "bg-muted-foreground/50",
-  in_progress: "bg-primary",
-  submitted: "bg-amber-500",
-  revision: "bg-destructive",
-  done: "bg-success",
 };
 
 export const PRIORITY_TONE: Record<string, string> = {
@@ -89,15 +70,6 @@ export function dueLabel(due: string | null, status: string): string {
   return `Còn ${diff} ngày`;
 }
 
-export function dueTone(due: string | null, status: string): string {
-  if (status === "done") return "text-success";
-  const diff = dueDiff(due);
-  if (diff === null) return "text-muted-foreground";
-  if (diff < 0) return "text-destructive";
-  if (diff <= 1) return "text-amber-600 dark:text-amber-400";
-  return "text-muted-foreground";
-}
-
 const formatISO = (iso: string) => iso.split("-").reverse().join("/");
 
 /** Two-letter monogram from the first and last word of a Vietnamese name. */
@@ -106,13 +78,6 @@ export function initials(name: string) {
   const first = words[0] ?? "";
   const last = words.length > 1 ? (words[words.length - 1] ?? "") : "";
   return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
-}
-
-/** Deadlines inside the next 24h (or already overdue) that still need action. */
-export function isDueSoon(task: Task) {
-  if (task.status === "done") return false;
-  const diff = dueDiff(task.due_on);
-  return diff !== null && diff <= 1;
 }
 
 /* ------------------------------------------------------------------------- *
@@ -161,6 +126,104 @@ export type GroupedTask = {
   assignees: GroupedAssignee[];
   rawTasks: Task[];
 };
+
+/* ------------------------------------------------------------------------- *
+ * Related documents stored inside `tasks.description`
+ * ------------------------------------------------------------------------- */
+
+/** A reference document (brief, design file, Drive/Notion link) attached by the assigner. */
+export type TaskAttachment = {
+  id: string;
+  title: string;
+  url: string;
+};
+
+const ATTACHMENT_HEADER = /^\s*📎\s*Tài liệu liên quan\s*:?\s*$/i;
+const BULLET = /^\s*[•\-*]\s+(.+)$/;
+const MARKDOWN_LINK = /^\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)$/;
+
+/** Readable label for a bare URL: host + path, trimmed so chips stay on one line. */
+export function shortUrl(url: string, max = 42) {
+  const clean = url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  return clean.length > max ? `${clean.slice(0, max - 1)}…` : clean;
+}
+
+/** Safe markdown label: brackets would break the `[title](url)` syntax. */
+const safeTitle = (title: string) => title.replace(/[[\]]/g, "").trim();
+
+/**
+ * Split a stored description into its prose and the related-document block, so the
+ * editor shows clean text while the list renders as chips.
+ *
+ * Format written by `serializeDescription`:
+ * ```
+ * 📎 Tài liệu liên quan:
+ * • [Brief chiến dịch](https://docs.google.com/…)
+ * • https://drive.google.com/…
+ * ```
+ */
+export function parseAttachments(raw: string): {
+  description: string;
+  attachments: TaskAttachment[];
+} {
+  const attachments: TaskAttachment[] = [];
+  const body: string[] = [];
+  let inBlock = false;
+
+  for (const line of (raw ?? "").split(/\r?\n/)) {
+    if (ATTACHMENT_HEADER.test(line)) {
+      inBlock = true;
+      continue;
+    }
+
+    if (inBlock) {
+      const item = line.match(BULLET);
+      if (item) {
+        const value = item[1]!.trim();
+        const link = value.match(MARKDOWN_LINK);
+        if (link) {
+          const url = link[2]!;
+          attachments.push({
+            id: `doc-${attachments.length}`,
+            title: link[1]?.trim() || shortUrl(url),
+            url,
+          });
+        } else if (/^https?:\/\//i.test(value)) {
+          attachments.push({ id: `doc-${attachments.length}`, title: shortUrl(value), url: value });
+        }
+        continue;
+      }
+      if (!line.trim()) continue;
+      // Anything else ends the document block and belongs to the description again.
+      inBlock = false;
+    }
+
+    body.push(line);
+  }
+
+  const description = body
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return { description, attachments };
+}
+
+/** Merge prose and documents back into the single `description` column we store. */
+export function serializeDescription(description: string, attachments: TaskAttachment[]) {
+  const body = description.trim();
+  if (attachments.length === 0) return body;
+
+  const lines = attachments.map((doc) => {
+    const title = safeTitle(doc.title);
+    return `• ${title ? `[${title}](${doc.url})` : doc.url}`;
+  });
+
+  return `${body ? `${body}\n\n` : ""}📎 Tài liệu liên quan:\n${lines.join("\n")}`;
+}
+
+/** Description without the document block, for Kanban card previews. */
+export const descriptionBody = (raw: string) => parseAttachments(raw).description;
 
 /** Column definition: the first column also catches tasks sent back for rework. */
 export const BOARD_COLUMNS: {
@@ -305,8 +368,70 @@ export const submittedTasks = (group: GroupedTask) =>
  * Visual tones
  * ------------------------------------------------------------------------- */
 
-/** Pastel card palette, picked deterministically from the department name. */
-const DEPT_PALETTE = [
+export type DeptTone = {
+  /** Card surface: border + pastel background (light) and translucent tint (dark). */
+  card: string;
+  /** Department hashtag pill. */
+  tag: string;
+};
+
+/**
+ * Fixed pastel identity for the nine official TML departments, so no two Ban ever
+ * share a colour no matter how the hash falls.
+ */
+export const EXPLICIT_DEPT_TONE: Record<string, DeptTone> = {
+  // Ban Điều hành — royal indigo
+  executive: {
+    card: "border-indigo-200/70 bg-indigo-50/80 dark:border-indigo-400/20 dark:bg-indigo-400/10",
+    tag: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+  },
+  // Ban Chuyên môn – Giảng dạy — sky blue
+  academic: {
+    card: "border-sky-200/70 bg-sky-50/80 dark:border-sky-400/20 dark:bg-sky-400/10",
+    tag: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+  },
+  // Ban Thiết kế — violet purple
+  design: {
+    card: "border-violet-200/70 bg-violet-50/80 dark:border-violet-400/20 dark:bg-violet-400/10",
+    tag: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+  },
+  // Ban Truyền thông – Marketing — rose pink
+  comms: {
+    card: "border-rose-200/70 bg-rose-50/80 dark:border-rose-400/20 dark:bg-rose-400/10",
+    tag: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  },
+  // Ban Nhân sự — warm amber
+  hr: {
+    card: "border-amber-200/70 bg-amber-50/80 dark:border-amber-400/20 dark:bg-amber-400/10",
+    tag: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  },
+  // Ban Biên dịch – Phiên dịch — emerald green
+  translation: {
+    card: "border-emerald-200/70 bg-emerald-50/80 dark:border-emerald-400/20 dark:bg-emerald-400/10",
+    tag: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  },
+  // Ban Podcast — artistic fuchsia
+  postcard: {
+    card: "border-fuchsia-200/70 bg-fuchsia-50/80 dark:border-fuchsia-400/20 dark:bg-fuchsia-400/10",
+    tag: "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300",
+  },
+  // Ban Tài chính – Đối ngoại — teal mint
+  finance: {
+    card: "border-teal-200/70 bg-teal-50/80 dark:border-teal-400/20 dark:bg-teal-400/10",
+    tag: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
+  },
+  // Ban Công nghệ & Hệ thống — engineered cyan
+  tech: {
+    card: "border-cyan-200/70 bg-cyan-50/80 dark:border-cyan-400/20 dark:bg-cyan-400/10",
+    tag: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
+  },
+};
+
+/**
+ * Extended pastel fallback for new departments, ad-hoc projects and anything not
+ * in the official list. Sixteen tones keep hash collisions rare.
+ */
+const DEPT_PALETTE: DeptTone[] = [
   {
     card: "border-sky-200/70 bg-sky-50/80 dark:border-sky-400/20 dark:bg-sky-400/10",
     tag: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
@@ -331,9 +456,56 @@ const DEPT_PALETTE = [
     card: "border-teal-200/70 bg-teal-50/80 dark:border-teal-400/20 dark:bg-teal-400/10",
     tag: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
   },
+  {
+    card: "border-lime-200/70 bg-lime-50/80 dark:border-lime-400/20 dark:bg-lime-400/10",
+    tag: "bg-lime-500/15 text-lime-700 dark:text-lime-300",
+  },
+  {
+    card: "border-orange-200/70 bg-orange-50/80 dark:border-orange-400/20 dark:bg-orange-400/10",
+    tag: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+  },
+  {
+    card: "border-blue-200/70 bg-blue-50/80 dark:border-blue-400/20 dark:bg-blue-400/10",
+    tag: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
+  },
+  {
+    card: "border-purple-200/70 bg-purple-50/80 dark:border-purple-400/20 dark:bg-purple-400/10",
+    tag: "bg-purple-500/15 text-purple-700 dark:text-purple-300",
+  },
+  {
+    card: "border-pink-200/70 bg-pink-50/80 dark:border-pink-400/20 dark:bg-pink-400/10",
+    tag: "bg-pink-500/15 text-pink-700 dark:text-pink-300",
+  },
+  {
+    card: "border-yellow-200/70 bg-yellow-50/80 dark:border-yellow-400/20 dark:bg-yellow-400/10",
+    tag: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300",
+  },
+  {
+    card: "border-indigo-200/70 bg-indigo-50/80 dark:border-indigo-400/20 dark:bg-indigo-400/10",
+    tag: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+  },
+  {
+    card: "border-fuchsia-200/70 bg-fuchsia-50/80 dark:border-fuchsia-400/20 dark:bg-fuchsia-400/10",
+    tag: "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300",
+  },
+  {
+    card: "border-cyan-200/70 bg-cyan-50/80 dark:border-cyan-400/20 dark:bg-cyan-400/10",
+    tag: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
+  },
+  {
+    card: "border-slate-200/70 bg-slate-50/80 dark:border-slate-400/20 dark:bg-slate-400/10",
+    tag: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+  },
 ];
 
-export function deptTone(department: string) {
+/**
+ * Pastel identity for a department: the fixed colour of an official Ban, otherwise
+ * a stable hash pick from the extended fallback palette.
+ */
+export function deptTone(department: string): DeptTone {
+  const explicit = EXPLICIT_DEPT_TONE[department.trim().toLowerCase()];
+  if (explicit) return explicit;
+
   let hash = 0;
   for (const char of department) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
   return DEPT_PALETTE[hash % DEPT_PALETTE.length]!;
