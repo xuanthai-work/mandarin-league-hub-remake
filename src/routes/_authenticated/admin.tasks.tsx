@@ -1,240 +1,315 @@
-import { TaskEvidence } from "@/components/portal/TaskEvidence";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ExternalLink, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { deptName } from "@/lib/recruitment";
-import { PRIORITY, TASK_STATUS, fmtDate } from "@/lib/points";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMemo, useState } from "react";
+import { AnimatePresence } from "motion/react";
+import { ClipboardList, Plus } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/tasks")({ staticData: { sitemap: false },
-  head: () => ({ meta: [{ title: "Nhiệm vụ | TML Admin" }, { name: "robots", content: "noindex" }] }),
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { useConfirm } from "@/components/admin/Trash";
+import { CreateTaskDrawer } from "@/components/admin/tasks/CreateTaskDrawer";
+import { TaskCard } from "@/components/admin/tasks/TaskCard";
+import { TaskFilterToolbar, type TaskView } from "@/components/admin/tasks/TaskFilterToolbar";
+import { TaskKanbanBoard } from "@/components/admin/tasks/TaskKanbanBoard";
+import { TaskMetricsStrip } from "@/components/admin/tasks/TaskMetricsStrip";
+import { TaskReviewDialog } from "@/components/admin/tasks/TaskReviewDialog";
+import {
+  EMPTY_TASK_FILTERS,
+  groupTasks,
+  submittedTasks,
+  type GroupedTask,
+  type Task,
+  type TaskFilters,
+  type TaskMember,
+} from "@/components/admin/tasks/shared";
+import { supabase } from "@/integrations/supabase/client";
+
+export const Route = createFileRoute("/_authenticated/admin/tasks")({
+  staticData: { sitemap: false },
+  head: () => ({
+    meta: [{ title: "Nhiệm vụ | TML Admin" }, { name: "robots", content: "noindex" }],
+  }),
   component: TasksPage,
 });
 
-type Task = { id: string; title: string; description: string; department: string; assignee_id: string; priority: string; due_on: string | null; points: number; status: string; evidence_url: string; report_note: string; review_note: string; assigned_by_name: string; assigned_by_note: string };
+const STATUS_KEYS = ["assigned", "in_progress", "submitted", "revision", "done"];
 
-/** Dot colour per task status for the filter dropdown (badge classes carry both background and text). */
-const STATUS_DOT: Record<string, string> = {
-  assigned: "bg-muted-foreground/50",
-  in_progress: "bg-primary",
-  submitted: "bg-gold",
-  revision: "bg-destructive",
-  done: "bg-success",
-};
+/** A review action applies to one raw task or to every member of a grouped task. */
+interface ReviewTarget {
+  title: string;
+  tasks: Task[];
+}
 
 function TasksPage() {
   const qc = useQueryClient();
-  const members = useQuery({ queryKey: ["task-members"], queryFn: async () =>
-    (await supabase.from("members").select("id, full_name, member_code, department").eq("status", "active").order("full_name")).data ?? [] });
-  const tasks = useQuery({ queryKey: ["admin-tasks"], queryFn: async () =>
-    ((await supabase.from("tasks").select("*").order("created_at", { ascending: false })).data ?? []) as Task[] });
-  const me = useQuery({ queryKey: ["me-label"], queryFn: async () => {
-    const { data } = await supabase.rpc("my_account");
-    const m = (data as { member?: { full_name?: string; position?: string } } | null)?.member;
-    return m?.full_name ? `${m.full_name}${m.position ? ` · ${m.position}` : ""}` : "";
-  } });
-  const nameOf = (id: string) => members.data?.find((m) => m.id === id)?.full_name ?? "—";
+  const { confirm, dialog } = useConfirm();
 
-  const [f, setF] = useState({ title: "", description: "", priority: "medium", due: "", points: 10 });
-  const [note, setNote] = useState("");
-  const [giver, setGiver] = useState("");
-  const [picked, setPicked] = useState<string[]>([]);
-  const [dept, setDept] = useState(""); const [q, setQ] = useState("");
+  const members = useQuery({
+    queryKey: ["task-members"],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("members")
+          .select("id, full_name, member_code, department")
+          .eq("status", "active")
+          .order("full_name")
+      ).data ?? [],
+  });
+  const tasks = useQuery({
+    queryKey: ["admin-tasks"],
+    queryFn: async () =>
+      ((await supabase.from("tasks").select("*").order("created_at", { ascending: false })).data ??
+        []) as Task[],
+  });
+  const me = useQuery({
+    queryKey: ["me-label"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("my_account");
+      const m = (data as { member?: { full_name?: string; position?: string } | null } | null)
+        ?.member;
+      return m?.full_name ? `${m.full_name}${m.position ? ` · ${m.position}` : ""}` : "";
+    },
+  });
+
+  const [filters, setFilters] = useState<TaskFilters>(EMPTY_TASK_FILTERS);
+  const [view, setView] = useState<TaskView>("board");
   const [person, setPerson] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-tasks"] });
-  const depts = [...new Set((members.data ?? []).map((m) => m.department))];
-  const givers = [...new Set((tasks.data ?? []).map((t) => t.assigned_by_name).filter(Boolean))];
-  const term = q.trim().toLowerCase();
-  const pool = (members.data ?? []).filter((m) => (!dept || m.department === dept) && (!term || m.full_name.toLowerCase().includes(term) || m.member_code.toLowerCase().includes(term)));
-  const toggle = (id: string) => setPicked((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+  const [creating, setCreating] = useState(false);
+  const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [err, setErr] = useState("");
 
-  const create = async (e: React.FormEvent) => {
-    e.preventDefault(); setErr(""); setMsg("");
-    if (picked.length === 0) return setErr("Vui lòng chọn ít nhất 1 người thực hiện.");
-    setBusy(true);
-    const group = picked.length > 1 ? `\n\n[Nhiệm vụ nhóm cùng: ${picked.map(nameOf).join(", ")}]` : "";
-    const fails: string[] = [];
-    for (const id of picked) {
-      const { error } = await supabase.rpc("create_task_v2", { _title: f.title, _description: (f.description + group).slice(0, 3000), _assignee: id, _priority: f.priority, _due_on: (f.due || null) as string, _points: f.points, _assigned_note: note });
-      if (error) fails.push(`${nameOf(id)}: ${error.message}`);
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin-tasks"] });
+    qc.invalidateQueries({ queryKey: ["task-members"] });
+  };
+
+  const all = useMemo(() => tasks.data ?? [], [tasks.data]);
+  const memberList = useMemo(() => (members.data ?? []) as TaskMember[], [members.data]);
+  const memberById = useMemo(() => new Map(memberList.map((m) => [m.id, m])), [memberList]);
+
+  const depts = useMemo(
+    () =>
+      [
+        ...new Set([...memberList.map((m) => m.department), ...all.map((t) => t.department)]),
+      ].filter(Boolean),
+    [memberList, all],
+  );
+  const givers = useMemo(
+    () => [...new Set(all.map((t) => t.assigned_by_name).filter(Boolean))],
+    [all],
+  );
+
+  /** Search + non-status filters, shared by the status pills and the visible rows. */
+  const scoped = useMemo(() => {
+    const term = filters.q.trim().toLowerCase();
+    return all.filter((task) => {
+      const member = memberById.get(task.assignee_id);
+      const matchesTerm =
+        !term ||
+        task.title.toLowerCase().includes(term) ||
+        task.description.toLowerCase().includes(term) ||
+        (member?.full_name.toLowerCase().includes(term) ?? false) ||
+        (member?.member_code.toLowerCase().includes(term) ?? false);
+      return (
+        matchesTerm &&
+        (!filters.dept || task.department === filters.dept) &&
+        (!filters.priority || task.priority === filters.priority) &&
+        (!filters.giver || task.assigned_by_name === filters.giver) &&
+        (!person || task.assignee_id === person)
+      );
+    });
+  }, [all, filters, person, memberById]);
+
+  /** Board cards: tasks fanned out to a team collapse into one card with stacked avatars. */
+  const groups = useMemo(() => groupTasks(scoped, memberList), [scoped, memberList]);
+
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { all: scoped.length };
+    for (const key of STATUS_KEYS) map[key] = scoped.filter((t) => t.status === key).length;
+    return map;
+  }, [scoped]);
+
+  const rows = useMemo(
+    () => scoped.filter((t) => filters.status === "all" || t.status === filters.status),
+    [scoped, filters.status],
+  );
+
+  const reviewTasks = async (targets: Task[], approve: boolean, note = "") => {
+    setErr("");
+    for (const task of targets) {
+      const { error } = await supabase.rpc("review_task", {
+        _task: task.id,
+        _approve: approve,
+        _note: note,
+      });
+      if (error) {
+        setErr(error.message);
+        refresh();
+        return false;
+      }
     }
-    setBusy(false); refresh();
-    if (fails.length) setErr(fails.join(" · "));
-    const ok = picked.length - fails.length;
-    if (ok) { setMsg(`Đã giao nhiệm vụ cho ${ok} người.`); setF({ ...f, title: "", description: "" }); setPicked([]); }
-  };
-  const review = async (t: Task, approve: boolean) => {
-    const note = approve ? "" : window.prompt("Lý do yêu cầu làm lại:") ?? "";
-    if (!approve && !note) return;
-    const { error } = await supabase.rpc("review_task", { _task: t.id, _approve: approve, _note: note });
-    if (error) return setErr(error.message);
-    refresh(); qc.invalidateQueries({ queryKey: ["task-members"] });
-  };
-  const remove = async (t: Task) => {
-    if (!window.confirm(`Xóa nhiệm vụ "${t.title}"?`)) return;
-    const { error } = await supabase.rpc("delete_task", { _task: t.id });
-    if (error) setErr(error.message); else refresh();
+    refresh();
+    return true;
   };
 
-  const rows = (tasks.data ?? []).filter((t) => (filter === "all" || t.status === filter) && (!person || t.assignee_id === person) && (!giver || t.assigned_by_name === giver));
-  /** Status counts ignore the status filter itself, so every option stays reachable. */
-  const scopedForStatus = (tasks.data ?? []).filter((t) => (!person || t.assignee_id === person) && (!giver || t.assigned_by_name === giver));
-  const cntStatus = (s: string) => scopedForStatus.filter((t) => s === "all" || t.status === s).length;
-  const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
+  const openRevision = (title: string, targets: Task[]) => {
+    if (targets.length === 0) return;
+    setReviewTarget({ title, tasks: targets });
+  };
+
+  const confirmRevision = async (note: string) => {
+    if (!reviewTarget) return;
+    setReviewBusy(true);
+    const ok = await reviewTasks(reviewTarget.tasks, false, note);
+    setReviewBusy(false);
+    if (ok) setReviewTarget(null);
+  };
+
+  const removeTasks = async (title: string, targets: Task[]) => {
+    const ok = await confirm({
+      title: "Xóa nhiệm vụ?",
+      description:
+        targets.length > 1
+          ? `“${title}” cùng ${targets.length - 1} nhiệm vụ trong nhóm sẽ bị xóa vĩnh viễn.`
+          : `“${title}” sẽ bị xóa khỏi danh sách và không thể hoàn tác.`,
+      confirmLabel: "Xóa nhiệm vụ",
+      destructive: true,
+    });
+    if (!ok) return;
+    for (const task of targets) {
+      const { error } = await supabase.rpc("delete_task", { _task: task.id });
+      if (error) {
+        setErr(error.message);
+        refresh();
+        return;
+      }
+    }
+    refresh();
+  };
+
+  const approveGroup = (group: GroupedTask) => void reviewTasks(submittedTasks(group), true);
+  const reviseGroup = (group: GroupedTask) => openRevision(group.title, submittedTasks(group));
+  const removeGroup = (group: GroupedTask) =>
+    void removeTasks(
+      group.title,
+      group.rawTasks.filter((task) => task.status !== "done"),
+    );
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6 sm:py-8">
+      {dialog}
       <AdminPageHeader
         title="Nhiệm vụ"
         description="Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Trưởng Ban chỉ quản lý Ban mình."
-      />
-
-      <form onSubmit={create} className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2">
-        <h2 className="font-semibold sm:col-span-2">Giao nhiệm vụ mới</h2>
-        <input required minLength={3} maxLength={200} className={`${inp} sm:col-span-2`} placeholder="Tên nhiệm vụ" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
-        <div className="space-y-2 rounded-lg border border-border p-3 sm:col-span-2">
-          <p className="text-sm font-medium">Người thực hiện <span className="text-xs text-muted-foreground">(chọn được nhiều người — mỗi người nhận 1 nhiệm vụ riêng để nộp & cộng điểm)</span></p>
-          <div className="grid gap-2 sm:grid-cols-[200px_1fr_auto]">
-            <Select value={dept || "all"} onValueChange={(v) => setDept(v === "all" ? "" : v)}>
-              <SelectTrigger aria-label="Chọn Ban" className="h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
-                <SelectValue>{dept ? deptName(dept) : "Tất cả các Ban"}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="all" className="text-sm">Tất cả các Ban</SelectItem>
-                {depts.map((d) => (
-                  <SelectItem key={d} value={d} className="text-sm">{deptName(d)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input className={inp} placeholder="Tìm theo tên hoặc mã thành viên…" value={q} onChange={(e) => setQ(e.target.value)} />
-            <button type="button" onClick={() => setPicked((p) => [...new Set([...p, ...pool.map((m) => m.id)])])} className="rounded-lg border border-border px-3 text-xs">Chọn tất cả ({pool.length})</button>
-          </div>
-          {picked.length > 0 && <div className="flex flex-wrap gap-1.5">
-            {picked.map((id) => <button type="button" key={id} onClick={() => toggle(id)} className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">{nameOf(id)} ✕</button>)}
-            <button type="button" onClick={() => setPicked([])} className="text-xs text-muted-foreground underline">Bỏ chọn hết</button>
-          </div>}
-          <div className="max-h-48 overflow-y-auto rounded-md border border-border">
-            {pool.length === 0 && <p className="p-3 text-xs text-muted-foreground">Không có thành viên phù hợp.</p>}
-            {pool.map((m) => (
-              <label key={m.id} className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 text-sm last:border-0 hover:bg-accent">
-                <input type="checkbox" checked={picked.includes(m.id)} onChange={() => toggle(m.id)} />
-                <span className="font-medium">{m.full_name}</span>
-                <span className="font-mono text-xs text-muted-foreground">{m.member_code}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{deptName(m.department)}</span>
-              </label>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground">Đã chọn {picked.length} thành viên.</p>
-        </div>
-        <label className="text-xs text-muted-foreground sm:col-span-2">Người giao nhiệm vụ: <b className="text-foreground">{me.data || "Tài khoản đang đăng nhập"}</b> (tự động)
-          <input maxLength={200} className={`${inp} mt-1`} placeholder="Ghi chú người giao (tùy chọn), vd: Giao theo chỉ đạo của Ban Điều Hành – anh A" value={note} onChange={(e) => setNote(e.target.value)} /></label>
-        <textarea maxLength={3000} className={`${inp} sm:col-span-2`} rows={3} placeholder="Mô tả / yêu cầu" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
-        <div className="grid grid-cols-3 gap-3 sm:col-span-2">
-          <div className="text-xs text-muted-foreground">
-            <span className="block">Ưu tiên</span>
-            <Select value={f.priority} onValueChange={(val) => setF({ ...f, priority: val })}>
-              <SelectTrigger aria-label="Mức độ ưu tiên" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none">
-                <SelectValue>{PRIORITY[f.priority] ?? f.priority}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {Object.entries(PRIORITY).map(([k, v]) => (
-                  <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <label className="text-xs text-muted-foreground">Hạn chót
-            <input type="date" className={`${inp} mt-1`} value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></label>
-          <label className="text-xs text-muted-foreground">Điểm thưởng
-            <input type="number" min={0} max={100} className={`${inp} mt-1`} value={f.points} onChange={(e) => setF({ ...f, points: Number(e.target.value) })} /></label>
-        </div>
-        <p className="text-xs text-muted-foreground sm:col-span-2">Gợi ý: việc nhỏ 5–10 · việc vừa 15–25 · dự án lớn 30–50 điểm.</p>
-        {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
-        {msg && <p className="text-sm text-success sm:col-span-2">{msg}</p>}
-        <button disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60 sm:w-fit">{busy ? "Đang giao…" : picked.length > 1 ? `Giao cho ${picked.length} người` : "Giao nhiệm vụ"}</button>
-      </form>
-
-      <div className="flex flex-wrap items-center gap-2.5">
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
-            <SelectValue>
-              {filter === "all" ? "Trạng thái: Tất cả" : (TASK_STATUS[filter]?.label ?? filter)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="all" className="text-xs">
-              <span className="flex w-full items-center justify-between gap-2">
-                <span className="font-medium">Trạng thái: Tất cả</span>
-                <span className="text-muted-foreground">({cntStatus("all")})</span>
-              </span>
-            </SelectItem>
-            {Object.entries(TASK_STATUS).map(([k, v]) => (
-              <SelectItem key={k} value={k} className="text-xs">
-                <span className="flex w-full items-center gap-2">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[k] ?? "bg-primary/70"}`} />
-                  <span>{v.label}</span>
-                  <span className="ml-auto text-muted-foreground">({cntStatus(k)})</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={giver || "all"} onValueChange={(v) => setGiver(v === "all" ? "" : v)}>
-          <SelectTrigger aria-label="Lọc theo người giao" className="h-9 min-w-[190px] max-w-[260px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
-            <SelectValue>{giver ? `Người giao: ${giver}` : "Người giao: Tất cả"}</SelectValue>
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="all" className="text-xs">
-              <span className="font-medium">Người giao: Tất cả</span>
-            </SelectItem>
-            {givers.map((g) => (
-              <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {(filter !== "all" || giver || person) && (
+        actions={
           <button
             type="button"
-            onClick={() => { setFilter("all"); setGiver(""); setPerson(""); }}
-            className="h-9 rounded-xl border border-dashed border-border px-3 text-xs text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
+            onClick={() => setCreating(true)}
+            aria-label="Giao nhiệm vụ"
+            title="Giao nhiệm vụ"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:px-4"
           >
-            Đặt lại
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Giao nhiệm vụ</span>
           </button>
+        }
+      />
+
+      <TaskMetricsStrip tasks={all} />
+
+      <TaskFilterToolbar
+        filters={filters}
+        counts={counts}
+        depts={depts}
+        givers={givers}
+        shown={view === "board" ? groups.length : rows.length}
+        total={all.length}
+        view={view}
+        onViewChange={setView}
+        onChange={setFilters}
+        onReset={() => {
+          setFilters(EMPTY_TASK_FILTERS);
+          setPerson("");
+        }}
+      />
+
+      {person && (
+        <p className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">
+          Đang xem nhiệm vụ của <b>{memberById.get(person)?.full_name ?? "thành viên"}</b> ·{" "}
+          <button
+            type="button"
+            onClick={() => setPerson("")}
+            className="font-medium text-primary underline"
+          >
+            Xem tất cả
+          </button>
+        </p>
+      )}
+
+      {err && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>
+      )}
+
+      {tasks.isLoading ? (
+        <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+          Đang tải nhiệm vụ…
+        </div>
+      ) : view === "board" ? (
+        <TaskKanbanBoard
+          groups={groups}
+          onCreate={() => setCreating(true)}
+          onApprove={approveGroup}
+          onRequestRevision={reviseGroup}
+          onRemove={removeGroup}
+          onFilterPerson={(id) => setPerson(id)}
+        />
+      ) : rows.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-12 text-center">
+          <ClipboardList aria-hidden className="h-6 w-6 text-muted-foreground" />
+          <p className="text-sm font-medium text-foreground">
+            {all.length === 0 ? "Chưa có nhiệm vụ nào" : "Không tìm thấy nhiệm vụ phù hợp"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {all.length === 0
+              ? "Bấm “Giao nhiệm vụ” để tạo việc đầu tiên cho thành viên."
+              : "Thử đổi bộ lọc hoặc đặt lại để xem toàn bộ nhiệm vụ."}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              member={memberById.get(task.assignee_id) ?? null}
+              onApprove={(t) => void reviewTasks([t], true)}
+              onRequestRevision={(t) => openRevision(t.title, [t])}
+              onRemove={(t) => void removeTasks(t.title, [t])}
+              onFilterPerson={(id) => setPerson(id)}
+              onFilterGiver={(giver) => setFilters((f) => ({ ...f, giver }))}
+            />
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {creating && (
+          <CreateTaskDrawer
+            key="create-task"
+            members={memberList}
+            meLabel={me.data ?? ""}
+            onClose={() => setCreating(false)}
+            onCreated={refresh}
+          />
         )}
-      </div>
-      {person && <p className="text-sm">Đang xem nhiệm vụ của <b>{nameOf(person)}</b> · <button onClick={() => setPerson("")} className="text-primary underline">Xem tất cả</button></p>}
-      <div className="space-y-3">
-        {tasks.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
-        {!tasks.isLoading && rows.length === 0 && <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">Chưa có nhiệm vụ.</p>}
-        {rows.map((t) => (
-          <article key={t.id} className="rounded-xl border border-border bg-card p-4">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold">{t.title}</h3>
-                <p className="text-xs text-muted-foreground"><button type="button" title="Xem các nhiệm vụ của người này" onClick={() => setPerson(t.assignee_id)} className="font-medium text-primary hover:underline">{nameOf(t.assignee_id)}</button> · {deptName(t.department)} · Ưu tiên {PRIORITY[t.priority]} · Hạn {fmtDate(t.due_on)} · <span className="font-semibold text-gold">+{t.points} điểm</span></p>
-                <p className="text-xs text-muted-foreground">Giao bởi: <button type="button" onClick={() => setGiver(t.assigned_by_name)} className="font-medium text-foreground hover:underline">{t.assigned_by_name || "—"}</button>{t.assigned_by_note && ` — ${t.assigned_by_note}`}</p>
-              </div>
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS[t.status]?.className}`}>{TASK_STATUS[t.status]?.label}</span>
-            </div>
-            {t.description && <p className="mt-2 whitespace-pre-line text-sm">{t.description}</p>}
-            {t.evidence_url && <TaskEvidence value={t.evidence_url} note={t.report_note} />}
-            {t.review_note && <p className="mt-2 text-xs text-muted-foreground">Phản hồi: {t.review_note}</p>}
-            <div className="mt-3 flex flex-wrap gap-2">
-              {t.status === "submitted" && <>
-                <button onClick={() => review(t, true)} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Duyệt hoàn thành (+{t.points})</button>
-                <button onClick={() => review(t, false)} className="rounded-lg border border-border px-3 py-1.5 text-xs">Yêu cầu làm lại</button>
-              </>}
-              {t.status !== "done" && <button onClick={() => remove(t)} className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"><Trash2 className="h-3 w-3" />Xóa</button>}
-            </div>
-          </article>
-        ))}
-      </div>
+      </AnimatePresence>
+
+      <TaskReviewDialog
+        title={reviewTarget?.title ?? null}
+        busy={reviewBusy}
+        onClose={() => setReviewTarget(null)}
+        onConfirm={(note) => void confirmRevision(note)}
+      />
     </div>
   );
 }

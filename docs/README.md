@@ -41,6 +41,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-32-EXECUTIVE-HORIZONTAL-STRIP-HERO-AND-DATEPICKER-POLISH` | Hero 2 tầng ngang: CTA tầng 1, dải 3 chỉ số full-width, badge Ban đang mở | 2026-11-03 | **PASS** | [task-32-executive-horizontal-strip-hero-and-datepicker-polish.md](tasks/task-32-executive-horizontal-strip-hero-and-datepicker-polish.md) |
 | `TASK-34-IMPLEMENT-SHADCN-POPOVER-DATE-PICKER` | Chuẩn hóa DatePicker dạng Popover & Calendar Shadcn UI | 2026-11-03 | **PASS** | [task-34-implement-shadcn-popover-date-picker.md](tasks/task-34-implement-shadcn-popover-date-picker.md) |
 | `TASK-36-REDESIGN-CANDIDATES-TALENT-CENTER` | Redesign trang Quản lý Ứng viên thành Candidate Talent Center | 2026-11-03 | **PASS** | [task-36-redesign-candidates-talent-center.md](tasks/task-36-redesign-candidates-talent-center.md) |
+| `TASK-38-KANBAN-BOARD-REDESIGN-FOR-ADMIN-TASKS` | Redesign trang Quản lý Nhiệm vụ sang Bảng Kanban 4 cột & Stacked Avatars | 2026-11-03 | **PASS** | [task-38-kanban-board-redesign-for-admin-tasks.md](tasks/task-38-kanban-board-redesign-for-admin-tasks.md) |
 
 ---
 
