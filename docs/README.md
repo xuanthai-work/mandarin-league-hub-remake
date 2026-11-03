@@ -39,6 +39,8 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-31-CUSTOM-DATE-PICKER-COMPONENT` | DatePicker Shadcn/UI dùng chung, thay input date native trong 2 drawer | 2026-11-03 | **PASS** | [task-31-custom-date-picker-component.md](tasks/task-31-custom-date-picker-component.md) |
 | `TASK-31-MINIMALIST-CIRCULAR-DATE-PICKER` | DatePicker tối giản: ô ngày tròn, ngày chọn "ink", hôm nay có chấm | 2026-11-03 | **PASS** | [task-31-minimalist-circular-date-picker.md](tasks/task-31-minimalist-circular-date-picker.md) |
 | `TASK-32-EXECUTIVE-HORIZONTAL-STRIP-HERO-AND-DATEPICKER-POLISH` | Hero 2 tầng ngang: CTA tầng 1, dải 3 chỉ số full-width, badge Ban đang mở | 2026-11-03 | **PASS** | [task-32-executive-horizontal-strip-hero-and-datepicker-polish.md](tasks/task-32-executive-horizontal-strip-hero-and-datepicker-polish.md) |
+| `TASK-34-IMPLEMENT-SHADCN-POPOVER-DATE-PICKER` | Chuẩn hóa DatePicker dạng Popover & Calendar Shadcn UI | 2026-11-03 | **PASS** | [task-34-implement-shadcn-popover-date-picker.md](tasks/task-34-implement-shadcn-popover-date-picker.md) |
+| `TASK-36-REDESIGN-CANDIDATES-TALENT-CENTER` | Redesign trang Quản lý Ứng viên thành Candidate Talent Center | 2026-11-03 | **PASS** | [task-36-redesign-candidates-talent-center.md](tasks/task-36-redesign-candidates-talent-center.md) |
 
 ---
 

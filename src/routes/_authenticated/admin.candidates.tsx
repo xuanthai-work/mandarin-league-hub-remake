@@ -1,19 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Copy, Download, ExternalLink, FileText, Loader2, QrCode, Sparkles, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { analyzeApplication } from "@/lib/recruitment.functions";
-import { approveApplication } from "@/lib/accounts.functions";
-import { defaultPosition, positionsFor } from "@/lib/recruitment";
-import { Link } from "@tanstack/react-router";
-import { APP_STATUS, RECRUIT_DEPTS, STATUS_MESSAGE_TEMPLATES, deptName, nextCandidateMessage, type Choice } from "@/lib/recruitment";
+import { AnimatePresence } from "motion/react";
+import { Download, Sparkles } from "lucide-react";
+
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { CandidateDossierDrawer } from "@/components/admin/candidates/CandidateDossierDrawer";
+import { CandidateFilterToolbar } from "@/components/admin/candidates/CandidateFilterToolbar";
+import { CandidateMetricsStrip } from "@/components/admin/candidates/CandidateMetricsStrip";
+import { CandidateTableView } from "@/components/admin/candidates/CandidateTableView";
+import { FreeTextAnalyzeModal } from "@/components/admin/candidates/FreeTextAnalyzeModal";
+import {
+  EMPTY_FILTERS,
+  choicesOf,
+  openStorageFile,
+  type CandidateFilters,
+} from "@/components/admin/candidates/shared";
+import { supabase } from "@/integrations/supabase/client";
+import { APP_STATUS, deptName } from "@/lib/recruitment";
 
-export const Route = createFileRoute("/_authenticated/admin/candidates")({ staticData: { sitemap: false }, component: Candidates });
-
-const inp = "rounded-lg border border-input bg-background px-3 py-2 text-sm";
+export const Route = createFileRoute("/_authenticated/admin/candidates")({
+  staticData: { sitemap: false },
+  component: Candidates,
+});
 
 async function load() {
   const [a, p, q] = await Promise.all([
@@ -23,296 +32,155 @@ async function load() {
   ]);
   return { apps: a.data ?? [], periods: p.data ?? [], questions: q.data ?? [] };
 }
-type App = Awaited<ReturnType<typeof load>>["apps"][number];
 
 const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 function Candidates() {
   const { data } = useQuery({ queryKey: ["admin-candidates"], queryFn: load });
-  const [f, setF] = useState({ q: "", period: "", dept: "", position: "", status: "" });
-  const [sel, setSel] = useState<string | null>(null);
+  const [filters, setFilters] = useState<CandidateFilters>(EMPTY_FILTERS);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [freeOpen, setFreeOpen] = useState(false);
 
-  const list = useMemo(() => (data?.apps ?? []).filter((a) => {
-    const ch = (a.choices ?? []) as Choice[];
-    const s = f.q.toLowerCase();
-    return (!s || a.full_name.toLowerCase().includes(s) || a.email.includes(s) || a.code.toLowerCase().includes(s))
-      && (!f.period || a.period_id === f.period) && (!f.status || a.status === f.status)
-      && (!f.dept || ch.some((c) => c.department === f.dept)) && (!f.position || ch.some((c) => c.position === f.position));
-  }), [data, f]);
+  const list = useMemo(
+    () =>
+      (data?.apps ?? []).filter((app) => {
+        const choices = choicesOf(app);
+        const term = filters.q.trim().toLowerCase();
+        const matchesTerm =
+          !term ||
+          app.full_name.toLowerCase().includes(term) ||
+          app.email.toLowerCase().includes(term) ||
+          app.phone.toLowerCase().includes(term) ||
+          app.code.toLowerCase().includes(term);
+        return (
+          matchesTerm &&
+          (!filters.period || app.period_id === filters.period) &&
+          (!filters.status || app.status === filters.status) &&
+          (!filters.dept || choices.some((c) => c.department === filters.dept)) &&
+          (!filters.position || choices.some((c) => c.position === filters.position))
+        );
+      }),
+    [data, filters],
+  );
 
   const exportCsv = () => {
-    const head = ["Mã hồ sơ", "Họ tên", "Email", "Điện thoại", "Ngày sinh", "Đơn vị", "Facebook", "Tiếng Trung", "HSK", "NV1", "NV2", "Trạng thái", "Ngày gửi"];
+    const head = [
+      "Mã hồ sơ",
+      "Họ tên",
+      "Email",
+      "Điện thoại",
+      "Ngày sinh",
+      "Đơn vị",
+      "Facebook",
+      "Tiếng Trung",
+      "HSK",
+      "NV1",
+      "NV2",
+      "Trạng thái",
+      "Ngày gửi",
+    ];
     const rows = list.map((a) => {
-      const ch = (a.choices ?? []) as Choice[];
-      return [a.code, a.full_name, a.email, a.phone, a.date_of_birth ? a.date_of_birth.split("-").reverse().join("/") : "", a.organization, a.facebook_url ?? "", a.chinese_level, a.hsk_level, ...[0, 1].map((i) => ch[i] ? `${deptName(ch[i].department)} — ${ch[i].position}` : ""), APP_STATUS[a.status], new Date(a.created_at).toLocaleString("vi-VN")];
+      const choices = choicesOf(a);
+      return [
+        a.code,
+        a.full_name,
+        a.email,
+        a.phone,
+        a.date_of_birth ? a.date_of_birth.split("-").reverse().join("/") : "",
+        a.organization,
+        a.facebook_url ?? "",
+        a.chinese_level,
+        a.hsk_level,
+        ...[0, 1].map((i) => {
+          const choice = choices[i];
+          return choice ? `${deptName(choice.department)} — ${choice.position}` : "";
+        }),
+        APP_STATUS[a.status],
+        new Date(a.created_at).toLocaleString("vi-VN"),
+      ];
     });
-    const blob = new Blob(["\uFEFF" + [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(
+      ["\uFEFF" + [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\n")],
+      { type: "text/csv;charset=utf-8" },
+    );
     const url = URL.createObjectURL(blob);
-    Object.assign(document.createElement("a"), { href: url, download: `ung-vien-tml-${new Date().toISOString().slice(0, 10)}.csv` }).click();
+    Object.assign(document.createElement("a"), {
+      href: url,
+      download: `ung-vien-tml-${new Date().toISOString().slice(0, 10)}.csv`,
+    }).click();
     URL.revokeObjectURL(url);
   };
 
-  if (!data) return <p className="p-10 text-center text-muted-foreground">Đang tải…</p>;
-  const current = data.apps.find((a) => a.id === sel);
+  if (!data) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
+          Đang tải danh sách ứng viên…
+        </div>
+      </section>
+    );
+  }
+
+  const current = data.apps.find((a) => a.id === selectedId);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <AdminPageHeader
-        title={`Ứng viên (${list.length})`}
-        actions={<>
-          <button onClick={() => setFreeOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"><Sparkles className="h-4 w-4 text-gold" />Phân tích nội dung dán vào</button>
-          <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Download className="h-4 w-4" />Xuất Excel (CSV)</button>
-        </>}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setFreeOpen(true)}
+              aria-label="Phân tích nội dung dán vào"
+              title="Phân tích nội dung dán vào"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-sm font-medium transition-colors hover:bg-accent sm:px-4"
+            >
+              <Sparkles className="h-4 w-4 text-gold" />
+              <span className="hidden sm:inline">Phân tích nội dung dán vào</span>
+            </button>
+            <button
+              type="button"
+              onClick={exportCsv}
+              aria-label="Xuất Excel (CSV)"
+              title="Xuất Excel (CSV)"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:px-4"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Xuất Excel (CSV)</span>
+            </button>
+          </>
+        }
       />
-      <div className="grid gap-2 md:grid-cols-5">
-        <input className={inp} placeholder="Tìm tên, email, mã hồ sơ" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
-        <select className={inp} value={f.period} onChange={(e) => setF({ ...f, period: e.target.value })}><option value="">Mọi đợt tuyển</option>{data.periods.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-        <select className={inp} value={f.dept} onChange={(e) => setF({ ...f, dept: e.target.value })}><option value="">Mọi Ban</option>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
-        <select className={inp} value={f.position} onChange={(e) => setF({ ...f, position: e.target.value })}><option value="">Mọi vị trí</option>{["Co-founder", "Thư ký", "Trưởng Ban", "Phó Ban", "Thành viên"].map((p) => <option key={p}>{p}</option>)}</select>
-        <select className={inp} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Mọi trạng thái</option>{Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+
+      <div className="space-y-4">
+        <CandidateMetricsStrip apps={data.apps} />
+        <CandidateFilterToolbar
+          filters={filters}
+          periods={data.periods}
+          shown={list.length}
+          total={data.apps.length}
+          onChange={setFilters}
+          onReset={() => setFilters(EMPTY_FILTERS)}
+        />
+        <CandidateTableView
+          apps={list}
+          onOpen={(app) => setSelectedId(app.id)}
+          onOpenCv={(path) => void openStorageFile(path)}
+        />
       </div>
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="bg-secondary text-left text-xs uppercase text-muted-foreground"><tr><th className="p-3">Mã hồ sơ</th><th className="p-3">Họ tên</th><th className="p-3">Nguyện vọng</th><th className="p-3">Trạng thái</th><th className="p-3">Ngày gửi</th></tr></thead>
-          <tbody>
-            {list.map((a) => (
-              <tr key={a.id} onClick={() => setSel(a.id)} className="cursor-pointer border-t border-border hover:bg-accent/50">
-                <td className="p-3 font-mono text-xs">{a.code}</td><td className="p-3 font-medium">{a.full_name}</td>
-                <td className="p-3 text-xs">{((a.choices ?? []) as Choice[]).map((c, i) => <div key={i}>NV{i + 1}: {deptName(c.department)} — {c.position}</div>)}</td>
-                <td className="p-3"><span className="rounded-full bg-secondary px-2.5 py-1 text-xs">{APP_STATUS[a.status]}</span></td>
-                <td className="p-3 text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString("vi-VN")}</td>
-              </tr>
-            ))}
-            {list.length === 0 && <tr><td colSpan={5} className="p-10 text-center text-muted-foreground">Chưa có hồ sơ nào.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      {current && <Detail app={current} questions={data.questions} onClose={() => setSel(null)} />}
-      {freeOpen && <FreeAnalyze onClose={() => setFreeOpen(false)} />}
+
+      <AnimatePresence>
+        {current && (
+          <CandidateDossierDrawer
+            key={current.id}
+            app={current}
+            questions={data.questions}
+            onClose={() => setSelectedId(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <FreeTextAnalyzeModal open={freeOpen} onClose={() => setFreeOpen(false)} />
     </section>
-  );
-}
-
-function Drawer({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-foreground/30" onClick={onClose}>
-      <div className="h-full w-full max-w-2xl overflow-y-auto bg-background p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold text-primary-deep">{title}</h2><button onClick={onClose}><X className="h-5 w-5" /></button></div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function AiBox({ summary }: { summary: string }) {
-  return <div className="whitespace-pre-wrap rounded-xl border border-gold/40 bg-gold-soft/30 p-4 text-sm leading-relaxed">{summary}</div>;
-}
-
-function Detail({ app, questions, onClose }: { app: App; questions: { id: string; prompt: string; kind: string }[]; onClose: () => void }) {
-  const qc = useQueryClient();
-  const analyze = useServerFn(analyzeApplication);
-  const [status, setStatus] = useState(app.status);
-  const [note, setNote] = useState(app.admin_note);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const answers = (app.answers ?? {}) as Record<string, string | string[]>;
-  const { data: history } = useQuery({ queryKey: ["app-history", app.id, app.status], queryFn: async () => (await supabase.from("application_status_history").select("*").eq("application_id", app.id).order("created_at")).data ?? [] });
-
-  const openFile = async (path: string) => {
-    const { data } = await supabase.storage.from("applications").createSignedUrl(path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener");
-  };
-  const [reason, setReason] = useState("");
-  const [msg, setMsg] = useState(app.candidate_message ?? "");
-  const save = async () => {
-    setBusy("save"); setErr(null);
-    const r1 = await supabase.rpc("set_application_status", { _app: app.id, _status: status, _note: reason });
-    const patch = { ...(note !== app.admin_note ? { admin_note: note } : {}), ...(msg !== app.candidate_message ? { candidate_message: msg.slice(0, 1500) } : {}) };
-    const r2 = !r1.error && Object.keys(patch).length ? await supabase.from("candidate_applications").update(patch).eq("id", app.id) : { error: null };
-    const error = r1.error ?? r2.error;
-    if (error) setErr(error.message); else { setReason(""); qc.invalidateQueries({ queryKey: ["admin-candidates"] }); qc.invalidateQueries({ queryKey: ["app-history", app.id] }); }
-    setBusy(null);
-  };
-  const runAi = async () => {
-    setBusy("ai"); setErr(null);
-    try { await analyze({ data: { applicationId: app.id } }); qc.invalidateQueries({ queryKey: ["admin-candidates"] }); }
-    catch (e) { setErr((e as Error).message); }
-    setBusy(null);
-  };
-
-  return (
-    <Drawer title={app.full_name} onClose={onClose}>
-      <div className="font-mono text-sm text-primary">{app.code}</div>
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        {[["Email", app.email], ["Điện thoại", app.phone], ["Ngày sinh", app.date_of_birth ? app.date_of_birth.split("-").reverse().join("/") : "—"], ["Đơn vị", app.organization], ["Tiếng Trung", app.chinese_level || "—"], ["HSK", app.hsk_level || "—"], ["Ngày gửi", new Date(app.created_at).toLocaleString("vi-VN")]].map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="break-words">{v}</dd></div>)}
-      </dl>
-      <div className="mt-4 text-sm">{((app.choices ?? []) as Choice[]).map((c, i) => <div key={i} className="font-medium">NV{i + 1}: {deptName(c.department)} — {c.position}</div>)}</div>
-      <p className="mt-4 rounded-lg bg-secondary p-3 text-sm">{app.intro}</p>
-      {app.facebook_url && /^https?:\/\//i.test(app.facebook_url) && <a href={app.facebook_url} target="_blank" rel="noopener noreferrer" className="mt-3 mr-4 inline-flex items-center gap-2 text-sm font-medium text-primary underline">Xem Facebook ứng viên ↗</a>}
-      {app.cv_path && <button onClick={() => openFile(app.cv_path!)} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary underline"><FileText className="h-4 w-4" />Xem / tải CV</button>}
-
-      <h3 className="mt-6 font-semibold">Câu trả lời</h3>
-      <div className="mt-2 space-y-3">
-        {Object.entries(answers).map(([qid, v]) => {
-          const q = questions.find((x) => x.id === qid);
-          return <div key={qid} className="text-sm"><div className="text-xs text-muted-foreground">{q?.prompt ?? "Câu hỏi đã xóa"}</div>
-            {q?.kind === "file" && typeof v === "string" ? <button onClick={() => openFile(v)} className="text-primary underline">Mở tệp đính kèm</button> : <div className="whitespace-pre-wrap">{[v].flat().join(", ")}</div>}</div>;
-        })}
-        {Object.keys(answers).length === 0 && <p className="text-sm text-muted-foreground">Không có câu trả lời thêm.</p>}
-      </div>
-
-      <div className="mt-6 flex items-center justify-between"><h3 className="font-semibold">Phân tích AI</h3>
-        <button onClick={runAi} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-gold px-3 py-1.5 text-sm hover:bg-gold-soft/40 disabled:opacity-60">{busy === "ai" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-gold" />}{app.ai_summary ? "Phân tích lại" : "Phân tích hồ sơ bằng AI"}</button></div>
-      <p className="mt-1 text-xs text-muted-foreground">{app.cv_path ? (app.cv_path.toLowerCase().endsWith(".pdf") ? "AI sẽ đọc cả tệp CV (PDF) và thông tin trong form." : "CV dạng Word: AI đọc nội dung chữ trong tệp và thông tin trong form.") : "Không có CV — AI phân tích theo thông tin trong form."}</p>
-      <div className="mt-2">{app.ai_summary ? <AiBox summary={app.ai_summary} /> : <p className="text-sm text-muted-foreground">Chưa phân tích. AI chỉ hỗ trợ tóm tắt — quyết định cuối cùng thuộc về Ban Nhân sự.</p>}</div>
-
-      <h3 className="mt-6 font-semibold">Xử lý hồ sơ</h3>
-      <p className="text-xs text-muted-foreground">Người xử lý được ghi tự động theo tài khoản đang đăng nhập.</p>
-      <div className="mt-2 space-y-2">
-        <label className="block text-xs font-medium text-muted-foreground">Trạng thái (chọn tự do, chuyển thẳng sang bất kỳ bước nào)</label>
-        <select className={`${inp} w-full`} value={status} onChange={(e) => { setStatus(e.target.value); setMsg((m) => nextCandidateMessage(m, e.target.value)); }}>{Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        <div className="flex items-center justify-between pt-1">
-          <label className="block text-xs font-medium text-primary">Lời nhắn gửi ứng viên (ứng viên thấy khi tra cứu)</label>
-          {STATUS_MESSAGE_TEMPLATES[status] && <button type="button" onClick={() => setMsg(STATUS_MESSAGE_TEMPLATES[status] ?? "")} className="text-xs text-primary underline">Điền mẫu câu chuẩn</button>}
-        </div>
-        <textarea className={`${inp} w-full border-gold/50`} rows={3} maxLength={1500} placeholder="VD: Bạn vui lòng mở quyền xem Google Drive của CV và phản hồi về hr@themandarinleague.bond" value={msg} onChange={(e) => setMsg(e.target.value)} />
-        <label className="block pt-1 text-xs font-medium text-muted-foreground">Chỉ nội bộ (ứng viên không thấy)</label>
-        <textarea className={`${inp} w-full`} rows={2} placeholder="Lý do / ghi chú cho lần xử lý này (không bắt buộc)" value={reason} onChange={(e) => setReason(e.target.value)} />
-        <textarea className={`${inp} w-full`} rows={2} placeholder="Ghi chú nội bộ chung của hồ sơ" value={note} onChange={(e) => setNote(e.target.value)} />
-        <button onClick={save} disabled={!!busy} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">Lưu</button>
-      </div>
-      {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
-
-      <Approve app={app} />
-
-      <h3 className="mt-6 font-semibold">Lịch sử xử lý hồ sơ</h3>
-      <ol className="mt-3 border-l-2 border-gold/40 pl-4">
-        {[...(history ?? [])].reverse().map((h) => (
-          <li key={h.id} className="relative mb-4">
-            <span className="absolute -left-[23px] top-1 h-3 w-3 rounded-full border-2 border-background bg-primary" />
-            <div className="text-xs font-bold uppercase tracking-wide text-primary-deep">{APP_STATUS[h.new_status]}</div>
-            <div className="text-sm font-medium">{h.reviewer_name || "—"}{h.reviewer_member_code && <span className="ml-2 font-mono text-xs text-muted-foreground">{h.reviewer_member_code}</span>}</div>
-            {(h.reviewer_department || h.reviewer_position) && <div className="text-xs text-muted-foreground">{[h.reviewer_department && deptName(h.reviewer_department), h.reviewer_position].filter(Boolean).join(" · ")}</div>}
-            <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("vi-VN")}{h.old_status ? ` · từ "${APP_STATUS[h.old_status]}"` : ""}</div>
-            {h.note && <p className="mt-1 rounded-md bg-secondary px-2 py-1 text-xs italic">“{h.note}”</p>}
-          </li>
-        ))}
-      </ol>
-    </Drawer>
-  );
-}
-
-function FreeAnalyze({ onClose }: { onClose: () => void }) {
-  const analyze = useServerFn(analyzeApplication);
-  const [text, setText] = useState("");
-  const [out, setOut] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  return (
-    <Drawer title="Phân tích nội dung đơn bằng AI" onClose={onClose}>
-      <p className="text-sm text-muted-foreground">Dán nội dung đơn nhận qua email/tin nhắn, kèm Ban ứng tuyển.</p>
-      <textarea className={`${inp} mt-3 w-full`} rows={10} value={text} onChange={(e) => setText(e.target.value)} maxLength={20000} />
-      <button disabled={busy} onClick={async () => { setBusy(true); setErr(null); try { setOut((await analyze({ data: { text } })).summary); } catch (e) { setErr((e as Error).message); } setBusy(false); }}
-        className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}Phân tích</button>
-      {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
-      {out && <div className="mt-4"><AiBox summary={out} /></div>}
-    </Drawer>
-  );
-}
-
-function Approve({ app }: { app: App }) {
-  const qc = useQueryClient();
-  const approve = useServerFn(approveApplication);
-  const first = ((app.choices ?? []) as Choice[])[0];
-  const initDept = first?.department ?? "executive";
-  const [dept, setDept] = useState(initDept);
-  const [pos, setPos] = useState(defaultPosition(initDept, first?.position));
-  const existing = useQuery({ queryKey: ["app-member", app.id], queryFn: async () => (await supabase.from("members").select("id, member_code, department, position").eq("application_id", app.id).maybeSingle()).data });
-  const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
-  const [editing, setEditing] = useState(false);
-  const [eDept, setEDept] = useState(""); const [ePos, setEPos] = useState("");
-  const m = existing.data;
-  const code = m?.member_code;
-  const run = async () => {
-    setBusy(true); setErr("");
-    try { await approve({ data: { applicationId: app.id, department: dept, position: pos } }); qc.invalidateQueries({ queryKey: ["app-member", app.id] }); qc.invalidateQueries({ queryKey: ["admin-candidates"] }); }
-    catch (e) { setErr((e as Error).message); }
-    setBusy(false);
-  };
-  const saveEdit = async () => {
-    if (!m) return;
-    setBusy(true); setErr("");
-    const { error } = await supabase.from("members").update({ department: eDept, position: ePos }).eq("id", m.id);
-    if (error) setErr(error.message); else { setEditing(false); qc.invalidateQueries({ queryKey: ["app-member", app.id] }); qc.invalidateQueries({ queryKey: ["admin-members"] }); }
-    setBusy(false);
-  };
-  return (
-    <div className="mt-6 rounded-xl border border-gold/50 bg-gold-soft/20 p-4">
-      <h3 className="font-semibold">Chấp thuận kết nạp</h3>
-      {m ? (
-        <div className="mt-2 text-sm">Đã kết nạp — Mã thành viên: <span className="font-mono font-semibold text-primary">{code}</span>
-          <p className="mt-1">Ban: <b>{deptName(m.department)}</b> · Chức vụ: <b>{m.position}</b>
-            {!editing && <button type="button" onClick={() => { setEDept(m.department); setEPos(defaultPosition(m.department, m.position)); setEditing(true); }} className="ml-2 text-primary underline">Sửa Ban / Chức vụ</button>}</p>
-          {editing && (
-            <div className="mt-2 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <select className={inp} value={eDept} onChange={(e) => { setEDept(e.target.value); setEPos(defaultPosition(e.target.value)); }}>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
-                <select className={inp} value={ePos} onChange={(e) => setEPos(e.target.value)}>{positionsFor(eDept).map((p) => <option key={p}>{p}</option>)}</select>
-              </div>
-              <div className="flex gap-2">
-                <button disabled={busy} onClick={saveEdit} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang lưu…" : "Lưu thay đổi"}</button>
-                <button type="button" onClick={() => setEditing(false)} className="rounded-lg border border-border px-3 py-1.5 text-sm">Hủy</button>
-              </div>
-            </div>
-          )}
-          <p className="mt-1 text-muted-foreground">Chưa tự động có tài khoản. Nếu cần, cấp tại <Link to="/admin/members" className="text-primary underline">Thành viên</Link>.</p></div>
-      ) : (
-        <div className="mt-2 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <select className={inp} value={dept} onChange={(e) => { setDept(e.target.value); setPos(defaultPosition(e.target.value)); }}>{RECRUIT_DEPTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
-            <select className={inp} value={pos} onChange={(e) => setPos(e.target.value)}>{positionsFor(dept).map((p) => <option key={p}>{p}</option>)}</select>
-          </div>
-          <p className="text-xs text-muted-foreground">Kiểm tra lại: sẽ kết nạp vào <b>{deptName(dept)}</b> với chức vụ <b>{pos}</b>.</p>
-          <button disabled={busy} onClick={run} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang xử lý…" : "Chấp thuận & cấp mã TML-MBR"}</button>
-        </div>
-      )}
-      {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
-      {(m || app.status === "approved") && <WelcomeQr name={app.full_name} dept={m ? m.department : (first?.department ?? dept)} role={m ? m.position : (first?.position ?? pos)} code={code ?? ""} />}
-    </div>
-  );
-}
-
-function WelcomeQr({ name, dept, role, code }: { name: string; dept: string; role: string; code: string }) {
-  const [open, setOpen] = useState(false);
-  const [png, setPng] = useState("");
-  const [copied, setCopied] = useState(false);
-  const date = new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const origin = typeof window !== "undefined" && /themandarinleague\.bond$/.test(window.location.hostname) ? "https://www.themandarinleague.bond" : (typeof window !== "undefined" ? window.location.origin : "");
-  const p = new URLSearchParams({ name, dept, role, date, ...(code ? { code } : {}) });
-  const url = `${origin}/welcome?${p.toString()}`;
-  const show = async () => {
-    setOpen(true);
-    const QR = (await import("qrcode")).default;
-    setPng(await QR.toDataURL(url, { width: 1024, margin: 2, errorCorrectionLevel: "M" }));
-  };
-  return (
-    <>
-      <button type="button" onClick={show} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-primary px-3 py-1.5 text-sm font-medium text-primary hover:bg-accent"><QrCode className="h-4 w-4" />Mã QR & Link thiệp chào mừng</button>
-      {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40 p-4" onClick={() => setOpen(false)}>
-          <div className="w-full max-w-sm rounded-2xl bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between"><h3 className="font-semibold text-primary-deep">Thiệp chào mừng</h3><button onClick={() => setOpen(false)}><X className="h-5 w-5" /></button></div>
-            <p className="mt-1 text-xs text-muted-foreground">{name} · {deptName(dept)} · {role}{code ? ` · ${code}` : ""}</p>
-            <div className="mt-3 flex aspect-square items-center justify-center rounded-xl border border-border bg-card">{png ? <img src={png} alt="Mã QR thiệp chào mừng" className="h-full w-full rounded-xl" /> : <Loader2 className="h-6 w-6 animate-spin" />}</div>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-              <a href={png || undefined} download={`thiep-tml-${(code || name).replace(/\s+/g, "-")}.png`} className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-2 py-2 font-semibold text-primary-foreground"><Download className="h-3.5 w-3.5" />Tải PNG</a>
-              <button onClick={async () => { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2"><Copy className="h-3.5 w-3.5" />{copied ? "Đã chép" : "Chép link"}</button>
-              <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2"><ExternalLink className="h-3.5 w-3.5" />Xem thử</a>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
   );
 }
