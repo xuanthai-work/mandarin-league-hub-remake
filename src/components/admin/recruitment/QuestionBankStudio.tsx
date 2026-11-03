@@ -27,17 +27,17 @@ import {
 } from "@/components/ui/select";
 import { CandidatePreviewDrawer } from "./CandidatePreviewDrawer";
 import { DepartmentRail } from "./DepartmentRail";
+import { RAIL, RAIL_IDS, deptOf } from "./rail";
 import { TopicAccordionCard } from "./TopicAccordionCard";
 import {
   SELECT_CONTENT,
+  SELECT_TRIGGER,
   isChoiceKind,
   type Confirm,
   type Run,
   type StudioData,
   type Swap,
 } from "./types";
-
-const deptOf = (railId: string) => (railId === "common" ? null : railId);
 
 /** Marks the whole-bank seed action in `loadingBank`. */
 const ALL = "all";
@@ -50,7 +50,7 @@ const positionPill = (active: boolean) =>
       : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
   }`;
 
-/** Master-detail editor for the recruitment question bank (one department at a time). */
+/** Master-detail editor for the recruitment question bank (one or more departments at a time). */
 export function QuestionBankStudio({
   data,
   run,
@@ -60,7 +60,8 @@ export function QuestionBankStudio({
   run: Run;
   confirm: Confirm;
 }) {
-  const [selectedDept, setSelectedDept] = useState("design");
+  // Every bucket starts selected so the studio opens on the whole bank ("Tất cả các ban").
+  const [selectedDepts, setSelectedDepts] = useState<string[]>(RAIL_IDS);
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState("all");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -68,22 +69,45 @@ export function QuestionBankStudio({
   const [loadingBank, setLoadingBank] = useState<string | null>(null);
   const [topicDialogOpen, setTopicDialogOpen] = useState(false);
   const [newTopic, setNewTopic] = useState({ title: "", description: "" });
+  // Which bucket the new topic belongs to — only asked when several are selected.
+  const [newTopicDept, setNewTopicDept] = useState<string>("common");
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [customPositionInput, setCustomPositionInput] = useState("");
 
-  const deptKey = deptOf(selectedDept);
   const questionsOf = (topicId: string) =>
     data.questions
       .filter((q) => q.topic_id === topicId)
       .sort((a, b) => a.sort_order - b.sort_order);
+  /** Bucket order (shared first, then the rail order) so combined lists stay stable. */
+  const bucketIndex = (department: string | null) => RAIL_IDS.indexOf(department ?? "common");
+  const selectedKeys = selectedDepts.map(deptOf);
   const deptTopics = data.topics
-    .filter((t) => t.department === deptKey)
-    .sort((a, b) => a.sort_order - b.sort_order);
+    .filter((t) => selectedKeys.includes(t.department))
+    .sort(
+      (a, b) => bucketIndex(a.department) - bucketIndex(b.department) || a.sort_order - b.sort_order,
+    );
+  /** Topics of one bucket, in display order — the reorder buttons swap inside this list. */
+  const topicsInDept = (department: string | null) =>
+    data.topics
+      .filter((t) => t.department === department)
+      .sort((a, b) => a.sort_order - b.sort_order);
 
-  /** Department titles plus every custom position already used by its topics. */
+  const isMultiBucket = selectedDepts.length > 1;
+  const toggleDept = (id: string) =>
+    setSelectedDepts((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  const selectAllDepts = () => setSelectedDepts(RAIL_IDS);
+  const clearDepts = () => setSelectedDepts([]);
+
+  // The applicant preview always simulates one application form: the first selected bucket.
+  const previewDept = selectedDepts[0] ?? "common";
+  const previewTopics = topicsInDept(deptOf(previewDept));
+
+  /** Department titles plus every custom position already used by the selected buckets. */
   const availablePositions = Array.from(
     new Set([
-      ...(deptKey ? positionsFor(deptKey) : []),
+      ...selectedDepts.filter((id) => id !== "common").flatMap((id) => positionsFor(id)),
       ...deptTopics.flatMap((t) => parseTopicPositions(t.position)),
     ]),
   );
@@ -102,7 +126,7 @@ export function QuestionBankStudio({
   // a collapsed state that would hide the results the user just asked for.
   useEffect(() => {
     setCollapsed(new Set());
-  }, [search, kindFilter]);
+  }, [search, kindFilter, selectedDepts]);
 
   const stats = {
     topics: data.topics.length,
@@ -183,6 +207,12 @@ export function QuestionBankStudio({
     setNewTopic({ title: "", description: "" });
   };
 
+  /** Always asks for the bucket the topic will be created in, defaulting to the first selection. */
+  const openTopicDialog = () => {
+    setNewTopicDept(selectedDepts[0] ?? "common");
+    setTopicDialogOpen(true);
+  };
+
   const togglePosition = (position: string) =>
     setSelectedPositions((prev) =>
       prev.includes(position) ? prev.filter((p) => p !== position) : [...prev, position],
@@ -200,13 +230,17 @@ export function QuestionBankStudio({
     e.preventDefault();
     const title = newTopic.title.trim();
     if (!title) return;
+    // One selected bucket drives the target; with several, the dialog's picker decides.
+    const targetRail = isMultiBucket ? newTopicDept : (selectedDepts[0] ?? "common");
+    const targetDept = deptOf(targetRail);
+    const sortOrder = data.topics.filter((t) => t.department === targetDept).length;
     void run(
       supabase.from("recruitment_topics").insert({
-        department: deptKey,
+        department: targetDept,
         position: formatTopicPositions(selectedPositions),
         title,
         description: newTopic.description.trim(),
-        sort_order: deptTopics.length,
+        sort_order: sortOrder,
       }),
       "Đã thêm chủ đề.",
     ).then((ok) => {
@@ -258,8 +292,10 @@ export function QuestionBankStudio({
       <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
         <DepartmentRail
           data={data}
-          selected={selectedDept}
-          onSelect={setSelectedDept}
+          selectedDepts={selectedDepts}
+          onToggleDept={toggleDept}
+          onSelectAll={selectAllDepts}
+          onClearAll={clearDepts}
           onLoadBank={(id) => void seedBank(id)}
           loadingBank={loadingBank}
         />
@@ -322,7 +358,15 @@ export function QuestionBankStudio({
 
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-muted/30 px-3.5 py-2.5">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">{deptName(deptKey)}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {selectedDepts.length === 0
+                  ? "Chưa chọn ban nào"
+                  : selectedDepts.length === RAIL_IDS.length
+                    ? "Tất cả các ban"
+                    : selectedDepts.length === 1
+                      ? deptName(deptOf(selectedDepts[0]!))
+                      : `${selectedDepts.length} ban đã chọn`}
+              </p>
               <p className="text-[11px] text-muted-foreground">
                 {isFiltering ? (
                   <>
@@ -341,8 +385,9 @@ export function QuestionBankStudio({
             </div>
             <button
               type="button"
-              onClick={() => setTopicDialogOpen(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              onClick={openTopicDialog}
+              disabled={selectedDepts.length === 0}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
             >
               <Plus className="h-3.5 w-3.5" />
               Chủ đề mới
@@ -351,27 +396,33 @@ export function QuestionBankStudio({
 
           {filteredTopics.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-              {deptTopics.length === 0
-                ? "Ban này chưa có chủ đề nào. Bấm “Chủ đề mới” ở trên để bắt đầu."
-                : "Không có chủ đề nào khớp bộ lọc hiện tại."}
+              {selectedDepts.length === 0
+                ? "Chọn ít nhất một ban ở cột bên trái để xem chủ đề."
+                : deptTopics.length === 0
+                  ? "Ban này chưa có chủ đề nào. Bấm “Chủ đề mới” ở trên để bắt đầu."
+                  : "Không có chủ đề nào khớp bộ lọc hiện tại."}
             </p>
           ) : (
-            filteredTopics.map((item) => (
-              <TopicAccordionCard
-                key={item.topic.id}
-                topic={item.topic}
-                questions={item.matchingQuestions}
-                totalQuestionsCount={item.allQuestions.length}
-                availablePositions={availablePositions}
-                index={deptTopics.indexOf(item.topic)}
-                total={deptTopics.length}
-                expanded={!collapsed.has(item.topic.id)}
-                onToggle={() => toggleTopic(item.topic.id)}
-                onMove={(from, to) => swap(deptTopics, from, to, "recruitment_topics")}
-                run={run}
-                confirm={confirm}
-              />
-            ))
+            filteredTopics.map((item) => {
+              const group = topicsInDept(item.topic.department);
+              return (
+                <TopicAccordionCard
+                  key={item.topic.id}
+                  topic={item.topic}
+                  questions={item.matchingQuestions}
+                  totalQuestionsCount={item.allQuestions.length}
+                  availablePositions={availablePositions}
+                  departmentName={isMultiBucket ? deptName(item.topic.department) : undefined}
+                  index={group.findIndex((t) => t.id === item.topic.id)}
+                  total={group.length}
+                  expanded={!collapsed.has(item.topic.id)}
+                  onToggle={() => toggleTopic(item.topic.id)}
+                  onMove={(from, to) => swap(group, from, to, "recruitment_topics")}
+                  run={run}
+                  confirm={confirm}
+                />
+              );
+            })
           )}
         </div>
       </div>
@@ -386,10 +437,38 @@ export function QuestionBankStudio({
           <DialogHeader>
             <DialogTitle>Chủ đề mới</DialogTitle>
             <DialogDescription>
-              Tạo chủ đề câu hỏi cho {deptName(deptKey)}. Có thể thêm câu hỏi ngay sau khi tạo.
+              {isMultiBucket
+                ? "Chọn Ban cho chủ đề mới, sau đó thêm câu hỏi ngay khi tạo xong."
+                : `Tạo chủ đề câu hỏi cho ${deptName(deptOf(selectedDepts[0] ?? "common"))}. Có thể thêm câu hỏi ngay sau khi tạo.`}
             </DialogDescription>
           </DialogHeader>
           <form id="new-topic-form" onSubmit={addTopic} className="space-y-2.5">
+            {isMultiBucket && (
+              <div>
+                <label
+                  className="text-xs font-medium text-muted-foreground"
+                  htmlFor="new-topic-dept"
+                >
+                  Thuộc Ban
+                </label>
+                <Select value={newTopicDept} onValueChange={setNewTopicDept}>
+                  <SelectTrigger
+                    id="new-topic-dept"
+                    aria-label="Ban của chủ đề"
+                    className={`mt-1 ${SELECT_TRIGGER}`}
+                  >
+                    <SelectValue>{deptName(deptOf(newTopicDept))}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className={SELECT_CONTENT}>
+                    {RAIL.map((item) => (
+                      <SelectItem key={item.id} value={item.id} className="text-sm">
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <label
                 className="text-xs font-medium text-muted-foreground"
@@ -491,8 +570,8 @@ export function QuestionBankStudio({
       <CandidatePreviewDrawer
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        dept={selectedDept}
-        topics={deptTopics}
+        dept={previewDept}
+        topics={previewTopics}
         questions={data.questions}
       />
     </div>
