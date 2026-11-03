@@ -11,6 +11,7 @@ const iconBtn =
 export function TopicAccordionCard({
   topic,
   questions,
+  totalQuestionsCount,
   index,
   total,
   expanded,
@@ -21,7 +22,10 @@ export function TopicAccordionCard({
   confirm,
 }: {
   topic: StudioTopic;
+  /** Questions to render — already trimmed by the studio's search/kind filters. */
   questions: StudioQuestion[];
+  /** Every question of the topic, regardless of the active filters. */
+  totalQuestionsCount: number;
   index: number;
   total: number;
   expanded: boolean;
@@ -37,6 +41,7 @@ export function TopicAccordionCard({
     patch: Partial<Pick<StudioTopic, "title" | "description" | "visible">>,
     ok?: string,
   ) => run(supabase.from("recruitment_topics").update(patch).eq("id", topic.id), ok);
+  const filtered = questions.length !== totalQuestionsCount;
 
   return (
     <article
@@ -66,8 +71,14 @@ export function TopicAccordionCard({
         <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
           {topic.position ?? "Mọi vị trí"}
         </span>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-          {questions.length} câu
+        <span
+          className={`rounded-full px-2 py-0.5 text-[11px] ${
+            filtered ? "bg-primary/10 font-medium text-primary" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {filtered
+            ? `Hiển thị ${questions.length}/${totalQuestionsCount} câu`
+            : `${totalQuestionsCount} câu`}
         </span>
         <label className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
           <Switch
@@ -131,7 +142,9 @@ export function TopicAccordionCard({
           <div className="space-y-2">
             {questions.length === 0 && (
               <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
-                Chủ đề này chưa có câu hỏi nào.
+                {totalQuestionsCount === 0
+                  ? "Chủ đề này chưa có câu hỏi nào."
+                  : "Không có câu hỏi nào trong chủ đề này khớp bộ lọc hiện tại."}
               </p>
             )}
             {questions.map((question, i) => (
@@ -153,7 +166,7 @@ export function TopicAccordionCard({
                 supabase.from("recruitment_questions").insert({
                   topic_id: topic.id,
                   prompt: "Câu hỏi mới",
-                  sort_order: questions.length,
+                  sort_order: totalQuestionsCount,
                 }),
                 "Đã thêm câu hỏi.",
               )

@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Eye, Loader2, Plus, Search, Sparkles } from "lucide-react";
 import { QUESTION_BANK, QUESTION_KINDS, deptName, positionsFor } from "@/lib/recruitment";
+import { filterQuestionBank } from "@/lib/recruitment-question-search";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -62,17 +63,21 @@ export function QuestionBankStudio({
     .filter((t) => t.department === deptKey)
     .sort((a, b) => a.sort_order - b.sort_order);
 
-  const term = search.trim().toLowerCase();
-  const shownTopics = deptTopics.filter((topic) => {
-    const qs = questionsOf(topic.id);
-    if (kindFilter !== "all" && !qs.some((q) => q.kind === kindFilter)) return false;
-    if (!term) return true;
-    return (
-      topic.title.toLowerCase().includes(term) ||
-      topic.description.toLowerCase().includes(term) ||
-      qs.some((q) => q.prompt.toLowerCase().includes(term))
-    );
+  /** Both filters intersect: a question must pass the kind filter AND the search term. */
+  const filteredTopics = filterQuestionBank({
+    topics: deptTopics,
+    questionsOf,
+    search,
+    kindFilter,
   });
+  const isFiltering = search.trim() !== "" || kindFilter !== "all";
+  const matchingCount = filteredTopics.reduce((n, t) => n + t.matchingQuestions.length, 0);
+
+  // Opening every matching topic while filtering is more useful than remembering
+  // a collapsed state that would hide the results the user just asked for.
+  useEffect(() => {
+    setCollapsed(new Set());
+  }, [search, kindFilter]);
 
   const stats = {
     topics: data.topics.length,
@@ -95,8 +100,8 @@ export function QuestionBankStudio({
     if (!a || !b) return;
     void run(
       Promise.all([
-        supabase.from(table).update({ sort_order: j }).eq("id", a.id),
-        supabase.from(table).update({ sort_order: i }).eq("id", b.id),
+        supabase.from(table).update({ sort_order: b.sort_order }).eq("id", a.id),
+        supabase.from(table).update({ sort_order: a.sort_order }).eq("id", b.id),
       ]).then((r) => ({ error: r.find((x) => x.error)?.error ?? null })),
     );
   };
@@ -225,7 +230,7 @@ export function QuestionBankStudio({
               />
               <input
                 className="w-full rounded-xl border border-input bg-card py-2 pl-9 pr-3 text-sm shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Tìm chủ đề hoặc nội dung câu hỏi…"
+                placeholder="Tìm chủ đề, câu hỏi hoặc lựa chọn trắc nghiệm…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -258,15 +263,37 @@ export function QuestionBankStudio({
               <Eye className="h-3.5 w-3.5" />
               Xem trước dạng ứng viên
             </button>
+            {isFiltering && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setKindFilter("all");
+                }}
+                className="h-9 rounded-xl border border-dashed border-border px-3 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+              >
+                Đặt lại bộ lọc
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-muted/30 px-3.5 py-2.5">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">{deptName(deptKey)}</p>
               <p className="text-[11px] text-muted-foreground">
-                {deptTopics.length} chủ đề ·{" "}
-                {deptTopics.reduce((n, t) => n + questionsOf(t.id).length, 0)} câu hỏi
-                {term && ` · đang tìm "${search.trim()}"`}
+                {isFiltering ? (
+                  <>
+                    {filteredTopics.length}/{deptTopics.length} chủ đề · {matchingCount} câu hỏi
+                    khớp
+                    {search.trim() && ` · từ khóa "${search.trim()}"`}
+                    {kindFilter !== "all" && ` · loại "${QUESTION_KINDS[kindFilter]}"`}
+                  </>
+                ) : (
+                  <>
+                    {deptTopics.length} chủ đề ·{" "}
+                    {deptTopics.reduce((n, t) => n + questionsOf(t.id).length, 0)} câu hỏi
+                  </>
+                )}
               </p>
             </div>
             <button
@@ -279,25 +306,26 @@ export function QuestionBankStudio({
             </button>
           </div>
 
-          {shownTopics.length === 0 ? (
+          {filteredTopics.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
               {deptTopics.length === 0
                 ? "Ban này chưa có chủ đề nào. Bấm “Chủ đề mới” ở trên để bắt đầu."
                 : "Không có chủ đề nào khớp bộ lọc hiện tại."}
             </p>
           ) : (
-            shownTopics.map((topic) => (
+            filteredTopics.map((item) => (
               <TopicAccordionCard
-                key={topic.id}
-                topic={topic}
-                questions={questionsOf(topic.id)}
-                index={deptTopics.indexOf(topic)}
+                key={item.topic.id}
+                topic={item.topic}
+                questions={item.matchingQuestions}
+                totalQuestionsCount={item.allQuestions.length}
+                index={deptTopics.indexOf(item.topic)}
                 total={deptTopics.length}
-                expanded={!collapsed.has(topic.id)}
-                onToggle={() => toggleTopic(topic.id)}
+                expanded={!collapsed.has(item.topic.id)}
+                onToggle={() => toggleTopic(item.topic.id)}
                 onMove={(from, to) => swap(deptTopics, from, to, "recruitment_topics")}
                 onMoveQuestion={(from, to) =>
-                  swap(questionsOf(topic.id), from, to, "recruitment_questions")
+                  swap(item.matchingQuestions, from, to, "recruitment_questions")
                 }
                 run={run}
                 confirm={confirm}
