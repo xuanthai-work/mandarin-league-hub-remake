@@ -16,7 +16,7 @@ import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import type React from "react";
 import { LEADER_TONE, POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
-import { DongSonDrum as DongSon, LacBirds, FLOCK_H } from "@/components/portal/PassOrnaments";
+import { LacBirds, FLOCK_H } from "@/components/portal/PassOrnaments";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -176,13 +176,26 @@ function MemberDashboard() {
       <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
     </label>
   );
-  /** Đông Sơn drum watermark: the member-supplied photo, blended into the porcelain. */
+  /**
+   * Đông Sơn drum watermark: the member-supplied photo, blended into the porcelain.
+   * The horizontal pass pins it to the bottom-left corner (behind the info list),
+   * while the vertical pass keeps it centred.
+   */
   const drumWatermark = (
-    <div aria-hidden className="pointer-events-none absolute inset-0 flex select-none items-center justify-center">
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute select-none ${
+        layout === "v"
+          ? "inset-0 flex items-center justify-center"
+          : "-bottom-20 -left-20 md:-bottom-40 md:-left-40"
+      }`}
+    >
       <img
         src="/dongson-gold.png"
         alt=""
-        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[92%] aspect-square" : "h-44 w-44 md:h-[22rem] md:w-[22rem]"}`}
+        className={`tml-drum shrink-0 select-none rounded-full object-cover ${
+          layout === "v" ? "w-[92%] aspect-square" : "h-60 w-60 md:h-[30rem] md:w-[30rem]"
+        }`}
       />
     </div>
   );
@@ -356,11 +369,6 @@ function MemberDashboard() {
             <div aria-hidden className="tml-pass-pattern pointer-events-none absolute inset-0" />
             <div aria-hidden className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40" />
             {drumWatermark}
-            {layout === "h" && (
-              <span aria-hidden className="pointer-events-none absolute inset-0 select-none opacity-40">
-                <DongSon className="-bottom-24 -left-24 h-64 w-64 md:-bottom-48 md:-left-48 md:h-[32rem] md:w-[32rem]" />
-              </span>
-            )}
             <LacBirds flock={FLOCK_H} className="md:scale-[1.8]" />
             {layout === "h" ? <>
             {/* header */}
