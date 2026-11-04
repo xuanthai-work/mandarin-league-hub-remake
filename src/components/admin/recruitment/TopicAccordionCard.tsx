@@ -98,102 +98,118 @@ export function TopicAccordionCard({
         topic.visible ? "" : "opacity-60"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={expanded}
-          aria-label={expanded ? "Thu gọn chủ đề" : "Mở rộng chủ đề"}
-          className={iconBtn}
-        >
-          <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "" : "-rotate-90"}`} />
-        </button>
-        <input
-          className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-semibold"
-          defaultValue={topic.title}
-          aria-label="Tên chủ đề"
-          onBlur={(e) => {
-            const title = e.target.value.trim();
-            if (title && title !== topic.title) void save({ title });
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => (editingPositions ? setEditingPositions(false) : openPositions())}
-          aria-label="Chỉnh sửa vị trí áp dụng"
-          aria-expanded={editingPositions}
-          title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
-          className={`flex max-w-[240px] items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
-            editingPositions
-              ? "border-primary/40 bg-primary/10 text-primary"
-              : "border-transparent bg-secondary text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
-          }`}
-        >
-          <span className="min-w-0 truncate">
-            {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
-          </span>
-          <ChevronDown
-            aria-hidden
-            className={`h-3 w-3 shrink-0 transition-transform ${editingPositions ? "rotate-180" : ""}`}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={expanded}
+            aria-label={expanded ? "Thu gọn chủ đề" : "Mở rộng chủ đề"}
+            className={iconBtn}
+          >
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${expanded ? "" : "-rotate-90"}`}
+            />
+          </button>
+          <input
+            className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-semibold"
+            defaultValue={topic.title}
+            aria-label="Tên chủ đề"
+            onBlur={(e) => {
+              const title = e.target.value.trim();
+              if (title && title !== topic.title) void save({ title });
+            }}
           />
-        </button>
+        </div>
 
-        <span
-          className={`rounded-full px-2 py-0.5 text-[11px] ${
-            filtered ? "bg-primary/10 font-medium text-primary" : "bg-muted text-muted-foreground"
-          }`}
-        >
-          {filtered
-            ? `Hiển thị ${questions.length}/${totalQuestionsCount} câu`
-            : `${totalQuestionsCount} câu`}
-        </span>
-        <button
-          type="button"
-          className={iconBtn}
-          aria-label={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
-          title={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
-          onClick={() => void save({ visible: !topic.visible })}
-        >
-          {topic.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-        </button>
-        <button
-          type="button"
-          className={iconBtn}
-          aria-label="Đưa chủ đề lên"
-          disabled={index === 0}
-          onClick={() => onMove(index, index - 1)}
-        >
-          <ArrowUp className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconBtn}
-          aria-label="Đưa chủ đề xuống"
-          disabled={index === total - 1}
-          onClick={() => onMove(index, index + 1)}
-        >
-          <ArrowDown className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
-          aria-label="Xóa chủ đề"
-          onClick={async () => {
-            if (
-              !(await confirm({
-                title: "Xóa chủ đề?",
-                description:
-                  "Toàn bộ câu hỏi trong chủ đề này cũng sẽ bị xóa. Thao tác không thể hoàn tác.",
-                confirmLabel: "Xóa chủ đề",
-                destructive: true,
-              }))
-            )
-              return;
-            void run(supabase.from("recruitment_topics").delete().eq("id", topic.id));
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <div className="flex items-center justify-between gap-1.5 pl-10 md:justify-end md:pl-0">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => (editingPositions ? setEditingPositions(false) : openPositions())}
+              aria-label="Chỉnh sửa vị trí áp dụng"
+              aria-expanded={editingPositions}
+              title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+              className={`flex min-w-0 max-w-[160px] items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors sm:max-w-[240px] ${
+                editingPositions
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-transparent bg-secondary text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+              }`}
+            >
+              <span className="min-w-0 truncate">
+                {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+              </span>
+              <ChevronDown
+                aria-hidden
+                className={`h-3 w-3 shrink-0 transition-transform ${editingPositions ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+                filtered ? "bg-primary/10 font-medium text-primary" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {filtered
+                ? `${questions.length}/${totalQuestionsCount} câu`
+                : `${totalQuestionsCount} câu`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              className={iconBtn}
+              aria-label={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
+              title={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
+              onClick={() => void save({ visible: !topic.visible })}
+            >
+              {topic.visible ? (
+                <Eye className="h-3.5 w-3.5" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5" />
+              )}
+            </button>
+            <button
+              type="button"
+              className={iconBtn}
+              aria-label="Đưa chủ đề lên"
+              disabled={index === 0}
+              onClick={() => onMove(index, index - 1)}
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className={iconBtn}
+              aria-label="Đưa chủ đề xuống"
+              disabled={index === total - 1}
+              onClick={() => onMove(index, index + 1)}
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
+              aria-label="Xóa chủ đề"
+              onClick={async () => {
+                if (
+                  !(await confirm({
+                    title: "Xóa chủ đề?",
+                    description:
+                      "Toàn bộ câu hỏi trong chủ đề này cũng sẽ bị xóa. Thao tác không thể hoàn tác.",
+                    confirmLabel: "Xóa chủ đề",
+                    destructive: true,
+                  }))
+                )
+                  return;
+                void run(supabase.from("recruitment_topics").delete().eq("id", topic.id));
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {editingPositions && (

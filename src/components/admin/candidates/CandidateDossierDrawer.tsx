@@ -325,7 +325,7 @@ function ProfileTab({ app, questions }: { app: CandidateApp; questions: Candidat
             const value = answers[qid] ?? "";
             return (
               <div key={qid} className="rounded-xl border border-border/70 p-3">
-                <p className="text-[11px] font-medium text-muted-foreground">
+                <p className="whitespace-pre-line text-[11px] font-medium text-muted-foreground">
                   {q?.prompt ?? "Câu hỏi đã xóa"}
                 </p>
                 {q?.kind === "file" && typeof value === "string" ? (

@@ -178,7 +178,7 @@ export function CandidatePreviewDrawer({
                             : null;
                         return (
                           <div key={q.id}>
-                            <p className="text-sm font-medium text-foreground">
+                            <p className="whitespace-pre-line text-sm font-medium text-foreground">
                               {q.prompt}
                               {q.required && <span className="ml-1 text-destructive">*</span>}
                             </p>

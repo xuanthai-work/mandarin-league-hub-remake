@@ -1,4 +1,4 @@
-import { useState, type ClipboardEvent } from "react";
+import { useEffect, useRef, useState, type ClipboardEvent } from "react";
 import { Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { QUESTION_KINDS, canonicalKind } from "@/lib/recruitment";
 import { parsePastedOptions } from "@/lib/recruitment-choice";
@@ -23,6 +23,12 @@ import {
 const iconBtn =
   "grid h-7 w-7 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30";
 
+/** Browsers with `field-sizing: content` grow the prompt box on their own. */
+const FIELD_SIZING =
+  typeof CSS !== "undefined" &&
+  typeof CSS.supports === "function" &&
+  CSS.supports("field-sizing", "content");
+
 /** One editable question: prompt, kind, required flag, visibility/delete actions and option tags. */
 export function QuestionItemCard({
   question,
@@ -36,8 +42,23 @@ export function QuestionItemCard({
   confirm: Confirm;
 }) {
   const [draft, setDraft] = useState("");
+  const promptRef = useRef<HTMLTextAreaElement>(null);
   const kind = canonicalKind(question.kind);
   const choice = isChoiceKind(question.kind);
+
+  // Keep the prompt box exactly as tall as its wrapped text: CSS `field-sizing`
+  // grows it natively, and the JS pass covers browsers without that support.
+  const growPrompt = () => {
+    if (FIELD_SIZING) return;
+    const el = promptRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+  useEffect(() => {
+    const id = requestAnimationFrame(growPrompt);
+    return () => cancelAnimationFrame(id);
+  }, [question.prompt]);
 
   const save = (
     patch: Partial<Pick<StudioQuestion, "prompt" | "kind" | "options" | "required" | "visible">>,
@@ -73,75 +94,94 @@ export function QuestionItemCard({
         question.visible ? "" : "opacity-60"
       }`}
     >
-      <div className="flex flex-wrap items-start gap-2">
-        <span className="mt-2 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-secondary text-[11px] font-semibold text-muted-foreground">
-          {index + 1}
-        </span>
-        <input
-          className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm"
-          defaultValue={question.prompt}
-          aria-label="Nội dung câu hỏi"
-          placeholder="Nội dung câu hỏi"
-          onBlur={(e) => {
-            const prompt = e.target.value.trim();
-            if (prompt && prompt !== question.prompt) void save({ prompt });
-          }}
-        />
-        <Select value={kind} onValueChange={(next) => void save({ kind: next })}>
-          <SelectTrigger
-            aria-label="Loại câu hỏi"
-            className="h-9 w-[150px] rounded-lg border-input bg-background text-xs font-medium shadow-none"
-          >
-            <SelectValue>{QUESTION_KINDS[kind]}</SelectValue>
-          </SelectTrigger>
-          <SelectContent className={SELECT_CONTENT}>
-            {Object.entries(QUESTION_KINDS).map(([k, v]) => (
-              <SelectItem key={k} value={k} className="text-xs">
-                {v}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <label className="flex h-9 items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <Switch
-            checked={question.required}
-            onCheckedChange={(required) => void save({ required })}
-            aria-label="Bắt buộc trả lời"
-          />
-          Bắt buộc
-        </label>
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            className={iconBtn}
-            aria-label={question.visible ? "Ẩn câu hỏi" : "Hiện câu hỏi"}
-            onClick={() => void save({ visible: !question.visible })}
-          >
-            {question.visible ? (
-              <Eye className="h-3.5 w-3.5" />
-            ) : (
-              <EyeOff className="h-3.5 w-3.5" />
-            )}
-          </button>
-          <button
-            type="button"
-            className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
-            aria-label="Xóa câu hỏi"
-            onClick={async () => {
-              if (
-                !(await confirm({
-                  title: "Xóa câu hỏi?",
-                  description: "Câu hỏi này sẽ bị xóa khỏi chủ đề và không thể khôi phục.",
-                  confirmLabel: "Xóa câu hỏi",
-                  destructive: true,
-                }))
-              )
-                return;
-              void run(supabase.from("recruitment_questions").delete().eq("id", question.id));
+      <div className="flex flex-col gap-2 md:flex-row md:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-secondary text-[11px] font-semibold text-muted-foreground">
+            {index + 1}
+          </span>
+          <textarea
+            ref={promptRef}
+            rows={1}
+            className="field-sizing-content min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-input bg-background px-3 py-1.5 text-sm leading-snug"
+            defaultValue={question.prompt}
+            aria-label="Nội dung câu hỏi"
+            placeholder="Nội dung câu hỏi"
+            onInput={growPrompt}
+            onKeyDown={(e) => {
+              // Enter adds a line, so save with Cmd/Ctrl+Enter instead.
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
             }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+            onBlur={(e) => {
+              const prompt = e.target.value.trim();
+              if (prompt && prompt !== question.prompt) void save({ prompt });
+            }}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pl-8 md:justify-end md:pl-0">
+          <div className="flex items-center gap-2">
+            <Select value={kind} onValueChange={(next) => void save({ kind: next })}>
+              <SelectTrigger
+                aria-label="Loại câu hỏi"
+                className="h-8 w-[130px] rounded-lg border-input bg-background text-xs font-medium shadow-none sm:w-[150px]"
+              >
+                <SelectValue>{QUESTION_KINDS[kind]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className={SELECT_CONTENT}>
+                {Object.entries(QUESTION_KINDS).map(([k, v]) => (
+                  <SelectItem key={k} value={k} className="text-xs">
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <label className="flex h-8 cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Switch
+                checked={question.required}
+                onCheckedChange={(required) => void save({ required })}
+                aria-label="Bắt buộc trả lời"
+              />
+              Bắt buộc
+            </label>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              className={iconBtn}
+              aria-label={question.visible ? "Ẩn câu hỏi" : "Hiện câu hỏi"}
+              onClick={() => void save({ visible: !question.visible })}
+            >
+              {question.visible ? (
+                <Eye className="h-3.5 w-3.5" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5" />
+              )}
+            </button>
+            <button
+              type="button"
+              className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
+              aria-label="Xóa câu hỏi"
+              onClick={async () => {
+                if (
+                  !(await confirm({
+                    title: "Xóa câu hỏi?",
+                    description: "Câu hỏi này sẽ bị xóa khỏi chủ đề và không thể khôi phục.",
+                    confirmLabel: "Xóa câu hỏi",
+                    destructive: true,
+                  }))
+                )
+                  return;
+                void run(supabase.from("recruitment_questions").delete().eq("id", question.id));
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -184,7 +224,7 @@ export function QuestionItemCard({
             <button
               type="button"
               onClick={addOption}
-              className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 text-xs font-medium transition-colors hover:bg-accent"
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 text-xs font-medium transition-colors hover:bg-accent"
             >
               <Plus className="h-3 w-3" />
               Thêm

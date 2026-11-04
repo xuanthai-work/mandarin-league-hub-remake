@@ -30,7 +30,7 @@ async function loadOpen() {
 
 const input = "mt-1 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 const Label = ({ children, required }: { children: React.ReactNode; required?: boolean }) => (
-  <span className="text-sm font-medium">{children}{required && <span className="text-destructive"> *</span>}</span>
+  <span className="whitespace-pre-line text-sm font-medium">{children}{required && <span className="text-destructive"> *</span>}</span>
 );
 
 export function ApplicationForm({ onLookup, department }: { onLookup?: (code: string) => void; department?: string | undefined } = {}) {
