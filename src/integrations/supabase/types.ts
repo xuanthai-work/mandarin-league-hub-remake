@@ -1488,6 +1488,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           delta: number
+          evidence_paths: string[]
           id: string
           kind: string
           member_id: string
@@ -1500,6 +1501,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delta: number
+          evidence_paths?: string[]
           id?: string
           kind?: string
           member_id: string
@@ -1512,6 +1514,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delta?: number
+          evidence_paths?: string[]
           id?: string
           kind?: string
           member_id?: string
@@ -1923,6 +1926,7 @@ export type Database = {
       _apply_points: {
         Args: {
           _delta: number
+          _evidence?: string[]
           _kind: string
           _member: string
           _reason: string
@@ -1934,6 +1938,7 @@ export type Database = {
       adjust_points: {
         Args: {
           _delta: number
+          _evidence?: string[]
           _kind: string
           _member: string
           _reason: string

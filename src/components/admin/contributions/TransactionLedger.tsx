@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, ReceiptText, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Paperclip, ReceiptText, Search, X } from "lucide-react";
 
 import {
   Select,
@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { POINT_KIND } from "@/lib/points";
 import { deptName } from "@/lib/recruitment";
 import { cn } from "@/lib/utils";
@@ -68,6 +69,77 @@ function Delta({ value }: { value: number }) {
   );
 }
 
+/** Last path segment is the original file name (URL-encoded when uploaded). */
+function fileName(path: string) {
+  const name = path.split("/").pop() ?? "Tệp minh chứng";
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return name;
+  }
+}
+
+/**
+ * Proof files of one adjustment. Signed URLs are created on demand because the
+ * `point-evidence` bucket is private and only admins may read it.
+ */
+function EvidenceLinks({ paths }: { paths: string[] }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [links, setLinks] = useState<{ name: string; url: string }[] | null>(null);
+
+  const toggle = async () => {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
+    if (links || busy) return;
+    setBusy(true);
+    const resolved: { name: string; url: string }[] = [];
+    for (const path of paths) {
+      const { data } = await supabase.storage
+        .from("point-evidence")
+        .createSignedUrl(path, 300);
+      if (data?.signedUrl) resolved.push({ name: fileName(path), url: data.signedUrl });
+    }
+    setLinks(resolved);
+    setBusy(false);
+  };
+
+  return (
+    <span className="mt-1 flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => void toggle()}
+        aria-expanded={open}
+        className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+      >
+        <Paperclip aria-hidden className="h-3 w-3" />
+        {paths.length} minh chứng
+      </button>
+      {open &&
+        (busy ? (
+          <span className="text-[9px] text-muted-foreground">Đang mở…</span>
+        ) : links && links.length > 0 ? (
+          links.map((link) => (
+            <a
+              key={link.url}
+              href={link.url}
+              target="_blank"
+              rel="noreferrer"
+              className="max-w-[180px] truncate rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium text-primary underline-offset-2 hover:underline"
+            >
+              {link.name}
+            </a>
+          ))
+        ) : (
+          <span className="text-[9px] text-muted-foreground">Không mở được tệp</span>
+        ))}
+    </span>
+  );
+}
+
 /**
  * Accounting-style ledger: every points change is searchable by reason, member,
  * department, kind and approver, and always shows the balance after the change.
@@ -106,6 +178,7 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
         !term ||
         txn.reason.toLowerCase().includes(term) ||
         txn.actor_name.toLowerCase().includes(term) ||
+        (txn.evidence_paths ?? []).some((path) => fileName(path).toLowerCase().includes(term)) ||
         (member?.full_name.toLowerCase().includes(term) ?? false) ||
         (member?.member_code.toLowerCase().includes(term) ?? false);
       return (
@@ -146,6 +219,7 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
       "Ban",
       "Loại",
       "Nội dung",
+      "Minh chứng",
       "Biến động",
       "Số dư",
       "Người thực hiện",
@@ -159,6 +233,7 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
         member ? deptName(member.department) : "",
         kindLabel(txn.kind),
         txn.reason,
+        (txn.evidence_paths ?? []).map(fileName).join(" | "),
         signed(txn.delta),
         txn.balance_after,
         txn.actor_name || "Hệ thống",
@@ -350,7 +425,7 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
                     "Thời gian",
                     "Thành viên",
                     "Loại",
-                    "Nội dung / Căn cứ",
+                    "Nội dung / Minh chứng",
                     "Biến động",
                     "Số dư",
                     "Người ghi nhận",
@@ -391,6 +466,9 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
                           <p className="mt-0.5 font-mono text-[9px] text-muted-foreground">
                             Nhiệm vụ #{txn.task_id.slice(0, 8)}
                           </p>
+                        )}
+                        {txn.evidence_paths && txn.evidence_paths.length > 0 && (
+                          <EvidenceLinks paths={txn.evidence_paths} />
                         )}
                       </td>
                       <td className="px-3 py-2.5">
@@ -434,6 +512,9 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
                     )}
                   </div>
                   <p className="text-[11px] leading-relaxed text-foreground">{txn.reason}</p>
+                  {txn.evidence_paths && txn.evidence_paths.length > 0 && (
+                    <EvidenceLinks paths={txn.evidence_paths} />
+                  )}
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
                     <span>
                       Số dư sau:{" "}

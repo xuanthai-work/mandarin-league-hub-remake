@@ -75,16 +75,23 @@ function PointsPage() {
 
   const history = useQuery({
     queryKey: ["points-history"],
-    queryFn: async () =>
-      ((
-        await supabase
-          .from("point_transactions")
-          .select(
-            "id, member_id, delta, reason, kind, task_id, balance_after, actor_name, created_at",
-          )
-          .order("created_at", { ascending: false })
-          .limit(LEDGER_LIMIT)
-      ).data ?? []) as PointTxn[],
+    queryFn: async () => {
+      const base =
+        "id, member_id, delta, reason, kind, task_id, balance_after, actor_name, created_at";
+      const first = await supabase
+        .from("point_transactions")
+        .select(`${base}, evidence_paths`)
+        .order("created_at", { ascending: false })
+        .limit(LEDGER_LIMIT);
+      if (!first.error) return (first.data ?? []) as PointTxn[];
+      // Older database without `evidence_paths`: keep the ledger usable, just without files.
+      const fallback = await supabase
+        .from("point_transactions")
+        .select(base)
+        .order("created_at", { ascending: false })
+        .limit(LEDGER_LIMIT);
+      return (fallback.data ?? []) as PointTxn[];
+    },
   });
 
   // Month-over-month KPIs need the previous month even when the ledger's 500-row window is full.

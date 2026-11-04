@@ -22,6 +22,8 @@ export type PointTxn = {
   balance_after: number;
   actor_name: string;
   created_at: string;
+  /** Storage paths of the proof files attached to a manual adjustment. */
+  evidence_paths?: string[] | null;
 };
 
 /** Narrow projection used by the KPI strip (current + previous month). */
