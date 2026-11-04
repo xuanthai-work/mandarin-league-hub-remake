@@ -35,7 +35,7 @@ interface TransactionLedgerProps {
 
 const PAGE_SIZE = 15;
 const trigger =
-  "h-9 w-full rounded-xl border-input bg-card text-[11px] font-medium shadow-xs sm:w-[155px]";
+  "h-9 w-full rounded-xl border-input bg-card text-[11px] font-normal shadow-xs sm:w-[155px]";
 
 function KindBadge({ kind }: { kind: string }) {
   const meta = KIND_META[kind] ?? {

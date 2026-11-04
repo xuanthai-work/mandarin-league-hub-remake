@@ -75,7 +75,7 @@ function CoursesAdmin() {
           <input placeholder="Tìm mã, tên, email, SĐT…" className={`${inp} max-w-xs`} value={q} onChange={(e) => setQ(e.target.value)} />
           {cid && <button onClick={() => setCid("")} className="rounded-full bg-accent px-3 text-xs font-semibold text-primary">Đang lọc theo chương trình ✕</button>}
           <Select value={kid || "all"} onValueChange={(v) => setKid(v === "all" ? "" : v)}>
-            <SelectTrigger aria-label="Lọc theo lớp HSK" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectTrigger aria-label="Lọc theo lớp HSK" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
               <SelectValue>{kid ? (classes?.find((c) => c.id === kid)?.name ?? "Lớp HSK") : "Mọi lớp HSK cụ thể"}</SelectValue>
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -84,7 +84,7 @@ function CoursesAdmin() {
             </SelectContent>
           </Select>
           <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
-            <SelectTrigger aria-label="Lọc theo cấp độ" className="h-9 w-[130px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectTrigger aria-label="Lọc theo cấp độ" className="h-9 w-[130px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
               <SelectValue>{lv ? `HSK ${lv}` : "Mọi cấp độ"}</SelectValue>
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -93,7 +93,7 @@ function CoursesAdmin() {
             </SelectContent>
           </Select>
           <Select value={stF || "all"} onValueChange={(v) => setStF(v === "all" ? "" : v)}>
-            <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+            <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
               <SelectValue>{stF ? (ENROLL_STATUS[stF]?.label ?? stF) : "Mọi trạng thái"}</SelectValue>
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -140,7 +140,7 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
       <div className="mt-3 text-xs text-muted-foreground">
         <span className="block">Giảng viên phụ trách chính (hiện trên trang khóa)</span>
         <Select value={s.lead_teacher_id ?? "auto"} onValueChange={(v) => onSave({ lead_teacher_id: v === "auto" ? null : v })}>
-          <SelectTrigger aria-label="Giảng viên phụ trách chính" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none">
+          <SelectTrigger aria-label="Giảng viên phụ trách chính" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none">
             <SelectValue>{(teachers ?? []).find((t) => t.id === s.lead_teacher_id)?.full_name ?? "Tự động (nổi bật / xếp đầu)"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -168,7 +168,7 @@ function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pendi
       })}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Select value={fee.fee_type} onValueChange={(v) => setFee({ ...fee, fee_type: v as "free" | "paid" })}>
-          <SelectTrigger aria-label="Loại học phí" className="h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+          <SelectTrigger aria-label="Loại học phí" className="h-9 w-full rounded-lg border-input bg-background text-sm shadow-none">
             <SelectValue>{fee.fee_type === "free" ? "Miễn phí" : "Có phí"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -218,7 +218,7 @@ function ReviewDialog({ r, setting, onClose, onDone }: { r: Enrollment; setting:
           <div className="block text-sm">
             <span className="block">Kết quả</span>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger aria-label="Kết quả duyệt đơn" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+              <SelectTrigger aria-label="Kết quả duyệt đơn" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none">
                 <SelectValue>{ENROLL_STATUS[status]?.label ?? status}</SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl">

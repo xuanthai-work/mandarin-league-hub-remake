@@ -26,7 +26,7 @@ const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
 
 /** Shadcn select styled to match the drawer inputs (and float above the z-[60] drawer). */
-const DRAWER_SELECT_TRIGGER = "mt-1 flex h-9.5 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
+const DRAWER_SELECT_TRIGGER = "mt-1 flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm font-normal shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
 const DRAWER_SELECT_CONTENT = "z-[70] max-h-64 rounded-xl border-border bg-popover/95 backdrop-blur-md shadow-xl";
 const DRAWER_SELECT_ITEM = "rounded-lg text-sm cursor-pointer py-2 focus:bg-accent focus:text-accent-foreground";
 
@@ -333,7 +333,7 @@ function MembersPage() {
         </div>
 
         <Select value={deptFilter || "all"} onValueChange={(v) => setDeptFilter(v === "all" ? "" : v)}>
-          <SelectTrigger aria-label="Lọc theo ban" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo ban" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>
               {deptFilter
                 ? `Ban: ${deptName(deptFilter)} (${cntDept(deptFilter)})`
@@ -362,7 +362,7 @@ function MembersPage() {
         </Select>
 
         <Select value={tab} onValueChange={(v) => setTab(v as UnifiedStatus)}>
-          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[210px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[210px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>
               {`${UNIFIED_STATUS_MAP[tab].label} (${cntStatus(tab)})`}
             </SelectValue>

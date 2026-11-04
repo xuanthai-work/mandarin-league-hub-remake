@@ -22,7 +22,7 @@ interface TaskFilterToolbarProps {
 }
 
 const trigger =
-  "h-9 w-full rounded-xl border-input bg-card text-xs font-medium shadow-xs sm:w-[180px]";
+  "h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[180px]";
 
 export function TaskFilterToolbar({
   filters,
@@ -50,7 +50,7 @@ export function TaskFilterToolbar({
             onChange={(e) => patch({ q: e.target.value })}
             placeholder="Tìm tiêu đề, mô tả, người thực hiện…"
             aria-label="Tìm kiếm nhiệm vụ"
-            className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-8 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           {filters.q && (
             <button

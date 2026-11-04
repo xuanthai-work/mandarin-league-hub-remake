@@ -126,7 +126,7 @@ function ListTab() {
       <label className="text-xs text-muted-foreground">Slug (đường dẫn)<input className={`${inp} mt-1`} value={f.slug} onChange={(e) => setF({ ...f, slug: e.target.value })} /></label>
       <div className="text-xs text-muted-foreground">Loại hoạt động
         <Select value={f.category} onValueChange={(v) => setF({ ...f, category: v as ActivityCategory })}>
-          <SelectTrigger aria-label="Loại hoạt động" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{CATEGORY_LABEL[f.category]}</SelectValue></SelectTrigger>
+          <SelectTrigger aria-label="Loại hoạt động" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{CATEGORY_LABEL[f.category]}</SelectValue></SelectTrigger>
           <SelectContent className="rounded-xl">{CATS.map((k) => <SelectItem key={k} value={k} className="text-sm">{CATEGORY_LABEL[k]}</SelectItem>)}</SelectContent>
         </Select>
       </div>
@@ -142,7 +142,7 @@ function ListTab() {
       <label className="text-xs text-muted-foreground">Kết thúc<input type="datetime-local" className={`${inp} mt-1`} value={toLocal(f.end_time)} onChange={(e) => setF({ ...f, end_time: fromLocal(e.target.value) })} /></label>
       <div className="text-xs text-muted-foreground">Hình thức
         <Select value={f.location_type} onValueChange={(v) => setF({ ...f, location_type: v as LocationType })}>
-          <SelectTrigger aria-label="Hình thức" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{LOCATION_LABEL[f.location_type]}</SelectValue></SelectTrigger>
+          <SelectTrigger aria-label="Hình thức" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{LOCATION_LABEL[f.location_type]}</SelectValue></SelectTrigger>
           <SelectContent className="rounded-xl">{Object.entries(LOCATION_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent>
         </Select>
       </div>
@@ -168,7 +168,7 @@ function ListTab() {
       {canPublish ? (
         <div className="text-xs text-muted-foreground">Trạng thái hiển thị
           <Select value={f.manual_status} onValueChange={(v) => setF({ ...f, manual_status: v as ManualStatus })}>
-            <SelectTrigger aria-label="Trạng thái hiển thị" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{MANUAL_LABEL[f.manual_status]}</SelectValue></SelectTrigger>
+            <SelectTrigger aria-label="Trạng thái hiển thị" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{MANUAL_LABEL[f.manual_status]}</SelectValue></SelectTrigger>
             <SelectContent className="rounded-xl">{Object.entries(MANUAL_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -189,7 +189,7 @@ function ListTab() {
         <button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo hoạt động</button>
         <input className="rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Tìm theo tên…" value={q} onChange={(e) => setQ(e.target.value)} />
         <Select value={st || "all"} onValueChange={(v) => setSt(v === "all" ? "" : v)}>
-          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{st ? ((MANUAL_LABEL as Record<string, string>)[st] ?? st) : "Mọi trạng thái"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -227,7 +227,7 @@ function RegStatusPicker({ options, onPick }: { options: Record<string, string>;
   const [value, setValue] = useState("");
   return (
     <Select value={value} onValueChange={(v) => { setValue(""); onPick(v); }}>
-      <SelectTrigger aria-label="Đổi trạng thái đơn" className="h-8 w-[150px] rounded-lg border-input bg-background text-xs shadow-none">
+      <SelectTrigger aria-label="Đổi trạng thái đơn" className="h-9 w-[150px] rounded-lg border-input bg-background text-xs shadow-none">
         <SelectValue placeholder="Đổi trạng thái…" />
       </SelectTrigger>
       <SelectContent className="rounded-xl">
@@ -257,7 +257,7 @@ function RegsTab() {
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         <Select value={act || "all"} onValueChange={(v) => setAct(v === "all" ? "" : v)}>
-          <SelectTrigger aria-label="Lọc theo hoạt động" className="h-9 w-[220px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo hoạt động" className="h-9 w-[220px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{act ? title(act) : "Tất cả hoạt động"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -266,7 +266,7 @@ function RegsTab() {
           </SelectContent>
         </Select>
         <Select value={st || "all"} onValueChange={(v) => setSt(v === "all" ? "" : v)}>
-          <SelectTrigger aria-label="Lọc theo trạng thái đơn" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo trạng thái đơn" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{st ? (REG_STATUS[st] ?? st) : "Mọi trạng thái"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">

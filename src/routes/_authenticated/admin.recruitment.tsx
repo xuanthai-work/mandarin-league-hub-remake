@@ -47,7 +47,7 @@ const DAY_MS = 86_400_000;
 
 /** Shadcn select styled to match the inputs and float above the z-[60] drawer. */
 const DRAWER_SELECT_TRIGGER =
-  "mt-1 flex h-8 w-full items-center justify-between rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
+  "mt-1 flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-normal shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
 const DRAWER_SELECT_CONTENT =
   "z-[70] max-h-64 rounded-xl border-border bg-popover/95 backdrop-blur-md shadow-xl";
 const DRAWER_SELECT_ITEM =
@@ -567,7 +567,7 @@ function ActiveCampaignHero({
         <Select value={status} onValueChange={(v) => void changeStatus(v)}>
           <SelectTrigger
             aria-label="Đổi trạng thái đợt tuyển"
-            className="-ml-1 h-8 w-auto gap-1.5 rounded-lg border-0 bg-transparent px-2 text-[13px] font-semibold text-foreground shadow-none hover:bg-accent focus:ring-0 data-[state=open]:bg-accent [@media(pointer:coarse)]:h-11"
+            className="-ml-1 h-9 w-auto gap-1.5 rounded-lg border-0 bg-transparent px-2 text-[13px] font-semibold text-foreground shadow-none hover:bg-accent focus:ring-0 data-[state=open]:bg-accent [@media(pointer:coarse)]:h-11"
           >
             <SelectValue>
               <span className="flex items-center gap-1.5">

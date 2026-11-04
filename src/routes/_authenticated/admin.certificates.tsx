@@ -138,7 +138,7 @@ function CertificatesPage() {
       <div className="flex flex-wrap gap-2">
         <input className={`${inp} max-w-xs`} placeholder="Tìm mã, tên, chương trình…" value={q} onChange={(e) => setQ(e.target.value)} />
         <Select value={type || "all"} onValueChange={(v) => setType(v === "all" ? "" : v)}>
-          <SelectTrigger aria-label="Lọc theo loại chứng nhận" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo loại chứng nhận" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{type ? (CERT_TYPES[type] ?? type) : "Tất cả loại"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -147,7 +147,7 @@ function CertificatesPage() {
           </SelectContent>
         </Select>
         <Select value={status || "all"} onValueChange={(v) => setStatus(v === "all" ? "" : v)}>
-          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{status === "VALID" ? "Hợp lệ" : status === "REVOKED" ? "Đã thu hồi" : "Tất cả trạng thái"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -208,7 +208,7 @@ function CertificatesPage() {
                     setEdit({ ...edit, member_id: m?.id ?? null, holder_name: m ? m.full_name : edit.holder_name });
                   }}
                 >
-                  <SelectTrigger aria-label="Chọn thành viên" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none">
+                  <SelectTrigger aria-label="Chọn thành viên" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none">
                     <SelectValue>{members?.find((m) => m.id === edit.member_id)?.full_name ?? "— Người nhận bên ngoài —"}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -219,7 +219,7 @@ function CertificatesPage() {
               </div>
               <label className="text-sm">Họ tên người nhận *<input className={inp} value={edit.holder_name} onChange={(e) => setEdit({ ...edit, holder_name: e.target.value })} /></label>
               <label className="text-sm sm:col-span-2">Chương trình / Khóa học / Sự kiện *<input className={inp} value={edit.program_name} onChange={(e) => setEdit({ ...edit, program_name: e.target.value })} /></label>
-              <div className="text-sm"><span className="block">Loại chứng nhận</span><Select value={edit.certificate_type} onValueChange={(v) => setEdit({ ...edit, certificate_type: v })}><SelectTrigger aria-label="Loại chứng nhận" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{CERT_TYPES[edit.certificate_type] ?? edit.certificate_type}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(CERT_TYPES).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
+              <div className="text-sm"><span className="block">Loại chứng nhận</span><Select value={edit.certificate_type} onValueChange={(v) => setEdit({ ...edit, certificate_type: v })}><SelectTrigger aria-label="Loại chứng nhận" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{CERT_TYPES[edit.certificate_type] ?? edit.certificate_type}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(CERT_TYPES).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
               <label className="text-sm">Xếp loại / Vai trò<input className={inp} value={edit.classification} onChange={(e) => setEdit({ ...edit, classification: e.target.value })} placeholder="Hoàn thành, Xuất sắc, Trưởng ban…" /></label>
               <label className="text-sm">Ngày cấp<input type="date" className={inp} value={edit.issue_date} onChange={(e) => setEdit({ ...edit, issue_date: e.target.value })} /></label>
               <label className="text-sm">Hiệu lực đến (bỏ trống = vĩnh viễn)<input type="date" className={inp} value={edit.expiry_date ?? ""} onChange={(e) => setEdit({ ...edit, expiry_date: e.target.value || null })} /></label>

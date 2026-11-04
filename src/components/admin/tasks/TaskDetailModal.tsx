@@ -62,7 +62,7 @@ const POINT_OPTIONS = [
 ];
 
 const field =
-  "w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-xl border border-input bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20";
 const label = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
 /** Grow a textarea to fit its content, up to a comfortable maximum. */
@@ -214,29 +214,24 @@ export function TaskDetailModal({
         transition={{ type: "spring", damping: 26, stiffness: 320 }}
         className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl lg:max-w-5xl xl:max-w-6xl"
       >
-        <header className="flex shrink-0 items-start gap-2 border-b border-border/70 px-5 py-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", tone.tag)}>
-                {deptTag(group.department)}
-              </span>
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                  TASK_STATUS[group.status]?.className ?? "bg-secondary text-foreground",
-                )}
-              >
-                {TASK_STATUS[group.status]?.label ?? group.status}
-              </span>
-              {group.assignees.length > 1 && (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                  {group.assignees.length} người thực hiện
-                </span>
+        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border/70 px-5 py-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", tone.tag)}>
+              {deptTag(group.department)}
+            </span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                TASK_STATUS[group.status]?.className ?? "bg-secondary text-foreground",
               )}
-            </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Chi tiết &amp; chỉnh sửa nhiệm vụ
-            </p>
+            >
+              {TASK_STATUS[group.status]?.label ?? group.status}
+            </span>
+            {group.assignees.length > 1 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                {group.assignees.length} người thực hiện
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -257,128 +252,128 @@ export function TaskDetailModal({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={200}
-                className="w-full rounded-xl border border-transparent bg-transparent px-1 py-1 text-lg font-bold leading-snug text-foreground transition-colors hover:border-border focus:border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-xl border border-transparent bg-transparent px-2.5 py-1.5 text-sm font-semibold leading-normal text-foreground transition-colors hover:border-border focus:border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </label>
 
-            <label className="block space-y-1.5">
-              <span className={label}>Mô tả / yêu cầu công việc</span>
-              <textarea
-                ref={textRef}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={3000}
-                rows={3}
-                placeholder="Mô tả kết quả cần đạt, minh chứng cần nộp…"
-                className={`${field} resize-none leading-relaxed`}
-              />
-            </label>
-
-            <section className="space-y-2">
-              {attachments.length > 0 && (
-                <ul className="space-y-1.5">
-                  {attachments.map((doc) => (
-                    <li
-                      key={doc.id}
-                      className="flex items-center gap-2 rounded-xl border border-border bg-secondary/30 px-3 py-2"
-                    >
-                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                        <FileText aria-hidden className="h-3.5 w-3.5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium text-foreground">{doc.title}</p>
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {shortUrl(doc.url)}
-                        </p>
-                      </div>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Mở ${doc.title}`}
-                        title="Mở tài liệu"
-                        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+            <div className="space-y-2">
+              <label className="block space-y-1.5">
+                <span className={label}>Mô tả / yêu cầu công việc</span>
+                <textarea
+                  ref={textRef}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={3000}
+                  rows={3}
+                  placeholder="Mô tả kết quả cần đạt, minh chứng cần nộp…"
+                  className={`${field} resize-none leading-relaxed`}
+                />
+              </label>
+              <section className="space-y-2">
+                {attachments.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {attachments.map((doc) => (
+                      <li
+                        key={doc.id}
+                        className="flex items-center gap-2 rounded-xl border border-border bg-secondary/30 px-3 py-2"
                       >
-                        <ExternalLink aria-hidden className="h-3.5 w-3.5" />
-                      </a>
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <FileText aria-hidden className="h-3.5 w-3.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-medium text-foreground">{doc.title}</p>
+                          <p className="truncate text-[10px] text-muted-foreground">
+                            {shortUrl(doc.url)}
+                          </p>
+                        </div>
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Mở ${doc.title}`}
+                          title="Mở tài liệu"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+                        >
+                          <ExternalLink aria-hidden className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(doc.id)}
+                          aria-label={`Gỡ tài liệu ${doc.title}`}
+                          title="Gỡ tài liệu"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <X aria-hidden className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {addingDoc ? (
+                  <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-2.5">
+                    <input
+                      autoFocus
+                      value={docUrl}
+                      onChange={(e) => setDocUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addAttachment();
+                        }
+                      }}
+                      aria-label="URL tài liệu"
+                      placeholder="https://drive.google.com/…, https://docs.google.com/…"
+                      className={field}
+                    />
+                    <input
+                      value={docTitle}
+                      onChange={(e) => setDocTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addAttachment();
+                        }
+                      }}
+                      aria-label="Tên tài liệu"
+                      maxLength={120}
+                      placeholder="Tên tài liệu (tùy chọn): Brief chiến dịch, File mẫu thiết kế…"
+                      className={field}
+                    />
+                    {docErr && <p className="text-[11px] text-destructive">{docErr}</p>}
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => removeAttachment(doc.id)}
-                        aria-label={`Gỡ tài liệu ${doc.title}`}
-                        title="Gỡ tài liệu"
-                        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        onClick={addAttachment}
+                        className="rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                       >
-                        <X aria-hidden className="h-3.5 w-3.5" />
+                        Thêm
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {addingDoc ? (
-                <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-2.5">
-                  <input
-                    autoFocus
-                    value={docUrl}
-                    onChange={(e) => setDocUrl(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addAttachment();
-                      }
-                    }}
-                    aria-label="URL tài liệu"
-                    placeholder="https://drive.google.com/…, https://docs.google.com/…"
-                    className={field}
-                  />
-                  <input
-                    value={docTitle}
-                    onChange={(e) => setDocTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addAttachment();
-                      }
-                    }}
-                    aria-label="Tên tài liệu"
-                    maxLength={120}
-                    placeholder="Tên tài liệu (tùy chọn): Brief chiến dịch, File mẫu thiết kế…"
-                    className={field}
-                  />
-                  {docErr && <p className="text-[11px] text-destructive">{docErr}</p>}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={addAttachment}
-                      className="rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                    >
-                      Thêm
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAddingDoc(false);
-                        setDocErr("");
-                        setDocUrl("");
-                        setDocTitle("");
-                      }}
-                      className="rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-accent"
-                    >
-                      Hủy
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddingDoc(false);
+                          setDocErr("");
+                          setDocUrl("");
+                          setDocTitle("");
+                        }}
+                        className="rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-accent"
+                      >
+                        Hủy
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setAddingDoc(true)}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
-                >
-                  <Paperclip aria-hidden className="h-3.5 w-3.5" />
-                  Thêm tài liệu liên quan
-                </button>
-              )}
-            </section>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAddingDoc(true)}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+                  >
+                    <Paperclip aria-hidden className="h-3.5 w-3.5" />
+                    Thêm tài liệu liên quan
+                  </button>
+                )}
+              </section>
+            </div>
 
             {reported.length > 0 && (
               <section className="space-y-2">
@@ -459,25 +454,30 @@ export function TaskDetailModal({
               </ul>
             </div>
 
-            <div className="space-y-1.5">
-              <span className={label}>Mức độ ưu tiên</span>
-              <Select value={priority} onValueChange={(v) => setPriority(toPriority(v))}>
-                <SelectTrigger aria-label="Mức độ ưu tiên" className="h-9 rounded-xl text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {Object.entries(PRIORITY).map(([key, text]) => (
-                    <SelectItem key={key} value={key} className="text-xs">
-                      {text}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <span className={label}>Mức độ ưu tiên</span>
+                <Select value={priority} onValueChange={(v) => setPriority(toPriority(v))}>
+                  <SelectTrigger
+                    aria-label="Mức độ ưu tiên"
+                    className="h-9 rounded-xl border-input text-xs font-normal"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {Object.entries(PRIORITY).map(([key, text]) => (
+                      <SelectItem key={key} value={key} className="text-xs">
+                        {text}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-1.5">
-              <span className={label}>Hạn chót</span>
-              <DatePicker value={due} onChange={setDue} placeholder="Chọn hạn" />
+              <div className="space-y-1.5">
+                <span className={label}>Hạn chót</span>
+                <DatePicker value={due} onChange={setDue} placeholder="Chọn hạn" />
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -503,7 +503,7 @@ export function TaskDetailModal({
                       onClick={() => setPoints(opt.value)}
                       aria-pressed={active}
                       className={cn(
-                        "flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2 text-xs transition-colors",
+                        "flex h-9 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs transition-colors",
                         active
                           ? "border-primary bg-primary font-semibold text-primary-foreground shadow-xs"
                           : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -512,7 +512,7 @@ export function TaskDetailModal({
                       <span className="font-semibold">{opt.label}</span>
                       <span
                         className={cn(
-                          "text-[10px]",
+                          "whitespace-nowrap text-[10px]",
                           active ? "text-primary-foreground/80" : "text-muted-foreground",
                         )}
                       >

@@ -54,7 +54,7 @@ export function TaskReviewDialog({ title, busy, onClose, onConfirm }: TaskReview
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="VD: Minh chứng chưa đúng yêu cầu, cần bổ sung link và số liệu cụ thể."
-            className="w-full resize-y rounded-xl border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full resize-y rounded-xl border border-input bg-background px-3 py-2 text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           <span className="block text-right text-[10px] text-muted-foreground">
             {note.length.toLocaleString("vi-VN")} / 1.000 ký tự

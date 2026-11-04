@@ -73,7 +73,7 @@ function TeachersPage() {
       <div className="flex flex-wrap gap-2">
         <input className={`${inp} max-w-xs`} placeholder="Tìm tên hoặc chức danh…" value={q} onChange={(e) => setQ(e.target.value)} />
         <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
-          <SelectTrigger aria-label="Lọc theo cấp HSK" className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-medium shadow-xs">
+          <SelectTrigger aria-label="Lọc theo cấp HSK" className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{lv ? `HSK ${lv}` : "Tất cả cấp HSK"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -148,8 +148,8 @@ function TeachersPage() {
               })}</div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="text-sm"><span className="block">Loại giáo viên</span><Select value={edit.teacher_type} onValueChange={(v) => setEdit({ ...edit, teacher_type: v as TeacherType })}><SelectTrigger aria-label="Loại giáo viên" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{TEACHER_TYPE_LABEL[edit.teacher_type] ?? edit.teacher_type}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
-              <div className="text-sm"><span className="block">Trạng thái hồ sơ</span><Select value={edit.status} onValueChange={(v) => setEdit({ ...edit, status: v as TeacherStatus })}><SelectTrigger aria-label="Trạng thái hồ sơ" className="mt-1 h-9.5 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{TEACHER_STATUS_LABEL[edit.status] ?? edit.status}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(TEACHER_STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
+              <div className="text-sm"><span className="block">Loại giáo viên</span><Select value={edit.teacher_type} onValueChange={(v) => setEdit({ ...edit, teacher_type: v as TeacherType })}><SelectTrigger aria-label="Loại giáo viên" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{TEACHER_TYPE_LABEL[edit.teacher_type] ?? edit.teacher_type}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
+              <div className="text-sm"><span className="block">Trạng thái hồ sơ</span><Select value={edit.status} onValueChange={(v) => setEdit({ ...edit, status: v as TeacherStatus })}><SelectTrigger aria-label="Trạng thái hồ sơ" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"><SelectValue>{TEACHER_STATUS_LABEL[edit.status] ?? edit.status}</SelectValue></SelectTrigger><SelectContent className="rounded-xl">{Object.entries(TEACHER_STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>)}</SelectContent></Select></div>
               <label className="block text-sm">Thứ tự<input type="number" className={inp} value={edit.sort_order} onChange={(e) => setEdit({ ...edit, sort_order: Number(e.target.value) })} /></label>
             </div>
             <div className="flex flex-wrap gap-4">

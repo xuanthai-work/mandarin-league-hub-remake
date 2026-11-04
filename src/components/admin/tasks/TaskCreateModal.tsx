@@ -26,8 +26,6 @@ import { PRIORITY } from "@/lib/points";
 import { deptName } from "@/lib/recruitment";
 import { cn } from "@/lib/utils";
 import {
-  PRIORITY_TONE,
-  deptTone,
   initials,
   serializeDescription,
   shortUrl,
@@ -45,12 +43,10 @@ interface TaskCreateModalProps {
 type Priority = "low" | "medium" | "high";
 
 const field =
-  "w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-xl border border-input bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20";
 const label = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 /** Selects must float above the z-[70] dialog (their default content layer is z-50). */
 const SELECT_CONTENT = "z-[95] rounded-xl";
-
-const PRIORITIES: Priority[] = ["low", "medium", "high"];
 
 const POINT_OPTIONS = [
   { value: 5, label: "5đ", hint: "Việc nhỏ" },
@@ -137,8 +133,16 @@ export function TaskCreateModal({
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
-  const selectAllInPool = () =>
-    setAssigneeIds((prev) => [...new Set([...prev, ...pool.map((m) => m.id)])]);
+  const isAllInPoolSelected = pool.length > 0 && pool.every((m) => assigneeIds.includes(m.id));
+  const toggleSelectAllPool = () => {
+    if (pool.length === 0) return;
+    if (isAllInPoolSelected) {
+      const poolIds = new Set(pool.map((m) => m.id));
+      setAssigneeIds((prev) => prev.filter((id) => !poolIds.has(id)));
+    } else {
+      setAssigneeIds((prev) => [...new Set([...prev, ...pool.map((m) => m.id)])]);
+    }
+  };
 
   const newDocId = () =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -257,128 +261,128 @@ export function TaskCreateModal({
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={200}
                 placeholder="VD: Viết bài recap sự kiện Trung Thu"
-                className="w-full rounded-xl border border-transparent bg-transparent px-1 py-1 text-lg font-bold leading-snug text-foreground transition-colors placeholder:font-medium placeholder:text-muted-foreground hover:border-border focus:border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-xl border border-transparent bg-transparent px-2.5 py-1.5 text-sm font-semibold leading-normal text-foreground transition-colors placeholder:font-normal placeholder:text-muted-foreground hover:border-border focus:border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </label>
 
-            <label className="block space-y-1.5">
-              <span className={label}>Mô tả / yêu cầu công việc</span>
-              <textarea
-                ref={textRef}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={3000}
-                rows={3}
-                placeholder="Mô tả kết quả cần đạt, minh chứng cần nộp…"
-                className={`${field} resize-none leading-relaxed`}
-              />
-            </label>
-
-            <section className="space-y-2">
-              {attachments.length > 0 && (
-                <ul className="space-y-1.5">
-                  {attachments.map((doc) => (
-                    <li
-                      key={doc.id}
-                      className="flex items-center gap-2 rounded-xl border border-border bg-secondary/30 px-3 py-2"
-                    >
-                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                        <FileText aria-hidden className="h-3.5 w-3.5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium text-foreground">{doc.title}</p>
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {shortUrl(doc.url)}
-                        </p>
-                      </div>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Mở ${doc.title}`}
-                        title="Mở tài liệu"
-                        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+            <div className="space-y-2">
+              <label className="block space-y-1.5">
+                <span className={label}>Mô tả / yêu cầu công việc</span>
+                <textarea
+                  ref={textRef}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={3000}
+                  rows={3}
+                  placeholder="Mô tả kết quả cần đạt, minh chứng cần nộp…"
+                  className={`${field} resize-none leading-relaxed`}
+                />
+              </label>
+              <section className="space-y-2">
+                {attachments.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {attachments.map((doc) => (
+                      <li
+                        key={doc.id}
+                        className="flex items-center gap-2 rounded-xl border border-border bg-secondary/30 px-3 py-2"
                       >
-                        <ExternalLink aria-hidden className="h-3.5 w-3.5" />
-                      </a>
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <FileText aria-hidden className="h-3.5 w-3.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-medium text-foreground">{doc.title}</p>
+                          <p className="truncate text-[10px] text-muted-foreground">
+                            {shortUrl(doc.url)}
+                          </p>
+                        </div>
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Mở ${doc.title}`}
+                          title="Mở tài liệu"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+                        >
+                          <ExternalLink aria-hidden className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(doc.id)}
+                          aria-label={`Gỡ tài liệu ${doc.title}`}
+                          title="Gỡ tài liệu"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <X aria-hidden className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {addingDoc ? (
+                  <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-2.5">
+                    <input
+                      autoFocus
+                      value={docUrl}
+                      onChange={(e) => setDocUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addAttachment();
+                        }
+                      }}
+                      aria-label="URL tài liệu"
+                      placeholder="https://drive.google.com/…, https://docs.google.com/…"
+                      className={field}
+                    />
+                    <input
+                      value={docTitle}
+                      onChange={(e) => setDocTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addAttachment();
+                        }
+                      }}
+                      aria-label="Tên tài liệu"
+                      maxLength={120}
+                      placeholder="Tên tài liệu (tùy chọn): Brief chiến dịch, File mẫu thiết kế…"
+                      className={field}
+                    />
+                    {docErr && <p className="text-[11px] text-destructive">{docErr}</p>}
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => removeAttachment(doc.id)}
-                        aria-label={`Gỡ tài liệu ${doc.title}`}
-                        title="Gỡ tài liệu"
-                        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        onClick={addAttachment}
+                        className="rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                       >
-                        <X aria-hidden className="h-3.5 w-3.5" />
+                        Thêm
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {addingDoc ? (
-                <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-2.5">
-                  <input
-                    autoFocus
-                    value={docUrl}
-                    onChange={(e) => setDocUrl(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addAttachment();
-                      }
-                    }}
-                    aria-label="URL tài liệu"
-                    placeholder="https://drive.google.com/…, https://docs.google.com/…"
-                    className={field}
-                  />
-                  <input
-                    value={docTitle}
-                    onChange={(e) => setDocTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addAttachment();
-                      }
-                    }}
-                    aria-label="Tên tài liệu"
-                    maxLength={120}
-                    placeholder="Tên tài liệu (tùy chọn): Brief chiến dịch, File mẫu thiết kế…"
-                    className={field}
-                  />
-                  {docErr && <p className="text-[11px] text-destructive">{docErr}</p>}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={addAttachment}
-                      className="rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                    >
-                      Thêm
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAddingDoc(false);
-                        setDocErr("");
-                        setDocUrl("");
-                        setDocTitle("");
-                      }}
-                      className="rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-accent"
-                    >
-                      Hủy
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddingDoc(false);
+                          setDocErr("");
+                          setDocUrl("");
+                          setDocTitle("");
+                        }}
+                        className="rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-accent"
+                      >
+                        Hủy
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setAddingDoc(true)}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
-                >
-                  <Paperclip aria-hidden className="h-3.5 w-3.5" />
-                  Thêm tài liệu liên quan
-                </button>
-              )}
-            </section>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAddingDoc(true)}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+                  >
+                    <Paperclip aria-hidden className="h-3.5 w-3.5" />
+                    Thêm tài liệu liên quan
+                  </button>
+                )}
+              </section>
+            </div>
           </div>
 
           {/* Right: assignment & attributes */}
@@ -392,47 +396,6 @@ export function TaskCreateModal({
                   </span>
                 )}
               </span>
-
-              {selectedMembers.length > 0 && (
-                <ul className="custom-scrollbar max-h-44 space-y-1 overflow-y-auto rounded-xl border border-primary/25 bg-primary/5 p-1.5">
-                  {selectedMembers.map((m) => (
-                    <li
-                      key={m.id}
-                      className="flex items-center gap-2 rounded-lg bg-card px-2 py-1.5"
-                    >
-                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                        {initials(m.full_name)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-semibold text-foreground">
-                          {m.full_name}
-                        </p>
-                        <p className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
-                          <span className="font-mono">{m.member_code}</span>
-                          <span className="text-border">·</span>
-                          <span
-                            className={cn(
-                              "rounded-full px-1.5 py-0.5 font-semibold",
-                              deptTone(m.department).tag,
-                            )}
-                          >
-                            {deptName(m.department)}
-                          </span>
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleAssignee(m.id)}
-                        aria-label={`Bỏ chọn ${m.full_name}`}
-                        title="Bỏ chọn"
-                        className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
 
               <div className="grid gap-2 sm:grid-cols-[140px_1fr]">
                 <Select
@@ -481,28 +444,17 @@ export function TaskCreateModal({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                <span className="text-muted-foreground">{pool.length} thành viên phù hợp</span>
-                <div className="flex items-center gap-2">
+              {pool.length > 0 && (
+                <div className="flex justify-end text-[11px]">
                   <button
                     type="button"
-                    onClick={selectAllInPool}
-                    disabled={pool.length === 0}
-                    className="font-medium text-primary underline underline-offset-2 disabled:opacity-50"
+                    onClick={toggleSelectAllPool}
+                    className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
                   >
-                    Chọn tất cả ({pool.length})
+                    {isAllInPoolSelected ? "Bỏ chọn tất cả" : `Chọn tất cả (${pool.length})`}
                   </button>
-                  {assigneeIds.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setAssigneeIds([])}
-                      className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                    >
-                      Bỏ chọn tất cả
-                    </button>
-                  )}
                 </div>
-              </div>
+              )}
 
               <div className="custom-scrollbar max-h-52 overflow-y-auto rounded-xl border border-border">
                 {pool.length === 0 && (
@@ -519,7 +471,7 @@ export function TaskCreateModal({
                       onClick={() => toggleAssignee(m.id)}
                       aria-pressed={checked}
                       className={cn(
-                        "flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left text-xs transition-colors last:border-0",
+                        "flex w-full items-center gap-2.5 border-b border-border px-3 py-2 text-left text-xs transition-colors last:border-0",
                         checked ? "bg-primary/10" : "hover:bg-accent/60",
                       )}
                     >
@@ -533,44 +485,61 @@ export function TaskCreateModal({
                       >
                         <Check className="h-3 w-3" />
                       </span>
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                         {initials(m.full_name)}
                       </span>
-                      <span className="truncate font-medium text-foreground">{m.full_name}</span>
-                      <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
-                        {m.member_code}
-                      </span>
-                      <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
-                        {deptName(m.department)}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-foreground">{m.full_name}</p>
+                        <p className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <span className="font-mono">{m.member_code}</span>
+                          <span className="text-border">·</span>
+                          <span className="truncate">{deptName(m.department)}</span>
+                        </p>
+                      </div>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <span className={label}>Mức độ ưu tiên</span>
-              <div className="grid grid-cols-3 gap-1.5">
-                {PRIORITIES.map((p) => {
-                  const active = priority === p;
-                  return (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <span className={label}>Mức độ ưu tiên</span>
+                <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+                  <SelectTrigger
+                    aria-label="Mức độ ưu tiên"
+                    className="h-9 rounded-xl border-input text-xs font-normal"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {Object.entries(PRIORITY).map(([key, text]) => (
+                      <SelectItem key={key} value={key} className="text-xs">
+                        {text}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className={label}>Hạn chót</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="min-w-0 flex-1">
+                    <DatePicker value={due} onChange={setDue} placeholder="Chọn hạn" />
+                  </div>
+                  {due && (
                     <button
-                      key={p}
                       type="button"
-                      onClick={() => setPriority(p)}
-                      aria-pressed={active}
-                      className={cn(
-                        "rounded-xl border px-2 py-2 text-xs font-semibold transition-colors",
-                        active
-                          ? cn("border-transparent", PRIORITY_TONE[p] ?? "bg-primary/10 text-primary")
-                          : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
-                      )}
+                      onClick={() => setDue("")}
+                      aria-label="Gỡ hạn chót"
+                      title="Gỡ hạn chót"
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
-                      {PRIORITY[p] ?? p}
+                      <X aria-hidden className="h-3.5 w-3.5" />
                     </button>
-                  );
-                })}
+                  )}
+                </div>
               </div>
             </div>
 
@@ -590,7 +559,7 @@ export function TaskCreateModal({
                       onClick={() => setPoints(opt.value)}
                       aria-pressed={active}
                       className={cn(
-                        "flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2 text-xs transition-colors",
+                        "flex h-9 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs transition-colors",
                         active
                           ? "border-primary bg-primary font-semibold text-primary-foreground shadow-xs"
                           : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -599,7 +568,7 @@ export function TaskCreateModal({
                       <span className="font-semibold">{opt.label}</span>
                       <span
                         className={cn(
-                          "text-[10px]",
+                          "whitespace-nowrap text-[10px]",
                           active ? "text-primary-foreground/80" : "text-muted-foreground",
                         )}
                       >
@@ -612,30 +581,9 @@ export function TaskCreateModal({
             </div>
 
             <div className="space-y-1.5">
-              <span className={label}>Hạn chót</span>
-              <div className="flex items-center gap-1.5">
-                <div className="min-w-0 flex-1">
-                  <DatePicker value={due} onChange={setDue} placeholder="Chọn hạn" />
-                </div>
-                {due && (
-                  <button
-                    type="button"
-                    onClick={() => setDue("")}
-                    aria-label="Gỡ hạn chót"
-                    title="Gỡ hạn chót"
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  >
-                    <X aria-hidden className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
               <span className={label}>Người giao việc</span>
               <p className="text-sm font-medium text-foreground">
-                {meLabel || "Tài khoản đang đăng nhập"}{" "}
-                <span className="text-[11px] font-normal text-muted-foreground">(tự động)</span>
+                {meLabel || "Tài khoản đang đăng nhập"}
               </p>
               <input
                 value={note}
@@ -654,14 +602,6 @@ export function TaskCreateModal({
               {err}
             </p>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
-          >
-            Hủy
-          </button>
           <button
             type="button"
             onClick={() => void create()}

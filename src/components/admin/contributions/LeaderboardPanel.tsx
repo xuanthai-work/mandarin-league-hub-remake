@@ -311,7 +311,7 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
         >
           <SelectTrigger
             aria-label="Lọc bảng vinh danh theo Ban"
-            className="h-8 w-[160px] rounded-xl border-input bg-card text-[11px] font-medium shadow-none"
+            className="h-9 w-[160px] rounded-xl border-input bg-card text-[11px] font-normal shadow-none"
           >
             <SelectValue>{dept ? deptName(dept) : "Mọi Ban"}</SelectValue>
           </SelectTrigger>

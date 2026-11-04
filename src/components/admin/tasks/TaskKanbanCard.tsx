@@ -1,11 +1,10 @@
-import { Check, Clock, ExternalLink, MessageCircle, RotateCcw, Trash2, Users } from "lucide-react";
+import { Check, Clock, ExternalLink, MessageCircle, RotateCcw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
   PRIORITY_TONE,
   deptTag,
   deptTone,
-  descriptionBody,
   dueBadgeTone,
   dueLabel,
   initials,
@@ -21,6 +20,7 @@ interface TaskKanbanCardProps {
   onOpen: () => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
+  /** Deletion now lives in TaskDetailModal; kept so the board can keep passing it. */
   onRemove: (group: GroupedTask) => void;
   onFilterPerson: (memberId: string) => void;
 }
@@ -33,7 +33,6 @@ export function TaskKanbanCard({
   onOpen,
   onApprove,
   onRequestRevision,
-  onRemove,
   onFilterPerson,
 }: TaskKanbanCardProps) {
   const tone = deptTone(group.department);
@@ -47,8 +46,6 @@ export function TaskKanbanCard({
   const names = group.assignees.map((a) => a.full_name);
   const visible = group.assignees.slice(0, MAX_AVATARS);
   const overflow = group.assignees.length - visible.length;
-  /** Documents live inside the description; keep them out of the card preview. */
-  const preview = descriptionBody(group.description);
 
   return (
     <article
@@ -63,56 +60,32 @@ export function TaskKanbanCard({
         }
       }}
       aria-label={`Xem chi tiết nhiệm vụ ${group.title}`}
-      className={cn(
-        "cursor-pointer rounded-2xl border p-3.5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
-        tone.card,
-      )}
+      className="cursor-pointer rounded-xl border border-border/80 bg-card p-3 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
     >
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* Top row: dept tag + priority */}
+      <div className="flex items-center gap-1.5">
         <span
-          className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", tone.tag)}
+          className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-medium", tone.tag)}
           title={group.department}
         >
           {deptTag(group.department)}
         </span>
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+            "rounded-md px-1.5 py-0.5 text-[10px] font-medium",
             PRIORITY_TONE[group.priority] ?? "bg-secondary text-secondary-foreground",
           )}
         >
           {priorityLabel(group.priority)}
         </span>
-        <span className="ml-auto rounded-full border border-gold/50 bg-gold-soft/50 px-2 py-0.5 text-[10px] font-bold text-primary-deep">
-          +{group.points}đ
-        </span>
       </div>
 
-      <h3 className="mt-2 text-sm font-semibold leading-snug text-foreground">{group.title}</h3>
-
-      {preview && (
-        <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
-          {preview}
-        </p>
-      )}
-
-      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium",
-            dueBadgeTone(group.due_on),
-          )}
-        >
-          <Clock aria-hidden className="h-3 w-3" />
-          {dueLabel(group.due_on, group.status)}
-        </span>
-        {group.assigned_by_name && (
-          <span className="truncate text-muted-foreground">Giao: {group.assigned_by_name}</span>
-        )}
-      </div>
+      <h3 className="mt-2 text-[13px] font-semibold leading-snug text-foreground">
+        {group.title}
+      </h3>
 
       {group.status === "revision" && revisionNote && (
-        <p className="mt-2 line-clamp-2 rounded-lg bg-destructive/5 px-2.5 py-1.5 text-[11px] text-destructive">
+        <p className="mt-2 line-clamp-2 rounded-lg bg-destructive/5 px-2 py-1 text-[10px] text-destructive">
           Làm lại: {revisionNote}
         </p>
       )}
@@ -167,52 +140,44 @@ export function TaskKanbanCard({
         </div>
       )}
 
+      {/* Footer: due date (left) | points + assignees (right) */}
       <div
-        className="mt-2.5 flex items-center justify-between gap-2"
+        className="mt-3 flex items-center justify-between gap-2 border-t border-border/50 pt-2"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex min-w-0 items-center gap-1.5" title={names.join(", ")}>
-          <div className="flex -space-x-2">
+        <span
+          className={cn(
+            "inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px]",
+            dueBadgeTone(group.due_on),
+          )}
+        >
+          <Clock aria-hidden className="h-3 w-3" />
+          {dueLabel(group.due_on, group.status)}
+        </span>
+
+        <div className="flex items-center gap-1.5">
+          <span className="shrink-0 rounded-md border border-gold/40 bg-gold-soft/40 px-1.5 py-0.5 text-[10px] font-bold text-primary-deep">
+            +{group.points}đ
+          </span>
+          <div className="flex -space-x-1.5" title={names.join(", ")}>
             {visible.map((assignee) => (
               <button
                 key={assignee.taskId}
                 type="button"
                 onClick={() => onFilterPerson(assignee.id)}
                 title={`${assignee.full_name} · ${assignee.member_code}`}
-                className="grid h-7 w-7 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary ring-2 ring-card transition-transform hover:-translate-y-0.5"
+                className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary ring-2 ring-card transition-transform hover:-translate-y-0.5"
               >
                 {initials(assignee.full_name)}
               </button>
             ))}
             {overflow > 0 && (
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-secondary text-[10px] font-bold text-muted-foreground ring-2 ring-card">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-secondary text-[9px] font-bold text-muted-foreground ring-2 ring-card">
                 +{overflow}
               </span>
             )}
           </div>
-          <span className="truncate text-[11px] text-muted-foreground">
-            {group.assignees.length > 1 ? (
-              <span className="inline-flex items-center gap-1">
-                <Users aria-hidden className="h-3 w-3" />
-                {group.assignees.length} người
-              </span>
-            ) : (
-              group.assignees[0]?.full_name
-            )}
-          </span>
         </div>
-
-        {group.status !== "done" && (
-          <button
-            type="button"
-            onClick={() => onRemove(group)}
-            aria-label={`Xóa nhiệm vụ ${group.title}`}
-            title="Xóa nhiệm vụ"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 aria-hidden className="h-3.5 w-3.5" />
-          </button>
-        )}
       </div>
     </article>
   );

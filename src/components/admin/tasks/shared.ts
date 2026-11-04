@@ -463,15 +463,20 @@ export function deptTone(department: string): DeptTone {
   return DEPT_PALETTE[hash % DEPT_PALETTE.length]!;
 }
 
-/** `#Học-thuật` style tag used on Kanban cards. */
-export const deptTag = (department: string) => `#${deptName(department).replace(/\s+/g, "-")}`;
+/** Department name tag used on Kanban cards and modals (natural text, no hashtag or hyphens). */
+export const deptTag = (department: string) => deptName(department);
 
-/** Deadline badge tint: red when overdue, amber today, calm blue otherwise. */
+/**
+ * Deadline tint (text-only, no background pill):
+ * - no due date: grey (text-muted-foreground)
+ * - overdue (< 0 days): red (text-rose-600)
+ * - due within 3 days (0..3): amber (text-amber-600)
+ * - more than 3 days out: sky blue (text-sky-600)
+ */
 export function dueBadgeTone(due: string | null) {
   const diff = dueDiff(due);
-  if (diff === null) return "bg-secondary text-muted-foreground";
-  if (diff < 0) return "bg-rose-500/15 text-rose-700 dark:text-rose-300";
-  if (diff === 0) return "bg-amber-500/20 text-amber-700 dark:text-amber-300";
-  if (diff <= 3) return "bg-sky-500/15 text-sky-700 dark:text-sky-300";
-  return "bg-secondary text-muted-foreground";
+  if (diff === null) return "text-muted-foreground";
+  if (diff < 0) return "text-rose-600 dark:text-rose-400 font-medium";
+  if (diff <= 3) return "text-amber-600 dark:text-amber-400 font-medium";
+  return "text-sky-600 dark:text-sky-400";
 }

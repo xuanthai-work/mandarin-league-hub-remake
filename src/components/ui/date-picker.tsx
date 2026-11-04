@@ -73,7 +73,7 @@ export function DatePicker({
           disabled={disabled}
           data-empty={!selectedDate}
           className={cn(
-            "h-8 w-full justify-between px-3 text-left text-xs font-normal data-[empty=true]:text-muted-foreground",
+            "h-9 w-full justify-between rounded-xl px-3 text-left text-xs font-normal shadow-xs border-input bg-transparent hover:bg-accent/50 cursor-pointer data-[empty=true]:text-muted-foreground",
             className,
           )}
         >

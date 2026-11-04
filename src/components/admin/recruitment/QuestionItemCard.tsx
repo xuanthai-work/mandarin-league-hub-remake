@@ -126,7 +126,7 @@ export function QuestionItemCard({
             <Select value={kind} onValueChange={(next) => void save({ kind: next })}>
               <SelectTrigger
                 aria-label="Loại câu hỏi"
-                className="h-8 w-[130px] rounded-lg border-input bg-background text-xs font-medium shadow-none sm:w-[150px]"
+                className="h-9 w-[130px] rounded-lg border-input bg-background text-xs font-normal shadow-none sm:w-[150px]"
               >
                 <SelectValue>{QUESTION_KINDS[kind]}</SelectValue>
               </SelectTrigger>
@@ -139,7 +139,7 @@ export function QuestionItemCard({
               </SelectContent>
             </Select>
 
-            <label className="flex h-8 cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <label className="flex h-9 cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Switch
                 checked={question.required}
                 onCheckedChange={(required) => void save({ required })}

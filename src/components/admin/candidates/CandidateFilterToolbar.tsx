@@ -26,7 +26,7 @@ interface CandidateFilterToolbarProps {
 }
 
 const trigger =
-  "h-9 w-full rounded-xl border-input bg-card text-xs font-medium shadow-xs sm:w-[185px]";
+  "h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[185px]";
 
 export function CandidateFilterToolbar({
   filters,
