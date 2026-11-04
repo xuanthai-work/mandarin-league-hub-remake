@@ -72,9 +72,6 @@ const UNIFIED_STATUS_MAP: Record<UnifiedStatus, { label: string; badge: string; 
 /** Filter order shown in the toolbar dropdown (full 5 states). */
 const FILTER_STATUS_ORDER: UnifiedStatus[] = ["active", "inactive", "on_leave", "suspended", "left"];
 
-/** Statuses offered when creating a member (only these two). */
-const CREATE_MEMBER_STATUSES: UnifiedStatus[] = ["inactive", "active"];
-
 /** The 3 statuses an admin may switch to by hand inside the edit drawer. */
 const EDIT_DRAWER_STATUS_BUTTONS: { value: UnifiedStatus; label: string; dot: string }[] = [
   { value: "active", label: "Đang hoạt động", dot: "bg-success" },
@@ -258,7 +255,11 @@ function MembersPage() {
   /** The fine-grained permission opens member profile creation/editing without granting account rights. */
   const permissions: string[] = access.data?.permissions ?? [];
   const canEditMembers = isAdmin || permissions.includes("members.edit");
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-members"] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin-members"] });
+    // A newly granted account makes the member assignable, so the task pickers must refetch too.
+    qc.invalidateQueries({ queryKey: ["task-members"] });
+  };
 
   const rotate = async (m: MemberRow) => {
     if (!confirm(`Làm mới mã QR của ${m.full_name}? Mã QR cũ sẽ không dùng được nữa.`)) return;
@@ -823,7 +824,7 @@ function NewMemberDrawer({ canCreateAccount, onClose, onChanged }: { canCreateAc
   const [v, setV] = useState({
     full_name: "", phone: "", email: "", department: "executive", position: positionsFor("executive")[0]!,
     withAccount: false, password: randomPassword(), access: "member" as AccessLevel,
-    permissions: PERMISSION_TEMPLATES.member as string[], status: "active" as UnifiedStatus, mustChange: true,
+    permissions: PERMISSION_TEMPLATES.member as string[], mustChange: true,
   });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [done, setDone] = useState(false);
   const set = (p: Partial<typeof v>) => setV((s) => ({ ...s, ...p }));
@@ -845,13 +846,14 @@ function NewMemberDrawer({ canCreateAccount, onClose, onChanged }: { canCreateAc
       if (canCreateAccount && v.withAccount) {
         if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) throw new Error("Email đăng nhập không hợp lệ.");
         if (v.password.length < 8) throw new Error("Mật khẩu tạm thời cần ít nhất 8 ký tự.");
-        await create({ data: { newMember: { full_name: v.full_name.trim(), phone: v.phone.trim() }, email, password: v.password, department: v.department, position: v.position, access: v.access, permissions: v.permissions, status: UNIFIED_ACCOUNT_STATUS[v.status], mustChange: v.mustChange } });
+        await create({ data: { newMember: { full_name: v.full_name.trim(), phone: v.phone.trim() }, email, password: v.password, department: v.department, position: v.position, access: v.access, permissions: v.permissions, status: UNIFIED_ACCOUNT_STATUS.active, mustChange: v.mustChange } });
         set({ email });
         setDone(true);
       } else {
         const { error } = await supabase.from("members").insert({
           full_name: v.full_name.trim(), phone: v.phone.trim(), email, department: v.department, position: v.position,
-          status: UNIFIED_MEMBER_STATUS[v.status],
+          // Every new profile starts active; the login account is granted separately.
+          status: UNIFIED_MEMBER_STATUS.active,
         });
         if (error) throw new Error(error.message);
         toast.success("Đã thêm hồ sơ thành viên");
@@ -959,7 +961,8 @@ function NewMemberDrawer({ canCreateAccount, onClose, onChanged }: { canCreateAc
           </section>
 
           <section className="space-y-3 border-t border-border/60 pt-5">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tài khoản & Trạng thái</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tài khoản đăng nhập</h3>
+            <p className="text-[11px] text-muted-foreground">Hồ sơ mới luôn được tạo ở trạng thái <strong className="font-semibold text-foreground">Đang hoạt động</strong>.</p>
             {canCreateAccount && (
               <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
                 <input type="checkbox" checked={v.withAccount} onChange={(e) => set({ withAccount: e.target.checked })} />
@@ -974,17 +977,6 @@ function NewMemberDrawer({ canCreateAccount, onClose, onChanged }: { canCreateAc
               </div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={v.mustChange} onChange={(e) => set({ mustChange: e.target.checked })} />Yêu cầu đổi mật khẩu khi đăng nhập lần đầu</label>
             </>}
-            <div>
-              <span className="block text-xs text-muted-foreground">Trạng thái thành viên</span>
-              <Select value={v.status} onValueChange={(val) => set({ status: val as UnifiedStatus })}>
-                <SelectTrigger aria-label="Trạng thái thành viên" className={DRAWER_SELECT_TRIGGER}>
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
-                <SelectContent className={DRAWER_SELECT_CONTENT}>
-                  {CREATE_MEMBER_STATUSES.map((s) => <SelectItem key={s} value={s} className={DRAWER_SELECT_ITEM}>{UNIFIED_STATUS_MAP[s].label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
           </section>
 
           {canCreateAccount && v.withAccount && (
