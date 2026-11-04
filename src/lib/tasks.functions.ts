@@ -86,3 +86,31 @@ export const updateTask = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/**
+ * Members a task may be assigned to: active profiles that already have an internal login account.
+ * Without an account the member cannot sign in, report evidence or earn points, so they never
+ * appear in the assignment picker. The admin client is used only for the account ids; the member
+ * list itself stays RLS-scoped (admins see every department, heads only their own).
+ */
+export const getAssignableMembers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: members, error }, { data: accounts }] = await Promise.all([
+      context.supabase
+        .from("members")
+        .select("id, full_name, member_code, department")
+        .eq("status", "active")
+        .order("full_name"),
+      supabaseAdmin.from("member_accounts").select("member_id, account_status"),
+    ]);
+    if (error) throw new Error(error.message);
+
+    const withLogin = new Set(
+      (accounts ?? [])
+        .filter((a) => a.account_status === "active" || a.account_status === "inactive")
+        .map((a) => a.member_id),
+    );
+    return (members ?? []).filter((m) => withLogin.has(m.id));
+  });
