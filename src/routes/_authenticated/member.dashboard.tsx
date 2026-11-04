@@ -444,9 +444,9 @@ function MemberDashboard() {
                     </div>
                   </dl>
                 </div>
-                <div className="flex h-full flex-col items-center justify-between pb-0.5 pt-0.5 md:justify-start md:gap-4 md:pb-0 md:pt-0">
+                <div className="flex h-full flex-col items-center justify-start gap-3 pb-0.5 pt-0.5 md:gap-4 md:pb-0 md:pt-0">
                   {avatarEl("h-[88px] w-[66px] md:h-[160px] md:w-[120px]")}
-                  {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số" className="mt-auto md:mt-0">
+                  {qr && <button type="button" onClick={() => setSheet("qr")} aria-label="Phóng to mã QR" title="Mã QR thư viện số">
                     <img src={qr} alt={`QR ${m.member_code}`} className="h-10 w-10 rounded-[4px] border border-gold/60 bg-white p-1 md:h-20 md:w-20 md:rounded-lg md:p-2" />
                   </button>}
                 </div>
