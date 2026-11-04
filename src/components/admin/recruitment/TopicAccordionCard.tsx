@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
-import { formatTopicPositions, parseTopicPositions } from "@/lib/recruitment";
+import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { formatTopicPositions, isDefaultPosition, parseTopicPositions } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { QuestionItemCard } from "./QuestionItemCard";
@@ -28,6 +28,7 @@ export function TopicAccordionCard({
   expanded,
   onToggle,
   onMove,
+  onDeletePosition,
   run,
   confirm,
 }: {
@@ -44,6 +45,8 @@ export function TopicAccordionCard({
   onToggle: () => void;
   /** Moves this topic to another index inside the department's topic list. */
   onMove: (from: number, to: number) => void;
+  /** Removes a saved custom position from every topic of the department. */
+  onDeletePosition: (position: string) => Promise<void>;
   run: Run;
   confirm: Confirm;
 }) {
@@ -56,8 +59,10 @@ export function TopicAccordionCard({
   ) => run(supabase.from("recruitment_topics").update(patch).eq("id", topic.id), ok);
   const filtered = questions.length !== totalQuestionsCount;
   const positions = parseTopicPositions(topic.position);
-  // Keep the topic's own positions selectable even if they are not in the department list yet.
-  const positionOptions = Array.from(new Set([...availablePositions, ...positions]));
+  // Keep the topic's own positions and anything just typed selectable before saving.
+  const positionOptions = Array.from(
+    new Set([...availablePositions, ...positions, ...positionDraft]),
+  );
 
   const openPositions = () => {
     setPositionDraft(positions);
@@ -75,6 +80,21 @@ export function TopicAccordionCard({
     if (!next) return;
     setPositionDraft((prev) => (prev.includes(next) ? prev : [...prev, next]));
     setCustomDraft("");
+  };
+
+  /** Drops a custom position from the draft, or from the whole department after confirming. */
+  const deletePosition = async (position: string) => {
+    setPositionDraft((prev) => prev.filter((p) => p !== position));
+    if (!availablePositions.includes(position)) return;
+    const ok = await confirm({
+      title: `Xóa vị trí "${position}"?`,
+      description:
+        "Vị trí này sẽ được gỡ khỏi tất cả các chủ đề thuộc phòng ban. Thao tác không thể hoàn tác.",
+      confirmLabel: "Xóa vị trí",
+      destructive: true,
+    });
+    if (!ok) return;
+    await onDeletePosition(position);
   };
 
   const savePositions = () => {
@@ -196,17 +216,53 @@ export function TopicAccordionCard({
             >
               Mọi vị trí
             </button>
-            {positionOptions.map((p) => (
-              <button
-                key={p}
-                type="button"
-                aria-pressed={positionDraft.includes(p)}
-                onClick={() => toggleDraft(p)}
-                className={positionPill(positionDraft.includes(p))}
-              >
-                {p}
-              </button>
-            ))}
+            {positionOptions.map((p) => {
+              const active = positionDraft.includes(p);
+              if (isDefaultPosition(topic.department, p)) {
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => toggleDraft(p)}
+                    className={positionPill(active)}
+                  >
+                    {p}
+                  </button>
+                );
+              }
+              return (
+                <span
+                  key={p}
+                  className={`inline-flex items-center rounded-full border text-[11px] font-medium transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => toggleDraft(p)}
+                    className="py-1 pl-2.5 pr-1"
+                  >
+                    {p}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Xóa vị trí ${p}`}
+                    title={`Xóa vị trí ${p}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void deletePosition(p);
+                    }}
+                    className="py-1 pl-0.5 pr-2 opacity-70 transition-opacity hover:opacity-100"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              );
+            })}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <input

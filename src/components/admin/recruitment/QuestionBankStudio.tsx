@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ChevronDown, Eye, Loader2, Plus, Search, Sparkles } from "lucide-react";
+import { ChevronDown, Eye, Loader2, Plus, Search, Sparkles, X } from "lucide-react";
 import {
   QUESTION_BANK,
   QUESTION_KINDS,
   deptName,
   formatTopicPositions,
+  isDefaultPosition,
   parseTopicPositions,
   positionsFor,
+  removePositionFromTopicString,
 } from "@/lib/recruitment";
 import { filterQuestionBank } from "@/lib/recruitment-question-search";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,6 +208,40 @@ export function QuestionBankStudio({
     setCustomPositionInput("");
   };
 
+  /** Removes a saved custom position from every topic of the selected department. */
+  const deleteDepartmentPosition = async (position: string) => {
+    const affected = deptTopics.filter((t) =>
+      parseTopicPositions(t.position).includes(position),
+    );
+    if (affected.length === 0) return;
+    await run(
+      Promise.all(
+        affected.map((t) =>
+          supabase
+            .from("recruitment_topics")
+            .update({ position: removePositionFromTopicString(t.position, position) })
+            .eq("id", t.id),
+        ),
+      ).then((r) => ({ error: r.find((x) => x.error)?.error ?? null })),
+      "Đã xóa vị trí.",
+    );
+  };
+
+  /** Drops a custom position from the draft, or from the department after confirming. */
+  const deleteSelectedPosition = async (position: string) => {
+    setSelectedPositions((prev) => prev.filter((p) => p !== position));
+    if (!availablePositions.includes(position)) return;
+    const ok = await confirm({
+      title: `Xóa vị trí "${position}"?`,
+      description:
+        "Vị trí này sẽ được gỡ khỏi tất cả các chủ đề thuộc phòng ban. Thao tác không thể hoàn tác.",
+      confirmLabel: "Xóa vị trí",
+      destructive: true,
+    });
+    if (!ok) return;
+    await deleteDepartmentPosition(position);
+  };
+
   const addTopic = (e: FormEvent) => {
     e.preventDefault();
     const title = newTopic.title.trim();
@@ -393,6 +429,7 @@ export function QuestionBankStudio({
                 expanded={!collapsed.has(item.topic.id)}
                 onToggle={() => toggleTopic(item.topic.id)}
                 onMove={(from, to) => swap(deptTopics, from, to, "recruitment_topics")}
+                onDeletePosition={deleteDepartmentPosition}
                 run={run}
                 confirm={confirm}
               />
@@ -457,17 +494,53 @@ export function QuestionBankStudio({
                 >
                   Mọi vị trí
                 </button>
-                {Array.from(new Set([...availablePositions, ...selectedPositions])).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    aria-pressed={selectedPositions.includes(p)}
-                    onClick={() => togglePosition(p)}
-                    className={positionPill(selectedPositions.includes(p))}
-                  >
-                    {p}
-                  </button>
-                ))}
+                {Array.from(new Set([...availablePositions, ...selectedPositions])).map((p) => {
+                  const active = selectedPositions.includes(p);
+                  if (isDefaultPosition(deptKey, p)) {
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => togglePosition(p)}
+                        className={positionPill(active)}
+                      >
+                        {p}
+                      </button>
+                    );
+                  }
+                  return (
+                    <span
+                      key={p}
+                      className={`inline-flex items-center rounded-full border text-xs font-medium transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => togglePosition(p)}
+                        className="py-1 pl-2.5 pr-1"
+                      >
+                        {p}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Xóa vị trí ${p}`}
+                        title={`Xóa vị trí ${p}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void deleteSelectedPosition(p);
+                        }}
+                        className="py-1 pl-0.5 pr-2 opacity-70 transition-opacity hover:opacity-100"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
               <div className="mt-2 flex gap-1.5">
                 <input

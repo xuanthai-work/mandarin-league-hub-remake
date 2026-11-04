@@ -72,6 +72,19 @@ export function formatTopicPositions(positions: string[]): string | null {
   return clean.length > 0 ? clean.join(", ") : null;
 }
 
+/** Whether a position is one of the fixed defaults of a department. */
+export function isDefaultPosition(dept: string | null | undefined, position: string): boolean {
+  return positionsFor(dept ?? "").includes(position);
+}
+
+/** Drops one position from a stored list, keeping the rest in order (`null` when empty). */
+export function removePositionFromTopicString(
+  raw: string | null | undefined,
+  positionToRemove: string,
+): string | null {
+  return formatTopicPositions(parseTopicPositions(raw).filter((p) => p !== positionToRemove));
+}
+
 /**
  * A topic applies to a choice when the department matches and the topic targets
  * either every position or one of the positions stored in its comma-separated list.
