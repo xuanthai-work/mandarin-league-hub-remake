@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Camera, Check, Copy, Download, Home, Lock, LogOut, Nfc, Pencil, RotateCcw, RotateCw, X } from "lucide-react";
+import { Camera, Check, Copy, Download, LayoutGrid, Lock, LogOut, Nfc, Pencil, RotateCcw, RotateCw, X } from "lucide-react";
 import { MyDepartment } from "@/components/portal/MyDepartment";
 import { MyBenefits } from "@/components/portal/MyBenefits";
 import QRCode from "qrcode";
@@ -16,6 +16,7 @@ import type React from "react";
 import { LEADER_TONE, POINT_KIND, PRIORITY, TASK_STATUS, TIERS, fmtDate, isLeader, tierOf } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
 import { LacBirds, FLOCK_H } from "@/components/portal/PassOrnaments";
+import { mainHomeUrl } from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -124,6 +125,12 @@ function MemberDashboard() {
   useEffect(() => { setCopied(false); }, [sheet]);
 
   const signOut = async () => { await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); navigate({ to: "/login", replace: true }); };
+  /** Sign out then land on the main TML website (full navigation when leaving the member portal). */
+  const signOutToLanding = async () => {
+    await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut();
+    const home = mainHomeUrl(window.location.host);
+    if (home) window.location.assign(home); else navigate({ to: "/", replace: true });
+  };
 
   if (me.isLoading) return <div className="portal-ai min-h-screen p-16 text-center portal-ink-muted">Đang tải…</div>;
   const m = me.data?.member;
@@ -601,8 +608,8 @@ function MemberDashboard() {
           {/* ===== Floating dock ===== */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/15 bg-white/5 p-1.5 backdrop-blur">
             <button type="button" onClick={downloadCard} className={dockItem} title="Tải thẻ ảnh"><Download className="h-4 w-4" />Tải thẻ</button>
-            <Link to="/admin" className={dockItem}><Home className="h-4 w-4" />Trang chủ</Link>
-            <button type="button" onClick={signOut} className={dockItem}><LogOut className="h-4 w-4" />Đăng xuất</button>
+            <Link to="/admin" className={dockItem}><LayoutGrid className="h-4 w-4" />Hệ thống</Link>
+            <button type="button" onClick={signOutToLanding} className={dockItem}><LogOut className="h-4 w-4" />Đăng xuất</button>
           </div>
         </>
       )}
