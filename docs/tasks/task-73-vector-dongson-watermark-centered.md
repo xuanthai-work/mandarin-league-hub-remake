@@ -36,6 +36,8 @@
 - [x] Trống đồng nằm chính giữa thẻ, căn tâm trên cả thẻ ngang và thẻ đứng, cả mặt trước và mặt sau.
 - [x] Thu nhỏ watermark để không đụng dải gradient header trên thẻ ngang: `h-40 w-40 md:h-[18rem] md:w-[18rem] md:translate-y-4` (mặt trước, hạ nhẹ xuống cho cân), `h-48 w-48 md:h-[18rem] md:w-[18rem]` (mặt sau), `w-[76%]`/`w-[84%]` cho thẻ đứng.
 - [x] Chim hạc không còn ở chính giữa; đã chuyển xuống góc dưới trái thẻ ngang với kích thước nhỏ, opacity thấp (desktop neo sát mép footer để không cắt qua dòng thông tin).
+- [x] Thẻ ngang trên desktop thu về `md:max-w-[40rem]` (640px) thay vì 832px, nên tỉ lệ thẻ gần chuẩn ID-1 (≈1.6) chứ không còn bị dài theo chiều ngang.
+- [x] Mã QR thẻ ngang nằm ngay dưới ảnh chân dung (cách 12px trên mobile, 16px trên desktop) thay vì bị đẩy xuống sát footer.
 - [x] `npx tsc --noEmit`: PASS
 - [x] `npm test`: PASS (136/136)
 - [x] `npm run build`: PASS

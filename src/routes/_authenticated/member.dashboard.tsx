@@ -357,7 +357,7 @@ function MemberDashboard() {
           <div className={`flip-scene mt-4 flex w-full min-w-0 justify-center`}>
             <div className={layout === "v"
               ? "w-full min-w-0 max-w-[min(24rem,calc(100vw-2rem))] md:max-w-[36rem]"
-              : "w-full min-w-0 max-w-[min(26rem,calc(100vw-2rem))] md:max-w-[52rem]"}>
+              : "w-full min-w-0 max-w-[min(26rem,calc(100vw-2rem))] md:max-w-[40rem]"}>
         {/* The pass no longer tilts or rotates in 3D (desktop mirrors the phone
             cross-fade), so the old hover-tilt pointer handlers are gone. */}
         <div
