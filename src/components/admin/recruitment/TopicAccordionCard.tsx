@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { formatTopicPositions, isDefaultPosition, parseTopicPositions } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
-import { Switch } from "@/components/ui/switch";
 import { QuestionItemCard } from "./QuestionItemCard";
 import { type Confirm, type Run, type StudioQuestion, type StudioTopic } from "./types";
 
@@ -148,14 +147,15 @@ export function TopicAccordionCard({
             ? `Hiển thị ${questions.length}/${totalQuestionsCount} câu`
             : `${totalQuestionsCount} câu`}
         </span>
-        <label className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-          <Switch
-            checked={topic.visible}
-            onCheckedChange={(visible) => void save({ visible })}
-            aria-label="Hiển thị chủ đề"
-          />
-          Hiện
-        </label>
+        <button
+          type="button"
+          className={iconBtn}
+          aria-label={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
+          title={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
+          onClick={() => void save({ visible: !topic.visible })}
+        >
+          {topic.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+        </button>
         <button
           type="button"
           className={iconBtn}

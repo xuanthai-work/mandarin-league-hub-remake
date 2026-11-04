@@ -102,7 +102,7 @@ export function QuestionItemCard({
             ))}
           </SelectContent>
         </Select>
-        <label className="flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground">
+        <label className="flex h-9 items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <Switch
             checked={question.required}
             onCheckedChange={(required) => void save({ required })}
@@ -190,35 +190,6 @@ export function QuestionItemCard({
               Thêm
             </button>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            Mục “Khác” luôn có sẵn khi ứng viên trả lời, không cần thêm vào danh sách.
-          </p>
-          {question.options.length > 0 && (
-            <div className="space-y-1 rounded-lg border border-dashed border-border p-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Xem trước · {kind === "multi" ? "chọn nhiều" : "chọn một"}
-              </p>
-              {question.options.slice(0, 3).map((option) => (
-                <span
-                  key={option}
-                  className="flex items-center justify-between gap-1.5 rounded-md border border-border/70 px-2 py-1 text-xs text-muted-foreground"
-                >
-                  {option}
-                  <span
-                    aria-hidden
-                    className={`h-3 w-3 shrink-0 border border-muted-foreground/30 ${
-                      kind === "multi" ? "rounded-[3px]" : "rounded-full"
-                    }`}
-                  />
-                </span>
-              ))}
-              {question.options.length > 3 && (
-                <p className="text-[11px] text-muted-foreground">
-                  …và {question.options.length - 3} lựa chọn khác
-                </p>
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>
