@@ -109,7 +109,8 @@ export const getAssignableMembers = createServerFn({ method: "GET" })
 
     const withLogin = new Set(
       (accounts ?? [])
-        .filter((a) => a.account_status === "active" || a.account_status === "inactive")
+        // Only an activated account can sign in, receive work and report evidence.
+        .filter((a) => a.account_status === "active")
         .map((a) => a.member_id),
     );
     return (members ?? []).filter((m) => withLogin.has(m.id));

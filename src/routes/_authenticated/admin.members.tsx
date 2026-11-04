@@ -61,6 +61,9 @@ const initials = (name: string) => {
 /** The five member states the whole admin UI exposes. */
 type UnifiedStatus = "inactive" | "active" | "on_leave" | "suspended" | "left";
 
+/** Toolbar filter: a single unified state, or every member at once. */
+type StatusFilter = UnifiedStatus | "all";
+
 const UNIFIED_STATUS_MAP: Record<UnifiedStatus, { label: string; badge: string; dot: string }> = {
   inactive: { label: "Chưa kích hoạt", badge: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
   active: { label: "Đang hoạt động", badge: "bg-success/15 text-success", dot: "bg-success" },
@@ -243,7 +246,7 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
 
 function MembersPage() {
   const [q, setQ] = useState("");
-  const [tab, setTab] = useState<UnifiedStatus>("active");
+  const [tab, setTab] = useState<StatusFilter>("all");
   const [deptFilter, setDeptFilter] = useState<string>("");
   const [selId, setSelId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -295,7 +298,10 @@ function MembersPage() {
     (m.account?.email.toLowerCase().includes(term) ?? false);
 
   const rows = all.filter(
-    (m) => unifiedStatus(m) === tab && (!deptFilter || m.department === deptFilter) && matchesQuery(m),
+    (m) =>
+      (tab === "all" || unifiedStatus(m) === tab) &&
+      (!deptFilter || m.department === deptFilter) &&
+      matchesQuery(m),
   );
   /** Every department the org knows about, plus any legacy id still present in member rows. */
   const deptList = [
@@ -307,7 +313,7 @@ function MembersPage() {
    * term), so the numbers always match what picking that option next would actually show.
    */
   const scopedForStatus = all.filter((m) => (!deptFilter || m.department === deptFilter) && matchesQuery(m));
-  const scopedForDept = all.filter((m) => unifiedStatus(m) === tab && matchesQuery(m));
+  const scopedForDept = all.filter((m) => (tab === "all" || unifiedStatus(m) === tab) && matchesQuery(m));
   const cntStatus = (s: UnifiedStatus) => scopedForStatus.filter((m) => unifiedStatus(m) === s).length;
   const cntDept = (deptId: string) => scopedForDept.filter((m) => m.department === deptId).length;
   const selected = all.find((m) => m.id === selId);
@@ -361,13 +367,30 @@ function MembersPage() {
           </SelectContent>
         </Select>
 
-        <Select value={tab} onValueChange={(v) => setTab(v as UnifiedStatus)}>
+        <Select value={tab} onValueChange={(v) => setTab(v as StatusFilter)}>
           <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[210px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>
-              {`${UNIFIED_STATUS_MAP[tab].label} (${cntStatus(tab)})`}
+              {tab === "all" ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-foreground/60" />
+                  <span>Tất cả ({scopedForStatus.length})</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${UNIFIED_STATUS_MAP[tab].dot}`} />
+                  <span>{UNIFIED_STATUS_MAP[tab].label} ({cntStatus(tab)})</span>
+                </span>
+              )}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              <span className="flex w-full items-center gap-2">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-foreground/60" />
+                <span>Tất cả</span>
+                <span className="ml-auto text-muted-foreground">({scopedForStatus.length})</span>
+              </span>
+            </SelectItem>
             {FILTER_STATUS_ORDER.map((s) => (
               <SelectItem key={s} value={s} className="text-xs">
                 <span className="flex w-full items-center gap-2">
@@ -380,10 +403,10 @@ function MembersPage() {
           </SelectContent>
         </Select>
 
-        {(q || tab !== "active" || deptFilter) && (
+        {(q || tab !== "all" || deptFilter) && (
           <button
             type="button"
-            onClick={() => { setQ(""); setTab("active"); setDeptFilter(""); }}
+            onClick={() => { setQ(""); setTab("all"); setDeptFilter(""); }}
             className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
