@@ -698,7 +698,7 @@ function MemberDashboard() {
                     className={`rounded-full px-3 py-1 text-xs font-semibold text-primary-foreground ring-2 ${previewTone === k ? "ring-gold" : "ring-transparent"}`}>{l}</button>
                 ))}
                 <button type="button" onClick={() => { setPreviewTone(null); setSheet(null); }} className="rounded-full border border-border px-3 py-1 text-xs">Mặc định</button>
-                <button type="button" onClick={() => setCongrats(tier.label)} className="rounded-full bg-gold px-3 py-1 text-xs font-semibold text-primary-deep">Thử hiệu ứng lên bậc</button>
+                <button type="button" onClick={() => { setCongrats(tier.label); setSheet(null); }} className="rounded-full bg-gold px-3 py-1 text-xs font-semibold text-primary-deep">Thử hiệu ứng lên bậc</button>
               </div>
             </div>
           )}
