@@ -694,10 +694,10 @@ function MemberDashboard() {
               <p className="text-xs font-semibold text-gold">Xem trước màu thẻ (chỉ Admin thấy, không đổi điểm thật)</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {[...[...TIERS].reverse().map((t) => [t.tone, t.label] as const), [LEADER_TONE.key, LEADER_TONE.label] as const].map(([k, l]) => (
-                  <button key={k} type="button" onClick={() => setPreviewTone(k)} style={{ background: `var(--pass-${k})` }}
+                  <button key={k} type="button" onClick={() => { setPreviewTone(k); setSheet(null); }} style={{ background: `var(--pass-${k})` }}
                     className={`rounded-full px-3 py-1 text-xs font-semibold text-primary-foreground ring-2 ${previewTone === k ? "ring-gold" : "ring-transparent"}`}>{l}</button>
                 ))}
-                <button type="button" onClick={() => setPreviewTone(null)} className="rounded-full border border-border px-3 py-1 text-xs">Mặc định</button>
+                <button type="button" onClick={() => { setPreviewTone(null); setSheet(null); }} className="rounded-full border border-border px-3 py-1 text-xs">Mặc định</button>
                 <button type="button" onClick={() => setCongrats(tier.label)} className="rounded-full bg-gold px-3 py-1 text-xs font-semibold text-primary-deep">Thử hiệu ứng lên bậc</button>
               </div>
             </div>
