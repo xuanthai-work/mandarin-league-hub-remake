@@ -64,6 +64,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-52-SPLIT-KANBAN-CARDS-PER-ASSIGNEE` | Hiển thị mỗi người 1 thẻ riêng biệt trên bảng Kanban (Bỏ auto-grouping) | 2026-11-04 | **PASS** | [task-52-split-kanban-cards-per-assignee.md](tasks/task-52-split-kanban-cards-per-assignee.md) |
 | `TASK-53-APPLY-CUSTOM-SCROLLBAR-TO-ADMIN-LAYOUT` | Áp dụng thanh cuộn tùy chỉnh (custom-scrollbar) cho layout Admin và trang Nhiệm vụ | 2026-11-04 | **PASS** | [task-53-apply-custom-scrollbar-to-admin-layout.md](tasks/task-53-apply-custom-scrollbar-to-admin-layout.md) |
 | `TASK-54-OTHER-CHOICE-OPTION-WITH-CUSTOM-INPUT` | Hỗ trợ mục "Khác" kèm textbox nhập liệu cho câu hỏi trắc nghiệm Google Form style | 2026-11-04 | **PASS** | [task-54-other-choice-option-with-custom-input.md](tasks/task-54-other-choice-option-with-custom-input.md) |
+| `TASK-55-PASTE-MULTI-LINE-CHOICE-OPTIONS` | Hỗ trợ dán (paste) danh sách nhiều lựa chọn trắc nghiệm tự động phân tách theo dòng | 2026-11-04 | **PASS** | [task-55-paste-multi-line-choice-options.md](tasks/task-55-paste-multi-line-choice-options.md) |
 | `TASK-SCALE-MEMBER-PASS-2X-DESKTOP` | Scale thẻ thành viên 2x trên desktop & điều chỉnh vị trí mã QR | 2026-11-04 | **PASS** | [task-scale-member-pass-2x-desktop.md](tasks/task-scale-member-pass-2x-desktop.md) |
 | `TASK-VERTICAL-PASS-REDESIGN` | Thiết kế & triển khai Thẻ đứng (Vertical Member Pass ID-1) | 2026-11-03 | **PASS** | [task-vertical-pass-redesign.md](tasks/task-vertical-pass-redesign.md) |
 
