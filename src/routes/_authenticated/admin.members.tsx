@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2, X } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -26,9 +26,9 @@ const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
 
 /** Shadcn select styled to match the drawer inputs (and float above the z-[60] drawer). */
-const DRAWER_SELECT_TRIGGER = "mt-1 flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm font-normal shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
+const DRAWER_SELECT_TRIGGER = "mt-1 flex h-9 w-full items-center justify-between rounded-xl border border-input bg-background px-3 text-xs font-normal shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
 const DRAWER_SELECT_CONTENT = "z-[70] max-h-64 rounded-xl border-border bg-popover/95 backdrop-blur-md shadow-xl";
-const DRAWER_SELECT_ITEM = "rounded-lg text-sm cursor-pointer py-2 focus:bg-accent focus:text-accent-foreground";
+const DRAWER_SELECT_ITEM = "rounded-lg text-xs cursor-pointer py-1.5 focus:bg-accent focus:text-accent-foreground";
 
 function randomPassword() {
   const c = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
@@ -60,9 +60,6 @@ const initials = (name: string) => {
 
 /** The five member states the whole admin UI exposes. */
 type UnifiedStatus = "inactive" | "active" | "on_leave" | "suspended" | "left";
-
-/** Toolbar filter: a single unified state, or every member at once. */
-type StatusFilter = UnifiedStatus | "all";
 
 const UNIFIED_STATUS_MAP: Record<UnifiedStatus, { label: string; badge: string; dot: string }> = {
   inactive: { label: "Chưa kích hoạt", badge: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
@@ -246,7 +243,7 @@ function DepartmentSection({ deptId, members, isAdmin, onOpen, onRotate }: {
 
 function MembersPage() {
   const [q, setQ] = useState("");
-  const [tab, setTab] = useState<StatusFilter>("all");
+  const [tab, setTab] = useState<UnifiedStatus>("active");
   const [deptFilter, setDeptFilter] = useState<string>("");
   const [selId, setSelId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -299,7 +296,7 @@ function MembersPage() {
 
   const rows = all.filter(
     (m) =>
-      (tab === "all" || unifiedStatus(m) === tab) &&
+      unifiedStatus(m) === tab &&
       (!deptFilter || m.department === deptFilter) &&
       matchesQuery(m),
   );
@@ -313,7 +310,7 @@ function MembersPage() {
    * term), so the numbers always match what picking that option next would actually show.
    */
   const scopedForStatus = all.filter((m) => (!deptFilter || m.department === deptFilter) && matchesQuery(m));
-  const scopedForDept = all.filter((m) => (tab === "all" || unifiedStatus(m) === tab) && matchesQuery(m));
+  const scopedForDept = all.filter((m) => unifiedStatus(m) === tab && matchesQuery(m));
   const cntStatus = (s: UnifiedStatus) => scopedForStatus.filter((m) => unifiedStatus(m) === s).length;
   const cntDept = (deptId: string) => scopedForDept.filter((m) => m.department === deptId).length;
   const selected = all.find((m) => m.id === selId);
@@ -342,14 +339,14 @@ function MembersPage() {
           <SelectTrigger aria-label="Lọc theo ban" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>
               {deptFilter
-                ? `Ban: ${deptName(deptFilter)} (${cntDept(deptFilter)})`
-                : `Ban: Tất cả (${scopedForDept.length})`}
+                ? `${deptName(deptFilter)} (${cntDept(deptFilter)})`
+                : `Mọi Ban (${scopedForDept.length})`}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             <SelectItem value="all" className="text-xs">
               <span className="flex w-full items-center justify-between gap-2">
-                <span className="font-medium">Ban: Tất cả</span>
+                <span className="font-medium">Mọi Ban</span>
                 <span className="text-muted-foreground">({scopedForDept.length})</span>
               </span>
             </SelectItem>
@@ -367,30 +364,16 @@ function MembersPage() {
           </SelectContent>
         </Select>
 
-        <Select value={tab} onValueChange={(v) => setTab(v as StatusFilter)}>
+        <Select value={tab} onValueChange={(v) => setTab(v as UnifiedStatus)}>
           <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[210px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>
-              {tab === "all" ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-foreground/60" />
-                  <span>Tất cả ({scopedForStatus.length})</span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${UNIFIED_STATUS_MAP[tab].dot}`} />
-                  <span>{UNIFIED_STATUS_MAP[tab].label} ({cntStatus(tab)})</span>
-                </span>
-              )}
+              <span className="flex items-center gap-2">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${UNIFIED_STATUS_MAP[tab].dot}`} />
+                <span>{UNIFIED_STATUS_MAP[tab].label} ({cntStatus(tab)})</span>
+              </span>
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="all" className="text-xs">
-              <span className="flex w-full items-center gap-2">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-foreground/60" />
-                <span>Tất cả</span>
-                <span className="ml-auto text-muted-foreground">({scopedForStatus.length})</span>
-              </span>
-            </SelectItem>
             {FILTER_STATUS_ORDER.map((s) => (
               <SelectItem key={s} value={s} className="text-xs">
                 <span className="flex w-full items-center gap-2">
@@ -402,17 +385,6 @@ function MembersPage() {
             ))}
           </SelectContent>
         </Select>
-
-        {(q || tab !== "all" || deptFilter) && (
-          <button
-            type="button"
-            onClick={() => { setQ(""); setTab("all"); setDeptFilter(""); }}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <X className="h-3.5 w-3.5" />
-            <span>Đặt lại</span>
-          </button>
-        )}
       </div>
 
       {isLoading ? (
@@ -948,7 +920,6 @@ function NewMemberDrawer({ canCreateAccount, onClose, onChanged }: { canCreateAc
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/70 px-6 py-4">
           <div>
             <h2 className="text-lg font-bold">Thêm thành viên</h2>
-            <p className="text-xs text-muted-foreground">{canCreateAccount ? "Tạo hồ sơ nhân sự, tuỳ chọn cấp tài khoản đăng nhập ngay." : "Tạo hồ sơ nhân sự. Tài khoản đăng nhập do Quản trị viên cấp sau."}</p>
           </div>
         </div>
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto custom-scrollbar px-6 py-5">
