@@ -53,9 +53,8 @@ function PodiumCard({ member, rank }: { member: PointMember; rank: number }) {
   return (
     <article
       className={cn(
-        "relative flex min-w-[210px] flex-1 snap-start flex-col items-center rounded-2xl border p-4 text-center sm:min-w-0",
+        "relative flex h-full min-w-[210px] flex-1 snap-start flex-col items-center rounded-2xl border p-4 text-center sm:min-w-0",
         style.card,
-        rank === 1 && "sm:-mt-3 sm:pb-5",
       )}
     >
       {rank === 1 && (
@@ -364,15 +363,7 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
               {top.map((member, index) => {
                 const rank = index + 1;
                 return (
-                  <div
-                    key={member.id}
-                    className={cn(
-                      "flex snap-start sm:block",
-                      rank === 1 && "sm:order-2",
-                      rank === 2 && "sm:order-1",
-                      rank === 3 && "sm:order-3",
-                    )}
-                  >
+                  <div key={member.id} className="flex h-full snap-start sm:block">
                     <PodiumCard member={member} rank={rank} />
                   </div>
                 );

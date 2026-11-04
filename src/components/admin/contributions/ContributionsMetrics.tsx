@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { CalendarCheck2, ClipboardCheck, Coins, ShieldAlert, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { dayKey, monthStart, shiftMonth, type PointStatRow } from "./shared";
+import { dayKey, monthStart, type PointStatRow } from "./shared";
 
 interface MetricCardProps {
   label: string;
@@ -88,16 +88,10 @@ interface ContributionsMetricsProps {
 export function ContributionsMetrics({ rows, totalMembers, loading }: ContributionsMetricsProps) {
   const now = new Date();
   const thisStart = monthStart(now).getTime();
-  const prevStart = shiftMonth(monthStart(now), -1).getTime();
 
   const monthRows = rows.filter((t) => new Date(t.created_at).getTime() >= thisStart);
-  const prevRows = rows.filter((t) => {
-    const time = new Date(t.created_at).getTime();
-    return time >= prevStart && time < thisStart;
-  });
 
   const monthPlus = monthRows.reduce((sum, t) => (t.delta > 0 ? sum + t.delta : sum), 0);
-  const prevPlus = prevRows.reduce((sum, t) => (t.delta > 0 ? sum + t.delta : sum), 0);
   const monthMinus = Math.abs(monthRows.reduce((sum, t) => (t.delta < 0 ? sum + t.delta : sum), 0));
   const penaltyCases = monthRows.filter((t) => t.kind === "penalty").length;
   const taskRows = monthRows.filter((t) => t.kind === "task");
@@ -107,12 +101,6 @@ export function ContributionsMetrics({ rows, totalMembers, loading }: Contributi
   const attendedMembers = new Set(attendance.map((t) => t.member_id)).size;
   const sessions = new Set(attendance.map((t) => `${dayKey(t.created_at)}|${t.reason}`)).size;
   const attendanceRate = totalMembers > 0 ? Math.round((attendedMembers / totalMembers) * 100) : 0;
-
-  const mom = prevPlus > 0 ? Math.round(((monthPlus - prevPlus) / prevPlus) * 100) : null;
-  const momText =
-    mom === null
-      ? "Chưa có dữ liệu tháng trước"
-      : `${mom >= 0 ? "Tăng" : "Giảm"} ${Math.abs(mom)}% so với tháng trước`;
 
   if (loading) {
     return (
@@ -132,7 +120,7 @@ export function ContributionsMetrics({ rows, totalMembers, loading }: Contributi
       <MetricCard
         label="Điểm đã cấp"
         value={monthPlus > 0 ? `+${monthPlus.toLocaleString("vi-VN")}` : "0"}
-        hint={`Tháng này · ${momText}`}
+        hint="Tổng điểm đã cấp trong tháng này"
         icon={Coins}
         tone="bg-primary/10 text-primary"
       >
