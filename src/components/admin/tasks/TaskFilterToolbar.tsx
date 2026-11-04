@@ -9,16 +9,13 @@ import {
 } from "@/components/ui/select";
 import { deptName } from "@/lib/recruitment";
 import { PRIORITY } from "@/lib/points";
-import { type TaskFilters } from "./shared";
+import { PRIORITY_DOT, type TaskFilters } from "./shared";
 
 interface TaskFilterToolbarProps {
   filters: TaskFilters;
   depts: string[];
   givers: string[];
-  shown: number;
-  total: number;
   onChange: (next: TaskFilters) => void;
-  onReset: () => void;
 }
 
 const trigger =
@@ -28,13 +25,9 @@ export function TaskFilterToolbar({
   filters,
   depts,
   givers,
-  shown,
-  total,
   onChange,
-  onReset,
 }: TaskFilterToolbarProps) {
   const patch = (part: Partial<TaskFilters>) => onChange({ ...filters, ...part });
-  const hasActive = !!(filters.q || filters.dept || filters.priority || filters.giver);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-3">
@@ -96,7 +89,10 @@ export function TaskFilterToolbar({
             </SelectItem>
             {(["high", "medium", "low"] as const).map((p) => (
               <SelectItem key={p} value={p} className="text-xs">
-                {PRIORITY[p]}
+                <span className="flex items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${PRIORITY_DOT[p]}`} />
+                  <span>{PRIORITY[p]}</span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -120,21 +116,6 @@ export function TaskFilterToolbar({
             ))}
           </SelectContent>
         </Select>
-
-        {hasActive && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <X className="h-3.5 w-3.5" />
-            Đặt lại
-          </button>
-        )}
-
-        <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
-          Hiển thị <b className="font-semibold text-foreground">{shown}</b> / {total} nhiệm vụ
-        </span>
       </div>
     </div>
   );

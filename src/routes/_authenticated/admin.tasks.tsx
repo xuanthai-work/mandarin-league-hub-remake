@@ -215,13 +215,7 @@ function TasksPage() {
         filters={filters}
         depts={depts}
         givers={givers}
-        shown={groups.length}
-        total={all.length}
         onChange={setFilters}
-        onReset={() => {
-          setFilters(EMPTY_TASK_FILTERS);
-          setPerson("");
-        }}
       />
 
       {person && (

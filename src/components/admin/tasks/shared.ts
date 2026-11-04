@@ -46,6 +46,12 @@ export const PRIORITY_TONE: Record<string, string> = {
   low: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
 };
 
+export const PRIORITY_DOT: Record<string, string> = {
+  high: "bg-rose-500",
+  medium: "bg-amber-500",
+  low: "bg-sky-500",
+};
+
 export const priorityLabel = (priority: string) => PRIORITY[priority] ?? priority;
 
 /** Whole-day difference between a `YYYY-MM-DD` deadline and today (negative = overdue). */

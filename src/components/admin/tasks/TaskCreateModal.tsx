@@ -26,6 +26,7 @@ import { PRIORITY } from "@/lib/points";
 import { deptName } from "@/lib/recruitment";
 import { cn } from "@/lib/utils";
 import {
+  PRIORITY_DOT,
   initials,
   serializeDescription,
   shortUrl,
@@ -513,9 +514,12 @@ export function TaskCreateModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {Object.entries(PRIORITY).map(([key, text]) => (
-                      <SelectItem key={key} value={key} className="text-xs">
-                        {text}
+                    {(["high", "medium", "low"] as const).map((p) => (
+                      <SelectItem key={p} value={p} className="text-xs">
+                        <span className="flex items-center gap-2">
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${PRIORITY_DOT[p]}`} />
+                          <span>{PRIORITY[p]}</span>
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
