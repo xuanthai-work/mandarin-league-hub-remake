@@ -34,7 +34,7 @@
 - [x] `public/dongson-vector.svg` không còn mảng nền đỏ nào (1.043 path còn lại, 100% `fill="#D9A02C"`), nền trong suốt.
 - [x] SVG có `viewBox="0 0 779 779"` nên sắc nét ở mọi độ phân giải.
 - [x] Trống đồng nằm chính giữa thẻ, căn tâm trên cả thẻ ngang và thẻ đứng, cả mặt trước và mặt sau.
-- [x] Thu nhỏ watermark để không đụng dải gradient header trên thẻ ngang: `h-40 w-40 md:h-[16rem] md:w-[16rem]` (mặt trước), `h-48 w-48 md:h-[18rem] md:w-[18rem]` (mặt sau), `w-[76%]`/`w-[84%]` cho thẻ đứng.
+- [x] Thu nhỏ watermark để không đụng dải gradient header trên thẻ ngang: `h-40 w-40 md:h-[18rem] md:w-[18rem] md:translate-y-4` (mặt trước, hạ nhẹ xuống cho cân), `h-48 w-48 md:h-[18rem] md:w-[18rem]` (mặt sau), `w-[76%]`/`w-[84%]` cho thẻ đứng.
 - [x] Chim hạc không còn ở chính giữa; đã chuyển xuống góc dưới trái thẻ ngang với kích thước nhỏ, opacity thấp (desktop neo sát mép footer để không cắt qua dòng thông tin).
 - [x] `npx tsc --noEmit`: PASS
 - [x] `npm test`: PASS (136/136)

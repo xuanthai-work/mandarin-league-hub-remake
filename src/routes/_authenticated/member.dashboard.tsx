@@ -196,7 +196,7 @@ function MemberDashboard() {
         src="/dongson-vector.svg"
         alt=""
         className={`tml-drum shrink-0 select-none object-contain ${
-          layout === "v" ? "w-[76%] aspect-square" : "h-40 w-40 md:h-[16rem] md:w-[16rem]"
+          layout === "v" ? "w-[76%] aspect-square" : "h-40 w-40 md:h-[18rem] md:w-[18rem] md:translate-y-4"
         }`}
       />
     </div>
