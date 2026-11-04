@@ -85,6 +85,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-70-REMOVE-HASHTAG-AND-HYPHENS-FROM-DEPT-TAGS` | Bỏ ký tự thăng (#) và dấu gạch nối (-) trong tag Ban ngành | 2026-11-04 | **PASS** | [task-70-remove-hashtag-and-hyphens-from-dept-tags.md](tasks/task-70-remove-hashtag-and-hyphens-from-dept-tags.md) |
 | `TASK-71-REVISE-DUE-DATE-COLOR-THRESHOLDS` | Điều chỉnh lại các mốc màu sắc cảnh báo hạn thời gian theo logic người dùng | 2026-11-04 | **PASS** | [task-71-revise-due-date-color-thresholds.md](tasks/task-71-revise-due-date-color-thresholds.md) |
 | `TASK-72-KANBAN-CARD-AVATAR-ONLY-LINEAR-FOOTER` | Tinh giản hàng footer thẻ Kanban theo chuẩn Linear (Avatar Only) | 2026-11-04 | **PASS** | [task-72-kanban-card-avatar-only-linear-footer.md](tasks/task-72-kanban-card-avatar-only-linear-footer.md) |
+| `TASK-58-ACTIVE-MEMBERS-AND-TASK-ASSIGNEE-FILTER` | Hiển thị thành viên chưa cấp email & giới hạn giao việc cho tài khoản nội bộ | 2026-11-04 | **PASS** | [task-58-active-members-and-task-assignee-filter.md](tasks/task-58-active-members-and-task-assignee-filter.md) |
 | `TASK-SCALE-MEMBER-PASS-2X-DESKTOP` | Scale thẻ thành viên 2x trên desktop & điều chỉnh vị trí mã QR | 2026-11-04 | **PASS** | [task-scale-member-pass-2x-desktop.md](tasks/task-scale-member-pass-2x-desktop.md) |
 | `TASK-VERTICAL-PASS-REDESIGN` | Thiết kế & triển khai Thẻ đứng (Vertical Member Pass ID-1) | 2026-11-03 | **PASS** | [task-vertical-pass-redesign.md](tasks/task-vertical-pass-redesign.md) |
 
