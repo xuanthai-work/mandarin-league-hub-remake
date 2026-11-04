@@ -320,7 +320,7 @@ function AdminLayout() {
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <main className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
               {/* Header: inside <main> so it shares the exact scrollable width with the page content. */}
-              <header className="sticky top-0 z-30 w-full px-0 pt-1 pb-1 backdrop-blur-xs sm:pt-2 sm:pb-1.5">
+              <header className="w-full px-0 pt-1 pb-1 sm:pt-2 sm:pb-1.5">
                 <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
                   <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
                     <button
