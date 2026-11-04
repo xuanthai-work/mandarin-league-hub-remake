@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { ClipboardCheck, Sparkles } from "lucide-react";
 
@@ -17,6 +18,7 @@ import {
   type PointTxn,
 } from "@/components/admin/contributions/shared";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({
@@ -44,6 +46,12 @@ function PointsPage() {
           .select("id, full_name, member_code, department, position, contribution_points, status")
           .order("contribution_points", { ascending: false })
       ).data ?? []) as PointMember[],
+  });
+
+  const fetchActiveAccountIds = useServerFn(getActiveAccountMemberIds);
+  const activeAccountIds = useQuery({
+    queryKey: ["points-active-accounts"],
+    queryFn: async () => new Set(await fetchActiveAccountIds()),
   });
 
   const roleMap = useQuery({
@@ -114,14 +122,19 @@ function PointsPage() {
     qc.invalidateQueries({ queryKey: ["points-members"] });
     qc.invalidateQueries({ queryKey: ["points-history"] });
     qc.invalidateQueries({ queryKey: ["points-stats"] });
+    qc.invalidateQueries({ queryKey: ["points-active-accounts"] });
   };
 
   const memberList = useMemo(() => members.data ?? [], [members.data]);
-  // Inactive members keep their historical transactions in the ledger but never join the roster or podium.
-  const activeMembers = useMemo(
-    () => memberList.filter((m) => m.status === "active"),
-    [memberList],
-  );
+  /**
+   * Only a member with an active profile AND an activated internal account joins the roster,
+   * podium, attendance and bonus/penalty pickers. Everyone else stays on /admin/members.
+   * Historical transactions remain in the ledger.
+   */
+  const activeMembers = useMemo(() => {
+    const ids = activeAccountIds.data ?? new Set<string>();
+    return memberList.filter((m) => m.status === "active" && ids.has(m.id));
+  }, [memberList, activeAccountIds.data]);
 
   const headerActions = useMemo(
     () => (
@@ -171,7 +184,7 @@ function PointsPage() {
         members={activeMembers}
         roleMap={roleMap.data}
         advisorIds={advisorIds.data}
-        loading={members.isLoading}
+        loading={members.isLoading || roleMap.isLoading || activeAccountIds.isLoading}
       />
 
       <TransactionLedger

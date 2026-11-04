@@ -74,6 +74,30 @@ export const getAdminMemberAccounts = createServerFn({ method: "GET" })
     }));
   });
 
+/**
+ * Member ids the caller may see whose internal account is activated. The points screens use it to
+ * keep profiles that cannot sign in (no account, inactive/suspended account) off the roster,
+ * podium, attendance and bonus/penalty pickers while `/admin/members` still lists everyone.
+ */
+export const getActiveAccountMemberIds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: members, error }, { data: accounts }] = await Promise.all([
+      // RLS keeps heads scoped to their own departments.
+      context.supabase.from("members").select("id"),
+      supabaseAdmin.from("member_accounts").select("member_id, account_status"),
+    ]);
+    if (error) throw new Error(error.message);
+
+    const active = new Set(
+      (accounts ?? [])
+        .filter((a) => a.account_status === "active")
+        .map((a) => a.member_id),
+    );
+    return (members ?? []).map((m) => m.id).filter((id) => active.has(id));
+  });
+
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({
