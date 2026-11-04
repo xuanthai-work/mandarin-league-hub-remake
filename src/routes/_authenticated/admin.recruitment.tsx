@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent, type RefObject } from "rea
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import {
+  Eye,
   FileText,
   Loader2,
   Play,
@@ -179,6 +180,7 @@ function RecruitmentAdmin() {
     qc.invalidateQueries({ queryKey: ["open-recruitment"] });
   };
   const [tab, setTab] = useState<"periods" | "questions">("periods");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [drawerPeriodId, setDrawerPeriodId] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
@@ -214,7 +216,7 @@ function RecruitmentAdmin() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
           {(["periods", "questions"] as const).map((t) => {
             const active = tab === t;
@@ -222,7 +224,10 @@ function RecruitmentAdmin() {
               <button
                 key={t}
                 type="button"
-                onClick={() => setTab(t)}
+                onClick={() => {
+                  setTab(t);
+                  setPreviewOpen(false);
+                }}
                 aria-pressed={active}
                 className={`relative rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
                   active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
@@ -247,6 +252,16 @@ function RecruitmentAdmin() {
             );
           })}
         </div>
+        {tab === "questions" && (
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/5 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Xem trước dạng ứng viên
+          </button>
+        )}
       </div>
 
       {!data ? (
@@ -260,7 +275,13 @@ function RecruitmentAdmin() {
           onConfigure={setDrawerPeriodId}
         />
       ) : (
-        <QuestionBankStudio data={data} run={run} confirm={confirm} />
+        <QuestionBankStudio
+          data={data}
+          run={run}
+          confirm={confirm}
+          previewOpen={previewOpen}
+          onClosePreview={() => setPreviewOpen(false)}
+        />
       )}
 
       {dialog}

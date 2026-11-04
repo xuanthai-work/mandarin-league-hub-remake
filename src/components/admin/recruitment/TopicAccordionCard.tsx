@@ -52,7 +52,6 @@ export function TopicAccordionCard({
 }) {
   const [editingPositions, setEditingPositions] = useState(false);
   const [positionDraft, setPositionDraft] = useState<string[]>([]);
-  const [customDraft, setCustomDraft] = useState("");
   const save = (
     patch: Partial<Pick<StudioTopic, "title" | "description" | "position" | "visible">>,
     ok?: string,
@@ -66,7 +65,6 @@ export function TopicAccordionCard({
 
   const openPositions = () => {
     setPositionDraft(positions);
-    setCustomDraft("");
     setEditingPositions(true);
   };
 
@@ -74,13 +72,6 @@ export function TopicAccordionCard({
     setPositionDraft((prev) =>
       prev.includes(position) ? prev.filter((p) => p !== position) : [...prev, position],
     );
-
-  const addCustomDraft = () => {
-    const next = customDraft.trim();
-    if (!next) return;
-    setPositionDraft((prev) => (prev.includes(next) ? prev : [...prev, next]));
-    setCustomDraft("");
-  };
 
   /** Drops a custom position from the draft, or from the whole department after confirming. */
   const deletePosition = async (position: string) => {
@@ -206,7 +197,7 @@ export function TopicAccordionCard({
       </div>
 
       {editingPositions && (
-        <div className="mt-2 space-y-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-2">
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-2">
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
@@ -265,31 +256,6 @@ export function TopicAccordionCard({
             })}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            <input
-              autoFocus
-              className="min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 py-1 text-xs"
-              placeholder="Thêm vị trí mới… (VD: Trưởng nhóm Frontend)"
-              aria-label="Thêm vị trí mới"
-              value={customDraft}
-              onChange={(e) => setCustomDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setEditingPositions(false);
-                  return;
-                }
-                if (e.key !== "Enter") return;
-                e.preventDefault();
-                addCustomDraft();
-              }}
-            />
-            <button
-              type="button"
-              disabled={!customDraft.trim()}
-              onClick={addCustomDraft}
-              className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-40"
-            >
-              Thêm
-            </button>
             <button
               type="button"
               onClick={savePositions}

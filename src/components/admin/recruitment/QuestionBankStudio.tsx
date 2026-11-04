@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ChevronDown, Eye, Loader2, Plus, Search, Sparkles, X } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Search, Sparkles, X } from "lucide-react";
 import {
   QUESTION_BANK,
   QUESTION_KINDS,
@@ -24,7 +24,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CandidatePreviewDrawer } from "./CandidatePreviewDrawer";
@@ -55,22 +54,25 @@ export function QuestionBankStudio({
   data,
   run,
   confirm,
+  previewOpen,
+  onClosePreview,
 }: {
   data: StudioData;
   run: Run;
   confirm: Confirm;
+  /** Applicant preview drawer, opened from the tab row above the studio. */
+  previewOpen: boolean;
+  onClosePreview: () => void;
 }) {
   const [selectedDept, setSelectedDept] = useState("design");
   const [search, setSearch] = useState("");
   // Empty list = every kind; otherwise each checked kind is shown (multi-select).
   const [kindFilters, setKindFilters] = useState<string[]>([]);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [loadingBank, setLoadingBank] = useState<string | null>(null);
   const [topicDialogOpen, setTopicDialogOpen] = useState(false);
   const [newTopic, setNewTopic] = useState({ title: "", description: "" });
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
-  const [customPositionInput, setCustomPositionInput] = useState("");
 
   const deptKey = deptOf(selectedDept);
   const questionsOf = (topicId: string) =>
@@ -187,11 +189,10 @@ export function QuestionBankStudio({
     );
   };
 
-  /** Resets the dialog so half-typed positions never leak into the next topic. */
+  /** Resets the dialog so half-picked positions never leak into the next topic. */
   const closeTopicDialog = () => {
     setTopicDialogOpen(false);
     setSelectedPositions([]);
-    setCustomPositionInput("");
     setNewTopic({ title: "", description: "" });
   };
 
@@ -199,14 +200,6 @@ export function QuestionBankStudio({
     setSelectedPositions((prev) =>
       prev.includes(position) ? prev.filter((p) => p !== position) : [...prev, position],
     );
-
-  /** Adds a typed position to the picked list so it saves with the topic right away. */
-  const addCustomPosition = () => {
-    const next = customPositionInput.trim();
-    if (!next) return;
-    setSelectedPositions((prev) => (prev.includes(next) ? prev : [...prev, next]));
-    setCustomPositionInput("");
-  };
 
   /** Removes a saved custom position from every topic of the selected department. */
   const deleteDepartmentPosition = async (position: string) => {
@@ -344,7 +337,6 @@ export function QuestionBankStudio({
                 >
                   Mọi loại câu hỏi
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
                 {Object.entries(QUESTION_KINDS).map(([k, v]) => (
                   <DropdownMenuCheckboxItem
                     key={k}
@@ -358,14 +350,6 @@ export function QuestionBankStudio({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <button
-              type="button"
-              onClick={() => setPreviewOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/5 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              Xem trước dạng ứng viên
-            </button>
             {isFiltering && (
               <button
                 type="button"
@@ -542,29 +526,6 @@ export function QuestionBankStudio({
                   );
                 })}
               </div>
-              <div className="mt-2 flex gap-1.5">
-                <input
-                  className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm"
-                  placeholder="Thêm vị trí mới… (VD: Trưởng nhóm Frontend)"
-                  aria-label="Thêm vị trí mới"
-                  value={customPositionInput}
-                  onChange={(e) => setCustomPositionInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter") return;
-                    e.preventDefault();
-                    addCustomPosition();
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled={!customPositionInput.trim()}
-                  onClick={addCustomPosition}
-                  className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-40"
-                >
-                  <Plus className="h-3 w-3" />
-                  Thêm
-                </button>
-              </div>
             </div>
           </form>
           <DialogFooter>
@@ -588,7 +549,7 @@ export function QuestionBankStudio({
       </Dialog>
       <CandidatePreviewDrawer
         open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
+        onClose={onClosePreview}
         dept={selectedDept}
         topics={deptTopics}
         questions={data.questions}
