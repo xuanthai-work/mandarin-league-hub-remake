@@ -1,7 +1,16 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LogOut, Menu, X, ShieldAlert, IdCard, ChevronDown } from "lucide-react";
+import {
+  LogOut,
+  Menu,
+  X,
+  ShieldAlert,
+  IdCard,
+  ChevronDown,
+  Home,
+  ChevronRight,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, navGroupsFor, type AdminNavGroup,
@@ -10,10 +19,15 @@ import { allowedSections } from "@/lib/admin-permissions";
 import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
 import { useAdminHeader } from "@/components/admin/admin-header-context";
 
-/** Renders whatever the current page registered as its header actions. */
+/** Renders the current page's header actions as capsules that mirror the breadcrumb capsule. */
 function HeaderActions() {
   const header = useAdminHeader();
-  return <div className="ml-auto flex shrink-0 items-center gap-2">{header?.headerActions}</div>;
+  if (!header?.headerActions) return null;
+  return (
+    <div className="ml-auto flex shrink-0 items-center gap-2 [&_button]:inline-flex [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-xl [&_button]:border [&_button]:border-primary/25 [&_button]:bg-primary [&_button]:px-3 [&_button]:py-1.5 [&_button]:text-xs [&_button]:font-semibold [&_button]:tracking-tight [&_button]:text-primary-foreground [&_button]:shadow-2xs [&_button]:transition-all [&_button]:hover:opacity-90 [&_button]:sm:gap-2.5 [&_button]:sm:px-3.5 [&_button]:sm:py-2 [&_button]:sm:text-sm [&_svg]:h-3.5 [&_svg]:w-3.5">
+      {header.headerActions}
+    </div>
+  );
 }
 
 export const Route = createFileRoute("/_authenticated/admin")({ staticData: { sitemap: false },
@@ -48,9 +62,9 @@ export function useAdminAccess() {
 }
 
 const NAV_ITEM =
-  "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
+  "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-accent/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 const NAV_ACTIVE =
-  "bg-primary/10 font-semibold text-primary-deep shadow-xs dark:bg-primary/15 dark:text-primary after:ml-auto after:h-1.5 after:w-1.5 after:shrink-0 after:rounded-full after:bg-primary after:content-['']";
+  "border border-border/80 bg-background font-semibold text-foreground shadow-2xs before:absolute before:left-1.5 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-full before:bg-gold before:content-[''] [&_svg]:text-primary";
 const ICON_BTN =
   "grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-accent/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 
@@ -74,8 +88,9 @@ function readCollapsedGroups(): Record<string, boolean> {
   }
 }
 
-function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onToggleGroup, onNavigate, onSignOut, onClose }: {
+function SidebarPanel({ email, name, roleLabel, groups, currentSlug, collapsed, onToggleGroup, onNavigate, onSignOut, onClose }: {
   email: string;
+  name: string;
   roleLabel: string;
   groups: AdminNavGroup[];
   currentSlug: string;
@@ -88,13 +103,14 @@ function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onTogg
   const initials = (email.split("@")[0] ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "TML";
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
-      <div className="flex h-[73px] shrink-0 items-center gap-3 border-b border-border/60 px-4">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gold/50 bg-background shadow-[0_2px_12px_-6px_color-mix(in_oklab,var(--gold)_70%,transparent)]">
+      <div className="relative flex h-[73px] shrink-0 items-center gap-3 border-b border-border/60 px-4">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-gold/40 bg-gradient-to-b from-card to-background p-1 shadow-[0_4px_14px_-4px_rgba(217,160,44,0.25)]">
           <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full object-cover" />
         </span>
         <div className="min-w-0">
           <p className="font-han truncate text-[13px] font-semibold leading-tight tracking-tight text-foreground">The Mandarin League</p>
-          <span className="mt-1 inline-block rounded bg-gold/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-[color:var(--metal-gold-lo)] dark:text-gold">
+          <span className="mt-1 inline-block rounded-md border border-gold/30 bg-gold/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-[color:var(--metal-gold-lo)] shadow-2xs dark:text-gold">
             Admin Portal
           </span>
         </div>
@@ -105,16 +121,18 @@ function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onTogg
         )}
       </div>
 
-      <nav aria-label="Điều hướng quản trị" className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-        <Link
-          to="/admin"
-          activeOptions={{ exact: true }}
-          className={`${NAV_ITEM} mt-3`}
-          activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
-          onClick={onNavigate}
-        >
-          <OVERVIEW_ICON className="h-4 w-4 shrink-0" strokeWidth={1.75} /> Tổng quan
-        </Link>
+      <nav aria-label="Điều hướng quản trị" className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pl-3 pr-2 pb-4">
+        <div className="px-1 pt-2">
+          <Link
+            to="/admin"
+            activeOptions={{ exact: true }}
+            className={NAV_ITEM}
+            activeProps={{ className: NAV_ACTIVE, "aria-current": "page" }}
+            onClick={onNavigate}
+          >
+            <OVERVIEW_ICON className="h-4 w-4 shrink-0" strokeWidth={1.75} /> Tổng quan
+          </Link>
+        </div>
         {groups.map((g) => {
           const key = g.title ?? "group";
           const active = !!currentSlug && g.sections.some((s) => s.slug === currentSlug);
@@ -128,7 +146,7 @@ function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onTogg
                   onClick={() => onToggleGroup(key)}
                   aria-expanded={!isCollapsed}
                   aria-controls={panelId}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg px-3 pt-5 pb-1.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-3 pt-5 pb-1.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
                   <span>{g.title}</span>
                   <ChevronDown
@@ -142,7 +160,8 @@ function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onTogg
                 className={`grid transition-[grid-template-rows] duration-200 ${isCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}
               >
                 <div className="overflow-hidden">
-                  <div className="space-y-0.5" inert={isCollapsed || undefined}>
+                  {/* p-1 keeps the rounded-xl border and shadow clear of the clipping edge. */}
+                  <div className="space-y-0.5 p-1" inert={isCollapsed || undefined}>
                     {g.sections.map((s) => (
                       <Link
                         key={s.slug}
@@ -164,20 +183,23 @@ function SidebarPanel({ email, roleLabel, groups, currentSlug, collapsed, onTogg
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-border/60 bg-muted/20 p-3">
-        <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card p-2">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-bold text-primary ring-1 ring-primary/20">
+      <div className="shrink-0 border-t border-border/60 bg-muted/10 p-3">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card p-2.5 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] transition-all hover:border-border hover:shadow-md">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-[11px] font-bold text-primary ring-1 ring-primary/25 shadow-2xs">
             {initials}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-foreground">{email}</p>
-            <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-primary-deep dark:text-gold">{roleLabel}</p>
+            <p className="truncate text-xs font-semibold text-foreground">{name || email}</p>
+            <p className="truncate text-[10px] text-muted-foreground">{name ? email : "Chưa có email"}</p>
+            <span className="mt-1 inline-block rounded-md border border-primary/20 bg-primary/5 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary-deep dark:text-gold">
+              {roleLabel}
+            </span>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <Link to="/member/dashboard" onClick={onNavigate} className={ICON_BTN} aria-label="Thẻ thành viên" title="Thẻ thành viên">
+          <div className="flex shrink-0 flex-col items-center gap-1">
+            <Link to="/member/dashboard" onClick={onNavigate} className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="Thẻ thành viên" title="Thẻ thành viên">
               <IdCard className="h-4 w-4" />
             </Link>
-            <button onClick={onSignOut} className={ICON_BTN} aria-label="Đăng xuất" title="Đăng xuất">
+            <button onClick={onSignOut} className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label="Đăng xuất" title="Đăng xuất">
               <LogOut className="h-4 w-4" />
             </button>
           </div>
@@ -249,57 +271,98 @@ function AdminLayout() {
   }
 
   const email = access.data?.email ?? "";
+  const name = access.data?.name ?? "";
 
   return (
     <AdminHeaderProvider>
-      <div className="fixed inset-0 z-50 flex admin-shell bg-background text-foreground">
-        <aside className="hidden w-[272px] shrink-0 border-r border-border lg:block">
-          <SidebarPanel email={email} roleLabel={roleLabel} groups={groups} currentSlug={current} collapsed={collapsedGroups} onToggleGroup={toggleGroup} onNavigate={() => setOpen(false)} onSignOut={signOut} />
-        </aside>
+      {/* Ambient canvas behind the floating islands; mobile stays edge-to-edge. */}
+      <div className="fixed inset-0 z-50 admin-shell text-foreground">
+        <div className="flex h-full min-h-0 overflow-hidden bg-muted/30 p-0 dark:bg-zinc-950 lg:gap-3 lg:p-3">
+          <aside className="hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs transition-shadow hover:shadow-sm lg:flex">
+            <SidebarPanel
+              email={email}
+              name={name}
+              roleLabel={roleLabel}
+              groups={groups}
+              currentSlug={current}
+              collapsed={collapsedGroups}
+              onToggleGroup={toggleGroup}
+              onNavigate={() => setOpen(false)}
+              onSignOut={signOut}
+            />
+          </aside>
 
-        {open && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200" onClick={() => setOpen(false)} />
-            <aside
-              role="dialog"
-              aria-modal="true"
-              aria-label="Điều hướng quản trị"
-              className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
-            >
-              <SidebarPanel
-                email={email}
-                roleLabel={roleLabel}
-                groups={groups}
-                currentSlug={current}
-                collapsed={collapsedGroups}
-                onToggleGroup={toggleGroup}
-                onNavigate={() => setOpen(false)}
-                onSignOut={signOut}
-                onClose={() => setOpen(false)}
-              />
-            </aside>
-          </div>
-        )}
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex h-[73px] shrink-0 items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-md sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <button aria-label="Mở menu" className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden" onClick={() => setOpen(true)}>
-                <Menu className="h-5 w-5" />
-              </button>
-              <h1 className="truncate text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h1>
+          {open && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200" onClick={() => setOpen(false)} />
+              <aside
+                role="dialog"
+                aria-modal="true"
+                aria-label="Điều hướng quản trị"
+                className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
+              >
+                <SidebarPanel
+                  email={email}
+                  name={name}
+                  roleLabel={roleLabel}
+                  groups={groups}
+                  currentSlug={current}
+                  collapsed={collapsedGroups}
+                  onToggleGroup={toggleGroup}
+                  onNavigate={() => setOpen(false)}
+                  onSignOut={signOut}
+                  onClose={() => setOpen(false)}
+                />
+              </aside>
             </div>
-            <HeaderActions />
-          </header>
-          <main className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
-            {blockedHere ? (
-              <div className="mx-auto max-w-md px-4 py-20 text-center">
-                <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
-                <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
-                <p className="mt-2 text-sm text-muted-foreground">Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.</p>
-              </div>
-            ) : <Outlet />}
-          </main>
+          )}
+
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <main className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
+              {/* Header: inside <main> so it shares the exact scrollable width with the page content. */}
+              <header className="sticky top-0 z-30 w-full px-0 pt-1 pb-1 backdrop-blur-xs sm:pt-2 sm:pb-1.5">
+                <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+                  <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                    <button
+                      aria-label="Mở menu"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border/60 bg-muted/40 text-muted-foreground shadow-2xs transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+                      onClick={() => setOpen(true)}
+                    >
+                      <Menu className="h-5 w-5" />
+                    </button>
+
+                    {/* Breadcrumb capsule: [ home > current section ] */}
+                    <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-2.5 py-1.5 shadow-2xs backdrop-blur-sm sm:gap-2.5 sm:px-3 sm:py-2">
+                      <Link
+                        to="/admin"
+                        aria-label="Về trang tổng quan"
+                        title="Trang tổng quan"
+                        className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-border/60 bg-muted/40 text-muted-foreground shadow-2xs transition-colors hover:border-border hover:bg-background hover:text-foreground"
+                      >
+                        <Home className="h-3.5 w-3.5" />
+                      </Link>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+                      <span className="truncate text-xs font-semibold tracking-tight text-foreground sm:text-sm">
+                        {title}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <HeaderActions />
+                  </div>
+                </div>
+              </header>
+
+              {blockedHere ? (
+                <div className="mx-auto max-w-md px-4 py-20 text-center">
+                  <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
+                  <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
+                  <p className="mt-2 text-sm text-muted-foreground">Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.</p>
+                </div>
+              ) : <Outlet />}
+            </main>
+          </div>
         </div>
       </div>
     </AdminHeaderProvider>
