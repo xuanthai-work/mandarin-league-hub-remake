@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { CalendarCheck2, ClipboardCheck, Coins, ShieldAlert, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -10,12 +9,11 @@ interface MetricCardProps {
   hint: string;
   icon: LucideIcon;
   tone: string;
-  children?: ReactNode;
   /** When set the card becomes a drill-down shortcut for the ledger below. */
   onClick?: () => void;
 }
 
-function MetricCard({ label, value, hint, icon: Icon, tone, children, onClick }: MetricCardProps) {
+function MetricCard({ label, value, hint, icon: Icon, tone, onClick }: MetricCardProps) {
   return (
     <div
       role={onClick ? "button" : undefined}
@@ -32,7 +30,7 @@ function MetricCard({ label, value, hint, icon: Icon, tone, children, onClick }:
           : undefined
       }
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/70 bg-card p-4 shadow-xs",
+        "relative overflow-hidden rounded-2xl border border-border/70 bg-card p-3.5 shadow-xs sm:p-4",
         onClick &&
           "cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:translate-y-0",
       )}
@@ -53,46 +51,7 @@ function MetricCard({ label, value, hint, icon: Icon, tone, children, onClick }:
         {value}
       </p>
       <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">{hint}</p>
-      {children}
     </div>
-  );
-}
-
-/** Five weekly buckets of positive points for the current month. */
-function weeklyBuckets(rows: PointStatRow[]) {
-  const buckets = [0, 0, 0, 0, 0];
-  rows.forEach((t) => {
-    if (t.delta <= 0) return;
-    const day = new Date(t.created_at).getDate();
-    const index = Math.min(4, Math.max(0, Math.floor((day - 1) / 7)));
-    buckets[index] = (buckets[index] ?? 0) + t.delta;
-  });
-  return buckets;
-}
-
-function Sparkline({ values }: { values: number[] }) {
-  const max = Math.max(1, ...values);
-  const step = values.length > 1 ? 100 / (values.length - 1) : 100;
-  const points = values
-    .map((value, index) => `${(index * step).toFixed(1)},${(30 - (value / max) * 26).toFixed(1)}`)
-    .join(" ");
-  return (
-    <svg
-      viewBox="0 0 100 32"
-      preserveAspectRatio="none"
-      aria-hidden
-      className="mt-2 h-7 w-full text-primary/70"
-    >
-      <polyline
-        points={points}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
   );
 }
 
@@ -136,7 +95,7 @@ export function ContributionsMetrics({
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-[118px] animate-pulse rounded-2xl border border-border/70 bg-card"
+            className="h-[102px] animate-pulse rounded-2xl border border-border/70 bg-card"
           />
         ))}
       </div>
@@ -152,9 +111,7 @@ export function ContributionsMetrics({
         icon={Coins}
         tone="bg-primary/10 text-primary"
         onClick={() => onFilterSelect?.({ period: "this", kind: "" })}
-      >
-        <Sparkline values={weeklyBuckets(monthRows)} />
-      </MetricCard>
+      />
       <MetricCard
         label="Chuyên cần điểm danh"
         value={`${attendanceRate}%`}
