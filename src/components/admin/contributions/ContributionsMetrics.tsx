@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { CalendarCheck2, ClipboardCheck, Coins, ShieldAlert, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { dayKey, monthStart, type PointStatRow } from "./shared";
+import { dayKey, monthStart, type LedgerFilters, type PointStatRow } from "./shared";
 
 interface MetricCardProps {
   label: string;
@@ -11,11 +11,32 @@ interface MetricCardProps {
   icon: LucideIcon;
   tone: string;
   children?: ReactNode;
+  /** When set the card becomes a drill-down shortcut for the ledger below. */
+  onClick?: () => void;
 }
 
-function MetricCard({ label, value, hint, icon: Icon, tone, children }: MetricCardProps) {
+function MetricCard({ label, value, hint, icon: Icon, tone, children, onClick }: MetricCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-4 shadow-xs">
+    <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-border/70 bg-card p-4 shadow-xs",
+        onClick &&
+          "cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:translate-y-0",
+      )}
+    >
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-gold/60 via-gold/20 to-transparent"
@@ -79,13 +100,20 @@ interface ContributionsMetricsProps {
   rows: PointStatRow[];
   totalMembers: number;
   loading: boolean;
+  /** Drill-down: apply the clicked metric's period/kind to the ledger. */
+  onFilterSelect?: (filter: Partial<LedgerFilters>) => void;
 }
 
 /**
  * Executive summary strip. Values are derived from the transactions the current
  * account may read (RLS already scopes heads to their own department).
  */
-export function ContributionsMetrics({ rows, totalMembers, loading }: ContributionsMetricsProps) {
+export function ContributionsMetrics({
+  rows,
+  totalMembers,
+  loading,
+  onFilterSelect,
+}: ContributionsMetricsProps) {
   const now = new Date();
   const thisStart = monthStart(now).getTime();
 
@@ -123,6 +151,7 @@ export function ContributionsMetrics({ rows, totalMembers, loading }: Contributi
         hint="Tổng điểm đã cấp trong tháng này"
         icon={Coins}
         tone="bg-primary/10 text-primary"
+        onClick={() => onFilterSelect?.({ period: "this", kind: "" })}
       >
         <Sparkline values={weeklyBuckets(monthRows)} />
       </MetricCard>
@@ -132,6 +161,7 @@ export function ContributionsMetrics({ rows, totalMembers, loading }: Contributi
         hint={`${attendedMembers}/${totalMembers} thành viên · ${sessions} buổi ghi nhận`}
         icon={CalendarCheck2}
         tone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        onClick={() => onFilterSelect?.({ period: "this", kind: "attendance" })}
       />
       <MetricCard
         label="Kỷ luật & trừ điểm"
@@ -139,6 +169,7 @@ export function ContributionsMetrics({ rows, totalMembers, loading }: Contributi
         hint={`${penaltyCases} trường hợp trừ điểm trong tháng`}
         icon={ShieldAlert}
         tone="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+        onClick={() => onFilterSelect?.({ period: "this", kind: "penalty" })}
       />
       <MetricCard
         label="Nhiệm vụ nghiệm thu"
@@ -146,6 +177,7 @@ export function ContributionsMetrics({ rows, totalMembers, loading }: Contributi
         hint={`+${taskPoints.toLocaleString("vi-VN")} điểm từ nhiệm vụ hoàn thành`}
         icon={ClipboardCheck}
         tone="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+        onClick={() => onFilterSelect?.({ period: "this", kind: "task" })}
       />
     </div>
   );

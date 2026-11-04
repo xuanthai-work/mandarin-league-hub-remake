@@ -13,6 +13,7 @@ import { TransactionLedger } from "@/components/admin/contributions/TransactionL
 import {
   monthStart,
   shiftMonth,
+  type LedgerFilters,
   type PointMember,
   type PointStatRow,
   type PointTxn,
@@ -117,6 +118,18 @@ function PointsPage() {
 
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
+  const [appliedFilter, setAppliedFilter] = useState<{
+    filter: Partial<LedgerFilters>;
+    stamp: number;
+  } | null>(null);
+
+  /** Metric card drill-down: filter the ledger and bring it into view. */
+  const handleMetricClick = (filter: Partial<LedgerFilters>) => {
+    setAppliedFilter({ filter, stamp: Date.now() });
+    document
+      .getElementById("transaction-ledger")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["points-members"] });
@@ -178,6 +191,7 @@ function PointsPage() {
         rows={stats.data ?? history.data ?? []}
         totalMembers={activeMembers.length}
         loading={stats.isLoading && history.isLoading}
+        onFilterSelect={handleMetricClick}
       />
 
       <LeaderboardPanel
@@ -192,6 +206,7 @@ function PointsPage() {
         members={memberList}
         loading={history.isLoading}
         capped={(history.data?.length ?? 0) >= LEDGER_LIMIT}
+        appliedFilter={appliedFilter}
       />
 
       {attendanceOpen && (

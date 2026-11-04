@@ -220,9 +220,6 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
         <h2 className="mr-auto flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
           <Trophy aria-hidden className="h-4 w-4 text-gold" />
           Bảng vinh danh
-          <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
-            {board.length}
-          </span>
         </h2>
         <div
           role="group"

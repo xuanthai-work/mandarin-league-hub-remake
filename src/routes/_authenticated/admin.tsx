@@ -64,7 +64,7 @@ export function useAdminAccess() {
 const NAV_ITEM =
   "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-accent/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 const NAV_ACTIVE =
-  "border border-border/80 bg-background font-semibold text-foreground shadow-2xs before:absolute before:left-1.5 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-full before:bg-gold before:content-[''] [&_svg]:text-primary";
+  "border border-border/80 bg-background font-semibold text-foreground shadow-2xs [&_svg]:text-primary";
 const ICON_BTN =
   "grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-accent/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 
@@ -195,7 +195,7 @@ function SidebarPanel({ email, name, roleLabel, groups, currentSlug, collapsed, 
               {roleLabel}
             </span>
           </div>
-          <div className="flex shrink-0 flex-col items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Link to="/member/dashboard" onClick={onNavigate} className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="Thẻ thành viên" title="Thẻ thành viên">
               <IdCard className="h-4 w-4" />
             </Link>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, Paperclip, ReceiptText, Search, X } from "lucide-react";
 
 import {
@@ -32,6 +32,8 @@ interface TransactionLedgerProps {
   members: PointMember[];
   loading: boolean;
   capped: boolean;
+  /** Drill-down filter pushed from the metric cards; `stamp` forces re-application. */
+  appliedFilter?: { filter: Partial<LedgerFilters>; stamp: number } | null;
 }
 
 const PAGE_SIZE = 15;
@@ -144,9 +146,26 @@ function EvidenceLinks({ paths }: { paths: string[] }) {
  * Accounting-style ledger: every points change is searchable by reason, member,
  * department, kind and approver, and always shows the balance after the change.
  */
-export function TransactionLedger({ rows, members, loading, capped }: TransactionLedgerProps) {
+export function TransactionLedger({
+  rows,
+  members,
+  loading,
+  capped,
+  appliedFilter,
+}: TransactionLedgerProps) {
   const [filters, setFilters] = useState<LedgerFilters>(EMPTY_LEDGER_FILTERS);
   const [page, setPage] = useState(1);
+  const [flash, setFlash] = useState(false);
+
+  // A metric card click replaces the whole filter set so the shown rows match that metric exactly.
+  useEffect(() => {
+    if (!appliedFilter) return;
+    setFilters({ ...EMPTY_LEDGER_FILTERS, ...appliedFilter.filter });
+    setPage(1);
+    setFlash(true);
+    const timer = window.setTimeout(() => setFlash(false), 1200);
+    return () => window.clearTimeout(timer);
+  }, [appliedFilter]);
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const depts = useMemo(
@@ -249,14 +268,17 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
   };
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+    <section
+      id="transaction-ledger"
+      className={cn(
+        "scroll-mt-24 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs transition-shadow duration-300",
+        flash && "ring-2 ring-primary/50 shadow-lg",
+      )}
+    >
       <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
         <h2 className="mr-auto flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
           <ReceiptText aria-hidden className="h-4 w-4 text-primary" />
           Sổ cái lịch sử điểm
-          <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
-            {filtered.length}
-          </span>
         </h2>
         <button
           type="button"
