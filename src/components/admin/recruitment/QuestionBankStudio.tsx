@@ -350,18 +350,6 @@ export function QuestionBankStudio({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            {isFiltering && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  setKindFilters([]);
-                }}
-                className="h-9 rounded-xl border border-dashed border-border px-3 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-              >
-                Đặt lại bộ lọc
-              </button>
-            )}
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-muted/30 px-3.5 py-2.5">

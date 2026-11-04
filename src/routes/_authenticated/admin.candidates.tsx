@@ -160,7 +160,6 @@ function Candidates() {
           shown={list.length}
           total={data.apps.length}
           onChange={setFilters}
-          onReset={() => setFilters(EMPTY_FILTERS)}
         />
         <CandidateTableView
           apps={list}

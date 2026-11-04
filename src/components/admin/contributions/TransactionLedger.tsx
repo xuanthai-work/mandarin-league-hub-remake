@@ -206,10 +206,6 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
     setFilters((prev) => ({ ...prev, ...next }));
     setPage(1);
   };
-  const reset = () => {
-    setFilters(EMPTY_LEDGER_FILTERS);
-    setPage(1);
-  };
 
   const exportCsv = () => {
     const header = [
@@ -381,17 +377,6 @@ export function TransactionLedger({ rows, members, loading, capped }: Transactio
               </SelectItem>
             </SelectContent>
           </Select>
-
-          {hasFilter && (
-            <button
-              type="button"
-              onClick={reset}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/50 px-3 py-2 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <X aria-hidden className="h-3.5 w-3.5" />
-              Đặt lại
-            </button>
-          )}
         </div>
       </div>
 

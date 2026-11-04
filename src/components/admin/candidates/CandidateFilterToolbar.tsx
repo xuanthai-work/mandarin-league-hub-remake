@@ -22,7 +22,6 @@ interface CandidateFilterToolbarProps {
   shown: number;
   total: number;
   onChange: (next: CandidateFilters) => void;
-  onReset: () => void;
 }
 
 const trigger =
@@ -34,9 +33,7 @@ export function CandidateFilterToolbar({
   shown,
   total,
   onChange,
-  onReset,
 }: CandidateFilterToolbarProps) {
-  const hasActive = Object.values(filters).some(Boolean);
   const patch = (part: Partial<CandidateFilters>) => onChange({ ...filters, ...part });
 
   return (
@@ -150,17 +147,6 @@ export function CandidateFilterToolbar({
             ))}
           </SelectContent>
         </Select>
-
-        {hasActive && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/50 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <X className="h-3.5 w-3.5" />
-            Xóa bộ lọc
-          </button>
-        )}
 
         <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
           Hiển thị <b className="font-semibold text-foreground">{shown}</b> / {total} hồ sơ
