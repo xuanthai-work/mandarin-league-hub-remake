@@ -183,35 +183,31 @@ function MemberDashboard() {
     </label>
   );
   /**
-   * Đông Sơn drum watermark: the member-supplied photo, blended into the porcelain.
-   * The horizontal pass pins it to the bottom-left corner (behind the info list),
-   * while the vertical pass keeps it centred.
+   * Đông Sơn drum watermark: a transparent gold vector, blended into the porcelain.
+   * Both the horizontal and the vertical pass keep it centred on the card so the
+   * ornament reads as an embossed seal instead of a corner sticker.
    */
   const drumWatermark = (
     <div
       aria-hidden
-      className={`pointer-events-none absolute select-none ${
-        layout === "v"
-          ? "inset-0 flex items-center justify-center"
-          : "-bottom-20 -left-20 md:-bottom-40 md:-left-40"
-      }`}
+      className="pointer-events-none absolute inset-0 flex select-none items-center justify-center overflow-hidden"
     >
       <img
-        src="/dongson-gold.png"
+        src="/dongson-vector.svg"
         alt=""
-        className={`tml-drum shrink-0 select-none rounded-full object-cover ${
-          layout === "v" ? "w-[92%] aspect-square" : "h-60 w-60 md:h-[30rem] md:w-[30rem]"
+        className={`tml-drum shrink-0 select-none object-contain ${
+          layout === "v" ? "w-[76%] aspect-square" : "h-40 w-40 md:h-[16rem] md:w-[16rem]"
         }`}
       />
     </div>
   );
   /** Back face: same drum, noticeably larger so it still reads behind the settings blocks. */
   const drumWatermarkBack = (
-    <div aria-hidden className="pointer-events-none absolute inset-0 flex select-none items-center justify-center">
+    <div aria-hidden className="pointer-events-none absolute inset-0 flex select-none items-center justify-center overflow-hidden">
       <img
-        src="/dongson-gold.png"
+        src="/dongson-vector.svg"
         alt=""
-        className={`tml-drum shrink-0 select-none rounded-full object-cover ${layout === "v" ? "w-[100%] aspect-square" : "h-64 w-64 md:h-[32rem] md:w-[32rem]"}`}
+        className={`tml-drum shrink-0 select-none object-contain ${layout === "v" ? "w-[84%] aspect-square" : "h-48 w-48 md:h-[18rem] md:w-[18rem]"}`}
       />
     </div>
   );
@@ -378,13 +374,13 @@ function MemberDashboard() {
             {layout === "h" && (
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 flex select-none items-center justify-center"
+                className="pointer-events-none absolute bottom-8 left-0 z-0 select-none md:bottom-14 md:left-1"
               >
                 <img
                   src="/lac-bird-gold.png"
                   alt=""
                   draggable={false}
-                  className="tml-emblem h-auto w-24 max-w-[45%] select-none object-contain md:w-64"
+                  className="tml-emblem h-auto w-24 select-none object-contain md:w-44"
                 />
               </div>
             )}

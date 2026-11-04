@@ -605,16 +605,18 @@
   .tml-watermark-front { animation: none !important; }
 }
 
-/* Đông Sơn drum watermark: one flat gold tone, static, blended into the porcelain */
+/* Đông Sơn drum watermark: one flat gold tone, static, blended into the porcelain.
+   The vector keeps every ornament path (no red ground), so it reads denser than the
+   old PNG — a lower opacity keeps it an embossed seal behind the member data. */
 .tml-drum {
   mix-blend-mode: multiply;
-  opacity: .34;
+  opacity: .2;
 }
 
-/* Small centred Lạc bird emblem on the pass front: transparent PNG, porcelain blend */
+/* Lạc bird emblem: small corner flourish on the pass front, porcelain blend */
 .tml-emblem {
   mix-blend-mode: multiply;
-  opacity: .5;
+  opacity: .3;
 }
 
 /* Back face: keep the password form reachable without scrolling the card (same
