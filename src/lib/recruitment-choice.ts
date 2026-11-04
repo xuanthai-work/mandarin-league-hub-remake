@@ -55,3 +55,25 @@ export function findOtherAnswer(value: string | string[] | undefined): string {
 export function withOtherOption(options: string[]): string[] {
   return options.some(isOtherOption) ? options : [...options, "Khác"];
 }
+
+/** Comparison key for option labels: trimmed and case-insensitive. */
+const optionKey = (value: string) => value.trim().toLowerCase();
+
+/**
+ * Splits pasted text into choice labels — one per line (LF, CRLF or lone CR) —
+ * then trims each label and drops blank lines, duplicates inside the pasted
+ * block, and labels the question already has (compared case-insensitively).
+ */
+export function parsePastedOptions(rawText: string, existingOptions: string[] = []): string[] {
+  const seen = new Set(existingOptions.map(optionKey));
+  const fresh: string[] = [];
+  for (const line of rawText.split(/\r\n|\r|\n/)) {
+    const value = line.trim();
+    if (!value) continue;
+    const key = optionKey(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    fresh.push(value);
+  }
+  return fresh;
+}

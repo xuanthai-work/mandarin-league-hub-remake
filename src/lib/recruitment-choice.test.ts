@@ -5,6 +5,7 @@ import {
   formatOtherAnswer,
   isOtherAnswerValue,
   isOtherOption,
+  parsePastedOptions,
   withOtherOption,
 } from "./recruitment-choice";
 
@@ -105,5 +106,38 @@ describe("withOtherOption", () => {
   it("keeps a single Other row when one already exists", () => {
     expect(withOtherOption(["Figma", "Khác"])).toEqual(["Figma", "Khác"]);
     expect(withOtherOption(["Other", "Khác"])).toEqual(["Other", "Khác"]);
+  });
+});
+
+describe("parsePastedOptions", () => {
+  it("keeps a single typed line, trimmed", () => {
+    expect(parsePastedOptions("  Figma  ")).toEqual(["Figma"]);
+  });
+
+  it("splits LF and CRLF lists copied from Excel/Word", () => {
+    expect(parsePastedOptions("Figma\nCanva\nSketch")).toEqual(["Figma", "Canva", "Sketch"]);
+    expect(parsePastedOptions("Figma\r\nCanva\r\nSketch")).toEqual(["Figma", "Canva", "Sketch"]);
+    expect(parsePastedOptions("Figma\rCanva")).toEqual(["Figma", "Canva"]);
+  });
+
+  it("drops blank lines and trims padded cells", () => {
+    expect(parsePastedOptions("  Figma  \n\n   \n Canva\n")).toEqual(["Figma", "Canva"]);
+    expect(parsePastedOptions("Figma\r\n\r\nCanva\r\n")).toEqual(["Figma", "Canva"]);
+  });
+
+  it("skips options the question already has", () => {
+    expect(parsePastedOptions("Figma\nCanva", ["Figma"])).toEqual(["Canva"]);
+    expect(parsePastedOptions("figma\nSketch", ["Figma"])).toEqual(["Sketch"]);
+  });
+
+  it("keeps each pasted option only once", () => {
+    expect(parsePastedOptions("Figma\nCanva\nFigma\nCanva ")).toEqual(["Figma", "Canva"]);
+    expect(parsePastedOptions("Figma\nfigma")).toEqual(["Figma"]);
+  });
+
+  it("returns nothing for empty or whitespace-only input", () => {
+    expect(parsePastedOptions("")).toEqual([]);
+    expect(parsePastedOptions("   ")).toEqual([]);
+    expect(parsePastedOptions("\n\r\n   \n")).toEqual([]);
   });
 });

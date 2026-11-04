@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type ClipboardEvent } from "react";
 import { Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { QUESTION_KINDS, canonicalKind } from "@/lib/recruitment";
+import { parsePastedOptions } from "@/lib/recruitment-choice";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -45,12 +46,25 @@ export function QuestionItemCard({
 
   const saveOptions = (options: string[]) => save({ options }, "Đã cập nhật lựa chọn.");
 
+  /** Appends whatever survived parsing, so a pasted block costs a single update. */
+  const addOptionsList = (newOptions: string[]) => {
+    if (newOptions.length === 0) return;
+    saveOptions([...question.options, ...newOptions]);
+  };
+
   const addOption = () => {
-    const value = draft.trim();
-    if (!value) return;
+    if (!draft.trim()) return;
     setDraft("");
-    if (question.options.includes(value)) return;
-    saveOptions([...question.options, value]);
+    addOptionsList(parsePastedOptions(draft, question.options));
+  };
+
+  /** A multi-line paste becomes one option per line instead of a single long label. */
+  const pasteOptions = (e: ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData("text");
+    if (!pastedText.includes("\n") && !pastedText.includes("\r")) return;
+    e.preventDefault();
+    setDraft("");
+    addOptionsList(parsePastedOptions(pastedText, question.options));
   };
 
   return (
@@ -156,10 +170,11 @@ export function QuestionItemCard({
           <div className="flex gap-1.5">
             <input
               className="min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
-              placeholder="Nhập lựa chọn rồi nhấn Enter…"
+              placeholder="Nhập lựa chọn rồi nhấn Enter… (hoặc dán danh sách nhiều dòng)"
               value={draft}
               aria-label="Thêm lựa chọn"
               onChange={(e) => setDraft(e.target.value)}
+              onPaste={pasteOptions}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
                 e.preventDefault();
