@@ -66,6 +66,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-54-OTHER-CHOICE-OPTION-WITH-CUSTOM-INPUT` | Hỗ trợ mục "Khác" kèm textbox nhập liệu cho câu hỏi trắc nghiệm Google Form style | 2026-11-04 | **PASS** | [task-54-other-choice-option-with-custom-input.md](tasks/task-54-other-choice-option-with-custom-input.md) |
 | `TASK-55-PASTE-MULTI-LINE-CHOICE-OPTIONS` | Hỗ trợ dán (paste) danh sách nhiều lựa chọn trắc nghiệm tự động phân tách theo dòng | 2026-11-04 | **PASS** | [task-55-paste-multi-line-choice-options.md](tasks/task-55-paste-multi-line-choice-options.md) |
 | `TASK-56-DELETE-CUSTOM-POSITIONS` | Cho phép xóa vị trí tùy chỉnh & sửa lỗi hiển thị vị trí mới trong chủ đề tuyển dụng | 2026-11-04 | **PASS** | [task-56-delete-custom-positions.md](tasks/task-56-delete-custom-positions.md) |
+| `TASK-57-CLEAN-QUESTION-STUDIO-AND-CENTER-PREVIEW-MODAL` | Tinh gọn giao diện tuyển dụng & chuyển Xem trước dạng ứng viên sang Modal Popup căn giữa | 2026-11-04 | **PASS** | [task-57-clean-question-studio-and-center-preview-modal.md](tasks/task-57-clean-question-studio-and-center-preview-modal.md) |
 | `TASK-SCALE-MEMBER-PASS-2X-DESKTOP` | Scale thẻ thành viên 2x trên desktop & điều chỉnh vị trí mã QR | 2026-11-04 | **PASS** | [task-scale-member-pass-2x-desktop.md](tasks/task-scale-member-pass-2x-desktop.md) |
 | `TASK-VERTICAL-PASS-REDESIGN` | Thiết kế & triển khai Thẻ đứng (Vertical Member Pass ID-1) | 2026-11-03 | **PASS** | [task-vertical-pass-redesign.md](tasks/task-vertical-pass-redesign.md) |
 
