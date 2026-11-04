@@ -88,7 +88,10 @@ function unifiedStatus(m: MemberRow): UnifiedStatus {
   if (m.account && (m.account.status === "suspended" || m.account.status === "disabled")) return "suspended";
   if (m.status === "on_leave") return "on_leave";
   if (m.status === "suspended") return "suspended";
-  if (!m.account || m.account.status === "inactive") return "inactive";
+  // A member without a login account is still an active member of the club: never hide them
+  // behind "Chưa kích hoạt" just because the account has not been granted yet.
+  if (m.status === "inactive") return "inactive";
+  if (m.account && m.account.status === "inactive") return "inactive";
   return "active";
 }
 
@@ -101,9 +104,9 @@ const UNIFIED_ACCOUNT_STATUS: Record<UnifiedStatus, AccountStatus> = {
   left: "suspended",
 };
 
-/** Profile status written when the admin picks a unified state. */
+/** Profile status written when the admin picks a unified state ("inactive" = explicit, account-free state). */
 const UNIFIED_MEMBER_STATUS: Record<UnifiedStatus, string> = {
-  inactive: "active",
+  inactive: "inactive",
   active: "active",
   on_leave: "on_leave",
   suspended: "suspended",
@@ -157,7 +160,16 @@ function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }
       {m.account ? (
         <p className="max-w-[200px] truncate font-mono text-[11px] text-muted-foreground" title={m.account.email}>{m.account.email}</p>
       ) : (
-        <button onClick={(e) => { e.stopPropagation(); onGrant(); }} className="rounded-md border border-dashed border-primary/50 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/5">+ Cấp tài khoản</button>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] italic text-muted-foreground">Chưa cấp email nội bộ</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onGrant(); }}
+            className="rounded-md border border-dashed border-primary/50 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/5"
+            title="Cấp tài khoản đăng nhập cho thành viên này"
+          >
+            + Cấp
+          </button>
+        </div>
       )}
       <StatusPill m={m} />
     </div>
@@ -479,7 +491,8 @@ function MemberDrawer({ m, isAdmin, canEdit, onClose, onChanged }: { m: MemberRo
     try {
       const { error } = await supabase.from("members").update({
         department, position,
-        status: UNIFIED_MEMBER_STATUS[status],
+        // "inactive" may just mean "account not activated" (profile untouched), so keep the profile's own state.
+        status: status === "inactive" ? m.status : UNIFIED_MEMBER_STATUS[status],
         leave_from: status === "on_leave" ? leaveFrom : null,
         leave_until: status === "on_leave" ? leaveUntil : null,
         status_note: status === "active" ? "" : note.trim().slice(0, 500),
@@ -639,7 +652,7 @@ function MemberDrawer({ m, isAdmin, canEdit, onClose, onChanged }: { m: MemberRo
               })}
             </div>
             {isAdmin && status === "left" && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Hồ sơ đang ở trạng thái <strong>Đã rời</strong> vì tài khoản nội bộ đã bị xóa. Cấp lại tài khoản ở mục bên dưới sẽ đưa hồ sơ về <strong>Đang hoạt động</strong>.</p>}
-            {isAdmin && status === "inactive" && !m.account && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Hồ sơ chưa có tài khoản đăng nhập nên luôn ở trạng thái <strong>Chưa kích hoạt</strong>. Cấp tài khoản ở mục bên dưới để kích hoạt.</p>}
+            {isAdmin && status === "inactive" && !m.account && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Hồ sơ đang ở trạng thái <strong>Chưa kích hoạt</strong>. Chọn <strong>Đang hoạt động</strong> ở trên rồi bấm <strong>Lưu thay đổi</strong> để đưa thành viên vào danh sách hoạt động — việc cấp tài khoản đăng nhập là tuỳ chọn.</p>}
             {isAdmin && status === "inactive" && m.account && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Tài khoản chưa được kích hoạt. Chọn <strong>Đang hoạt động</strong> ở trên rồi bấm <strong>Lưu thay đổi</strong> để mở quyền đăng nhập.</p>}
             {status === "on_leave" && <div className="grid grid-cols-2 gap-2">
               <label className="text-xs text-muted-foreground">Bắt đầu nghỉ<input type="date" className={`${inp} mt-1`} value={leaveFrom} disabled={!canEdit} onChange={(e) => setLeaveFrom(e.target.value)} /></label>
