@@ -43,6 +43,9 @@ mem-tmp
 
 # BA workflow files
 GEMINI.md
+CLAUDE.md
+DEV.md
+opencode.json
 justdoit.md
 
 # Specific private docs
