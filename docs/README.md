@@ -156,6 +156,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-59-SYNC-SPARKLES-AND-FLATTEN-PODIUM`                             | Đồng bộ icon Sparkles, bỏ so sánh tháng trước & bục vinh danh 1-2-3                                    | 2026-11-04     | **PASS** | [task-59-sync-sparkles-and-flatten-podium.md](tasks/task-59-sync-sparkles-and-flatten-podium.md)                                                         |
 | `TASK-SCALE-MEMBER-PASS-2X-DESKTOP`                                    | Scale thẻ thành viên 2x trên desktop & điều chỉnh vị trí mã QR                                         | 2026-11-04     | **PASS** | [task-scale-member-pass-2x-desktop.md](tasks/task-scale-member-pass-2x-desktop.md)                                                                       |
 | `TASK-VERTICAL-PASS-REDESIGN`                                          | Thiết kế & triển khai Thẻ đứng (Vertical Member Pass ID-1)                                             | 2026-11-03     | **PASS** | [task-vertical-pass-redesign.md](tasks/task-vertical-pass-redesign.md)                                                                                   |
+| `TASK-OC-138-PARTNER-TOOLBAR-AND-CARDS`                                | Danh sách đối tác: tìm kiếm, lọc phân loại/trạng thái, thẻ khung logo, Switch, tải logo                | 2026-11-06     | **PASS** | [task-oc-138-partner-toolbar-and-cards.md](tasks/task-oc-138-partner-toolbar-and-cards.md)                                                               |
 
 ---
 

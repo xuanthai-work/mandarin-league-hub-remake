@@ -2,13 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { Eye, EyeOff, Handshake, Pencil, Plus } from "lucide-react";
+import { ArrowUpRight, Download, Handshake, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
 import { PARTNER_BUCKET, withLogos, type PartnerRow } from "@/lib/news-db";
 import { canManagePartners, canViewPartners } from "@/lib/admin-permissions";
+import { matchesSearch, removeVietnameseTones } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   PartnerDrawer,
   type PartnerForm,
@@ -33,6 +42,29 @@ const EMPTY: PartnerForm = {
   website_url: "",
   sort_order: 0,
   is_active: true,
+};
+
+type StatusFilter = "all" | "visible" | "hidden";
+
+/** "https://www.canva.com/vi" → "canva.com" */
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
+/** Link tải logo: Supabase signed URL hỗ trợ tham số `download` để trình duyệt tải về thay vì mở tab. */
+const logoDownloadUrl = (p: PartnerRow) => {
+  if (!p.logo) return "";
+  const ext = p.logo_path.split(".").pop() || "png";
+  const slug =
+    removeVietnameseTones(p.name)
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "doi-tac";
+  const sep = p.logo.includes("?") ? "&" : "?";
+  return `${p.logo}${sep}download=${encodeURIComponent(`logo-${slug}.${ext}`)}`;
 };
 
 function PartnersAdmin() {
@@ -165,6 +197,23 @@ function PartnersAdmin() {
     positions.push({ value: f.sort_order, occupant: null });
   positions.sort((a, b) => a.value - b.value);
 
+  const openEdit = (p: PartnerRow) => {
+    const { logo: _l, ...rest } = p;
+    setLogoPreview(p.logo || null);
+    setF({ ...rest, sort_order: p.sort_order >= 1 ? p.sort_order : nextSortOrder });
+  };
+
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState<string>("all");
+  const [status, setStatus] = useState<StatusFilter>("all");
+
+  const rows = partners.filter(
+    (p) =>
+      (cat === "all" || p.category === cat) &&
+      (status === "all" || (status === "visible" ? p.is_active : !p.is_active)) &&
+      (matchesSearch(p.name, q) || matchesSearch(p.field, q)),
+  );
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
@@ -189,85 +238,113 @@ function PartnersAdmin() {
         }
       />
 
-      <div className="flex items-center justify-between border-b border-border pb-3">
-        <h2 className="text-sm font-semibold text-foreground">Danh sách đối tác</h2>
-        <p className="text-sm text-muted-foreground">
-          Tổng số đối tác:
-          <span className="ml-1 font-semibold text-foreground">{partners.length}</span>
-        </p>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm tên hoặc lĩnh vực…"
+            aria-label="Tìm kiếm đối tác"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <Select value={cat} onValueChange={setCat}>
+          <SelectTrigger
+            aria-label="Lọc theo phân loại"
+            className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+          >
+            <SelectValue>{cat === "all" ? "Tất cả phân loại" : cat}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Tất cả phân loại
+            </SelectItem>
+            {PARTNER_CATEGORIES.map((c) => (
+              <SelectItem key={c} value={c} className="text-xs">
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
+          <SelectTrigger
+            aria-label="Lọc theo trạng thái"
+            className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+          >
+            <SelectValue>
+              {status === "all"
+                ? "Tất cả trạng thái"
+                : status === "visible"
+                  ? "Đang hiển thị"
+                  : "Đang ẩn"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Tất cả trạng thái
+            </SelectItem>
+            <SelectItem value="visible" className="text-xs">
+              Đang hiển thị
+            </SelectItem>
+            <SelectItem value="hidden" className="text-xs">
+              Đang ẩn
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="ml-auto font-mono text-xs text-muted-foreground">
+          {rows.length} đối tác
+        </span>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {list.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
-        {!list.isLoading && partners.length === 0 && (
-          <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground sm:col-span-2 lg:col-span-3">
-            Chưa có đối tác.
+      {list.isLoading ? (
+        <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+          Đang tải danh sách đối tác…
+        </p>
+      ) : partners.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+          <Handshake className="mx-auto h-8 w-8 text-muted-foreground" />
+          <p className="mt-3 text-sm font-medium">Chưa có đối tác nào</p>
+          {manager && (
+            <p className="mt-1 text-xs text-muted-foreground">Bấm “Thêm đối tác” để bắt đầu.</p>
+          )}
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+          <p className="text-sm font-medium">Không tìm thấy đối tác phù hợp</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Thử xóa từ khóa hoặc chọn lại bộ lọc phân loại và trạng thái.
           </p>
-        )}
-        {partners.map((p) => (
-          <div
-            key={p.id}
-            className={`rounded-xl border border-border bg-card p-4 ${p.is_active ? "" : "opacity-60"}`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              {p.logo ? (
-                <a href={p.logo} target="_blank" rel="noreferrer">
-                  <img src={p.logo} alt={p.name} className="h-10 object-contain" />
-                </a>
-              ) : (
-                <Handshake className="h-8 w-8 text-primary" />
-              )}
-              {manager && (
-                <div className="flex gap-1">
-                  <button
-                    title="Sửa"
-                    aria-label={`Sửa đối tác ${p.name}`}
-                    onClick={() => {
-                      const { logo: _l, ...rest } = p;
-                      setLogoPreview(p.logo || null);
-                      setF({
-                        ...rest,
-                        sort_order: p.sort_order >= 1 ? p.sort_order : nextSortOrder,
-                      });
-                    }}
-                    className="rounded-lg border border-border p-1.5"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    title={p.is_active ? "Ẩn" : "Hiện"}
-                    aria-label={`${p.is_active ? "Ẩn" : "Hiện"} đối tác ${p.name}`}
-                    onClick={() => patch(p.id, { is_active: !p.is_active }, "Đã cập nhật")}
-                    className="rounded-lg border border-border p-1.5"
-                  >
-                    {p.is_active ? (
-                      <Eye className="h-3.5 w-3.5" />
-                    ) : (
-                      <EyeOff className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-            <p className="mt-3 font-semibold">{p.name}</p>
-            <p className="text-xs text-primary">
-              {p.category}
-              {p.field && ` · ${p.field}`}
-            </p>
-            <span
-              className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                p.is_active
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {p.is_active ? "Đang hiển thị" : "Đang ẩn"}
-            </span>
-            <p className="mt-1 text-xs text-muted-foreground">Thứ tự hiển thị: {p.sort_order}</p>
-            <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{p.description}</p>
-          </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {rows.map((p) => (
+            <PartnerCard
+              key={p.id}
+              p={p}
+              manager={manager}
+              onEdit={() => openEdit(p)}
+              onToggleActive={(next) =>
+                void patch(p.id, { is_active: next }, next ? "Đã hiện đối tác" : "Đã ẩn đối tác")
+              }
+            />
+          ))}
+        </div>
+      )}
 
       <AnimatePresence>
         {f && manager && (
@@ -294,5 +371,133 @@ function PartnersAdmin() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function PartnerCard({
+  p,
+  manager,
+  onEdit,
+  onToggleActive,
+}: {
+  p: PartnerRow;
+  manager: boolean;
+  onEdit: () => void;
+  onToggleActive: (next: boolean) => void;
+}) {
+  const interactive = manager
+    ? {
+        onClick: onEdit,
+        tabIndex: 0,
+        role: "button" as const,
+        "aria-label": `Sửa đối tác ${p.name}`,
+        onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onEdit();
+          }
+        },
+      }
+    : {};
+
+  return (
+    <article
+      {...interactive}
+      className={`group flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition duration-200 ${
+        p.is_active ? "" : "opacity-75"
+      } ${manager ? "cursor-pointer hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md" : ""}`}
+    >
+      <div className="relative grid h-32 place-items-center border-b border-border/70 bg-white">
+        {p.logo ? (
+          <img
+            src={p.logo}
+            alt={p.name}
+            className={`max-h-16 max-w-[65%] object-contain ${p.is_active ? "" : "grayscale"}`}
+          />
+        ) : (
+          <Handshake className="h-8 w-8 text-muted-foreground/60" />
+        )}
+        <span className="absolute left-2.5 top-2.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+          {p.category}
+        </span>
+        <span
+          className="absolute right-2.5 top-2.5 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground"
+          title="Vị trí hiển thị trên website"
+        >
+          {`#${p.sort_order}`}
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="truncate text-base font-bold tracking-tight text-foreground">{p.name}</h3>
+        <p
+          className={`mt-0.5 truncate text-xs ${
+            p.field ? "font-medium text-primary" : "font-normal italic text-muted-foreground"
+          }`}
+        >
+          {p.field || "Chưa ghi lĩnh vực"}
+        </p>
+        <p
+          className={`mt-2 line-clamp-2 min-h-[2rem] text-xs text-muted-foreground ${
+            p.description ? "" : "italic"
+          }`}
+        >
+          {p.description || "Chưa có mô tả."}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5">
+        {p.website_url ? (
+          <a
+            href={p.website_url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex min-w-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{hostOf(p.website_url)}</span>
+          </a>
+        ) : (
+          <span className="text-[11px] italic text-muted-foreground">Chưa có website</span>
+        )}
+
+        <div className="flex shrink-0 items-center gap-2">
+          {p.logo && (
+            <a
+              href={logoDownloadUrl(p)}
+              onClick={(e) => e.stopPropagation()}
+              title="Tải logo"
+              aria-label={`Tải logo ${p.name}`}
+              className="grid h-7 w-7 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </a>
+          )}
+          {manager ? (
+            <Switch
+              checked={p.is_active}
+              onCheckedChange={onToggleActive}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={p.is_active ? `Ẩn ${p.name} khỏi website` : `Hiện ${p.name} trên website`}
+              title={
+                p.is_active ? "Đang hiển thị trên website (bấm để ẩn)" : "Đang ẩn (bấm để hiện)"
+              }
+            />
+          ) : (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                p.is_active
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {p.is_active ? "Đang hiển thị" : "Đang ẩn"}
+            </span>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
