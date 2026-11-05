@@ -227,7 +227,7 @@ function SidebarPanel({
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-border/60 bg-muted/10 p-3">
+      <div className="shrink-0 border-t border-border/60 p-3">
         <div className="flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card p-2.5 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] transition-all hover:border-border hover:shadow-md">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-[11px] font-bold text-primary ring-1 ring-primary/25 shadow-2xs">
             {initials}
