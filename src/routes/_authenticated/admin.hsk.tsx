@@ -2,23 +2,37 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
+  Award,
   Ban,
+  Calendar,
+  CheckCircle2,
   Download,
   ExternalLink,
+  FileSpreadsheet,
+  GraduationCap,
   History,
   Pencil,
   Plus,
   QrCode,
   RotateCcw,
   Search,
-  Upload,
+  ShieldCheck,
+  UploadCloud,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { HSK_LEVELS, HSK_PREFIXES, hskRule, hskSkills } from "@/lib/hsk";
+import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -124,6 +138,7 @@ function HskAdminPage() {
   const [historyOf, setHistoryOf] = useState<Row | null>(null);
   const [prefix, setPrefix] = useState<string>("TMLHSK");
   const [customCode, setCustomCode] = useState(false);
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-hsk"],
@@ -161,15 +176,27 @@ function HskAdminPage() {
   });
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-hsk"] });
 
-  const rows = (data ?? []).filter(
-    (r) =>
-      (!q ||
-        `${r.candidate_code} ${r.candidate_name} ${r.exam_session}`
-          .toLowerCase()
-          .includes(q.toLowerCase())) &&
-      (!level || r.level === level) &&
-      (!status || r.status === status),
-  );
+  const rows = (data ?? []).filter((r) => {
+    if (q.trim()) {
+      const target = `${r.candidate_code} ${r.candidate_name} ${r.candidate_name_zh || ""} ${r.exam_session || ""} ${r.course_name || ""}`;
+      if (!matchesSearch(target, q)) return false;
+    }
+    if (level && r.level !== level) return false;
+    if (status && r.status !== status) return false;
+    return true;
+  });
+
+  const totalRecords = data?.length ?? 0;
+  const validRecords = data?.filter((r) => r.status === "VALID") ?? [];
+  const passedCount = validRecords.filter((r) => r.passed).length;
+  const passRate =
+    validRecords.length > 0 ? Math.round((passedCount / validRecords.length) * 100) : 0;
+  const latestExam =
+    data && data.length > 0
+      ? [...data].sort(
+          (a, b) => new Date(b.exam_date).getTime() - new Date(a.exam_date).getTime(),
+        )[0]
+      : null;
 
   const genCode = async (p: string) =>
     ((await supabase.rpc("suggest_hsk_code_v2", { _prefix: p })).data as string) ?? "";
@@ -339,6 +366,19 @@ function HskAdminPage() {
   };
 
   // CSV columns: code(optional),name,level,exam_date,listening,reading,writing,speaking,session
+  const downloadTemplateCsv = () => {
+    const head = "ma,ho_ten,cap_do,ngay_thi,nghe,doc,viet,khau_ngu,dot_thi";
+    const sample = [
+      "TML-HSK-2601-0001,Nguyễn Văn A,HSK3,2026-01-15,85,80,78,,Đợt 1/2026",
+      "TML-HSK-2601-0002,Trần Thị B,HSK4,2026-01-18,90,88,86,80,Đợt 1/2026",
+    ];
+    const csv = [head, ...sample].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "ket_qua_hsk_mau.csv";
+    a.click();
+  };
+
   const importCsv = async (f: File | undefined) => {
     if (!f) return;
     const lines = (await f.text())
@@ -399,18 +439,12 @@ function HskAdminPage() {
         description="Ghi nhận kết quả thi thử / đánh giá do TML tổ chức hoặc liên kết. Tổng điểm và Đạt/Chưa đạt do hệ thống tự tính."
         actions={
           <>
-            <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent">
-              <Upload className="h-4 w-4" /> Nhập CSV
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                onChange={(e) => {
-                  importCsv(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
-            </label>
+            <button
+              onClick={() => setCsvModalOpen(true)}
+              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent"
+            >
+              <UploadCloud className="h-4 w-4" /> Nhập CSV
+            </button>
             <button
               onClick={exportCsv}
               className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent"
@@ -426,11 +460,58 @@ function HskAdminPage() {
           </>
         }
       />
-      <p className="text-xs text-muted-foreground">
-        CSV mẫu (dòng đầu là tiêu đề):{" "}
-        <code>ma,ho_ten,cap_do,ngay_thi,nghe,doc,viet,khau_ngu,dot_thi</code> — cấp độ: HSK1…HSK6,
-        HSKK-BEG/INT/ADV; bỏ trống mã để hệ thống tự tạo.
-      </p>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-medium">Tổng thí sinh</span>
+            <GraduationCap className="h-4 w-4" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{totalRecords}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {validRecords.length} chứng nhận hợp lệ
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-medium">Tỷ lệ Đạt</span>
+            <Award className="h-4 w-4 text-emerald-500" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+            {passRate}%
+          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {passedCount} / {validRecords.length} thí sinh đỗ
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-medium">Đợt thi gần nhất</span>
+            <Calendar className="h-4 w-4" />
+          </div>
+          <p className="mt-2 truncate text-base font-bold text-foreground">
+            {latestExam?.exam_session || latestExam?.exam_date || "Chưa có"}
+          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {latestExam ? `Ngày: ${latestExam.exam_date}` : "Chưa có dữ liệu"}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-medium">Chứng nhận hiệu lực</span>
+            <ShieldCheck className="h-4 w-4 text-primary" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+            {validRecords.length}{" "}
+            <span className="text-xs font-normal text-muted-foreground">/ {totalRecords}</span>
+          </p>
+          <p className="mt-0.5 text-[11px] text-destructive">
+            {totalRecords - validRecords.length} chứng nhận đã hủy
+          </p>
+        </div>
+      </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
         <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
@@ -496,119 +577,132 @@ function HskAdminPage() {
             </SelectItem>
           </SelectContent>
         </Select>
+        <span className="ml-auto font-mono text-xs text-muted-foreground">
+          {rows.length} kết quả
+        </span>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="p-3">Mã</th>
-              <th className="p-3">Thí sinh</th>
-              <th className="p-3">Cấp độ</th>
-              <th className="p-3">Ngày thi</th>
-              <th className="p-3">Tổng</th>
-              <th className="p-3">Kết quả</th>
-              <th className="p-3 text-right">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
+      {!isLoading && rows.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-border/80 bg-card/50 p-10 text-center">
+          <FileSpreadsheet className="mx-auto h-8 w-8 text-muted-foreground" />
+          <p className="mt-3 text-sm font-medium text-foreground">Không tìm thấy kết quả phù hợp</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Thử tìm bằng từ khóa khác hoặc bỏ bớt các bộ lọc cấp độ, trạng thái.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <td colSpan={7} className="p-6 text-center text-muted-foreground">
-                  Đang tải…
-                </td>
+                <th className="p-3">Mã</th>
+                <th className="p-3">Thí sinh</th>
+                <th className="p-3">Cấp độ</th>
+                <th className="p-3">Ngày thi</th>
+                <th className="p-3">Tổng</th>
+                <th className="p-3">Kết quả</th>
+                <th className="p-3 text-right">Thao tác</th>
               </tr>
-            )}
-            {!isLoading && rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="p-6 text-center text-muted-foreground">
-                  Chưa có kết quả nào.
-                </td>
-              </tr>
-            )}
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-border">
-                <td className="p-3 font-mono text-xs">{r.candidate_code}</td>
-                <td className="p-3">
-                  {r.candidate_name}
-                  {r.candidate_name_zh && (
-                    <span className="block text-xs text-muted-foreground">
-                      {r.candidate_name_zh}
-                    </span>
-                  )}
-                </td>
-                <td className="p-3">{HSK_LEVELS[r.level]}</td>
-                <td className="p-3">{r.exam_date}</td>
-                <td className="p-3 font-semibold">
-                  {r.total_score}/{r.max_score}
-                </td>
-                <td className="p-3">
-                  {r.status === "REVOKED" ? (
-                    <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
-                      Đã hủy
-                    </span>
-                  ) : (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.passed ? "bg-success/10 text-success" : "bg-warning-soft text-warning-foreground"}`}
-                    >
-                      {r.passed ? "Đạt" : "Chưa đạt"}
-                    </span>
-                  )}
-                </td>
-                <td className="p-3">
-                  <div className="flex justify-end gap-1">
-                    <button
-                      title="Mở trang xác minh"
-                      onClick={() => window.open(link(r), "_blank")}
-                      className="rounded p-1.5 hover:bg-accent"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </button>
-                    <button
-                      title="Tải mã QR (PNG)"
-                      onClick={() => downloadQr(r)}
-                      className="rounded p-1.5 hover:bg-accent"
-                    >
-                      <QrCode className="h-4 w-4" />
-                    </button>
-                    <button
-                      title="Nhật ký"
-                      onClick={() => setHistoryOf(r)}
-                      className="rounded p-1.5 hover:bg-accent"
-                    >
-                      <History className="h-4 w-4" />
-                    </button>
-                    <button
-                      title="Sửa"
-                      onClick={() => openEdit(r)}
-                      className="rounded p-1.5 hover:bg-accent"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    {r.status === "VALID" ? (
-                      <button
-                        title="Hủy kết quả"
-                        onClick={() => setRevoked(r, true)}
-                        className="rounded p-1.5 text-destructive hover:bg-destructive/10"
-                      >
-                        <Ban className="h-4 w-4" />
-                      </button>
+            </thead>
+            <tbody>
+              {isLoading && (
+                <tr>
+                  <td colSpan={7} className="p-6 text-center text-muted-foreground">
+                    Đang tải…
+                  </td>
+                </tr>
+              )}
+              {rows.map((r) => (
+                <tr key={r.id} className="border-t border-border">
+                  <td className="p-3 font-mono text-xs">{r.candidate_code}</td>
+                  <td className="p-3">
+                    {r.candidate_name}
+                    {r.candidate_name_zh && (
+                      <span className="block text-xs text-muted-foreground">
+                        {r.candidate_name_zh}
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3">{HSK_LEVELS[r.level]}</td>
+                  <td className="p-3">{r.exam_date}</td>
+                  <td className="p-3 font-semibold">
+                    {r.total_score}/{r.max_score}
+                  </td>
+                  <td className="p-3">
+                    {r.status === "REVOKED" ? (
+                      <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+                        Đã hủy
+                      </span>
                     ) : (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.passed ? "bg-success/10 text-success" : "bg-warning-soft text-warning-foreground"}`}
+                      >
+                        {r.passed ? "Đạt" : "Chưa đạt"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex justify-end gap-1">
                       <button
-                        title="Khôi phục"
-                        onClick={() => setRevoked(r, false)}
+                        title="Mở trang xác minh"
+                        onClick={() => window.open(link(r), "_blank")}
                         className="rounded p-1.5 hover:bg-accent"
                       >
-                        <RotateCcw className="h-4 w-4" />
+                        <ExternalLink className="h-4 w-4" />
                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                      <button
+                        title="Tải mã QR (PNG)"
+                        onClick={() => downloadQr(r)}
+                        className="rounded p-1.5 hover:bg-accent"
+                      >
+                        <QrCode className="h-4 w-4" />
+                      </button>
+                      <button
+                        title="Nhật ký"
+                        onClick={() => setHistoryOf(r)}
+                        className="rounded p-1.5 hover:bg-accent"
+                      >
+                        <History className="h-4 w-4" />
+                      </button>
+                      <button
+                        title="Sửa"
+                        onClick={() => openEdit(r)}
+                        className="rounded p-1.5 hover:bg-accent"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      {r.status === "VALID" ? (
+                        <button
+                          title="Hủy kết quả"
+                          onClick={() => setRevoked(r, true)}
+                          className="rounded p-1.5 text-destructive hover:bg-destructive/10"
+                        >
+                          <Ban className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <button
+                          title="Khôi phục"
+                          onClick={() => setRevoked(r, false)}
+                          className="rounded p-1.5 hover:bg-accent"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <CsvImportDialog
+        open={csvModalOpen}
+        onOpenChange={setCsvModalOpen}
+        onDownloadTemplate={downloadTemplateCsv}
+        onImport={importCsv}
+      />
 
       {edit && (
         <div
@@ -931,5 +1025,125 @@ function HskAdminPage() {
         </div>
       )}
     </section>
+  );
+}
+
+// ---------------------------------------------------------------- csv import dialog
+
+function CsvImportDialog({
+  open,
+  onOpenChange,
+  onDownloadTemplate,
+  onImport,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDownloadTemplate: () => void;
+  onImport: (file: File | undefined) => Promise<void>;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [lineCount, setLineCount] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  const reset = () => {
+    setFile(null);
+    setLineCount(0);
+    setBusy(false);
+  };
+
+  const pick = async (f: File | undefined) => {
+    if (!f) return;
+    const text = (await f.text()).replace(/^\ufeff/, "");
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    setFile(f);
+    setLineCount(Math.max(0, lines.length - 1));
+  };
+
+  const submit = async () => {
+    if (!file) {
+      toast.error("Vui lòng chọn file CSV");
+      return;
+    }
+    setBusy(true);
+    await onImport(file);
+    setBusy(false);
+    reset();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (!v) reset();
+      }}
+    >
+      <DialogContent className="max-w-lg rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Nhập kết quả HSK từ CSV</DialogTitle>
+          <DialogDescription>
+            Tải file danh sách kết quả hàng loạt định dạng .csv vào hệ thống.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={onDownloadTemplate}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-2xs transition-colors hover:bg-muted"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Tải file CSV mẫu
+          </button>
+
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center transition-colors hover:bg-muted/40">
+            <FileSpreadsheet className="h-7 w-7 text-muted-foreground" />
+            <span className="text-sm font-medium">{file ? file.name : "Chọn file CSV từ máy"}</span>
+            <span className="text-[11px] text-muted-foreground">
+              {file
+                ? `${lineCount} dòng dữ liệu hợp lệ đọc được`
+                : "Chỉ nhận file .csv, dòng đầu tiên là tiêu đề"}
+            </span>
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                void pick(f);
+              }}
+            />
+          </label>
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">
+              {file ? (
+                <span className="inline-flex items-center gap-1 text-success">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Sẵn sàng nhập {lineCount} dòng
+                </span>
+              ) : (
+                "Chưa chọn file"
+              )}
+            </p>
+            <button
+              type="button"
+              disabled={!file || busy}
+              onClick={() => void submit()}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                !file || busy
+                  ? "cursor-not-allowed bg-muted text-muted-foreground"
+                  : "cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
+            >
+              <UploadCloud className="h-4 w-4" />
+              {busy ? "Đang nhập…" : "Xác nhận nhập dữ liệu"}
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
