@@ -9,7 +9,6 @@ import {
   PROGRAM_OPTIONS,
   resolveTeacherPhotos,
   TEACHER_BUCKET,
-  TEACHER_STATUS_LABEL,
   TEACHER_TYPE_LABEL,
   type TeacherStatus,
   type TeacherType,
@@ -68,20 +67,20 @@ const EMPTY: Omit<Teacher, "id"> = {
   teaching_levels: [],
   programs: [],
   teacher_type: "official",
-  status: "draft",
+  status: "visible",
   show_on_home: false,
   is_featured: false,
   sort_order: 0,
 };
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const LEVELS = [1, 2, 3, 4, 5, 6];
+const CHINESE_LEVELS = ["HSK 4", "HSK 5", "HSK 6", "HSK 7", "HSK 8", "HSK 9", "HSK 7-9"];
 
 function TeachersPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [lv, setLv] = useState(0);
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [edit, setEditRaw] = useState<(Omit<Teacher, "id"> & { id?: string }) | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -108,7 +107,6 @@ function TeachersPage() {
     }
     if (lv && !t.teaching_levels.includes(lv)) return false;
     if (typeFilter !== "all" && t.teacher_type !== typeFilter) return false;
-    if (statusFilter !== "all" && t.status !== statusFilter) return false;
     return true;
   });
 
@@ -147,7 +145,7 @@ function TeachersPage() {
       body as Partial<Teacher> & { visible?: boolean; created_at?: string; member_id?: string }
     ).visible;
     delete (body as { created_at?: string }).created_at;
-    const payload = { ...body, full_name: body.full_name.trim() };
+    const payload = { ...body, full_name: body.full_name.trim(), status: "visible" as const };
     const { error } = id
       ? await supabase.from("teachers").update(payload).eq("id", id)
       : await supabase.from("teachers").insert(payload);
@@ -157,13 +155,6 @@ function TeachersPage() {
     }
     toast.success("Đã lưu hồ sơ giáo viên");
     setEdit(null);
-    refresh();
-  };
-  const toggle = async (t: Teacher) => {
-    await supabase
-      .from("teachers")
-      .update({ status: t.status === "visible" ? "hidden" : "visible" })
-      .eq("id", t.id);
     refresh();
   };
   const toggleHome = async (t: Teacher) => {
@@ -260,28 +251,6 @@ function TeachersPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger
-            aria-label="Lọc theo trạng thái"
-            className="h-9 w-[150px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
-          >
-            <SelectValue>
-              {statusFilter === "all"
-                ? "Tất cả trạng thái"
-                : (TEACHER_STATUS_LABEL[statusFilter as TeacherStatus] ?? statusFilter)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="all" className="text-xs">
-              Tất cả trạng thái
-            </SelectItem>
-            {Object.entries(TEACHER_STATUS_LABEL).map(([k, v]) => (
-              <SelectItem key={k} value={k} className="text-xs">
-                {v}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <span className="ml-auto font-mono text-xs text-muted-foreground">
           {rows.length} giáo viên
         </span>
@@ -296,7 +265,7 @@ function TeachersPage() {
           <UserRound className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-3 text-sm font-medium">Không tìm thấy giáo viên phù hợp</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Thử xóa từ khóa hoặc chọn lại bộ lọc cấp HSK, loại và trạng thái.
+            Thử xóa từ khóa hoặc chọn lại bộ lọc cấp HSK và loại giáo viên.
           </p>
         </div>
       ) : (
@@ -306,7 +275,6 @@ function TeachersPage() {
               key={t.id}
               t={t}
               onEdit={() => setEdit(t)}
-              onToggle={() => void toggle(t)}
               onToggleHome={() => void toggleHome(t)}
             />
           ))}
@@ -338,12 +306,10 @@ function TeachersPage() {
 function TeacherCard({
   t,
   onEdit,
-  onToggle,
   onToggleHome,
 }: {
   t: Teacher;
   onEdit: () => void;
-  onToggle: () => void;
   onToggleHome: () => void;
 }) {
   return (
@@ -388,10 +354,19 @@ function TeacherCard({
                 )}
               </div>
               <Switch
-                checked={t.status === "visible"}
-                onCheckedChange={onToggle}
+                checked={t.show_on_home}
+                onCheckedChange={onToggleHome}
                 onClick={(e) => e.stopPropagation()}
-                aria-label={t.status === "visible" ? `Ẩn ${t.full_name}` : `Hiện ${t.full_name}`}
+                aria-label={
+                  t.show_on_home
+                    ? `Ẩn ${t.full_name} khỏi trang chủ`
+                    : `Hiện ${t.full_name} ở trang chủ`
+                }
+                title={
+                  t.show_on_home
+                    ? "Đang hiện ở Trang chủ (click để ẩn)"
+                    : "Chưa hiện ở Trang chủ (click để bật)"
+                }
               />
             </div>
             <p className="mt-1 truncate text-xs font-medium text-primary">
@@ -417,13 +392,10 @@ function TeacherCard({
             )}
           </div>
 
-          {(t.chinese_level || t.specialty) && (
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              {t.chinese_level && (
-                <span className="font-medium text-foreground">{t.chinese_level}</span>
-              )}
-              {t.chinese_level && t.specialty && <span>·</span>}
-              {t.specialty && <span className="truncate">{t.specialty}</span>}
+          {t.chinese_level && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span>Trình độ Hán ngữ:</span>
+              <span className="font-semibold text-foreground">{t.chinese_level}</span>
             </div>
           )}
         </div>
@@ -442,21 +414,13 @@ function TeacherCard({
           >
             {TEACHER_TYPE_LABEL[t.teacher_type] ?? t.teacher_type}
           </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleHome();
-            }}
-            title={t.show_on_home ? "Ẩn khỏi trang chủ" : "Hiện ở trang chủ"}
-            className={`rounded-full px-2 py-0.5 font-medium transition-colors ${
-              t.show_on_home
-                ? "bg-primary/10 text-primary hover:bg-primary/15"
-                : "bg-secondary text-muted-foreground hover:bg-muted"
+          <span
+            className={`rounded-full px-2 py-0.5 font-medium ${
+              t.show_on_home ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
             }`}
           >
-            {t.show_on_home ? "Trang chủ" : "Ẩn khỏi trang chủ"}
-          </button>
+            {t.show_on_home ? "★ Hiện trang chủ" : "Không hiện trang chủ"}
+          </span>
         </div>
         <span className="shrink-0 font-mono text-xs text-muted-foreground/70">#{t.sort_order}</span>
       </div>
@@ -548,15 +512,6 @@ function TeacherDrawer({
                     ({value.chinese_name})
                   </span>
                 )}
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    value.status === "visible"
-                      ? "bg-success/15 text-success"
-                      : "bg-secondary text-muted-foreground"
-                  }`}
-                >
-                  {value.status === "visible" ? "Đang hiển thị" : "Bản nháp / Đang ẩn"}
-                </span>
               </div>
             </div>
           </div>
@@ -662,25 +617,28 @@ function TeacherDrawer({
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Năng lực chuyên môn & Giảng dạy
             </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-xs text-muted-foreground">
-                Trình độ Hán ngữ
-                <input
-                  className={`${inp} mt-1`}
-                  placeholder="VD: HSK 6, Thạc sĩ Ngôn ngữ"
-                  value={value.chinese_level}
-                  onChange={(e) => onChange({ chinese_level: e.target.value })}
-                />
-              </label>
-              <label className="block text-xs text-muted-foreground">
-                Chuyên môn chính
-                <input
-                  className={`${inp} mt-1`}
-                  placeholder="VD: Ngữ pháp, Luyện đề HSK 5-6"
-                  value={value.specialty}
-                  onChange={(e) => onChange({ specialty: e.target.value })}
-                />
-              </label>
+            <div className="text-xs text-muted-foreground">
+              <span>Trình độ Hán ngữ</span>
+              <Select
+                value={value.chinese_level || ""}
+                onValueChange={(v) => onChange({ chinese_level: v })}
+              >
+                <SelectTrigger
+                  aria-label="Trình độ Hán ngữ"
+                  className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                >
+                  <SelectValue placeholder="Chọn trình độ HSK (HSK 4 - 9)">
+                    {value.chinese_level || "Chưa chọn trình độ"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {CHINESE_LEVELS.map((level) => (
+                    <SelectItem key={level} value={level} className="text-xs">
+                      {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
@@ -833,20 +791,6 @@ function TeacherDrawer({
             </div>
 
             <div className="space-y-2 pt-1">
-              <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
-                <div className="space-y-0.5">
-                  <span className="text-xs font-medium text-foreground">Hiển thị công khai</span>
-                  <p className="text-[11px] text-muted-foreground">
-                    Bật để học viên có thể thấy hồ sơ trên website
-                  </p>
-                </div>
-                <Switch
-                  checked={value.status === "visible"}
-                  onCheckedChange={(v) => onChange({ status: v ? "visible" : "hidden" })}
-                  aria-label="Hiển thị công khai"
-                />
-              </label>
-
               <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
                 <div className="space-y-0.5">
                   <span className="text-xs font-medium text-foreground">
