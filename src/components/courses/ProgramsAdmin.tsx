@@ -1,17 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  BookOpen,
-  CalendarCheck,
-  Copy,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { BookOpen, CalendarCheck, Copy, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirm } from "@/components/admin/Trash";
@@ -39,8 +28,10 @@ const inp =
   "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20";
 const areaCls =
   "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20";
-const fileCls =
-  "h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-none file:mr-2 file:rounded-md file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs file:font-medium";
+const fileFrameCls =
+  "flex h-9 w-full items-center gap-2 rounded-lg border border-input bg-background px-2 text-sm shadow-none focus-within:ring-2 focus-within:ring-primary/20";
+const fileBtnCls =
+  "shrink-0 cursor-pointer rounded-md bg-muted px-2.5 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-accent";
 const fieldClass = "space-y-1.5 text-sm";
 const labelClass = "block text-sm font-medium text-foreground";
 const triggerClass = "h-9 w-full rounded-lg border-input bg-background text-sm shadow-none";
@@ -66,6 +57,17 @@ const EMPTY: Partial<Program> = {
   show_in_courses: true,
   show_in_activities: false,
 };
+
+/** Percentage widths keep the program grid aligned and always visible (no horizontal scroll). */
+const PROGRAM_COLS = [
+  { label: "Chương trình", className: "w-[26%]" },
+  { label: "Loại", className: "w-[15%]" },
+  { label: "Giáo viên", className: "w-[11%]" },
+  { label: "Trạng thái", className: "w-[14%]" },
+  { label: "Đăng ký", className: "w-[8%]" },
+  { label: "Ngày tạo", className: "w-[9%]" },
+  { label: "Thao tác", className: "w-[17%]" },
+] as const;
 
 /** Admin CRUD for the program catalog; enrollment counts come from course_enrollments.course_id. */
 export function ProgramsAdmin({
@@ -181,155 +183,158 @@ export function ProgramsAdmin({
           Tạo chương trình học
         </button>
       </div>
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="p-3">Chương trình</th>
-              <th className="p-3">Loại</th>
-              <th className="p-3">Giáo viên</th>
-              <th className="p-3">Trạng thái</th>
-              <th className="p-3">Đăng ký</th>
-              <th className="p-3">Ngày tạo</th>
-              <th className="p-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {(list ?? []).length === 0 && (
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full table-fixed text-sm">
+            <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
               <tr>
-                <td colSpan={7} className="p-6 text-center text-muted-foreground">
-                  Chưa có chương trình nào.
-                </td>
+                {PROGRAM_COLS.map((col) => (
+                  <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
+                    {col.label}
+                  </th>
+                ))}
               </tr>
-            )}
-            {(list ?? []).map((p) => (
-              <tr key={p.id} className="border-t border-border">
-                <td className="p-3">
-                  <div className="flex items-center gap-3">
-                    {p.thumb ? (
-                      <img src={p.thumb} alt="" className="h-10 w-16 rounded object-cover" />
-                    ) : (
-                      <div className="flex h-10 w-16 items-center justify-center rounded bg-muted">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div>
-                      <div className="font-medium">{p.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {p.level || "—"} · {programFee(p)}
+            </thead>
+            <tbody>
+              {(list ?? []).length === 0 && (
+                <tr>
+                  <td
+                    colSpan={PROGRAM_COLS.length}
+                    className="p-6 text-center text-xs text-muted-foreground"
+                  >
+                    Chưa có chương trình nào.
+                  </td>
+                </tr>
+              )}
+              {(list ?? []).map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-t border-border/60 transition-colors hover:bg-accent/50"
+                >
+                  <td className="p-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      {p.thumb ? (
+                        <img
+                          src={p.thumb}
+                          alt=""
+                          className="h-9 w-14 shrink-0 rounded object-cover"
+                        />
+                      ) : (
+                        <span className="grid h-9 w-14 shrink-0 place-items-center rounded bg-muted">
+                          <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foreground" title={p.title}>
+                          {p.title}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {p.level || "—"} · {programFee(p)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="p-3">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${TYPE_LABEL[p.course_type].tone}`}
-                  >
-                    {TYPE_LABEL[p.course_type].label}
-                  </span>
-                </td>
-                <td className="p-3 text-xs">{namesFor(p.id) || "—"}</td>
-                <td className="p-3 text-xs">
-                  {STATUS_LABEL[p.status]}
-                  {!p.is_published && <div className="font-semibold text-destructive">Đang ẩn</div>}
-                  {p.show_in_activities && (
-                    <div className="font-semibold text-primary">+ Hoạt động</div>
-                  )}
-                </td>
-                <td className="p-3">
-                  <button
-                    onClick={() => onFilter(p.id)}
-                    className="font-semibold text-primary hover:underline"
-                  >
-                    {p.registration_url ? "Link ngoài" : (enrollCounts.get(p.id) ?? 0)}
-                  </button>
-                </td>
-                <td className="p-3 text-xs">
-                  {new Date(p.created_at).toLocaleDateString("vi-VN")}
-                </td>
-                <td className="p-3">
-                  <div className="flex gap-1">
-                    <button
-                      title={p.is_published ? "Ẩn" : "Hiện"}
-                      onClick={() =>
-                        patch(
-                          p,
-                          { is_published: !p.is_published },
-                          p.is_published ? "Đã ẩn" : "Đã hiển thị",
-                        )
-                      }
-                      className="rounded p-1.5 hover:bg-muted"
+                  </td>
+                  <td className="p-3">
+                    <span
+                      className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${TYPE_LABEL[p.course_type].tone}`}
                     >
-                      {p.is_published ? (
-                        <Eye className="h-4 w-4" />
-                      ) : (
-                        <EyeOff className="h-4 w-4" />
-                      )}
-                    </button>
-                    <button
-                      title={
-                        p.show_in_activities
-                          ? "Đang hiện trong Hoạt động — bấm để tắt"
-                          : "Hiển thị trong Hoạt động"
-                      }
-                      onClick={() =>
-                        patch(
-                          p,
-                          { show_in_activities: !p.show_in_activities },
-                          p.show_in_activities
-                            ? "Đã gỡ khỏi Hoạt động"
-                            : "Đã hiển thị trong Hoạt động",
-                        )
-                      }
-                      className={`rounded p-1.5 hover:bg-muted ${p.show_in_activities ? "text-primary" : "text-muted-foreground"}`}
-                    >
-                      <CalendarCheck className="h-4 w-4" />
-                    </button>
-                    <button
-                      title="Sao chép"
-                      onClick={() =>
-                        setEdit({
-                          ...(({ id: _i, ...r }) => r)(p),
-                          title: `${p.title} (bản sao)`,
-                          slug: "",
-                          is_published: false,
-                        })
-                      }
-                      className="rounded p-1.5 hover:bg-muted"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                    {p.is_published && (
-                      <a
-                        title="Xem"
-                        href={`/courses/${p.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded p-1.5 hover:bg-muted"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
+                      {TYPE_LABEL[p.course_type].label}
+                    </span>
+                  </td>
+                  <td className="truncate p-3 text-muted-foreground">{namesFor(p.id) || "—"}</td>
+                  <td className="p-3">
+                    <div className="font-medium text-foreground">{STATUS_LABEL[p.status]}</div>
+                    {!p.is_published && (
+                      <div className="text-xs font-semibold text-destructive">Đang ẩn</div>
                     )}
+                    {p.show_in_activities && (
+                      <div className="text-xs font-semibold text-primary">+ Hoạt động</div>
+                    )}
+                  </td>
+                  <td className="p-3">
                     <button
-                      title="Sửa"
-                      onClick={() => setEdit(p)}
-                      className="rounded p-1.5 hover:bg-muted"
+                      onClick={() => onFilter(p.id)}
+                      className="whitespace-nowrap font-semibold text-primary hover:underline"
                     >
-                      <Pencil className="h-4 w-4" />
+                      {p.registration_url ? "Link ngoài" : (enrollCounts.get(p.id) ?? 0)}
                     </button>
-                    <button
-                      title="Xóa"
-                      onClick={() => remove(p)}
-                      className="rounded p-1.5 text-destructive hover:bg-muted"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                  <td className="whitespace-nowrap p-3 text-muted-foreground">
+                    {new Date(p.created_at).toLocaleDateString("vi-VN")}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex gap-0.5">
+                      <button
+                        title={p.is_published ? "Ẩn" : "Hiện"}
+                        onClick={() =>
+                          patch(
+                            p,
+                            { is_published: !p.is_published },
+                            p.is_published ? "Đã ẩn" : "Đã hiển thị",
+                          )
+                        }
+                        className="rounded px-1 py-1.5 hover:bg-muted"
+                      >
+                        {p.is_published ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        title={
+                          p.show_in_activities
+                            ? "Đang hiện trong Hoạt động — bấm để tắt"
+                            : "Hiển thị trong Hoạt động"
+                        }
+                        onClick={() =>
+                          patch(
+                            p,
+                            { show_in_activities: !p.show_in_activities },
+                            p.show_in_activities
+                              ? "Đã gỡ khỏi Hoạt động"
+                              : "Đã hiển thị trong Hoạt động",
+                          )
+                        }
+                        className={`rounded px-1 py-1.5 hover:bg-muted ${p.show_in_activities ? "text-primary" : "text-muted-foreground"}`}
+                      >
+                        <CalendarCheck className="h-4 w-4" />
+                      </button>
+                      <button
+                        title="Sao chép"
+                        onClick={() =>
+                          setEdit({
+                            ...(({ id: _i, ...r }) => r)(p),
+                            title: `${p.title} (bản sao)`,
+                            slug: "",
+                            is_published: false,
+                          })
+                        }
+                        className="rounded px-1 py-1.5 hover:bg-muted"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                      <button
+                        title="Sửa"
+                        onClick={() => setEdit(p)}
+                        className="rounded px-1 py-1.5 hover:bg-muted"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        title="Xóa"
+                        onClick={() => remove(p)}
+                        className="rounded px-1 py-1.5 text-destructive hover:bg-muted"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {edit && (
         <ProgramForm
@@ -372,7 +377,12 @@ function ProgramForm({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [f, setF] = useState<Partial<Program>>(init);
+  // Older rows only filled `short_description`; seed the merged field from it so
+  // editing a legacy program does not lose its copy.
+  const [f, setF] = useState<Partial<Program>>({
+    ...init,
+    description: init.description || init.short_description || "",
+  });
   const [picks, setPicks] = useState<Pick[]>(
     initLinks.length
       ? initLinks
@@ -382,6 +392,7 @@ function ProgramForm({
   );
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const s = (k: keyof Program) => (e: { target: { value: string } }) =>
     setF({ ...f, [k]: e.target.value });
   const urlOk = (u?: string) => !u || /^https:\/\//i.test(u);
@@ -417,7 +428,7 @@ function ProgramForm({
     const row = {
       title: f.title!.trim(),
       slug: slugify(f.slug || f.title!) || crypto.randomUUID().slice(0, 8),
-      short_description: f.short_description ?? "",
+      short_description: (f.description ?? "").slice(0, 300),
       description: f.description ?? "",
       thumbnail_path,
       level: f.level ?? "",
@@ -615,34 +626,36 @@ function ProgramForm({
             <TeacherPicker teachers={teachers} picks={picks} onChange={setPicks} />
           </div>
           <div className={`${fieldClass} sm:col-span-2`}>
-            <label className={labelClass}>Mô tả ngắn</label>
-            <input
-              maxLength={300}
-              className={inp}
-              value={f.short_description}
-              onChange={s("short_description")}
-            />
-          </div>
-          <div className={`${fieldClass} sm:col-span-2`}>
-            <label className={labelClass}>Mô tả chi tiết</label>
+            <label className={labelClass}>Mô tả</label>
             <textarea
-              rows={6}
+              rows={5}
               className={areaCls}
+              placeholder="Mô tả nội dung chương trình học..."
               value={f.description}
               onChange={s("description")}
             />
           </div>
           <div className={`${fieldClass} sm:col-span-2`}>
-            <label className={labelClass}>
-              Ảnh đại diện
-              {f.thumbnail_path && !file && " — đã có ảnh"}
-            </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className={fileCls}
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
+            <label className={labelClass}>Ảnh đại diện</label>
+            <div className={fileFrameCls}>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(e) => {
+                  setFile(e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
+              />
+              <button type="button" className={fileBtnCls} onClick={() => fileRef.current?.click()}>
+                Chọn tệp
+              </button>
+              <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                {file?.name ??
+                  (f.thumbnail_path ? "Đã có ảnh — chọn tệp mới để thay" : "Chưa chọn tệp")}
+              </span>
+            </div>
           </div>
           <div className={fieldClass}>
             <label className={labelClass}>Link Facebook</label>
@@ -712,7 +725,7 @@ function ProgramForm({
   );
 }
 
-/** Multi-teacher assignment with a role per teacher; order = display order. */
+/** Multi-teacher assignment with a role per teacher; shown in insertion order. */
 function TeacherPicker({
   teachers,
   picks,
@@ -728,16 +741,6 @@ function TeacherPicker({
       !picks.some((p) => p.teacher_id === t.id) &&
       (!q || t.full_name.toLowerCase().includes(q.toLowerCase())),
   );
-  const move = (i: number, d: number) => {
-    const n = [...picks];
-    const j = i + d;
-    if (j < 0 || j >= n.length) return;
-    const a = n[i]!,
-      b = n[j]!;
-    n[i] = b;
-    n[j] = a;
-    onChange(n);
-  };
   return (
     <div className="rounded-xl border border-border p-3 text-sm">
       <div className="font-medium">
@@ -792,22 +795,6 @@ function TeacherPicker({
                   ))}
                 </SelectContent>
               </Select>
-              <button
-                type="button"
-                onClick={() => move(i, -1)}
-                className="rounded px-1.5 hover:bg-muted"
-                aria-label="Lên"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => move(i, 1)}
-                className="rounded px-1.5 hover:bg-muted"
-                aria-label="Xuống"
-              >
-                ↓
-              </button>
               <button
                 type="button"
                 onClick={() => onChange(picks.filter((_, k) => k !== i))}

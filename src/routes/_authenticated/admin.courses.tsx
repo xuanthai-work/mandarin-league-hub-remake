@@ -11,7 +11,6 @@ import { HskClassesAdmin } from "@/components/courses/HskClassesAdmin";
 import { classFee, type HskClass } from "@/lib/hsk-classes";
 import { reviewEnrollment } from "@/lib/courses.functions";
 import { matchesSearch } from "@/lib/search";
-import { TrashList } from "@/components/admin/Trash";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   Select,
@@ -20,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminAccess } from "./admin";
 import { ENROLL_STATUS, useCourseSettings } from "@/lib/course-settings";
 
 export const Route = createFileRoute("/_authenticated/admin/courses")({
@@ -61,9 +59,8 @@ function CoursesAdmin() {
   const [q, setQ] = useState("");
   const [cid, setCid] = useState("");
   const [sel, setSel] = useState<Enrollment | null>(null);
-  const [tab, setTab] = useState<"hsk" | "programs" | "enroll" | "trash">("hsk");
+  const [tab, setTab] = useState<"hsk" | "programs" | "enroll">("hsk");
   const [createHskOpen, setCreateHskOpen] = useState(false);
-  const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const [kid, setKid] = useState("");
   const { data: classes } = useQuery({
     queryKey: ["admin-class-names"],
@@ -136,7 +133,6 @@ function CoursesAdmin() {
               ["hsk", "Khóa học HSK"],
               ["programs", "Chương trình học"],
               ["enroll", "Đơn đăng ký"],
-              ["trash", "Thùng rác"],
             ] as const
           ).map(([k, l]) => {
             const active = tab === k;
@@ -207,29 +203,9 @@ function CoursesAdmin() {
         />
       )}
 
-      {tab === "trash" && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="mb-2 font-bold">Lớp HSK đã xóa</h3>
-            <TrashList
-              table="hsk_classes"
-              canHardDelete={isAdmin}
-              invalidate={["admin-hsk-classes", "public-hsk-classes"]}
-            />
-          </div>
-          <div>
-            <h3 className="mb-2 font-bold">Chương trình học đã xóa</h3>
-            <TrashList
-              table="courses"
-              canHardDelete={isAdmin}
-              invalidate={["admin-programs", "public-programs"]}
-            />
-          </div>
-        </div>
-      )}
       {tab === "enroll" && (
-        <section className="rounded-2xl border border-border bg-card p-4">
-          <div className="flex flex-wrap items-center gap-2.5">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex flex-wrap items-center gap-2.5 p-4">
             <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
               <Search
                 aria-hidden
@@ -327,29 +303,29 @@ function CoursesAdmin() {
               {list.length} đơn
             </span>
           </div>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase text-muted-foreground">
+          <div className="overflow-x-auto border-t border-border/60 custom-scrollbar">
+            <table className="w-full table-fixed text-sm">
+              <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
                 <tr>
-                  <th className="p-2">Mã</th>
-                  <th className="p-2">Họ tên</th>
-                  <th className="p-2">Liên hệ</th>
-                  <th className="p-2">Lớp</th>
-                  <th className="p-2">Ngày</th>
-                  <th className="p-2">Trạng thái</th>
+                  <th className="w-[14%] p-3 font-semibold">Mã</th>
+                  <th className="w-[14%] p-3 font-semibold">Họ tên</th>
+                  <th className="w-[20%] p-3 font-semibold">Liên hệ</th>
+                  <th className="w-[18%] p-3 font-semibold">Lớp</th>
+                  <th className="w-[16%] p-3 font-semibold">Ngày</th>
+                  <th className="w-[18%] p-3 font-semibold">Trạng thái</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-6 text-center text-xs text-muted-foreground">
                       Đang tải…
                     </td>
                   </tr>
                 )}
                 {!isLoading && isError && !rows && (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-6 text-center text-xs text-muted-foreground">
                       Không tải được danh sách đơn đăng ký.
                       <button
                         type="button"
@@ -365,14 +341,14 @@ function CoursesAdmin() {
                 )}
                 {!isLoading && !isError && (rows ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-6 text-center text-xs text-muted-foreground">
                       Chưa có đơn đăng ký.
                     </td>
                   </tr>
                 )}
                 {!isLoading && !isError && (rows ?? []).length > 0 && list.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-6 text-center text-xs text-muted-foreground">
                       Không có đơn nào khớp bộ lọc.
                       <button
                         type="button"
@@ -394,27 +370,33 @@ function CoursesAdmin() {
                       e.preventDefault();
                       setSel(r);
                     }}
-                    className="cursor-pointer border-t border-border hover:bg-muted/50"
+                    className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50"
                   >
-                    <td className="p-2 font-mono text-xs">{r.code}</td>
-                    <td className="p-2 font-medium">{r.full_name}</td>
-                    <td className="p-2 text-xs">
-                      {r.phone}
-                      <div className="text-muted-foreground">{r.email}</div>
+                    <td className="truncate p-3 font-mono text-xs font-medium text-primary">
+                      {r.code}
                     </td>
-                    <td className="p-2">
+                    <td className="truncate p-3 font-medium text-foreground" title={r.full_name}>
+                      {r.full_name}
+                    </td>
+                    <td className="p-3 text-xs">
+                      <div>{r.phone}</div>
+                      <div className="truncate text-muted-foreground" title={r.email}>
+                        {r.email}
+                      </div>
+                    </td>
+                    <td className="truncate p-3 text-muted-foreground">
                       {r.hsk_class_id
                         ? (classes?.find((c) => c.id === r.hsk_class_id)?.name ?? `HSK ${r.level}`)
                         : r.course_id
                           ? "Chương trình"
                           : `HSK ${r.level}`}
                     </td>
-                    <td className="p-2 text-xs">
+                    <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
                       {new Date(r.created_at).toLocaleString("vi-VN")}
                     </td>
-                    <td className="p-2">
+                    <td className="p-3">
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ENROLL_STATUS[r.status]?.tone}`}
+                        className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${ENROLL_STATUS[r.status]?.tone}`}
                       >
                         {ENROLL_STATUS[r.status]?.label}
                       </span>

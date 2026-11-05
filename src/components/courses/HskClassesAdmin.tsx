@@ -1,17 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Copy, Eye, EyeOff, Pencil, Settings, Trash2, X } from "lucide-react";
+import { BookOpen, Copy, Eye, EyeOff, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { COURSE_BUCKET, STATUS_LABEL, type ProgramStatus } from "@/lib/programs";
 import { useConfirm } from "@/components/admin/Trash";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -49,6 +42,17 @@ const EMPTY: Partial<HskClass> = {
   registration_url: "",
   is_published: false,
 };
+
+/** Percentage widths keep every HSK level table aligned and fully visible without horizontal scroll. */
+const CLASS_COLS = [
+  { label: "Lớp học", className: "w-[24%]" },
+  { label: "Giáo viên", className: "w-[12%]" },
+  { label: "Thời gian", className: "w-[16%]" },
+  { label: "Học phí", className: "w-[12%]" },
+  { label: "Trạng thái", className: "w-[11%]" },
+  { label: "Học viên", className: "w-[12%]" },
+  { label: "Thao tác", className: "w-[13%]" },
+] as const;
 
 /** Admin: fixed HSK 1–6 levels, concrete classes created underneath. */
 export function HskClassesAdmin({
@@ -132,111 +136,175 @@ export function HskClassesAdmin({
       {HSK_LEVELS.map((lv) => {
         const rows = (list ?? []).filter((c) => c.level === lv);
         return (
-          <div key={lv} className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <span className="rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">
-                HSK {lv}
+          <div key={lv}>
+            <div className="mb-2 flex items-center gap-2.5 px-1">
+              <h3 className="text-sm font-bold tracking-tight text-foreground">HSK {lv}</h3>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+                {rows.length} lớp
               </span>
               <button
                 onClick={() => setEdit({ ...EMPTY, level: lv, name: `HSK ${lv} – Lớp ` })}
-                className="text-xs font-semibold text-primary hover:underline"
+                className="ml-auto text-xs font-semibold text-primary hover:underline"
               >
                 + Thêm lớp HSK {lv}
               </button>
             </div>
-            {rows.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">Chưa có lớp.</p>
-            ) : (
-              <div className="mt-3 divide-y divide-border">
-                {rows.map((c) => (
-                  <div key={c.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                    {c.thumb ? (
-                      <img src={c.thumb} alt="" className="h-10 w-16 rounded object-cover" />
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full table-fixed text-sm">
+                  <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
+                    <tr>
+                      {CLASS_COLS.map((col) => (
+                        <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
+                          {col.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={CLASS_COLS.length}
+                          className="p-6 text-center text-xs text-muted-foreground"
+                        >
+                          Chưa có lớp.
+                        </td>
+                      </tr>
                     ) : (
-                      <div className="flex h-10 w-16 items-center justify-center rounded bg-muted">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      rows.map((c) => (
+                        <tr
+                          key={c.id}
+                          className="border-t border-border/60 transition-colors hover:bg-accent/50"
+                        >
+                          <td className="p-3">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              {c.thumb ? (
+                                <img
+                                  src={c.thumb}
+                                  alt=""
+                                  className="h-9 w-14 shrink-0 rounded object-cover"
+                                />
+                              ) : (
+                                <span className="grid h-9 w-14 shrink-0 place-items-center rounded bg-muted">
+                                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                                </span>
+                              )}
+                              <span
+                                className="min-w-0 truncate font-medium text-foreground"
+                                title={c.name}
+                              >
+                                {c.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-muted-foreground">
+                            {teachers?.find((t) => t.id === c.teacher_id)?.full_name ?? (
+                              <span className="text-muted-foreground">Đang cập nhật</span>
+                            )}
+                          </td>
+                          <td className="p-3 text-muted-foreground">
+                            {c.start_date || c.end_date ? (
+                              <>
+                                <div className="whitespace-nowrap">
+                                  {fmtDate(c.start_date) || "—"}
+                                </div>
+                                {c.end_date && (
+                                  <div className="whitespace-nowrap">→ {fmtDate(c.end_date)}</div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="whitespace-nowrap">Chưa có ngày</div>
+                            )}
+                            {c.schedule && (
+                              <div className="truncate text-xs text-muted-foreground">
+                                {c.schedule}
+                              </div>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
+                            {c.fee_type === "free" ? "Miễn phí" : classFee(c)}
+                          </td>
+                          <td className="p-3">
+                            <div className="font-medium text-foreground">
+                              {STATUS_LABEL[c.status]}
+                            </div>
+                            {!c.is_published && (
+                              <div className="text-xs font-semibold text-destructive">Đang ẩn</div>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <button
+                              onClick={() => onFilter(c.id)}
+                              className="block text-left text-xs font-semibold text-primary hover:underline"
+                            >
+                              <span className="block whitespace-nowrap">
+                                {c.seats}/{c.max_students} học viên
+                              </span>
+                              <span className="block whitespace-nowrap">
+                                {pendingCounts.get(c.id) ?? 0} chờ duyệt
+                              </span>
+                            </button>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-0.5">
+                              <button
+                                title={c.is_published ? "Ẩn" : "Hiện"}
+                                aria-label={`${c.is_published ? "Ẩn" : "Hiện"} lớp ${c.name}`}
+                                onClick={() =>
+                                  patch(
+                                    c,
+                                    { is_published: !c.is_published },
+                                    c.is_published ? "Đã ẩn" : "Đã hiển thị",
+                                  )
+                                }
+                                className="rounded px-1 py-1.5 hover:bg-muted"
+                              >
+                                {c.is_published ? (
+                                  <Eye className="h-4 w-4" />
+                                ) : (
+                                  <EyeOff className="h-4 w-4" />
+                                )}
+                              </button>
+                              <button
+                                title="Sao chép"
+                                aria-label={`Sao chép lớp ${c.name}`}
+                                onClick={() =>
+                                  setEdit({
+                                    ...(({ id: _i, ...r }) => r)(c),
+                                    name: `${c.name} (bản sao)`,
+                                    is_published: false,
+                                  })
+                                }
+                                className="rounded px-1 py-1.5 hover:bg-muted"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </button>
+                              <button
+                                title="Sửa"
+                                aria-label={`Sửa lớp ${c.name}`}
+                                onClick={() => setEdit(c)}
+                                className="rounded px-1 py-1.5 hover:bg-muted"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                title="Xóa"
+                                aria-label={`Xóa lớp ${c.name}`}
+                                onClick={() => remove(c)}
+                                className="rounded px-1 py-1.5 text-destructive hover:bg-muted"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                     )}
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {teachers?.find((t) => t.id === c.teacher_id)?.full_name ??
-                          "GV: Đang cập nhật"}{" "}
-                        ·{" "}
-                        {[fmtDate(c.start_date), fmtDate(c.end_date)].filter(Boolean).join(" → ") ||
-                          "Chưa có ngày"}{" "}
-                        · {classFee(c)}
-                      </div>
-                    </div>
-                    <div className="text-xs">
-                      {STATUS_LABEL[c.status]}
-                      {!c.is_published && (
-                        <div className="font-semibold text-destructive">Đang ẩn</div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => onFilter(c.id)}
-                      className="text-xs font-semibold text-primary hover:underline"
-                    >
-                      {c.seats}/{c.max_students} học viên · {pendingCounts.get(c.id) ?? 0} chờ duyệt
-                    </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          title="Tùy chọn"
-                          aria-label="Tùy chọn lớp học"
-                          className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        >
-                          <Settings className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            patch(
-                              c,
-                              { is_published: !c.is_published },
-                              c.is_published ? "Đã ẩn" : "Đã hiển thị",
-                            )
-                          }
-                        >
-                          {c.is_published ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                          {c.is_published ? "Ẩn khỏi website" : "Hiển thị trên website"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setEdit({
-                              ...(({ id: _i, ...r }) => r)(c),
-                              name: `${c.name} (bản sao)`,
-                              is_published: false,
-                            })
-                          }
-                        >
-                          <Copy className="h-4 w-4" />
-                          Sao chép
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setEdit(c)}>
-                          <Pencil className="h-4 w-4" />
-                          Sửa lớp
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => remove(c)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Chuyển vào Thùng rác
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+            </div>
           </div>
         );
       })}

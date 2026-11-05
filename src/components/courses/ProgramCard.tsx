@@ -35,7 +35,9 @@ export function ProgramCard({ p }: { p: Program }) {
           </span>
         </div>
         <h3 className="mt-3 text-lg font-semibold">{p.title}</h3>
-        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.short_description}</p>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {p.short_description || p.description}
+        </p>
         <div className="mt-auto grid gap-1 pt-4 text-sm text-muted-foreground">
           {p.schedule && (
             <span className="flex items-center gap-2">

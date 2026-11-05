@@ -111,7 +111,9 @@ function ProgramPage() {
               </span>
             </div>
             <h1 className="mt-4 text-3xl font-bold text-primary-deep md:text-5xl">{p.title}</h1>
-            <p className="mt-4 text-muted-foreground">{p.short_description}</p>
+            <p className="mt-4 line-clamp-3 text-muted-foreground">
+              {p.short_description || p.description}
+            </p>
           </div>
           {p.thumb && (
             <img
