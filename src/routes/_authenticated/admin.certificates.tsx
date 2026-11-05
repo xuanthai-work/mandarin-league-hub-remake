@@ -22,6 +22,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { CERT_TYPES, normalizeCode } from "@/lib/certificates";
 import { matchesSearch } from "@/lib/search";
+import { csvCell } from "@/lib/csv";
 import { extractCertificate } from "@/lib/certificate-extract.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MemberCombobox } from "@/components/admin/MemberCombobox";
@@ -349,11 +350,7 @@ function CertificatesPage() {
       c.status,
       c.revoked_reason,
     ]);
-    const csv =
-      "\uFEFF" +
-      [head, ...lines]
-        .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
-        .join("\n");
+    const csv = "\uFEFF" + [head, ...lines].map((r) => r.map(csvCell).join(",")).join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     a.download = "tml-chung-nhan.csv";

@@ -133,11 +133,7 @@ export function signed(value: number) {
   return value > 0 ? `+${value}` : String(value);
 }
 
-/** Safe CSV cell (quotes doubled, wrapped when needed). */
-export function csvCell(value: string | number) {
-  const text = String(value);
-  return /[",;\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-}
+export { csvCell } from "@/lib/csv";
 
 export const POINT_LIMITS = {
   bonus: 100,

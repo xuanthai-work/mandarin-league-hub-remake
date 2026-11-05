@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { APP_STATUS, deptName } from "@/lib/recruitment";
 import { matchesSearch } from "@/lib/search";
+import { csvCell } from "@/lib/csv";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({
   staticData: { sitemap: false },
@@ -33,8 +34,6 @@ async function load() {
   ]);
   return { apps: a.data ?? [], periods: p.data ?? [], questions: q.data ?? [] };
 }
-
-const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 function Candidates() {
   const { data } = useQuery({ queryKey: ["admin-candidates"], queryFn: load });

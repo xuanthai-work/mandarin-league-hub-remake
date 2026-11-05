@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEPARTMENTS } from "@/lib/data/departments";
+import { csvCell } from "@/lib/csv";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export const Route = createFileRoute("/_authenticated/admin/departments")({
@@ -26,7 +27,6 @@ export const Route = createFileRoute("/_authenticated/admin/departments")({
 
 const RANK: Record<string, number> = { "Trưởng Ban": 0, "Phó Ban": 1 };
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 async function load() {
   const [{ data: m }, { data: a }, { data: c }] = await Promise.all([
