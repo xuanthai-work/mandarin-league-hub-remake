@@ -1,13 +1,25 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Check, Pencil, Plus, Send, Star, Trash2, Undo2, Upload } from "lucide-react";
+import {
+  Clock,
+  ExternalLink,
+  FileText,
+  Globe,
+  ImageOff,
+  MoreHorizontal,
+  Pencil,
+  PencilLine,
+  Pin,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { slugify } from "@/lib/programs";
 import { NEWS_CATEGORIES } from "@/lib/data/news";
 import {
-  NEWS_BUCKET,
   NEWS_STATUS_LABEL,
   fmtDate,
   withCovers,
@@ -15,9 +27,24 @@ import {
   type NewsStatus,
 } from "@/lib/news-db";
 import { canReviewNews } from "@/lib/admin-permissions";
+import { matchesSearch } from "@/lib/search";
 import { useAdminAccess } from "./admin";
 import { TrashList, useConfirm } from "@/components/admin/Trash";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_authenticated/admin/news")({
   staticData: { sitemap: false },
@@ -27,28 +54,8 @@ export const Route = createFileRoute("/_authenticated/admin/news")({
   component: NewsAdmin,
 });
 
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-type Form = {
-  id?: string;
-  title: string;
-  slug: string;
-  summary: string;
-  content: string;
-  category: string;
-  cover_path: string;
-  review_note?: string;
-  status?: NewsStatus;
-};
-const EMPTY: Form = {
-  title: "",
-  slug: "",
-  summary: "",
-  content: "",
-  category: NEWS_CATEGORIES[0]!,
-  cover_path: "",
-};
 const TONE: Record<NewsStatus, string> = {
-  draft: "bg-secondary",
+  draft: "bg-secondary text-secondary-foreground",
   pending_review: "bg-gold/20 text-primary-deep",
   needs_revision: "bg-destructive/15 text-destructive",
   published: "bg-primary/15 text-primary",
@@ -56,14 +63,17 @@ const TONE: Record<NewsStatus, string> = {
 };
 
 function NewsAdmin() {
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const access = useAdminAccess().data;
   const reviewer = !!access && canReviewNews(access.roles, access.department);
-  const [f, setF] = useState<Form | null>(null);
-  const [filter, setFilter] = useState<NewsStatus | "" | "trash">("");
-  const { confirm, dialog } = useConfirm();
   const isAdmin = !!access?.roles.includes("admin");
-  const [busy, setBusy] = useState(false);
+  const { confirm, dialog } = useConfirm();
+
+  const [status, setStatus] = useState<NewsStatus | "">("");
+  const [category, setCategory] = useState<string>("");
+  const [q, setQ] = useState<string>("");
+  const [trash, setTrash] = useState(false);
 
   const list = useQuery({
     queryKey: ["admin-news"],
@@ -76,6 +86,7 @@ function NewsAdmin() {
       return withCovers((data ?? []) as NewsRow[]);
     },
   });
+
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-news"] });
     qc.invalidateQueries({ queryKey: ["public-news"] });
@@ -91,61 +102,6 @@ function NewsAdmin() {
     refresh();
   };
 
-  const save = async (status: NewsStatus) => {
-    if (!f) return;
-    if (f.title.trim().length < 5) return void toast.error("Tiêu đề tối thiểu 5 ký tự");
-    if (f.content.trim().length < 20) return void toast.error("Nội dung quá ngắn");
-    setBusy(true);
-    const row = {
-      title: f.title.trim(),
-      slug: f.slug || slugify(f.title),
-      summary: f.summary.trim(),
-      content: f.content,
-      category: f.category,
-      cover_path: f.cover_path,
-      status,
-    };
-    const { error } = f.id
-      ? await supabase.from("news_articles").update(row).eq("id", f.id)
-      : await supabase
-          .from("news_articles")
-          .insert({ ...row, author_id: (await supabase.auth.getUser()).data.user?.id ?? null });
-    setBusy(false);
-    if (error)
-      return void toast.error(
-        error.message.includes("duplicate")
-          ? "Đường dẫn (slug) đã tồn tại"
-          : "Không lưu được: " + error.message,
-      );
-    toast.success(
-      status === "pending_review"
-        ? "Đã gửi bài chờ duyệt"
-        : status === "published"
-          ? "Đã xuất bản"
-          : "Đã lưu nháp",
-    );
-    setF(null);
-    refresh();
-  };
-
-  const upload = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) return void toast.error("Ảnh tối đa 5MB");
-    const path = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
-    const { error } = await supabase.storage
-      .from(NEWS_BUCKET)
-      .upload(path, file, { contentType: file.type });
-    if (error) return void toast.error("Tải ảnh thất bại: " + error.message);
-    setF((x) => x && { ...x, cover_path: path });
-    toast.success("Đã tải ảnh bìa");
-  };
-
-  const requestRevision = (a: NewsRow) => {
-    const note = window.prompt("Góp ý cho tác giả (bắt buộc):", a.review_note);
-    if (!note?.trim()) return;
-    patch(a.id, { status: "needs_revision", review_note: note.trim() }, "Đã yêu cầu chỉnh sửa");
-  };
-
-  const rows = (list.data ?? []).filter((a) => !filter || a.status === filter);
   const remove = async (a: NewsRow) => {
     if (
       !(await confirm({
@@ -158,9 +114,71 @@ function NewsAdmin() {
       return;
     patch(a.id, { deleted_at: new Date().toISOString() }, "Đã chuyển vào Thùng rác");
   };
-  const pending = (list.data ?? []).filter((a) => a.status === "pending_review").length;
+
   const editable = (a: NewsRow) =>
     reviewer || ["draft", "pending_review", "needs_revision"].includes(a.status);
+
+  const allRows = list.data ?? [];
+  const countPublished = allRows.filter((a) => a.status === "published").length;
+  const countPending = allRows.filter((a) => a.status === "pending_review").length;
+  const countNeedsRevision = allRows.filter((a) => a.status === "needs_revision").length;
+  const countDraft = allRows.filter((a) => a.status === "draft").length;
+
+  const statusCounts: Record<NewsStatus, number> = {
+    published: countPublished,
+    pending_review: countPending,
+    needs_revision: countNeedsRevision,
+    draft: countDraft,
+    archived: allRows.filter((a) => a.status === "archived").length,
+  };
+
+  const filteredRows = allRows.filter((a) => {
+    if (status && a.status !== status) return false;
+    if (category && a.category !== category) return false;
+    if (q.trim()) {
+      return matchesSearch(`${a.title} ${a.summary} ${a.author_name}`, q);
+    }
+    return true;
+  });
+
+  const statCards: {
+    key: NewsStatus;
+    label: string;
+    icon: typeof Globe;
+    count: number;
+    sub: string;
+    highlightGold?: boolean;
+  }[] = [
+    {
+      key: "published",
+      label: "Đã xuất bản",
+      icon: Globe,
+      count: countPublished,
+      sub: "Đang hiển thị trên website",
+    },
+    {
+      key: "pending_review",
+      label: "Chờ duyệt",
+      icon: Clock,
+      count: countPending,
+      sub: "Cần Trưởng/Phó Ban duyệt",
+      highlightGold: reviewer && countPending > 0,
+    },
+    {
+      key: "needs_revision",
+      label: "Cần chỉnh sửa",
+      icon: PencilLine,
+      count: countNeedsRevision,
+      sub: "Chờ tác giả sửa theo góp ý",
+    },
+    {
+      key: "draft",
+      label: "Nháp",
+      icon: FileText,
+      count: countDraft,
+      sub: "Chưa gửi duyệt",
+    },
+  ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
@@ -174,7 +192,8 @@ function NewsAdmin() {
         }
         actions={
           <button
-            onClick={() => setF({ ...EMPTY })}
+            type="button"
+            onClick={() => navigate({ to: "/admin/news/$id", params: { id: "new" } })}
             className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
           >
             <Plus className="h-4 w-4" /> Viết bài mới
@@ -182,131 +201,136 @@ function NewsAdmin() {
         }
       />
 
-      {reviewer && pending > 0 && (
-        <div className="rounded-xl border border-gold/50 bg-gold/10 p-3 text-sm">
-          Có <b>{pending}</b> bài đang chờ duyệt.
-        </div>
-      )}
+      {/* Thẻ số liệu */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {statCards.map((c) => {
+          const Icon = c.icon;
+          const isSelected = !trash && status === c.key;
+          return (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => {
+                setTrash(false);
+                setStatus((prev) => (prev === c.key ? "" : c.key));
+              }}
+              className={`rounded-2xl border p-4 text-left shadow-2xs transition-all hover:border-primary/40 focus:outline-none ${
+                isSelected
+                  ? "border-primary bg-card ring-2 ring-primary/15"
+                  : c.highlightGold
+                    ? "border-gold/60 bg-card"
+                    : "border-border/70 bg-card"
+              }`}
+            >
+              <div className="flex items-center justify-between text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
+                  {c.highlightGold && (
+                    <span className="inline-block h-2 w-2 rounded-full bg-gold" />
+                  )}
+                </div>
+                <Icon className="h-4 w-4" />
+              </div>
+              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{c.count}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{c.sub}</p>
+            </button>
+          );
+        })}
+      </div>
 
-      {f && (
-        <div className="grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-2">
-          {f.review_note && f.status === "needs_revision" && (
-            <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive sm:col-span-2">
-              Góp ý của người duyệt: {f.review_note}
-            </p>
+      {/* Thanh lọc */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pr-8 pl-9 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm tiêu đề, tóm tắt, tác giả…"
+            aria-label="Tìm kiếm bài viết"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           )}
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Tiêu đề
-            <input
-              className={`${inp} mt-1`}
-              value={f.title}
-              onChange={(e) =>
-                setF({ ...f, title: e.target.value, slug: f.id ? f.slug : slugify(e.target.value) })
-              }
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Đường dẫn
-            <input
-              className={`${inp} mt-1`}
-              value={f.slug}
-              onChange={(e) => setF({ ...f, slug: slugify(e.target.value) })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Chuyên mục
-            <select
-              className={`${inp} mt-1`}
-              value={f.category}
-              onChange={(e) => setF({ ...f, category: e.target.value })}
-            >
-              {NEWS_CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Tóm tắt
-            <textarea
-              rows={2}
-              className={`${inp} mt-1`}
-              value={f.summary}
-              onChange={(e) => setF({ ...f, summary: e.target.value })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Nội dung (cách 1 dòng trống giữa các đoạn)
-            <textarea
-              rows={10}
-              className={`${inp} mt-1`}
-              value={f.content}
-              onChange={(e) => setF({ ...f, content: e.target.value })}
-            />
-          </label>
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-primary">
-            <Upload className="h-4 w-4" /> {f.cover_path ? "Đổi ảnh bìa" : "Tải ảnh bìa (≤5MB)"}
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
-            />
-          </label>
-          <div className="flex flex-wrap justify-end gap-2 sm:col-span-2">
-            <button
-              onClick={() => setF(null)}
-              className="rounded-full border border-border px-4 py-2 text-sm"
-            >
-              Hủy
-            </button>
-            <button
-              disabled={busy}
-              onClick={() => save("draft")}
-              className="rounded-full border border-border px-4 py-2 text-sm"
-            >
-              Lưu nháp
-            </button>
-            <button
-              disabled={busy}
-              onClick={() => save("pending_review")}
-              className="inline-flex items-center gap-1 rounded-full bg-secondary px-4 py-2 text-sm font-semibold"
-            >
-              <Send className="h-4 w-4" /> Gửi duyệt
-            </button>
-            {reviewer && (
-              <button
-                disabled={busy}
-                onClick={() => save("published")}
-                className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                <Check className="h-4 w-4" /> Duyệt & Xuất bản
-              </button>
-            )}
-          </div>
         </div>
-      )}
 
-      <div className="flex flex-wrap gap-2">
-        {(["", ...Object.keys(NEWS_STATUS_LABEL)] as (NewsStatus | "")[]).map((k) => (
-          <button
-            key={k || "all"}
-            onClick={() => setFilter(k)}
-            className={`rounded-full border px-3 py-1 text-xs ${filter === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
+        <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
+          <SelectTrigger
+            aria-label="Lọc theo chuyên mục"
+            className="h-9 w-[180px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
           >
-            {k ? NEWS_STATUS_LABEL[k] : "Tất cả"}
-          </button>
-        ))}
+            <SelectValue>{category ? category : "Tất cả chuyên mục"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Tất cả chuyên mục
+            </SelectItem>
+            {NEWS_CATEGORIES.map((cat) => (
+              <SelectItem key={cat} value={cat} className="text-xs">
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={status || "all"}
+          onValueChange={(v) => {
+            setTrash(false);
+            setStatus(v === "all" ? "" : (v as NewsStatus));
+          }}
+        >
+          <SelectTrigger
+            aria-label="Lọc theo trạng thái"
+            className="h-9 w-[180px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+          >
+            <SelectValue>
+              {status
+                ? `${NEWS_STATUS_LABEL[status]} (${statusCounts[status] ?? 0})`
+                : `Tất cả trạng thái (${allRows.length})`}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Tất cả trạng thái ({allRows.length})
+            </SelectItem>
+            {(Object.keys(NEWS_STATUS_LABEL) as NewsStatus[]).map((k) => (
+              <SelectItem key={k} value={k} className="text-xs">
+                {NEWS_STATUS_LABEL[k]} ({statusCounts[k] ?? 0})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {(reviewer || isAdmin) && (
           <button
-            onClick={() => setFilter("trash")}
-            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${filter === "trash" ? "border-destructive bg-destructive text-destructive-foreground" : "border-border bg-card"}`}
+            type="button"
+            onClick={() => setTrash((prev) => !prev)}
+            className={`ml-auto inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
+              trash
+                ? "border-destructive bg-destructive text-destructive-foreground"
+                : "border-border/70 bg-card text-foreground hover:bg-muted"
+            }`}
           >
-            <Trash2 className="h-3 w-3" /> Thùng rác
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Thùng rác</span>
           </button>
         )}
       </div>
 
-      {filter === "trash" ? (
+      {trash ? (
         <TrashList
           table="news_articles"
           canHardDelete={isAdmin}
@@ -314,111 +338,211 @@ function NewsAdmin() {
         />
       ) : (
         <div className="space-y-3">
-          {list.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
-          {!list.isLoading && rows.length === 0 && (
-            <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Chưa có bài viết.
-            </p>
-          )}
-          {rows.map((a) => (
-            <div
-              key={a.id}
-              className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card p-4"
-            >
-              {a.cover ? (
-                <img src={a.cover} alt="" className="h-16 w-24 rounded-lg object-cover" />
-              ) : (
-                <div className="h-16 w-24 rounded-lg bg-accent" />
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className={`rounded-full px-2 py-0.5 ${TONE[a.status]}`}>
-                    {NEWS_STATUS_LABEL[a.status]}
-                  </span>
-                  <span className="text-primary">{a.category}</span>
-                  {a.is_featured && <Star className="h-3.5 w-3.5 fill-gold text-gold" />}
+          {list.isLoading && (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex animate-pulse items-start gap-4 rounded-2xl border border-border/70 bg-card p-3 shadow-2xs"
+                >
+                  <div className="aspect-[16/10] w-20 shrink-0 rounded-lg bg-muted sm:w-28" />
+                  <div className="min-w-0 flex-1 space-y-2 py-1">
+                    <div className="h-4 w-28 rounded bg-muted" />
+                    <div className="h-5 w-3/4 rounded bg-muted" />
+                    <div className="h-3 w-1/3 rounded bg-muted" />
+                  </div>
+                  <div className="h-8 w-20 shrink-0 rounded-lg bg-muted" />
                 </div>
-                <p className="mt-1 truncate font-semibold">{a.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  Tác giả: {a.author_name || "—"} · Cập nhật {fmtDate(a.updated_at)}
-                  {a.reviewer_name && ` · Duyệt bởi ${a.reviewer_name}`}
-                </p>
-                {a.status === "needs_revision" && a.review_note && (
-                  <p className="mt-1 text-xs text-destructive">Góp ý: {a.review_note}</p>
-                )}
-              </div>
-              <div className="flex gap-1.5">
-                {editable(a) && (
-                  <button
-                    title="Sửa"
-                    onClick={() =>
-                      setF({
-                        id: a.id,
-                        title: a.title,
-                        slug: a.slug,
-                        summary: a.summary,
-                        content: a.content,
-                        category: a.category,
-                        cover_path: a.cover_path,
-                        review_note: a.review_note,
-                        status: a.status,
-                      })
-                    }
-                    className="rounded-lg border border-border p-2"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                )}
-                {reviewer && a.status !== "published" && (
-                  <button
-                    title="Duyệt & Xuất bản"
-                    onClick={() =>
-                      patch(a.id, { status: "published", review_note: "" }, "Đã xuất bản")
-                    }
-                    className="rounded-lg border border-border p-2 text-primary"
-                  >
-                    <Check className="h-4 w-4" />
-                  </button>
-                )}
-                {reviewer && a.status === "pending_review" && (
-                  <button
-                    title="Yêu cầu chỉnh sửa"
-                    onClick={() => requestRevision(a)}
-                    className="rounded-lg border border-border p-2"
-                  >
-                    <Undo2 className="h-4 w-4" />
-                  </button>
-                )}
-                {reviewer && a.status === "published" && (
-                  <button
-                    title={a.is_featured ? "Bỏ nổi bật" : "Ghim nổi bật"}
-                    onClick={() => patch(a.id, { is_featured: !a.is_featured }, "Đã cập nhật")}
-                    className="rounded-lg border border-border p-2"
-                  >
-                    <Star className="h-4 w-4" />
-                  </button>
-                )}
-                {reviewer && a.status === "published" && (
-                  <button
-                    title="Gỡ xuống (lưu trữ)"
-                    onClick={() => patch(a.id, { status: "archived" }, "Đã gỡ bài")}
-                    className="rounded-lg border border-border p-2 text-xs"
-                  >
-                    Gỡ
-                  </button>
-                )}
-                {(reviewer || a.status === "draft") && (
-                  <button
-                    title="Xóa"
-                    onClick={() => remove(a)}
-                    className="rounded-lg border border-border p-2 text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {!list.isLoading && allRows.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-border/80 p-10 text-center">
+              <p className="text-sm font-medium text-foreground">Chưa có bài viết nào</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Bắt đầu bằng cách tạo bài viết mới đầu tiên cho câu lạc bộ.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/admin/news/$id", params: { id: "new" } })}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
+              >
+                <Plus className="h-4 w-4" />
+                Viết bài đầu tiên
+              </button>
+            </div>
+          )}
+
+          {!list.isLoading && allRows.length > 0 && filteredRows.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-border/80 p-10 text-center">
+              <p className="text-sm font-medium text-foreground">Không tìm thấy bài viết phù hợp</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Thử thay đổi từ khóa tìm kiếm hoặc bỏ bớt các bộ lọc đang chọn.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatus("");
+                  setCategory("");
+                  setQ("");
+                }}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted"
+              >
+                Xóa bộ lọc
+              </button>
+            </div>
+          )}
+
+          {!list.isLoading &&
+            filteredRows.map((a) => (
+              <div
+                key={a.id}
+                role="link"
+                tabIndex={0}
+                onClick={() => navigate({ to: "/admin/news/$id", params: { id: a.id } })}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    navigate({ to: "/admin/news/$id", params: { id: a.id } });
+                  }
+                }}
+                className="flex cursor-pointer items-start gap-4 rounded-2xl border border-border/70 bg-card p-3 shadow-2xs transition-all hover:border-primary/30"
+              >
+                {/* Ảnh bìa */}
+                {a.cover ? (
+                  <img
+                    src={a.cover}
+                    alt=""
+                    className="aspect-[16/10] w-20 shrink-0 rounded-lg object-cover sm:w-28"
+                  />
+                ) : (
+                  <div className="flex aspect-[16/10] w-20 shrink-0 items-center justify-center rounded-lg bg-muted sm:w-28">
+                    <ImageOff className="h-5 w-5 text-muted-foreground/40" />
+                  </div>
+                )}
+
+                {/* Nội dung */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+                        TONE[a.status] ?? TONE.draft
+                      }`}
+                    >
+                      {NEWS_STATUS_LABEL[a.status] ?? a.status}
+                    </span>
+                    <span className="text-xs font-medium text-primary">{a.category}</span>
+                    {a.is_featured && (
+                      <span title="Đang ghim nổi bật" className="inline-flex items-center">
+                        <Pin className="h-3.5 w-3.5 shrink-0 fill-gold text-gold" />
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-1 line-clamp-2 font-semibold text-foreground">{a.title}</p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {a.author_name || "—"} ·{" "}
+                    {a.status === "published"
+                      ? `Xuất bản ${fmtDate(a.published_at)}`
+                      : `Cập nhật ${fmtDate(a.updated_at)}`}
+                  </p>
+
+                  {a.status === "needs_revision" && a.review_note && (
+                    <p className="mt-1 line-clamp-1 text-xs text-destructive">
+                      Góp ý: {a.review_note}
+                    </p>
+                  )}
+                </div>
+
+                {/* Thao tác */}
+                <div
+                  className="flex shrink-0 items-center gap-1.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Nút chính */}
+                  {reviewer && a.status === "pending_review" ? (
+                    <button
+                      type="button"
+                      onClick={() => navigate({ to: "/admin/news/$id", params: { id: a.id } })}
+                      className="h-8 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:opacity-90"
+                    >
+                      Duyệt
+                    </button>
+                  ) : a.status === "published" ? (
+                    <a
+                      href={`/news/${a.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-3 text-xs font-semibold text-foreground hover:bg-muted"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span>Xem trên web</span>
+                    </a>
+                  ) : editable(a) ? (
+                    <button
+                      type="button"
+                      onClick={() => navigate({ to: "/admin/news/$id", params: { id: a.id } })}
+                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-3 text-xs font-semibold text-foreground hover:bg-muted"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span>Sửa</span>
+                    </button>
+                  ) : null}
+
+                  {/* Menu ⋯ */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Thao tác khác"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                      <DropdownMenuItem
+                        onClick={() => navigate({ to: "/admin/news/$id", params: { id: a.id } })}
+                      >
+                        Mở trang soạn
+                      </DropdownMenuItem>
+
+                      {reviewer && a.status === "published" && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              patch(a.id, { is_featured: !a.is_featured }, "Đã cập nhật")
+                            }
+                          >
+                            {a.is_featured ? "Bỏ ghim" : "Ghim nổi bật"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => patch(a.id, { status: "archived" }, "Đã gỡ bài")}
+                          >
+                            Gỡ xuống (lưu trữ)
+                          </DropdownMenuItem>
+                        </>
+                      )}
+
+                      {(reviewer || a.status === "draft") && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => remove(a)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            Chuyển vào thùng rác
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
         </div>
       )}
     </div>

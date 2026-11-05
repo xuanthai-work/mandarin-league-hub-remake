@@ -144,7 +144,9 @@ function NewsEditor({ id }: { id: string }) {
   const editable =
     isNew || reviewer || ["draft", "pending_review", "needs_revision"].includes(row?.status ?? "");
   const canDelete = !isNew && row && (reviewer || row.status === "draft");
-  const dirty = JSON.stringify(form) !== JSON.stringify(baseline);
+  const dirty =
+    JSON.stringify(form) !== JSON.stringify(baseline) ||
+    (reviewer && row?.status === "pending_review" && reviewNote !== (row.review_note ?? ""));
 
   useBlocker({
     shouldBlockFn: async () => {
@@ -498,7 +500,8 @@ function NewsEditor({ id }: { id: string }) {
               to="/admin/news"
               className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
             >
-              <ArrowLeft className="h-4 w-4" />← Tin tức
+              <ArrowLeft className="h-4 w-4" />
+              Tin tức
             </Link>
           </div>
         </div>
@@ -589,7 +592,9 @@ function NewsEditor({ id }: { id: string }) {
           <div className="space-y-5">
             {!editable && (
               <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3.5 text-sm text-amber-900 dark:text-amber-200">
-                Bài đã xuất bản. Chỉ Trưởng/Phó Ban Truyền thông hoặc admin được chỉnh sửa.
+                {row?.status === "archived"
+                  ? "Bài đã lưu trữ. Chỉ Trưởng/Phó Ban Truyền thông hoặc admin được chỉnh sửa."
+                  : "Bài đã xuất bản. Chỉ Trưởng/Phó Ban Truyền thông hoặc admin được chỉnh sửa."}
               </div>
             )}
 
