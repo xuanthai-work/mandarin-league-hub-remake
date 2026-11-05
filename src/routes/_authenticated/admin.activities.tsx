@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/programs";
 import { matchesSearch } from "@/lib/search";
+import { isoToLocal, localToIso } from "@/lib/datetime-local";
 import {
   ACTIVITY_BUCKET,
   CATEGORY_LABEL,
@@ -50,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 export const Route = createFileRoute("/_authenticated/admin/activities")({
   staticData: { sitemap: false },
   head: () => ({
@@ -81,13 +83,6 @@ const EMPTY: Form = {
   auto_status: true,
   manual_status: "draft",
 };
-const toLocal = (iso: string | null) =>
-  iso
-    ? new Date(new Date(iso).getTime() - new Date().getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16)
-    : "";
-const fromLocal = (v: string) => (v ? new Date(v).toISOString() : null);
 function useCanPublish() {
   const a = useAdminAccess().data;
   return !!a && canReviewNews(a.roles, a.department);
@@ -796,24 +791,27 @@ function ListTab({
               onChange={(e) => setF({ ...f, description: e.target.value })}
             />
           </label>
-          <label className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Bắt đầu
-            <input
-              type="datetime-local"
-              className={`${inp} mt-1`}
-              value={toLocal(f.start_time)}
-              onChange={(e) => setF({ ...f, start_time: fromLocal(e.target.value) })}
+            <DateTimePicker
+              className="mt-1"
+              value={isoToLocal(f.start_time)}
+              onChange={(v) => setF({ ...f, start_time: localToIso(v) })}
+              placeholder="Chọn ngày giờ bắt đầu"
+              clearable
             />
-          </label>
-          <label className="text-xs text-muted-foreground">
+          </div>
+          <div className="text-xs text-muted-foreground">
             Kết thúc
-            <input
-              type="datetime-local"
-              className={`${inp} mt-1`}
-              value={toLocal(f.end_time)}
-              onChange={(e) => setF({ ...f, end_time: fromLocal(e.target.value) })}
+            <DateTimePicker
+              className="mt-1"
+              value={isoToLocal(f.end_time)}
+              onChange={(v) => setF({ ...f, end_time: localToIso(v) })}
+              {...(f.start_time ? { min: isoToLocal(f.start_time) } : {})}
+              placeholder="Chọn ngày giờ kết thúc"
+              clearable
             />
-          </label>
+          </div>
           <div className="text-xs text-muted-foreground">
             Hình thức
             <Select
@@ -891,15 +889,17 @@ function ListTab({
               />
             </label>
           )}
-          <label className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Hạn đăng ký (không bắt buộc)
-            <input
-              type="datetime-local"
-              className={`${inp} mt-1`}
-              value={toLocal(f.registration_deadline)}
-              onChange={(e) => setF({ ...f, registration_deadline: fromLocal(e.target.value) })}
+            <DateTimePicker
+              className="mt-1"
+              value={isoToLocal(f.registration_deadline)}
+              onChange={(v) => setF({ ...f, registration_deadline: localToIso(v) })}
+              placeholder="Không đặt hạn"
+              clearable
+              clearLabel="Bỏ hạn đăng ký"
             />
-          </label>
+          </div>
           <label className="text-xs text-muted-foreground">
             Số người tối đa (0 = không giới hạn)
             <input
