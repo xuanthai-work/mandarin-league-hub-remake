@@ -1130,13 +1130,6 @@ function CertificateDrawer({
         <div className="flex shrink-0 items-center justify-end gap-2.5 border-t border-border/70 bg-card px-6 py-4">
           <button
             type="button"
-            onClick={onClose}
-            className="h-9 cursor-pointer rounded-xl border border-border px-4 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Đóng
-          </button>
-          <button
-            type="button"
             disabled={saving}
             onClick={onSave}
             className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
