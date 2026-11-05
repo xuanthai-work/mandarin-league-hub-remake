@@ -85,7 +85,7 @@ function NewsAdmin() {
   const editable = (a: NewsRow) => reviewer || ["draft", "pending_review", "needs_revision"].includes(a.status);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       {dialog}
       <AdminPageHeader
         title="Tin tức"

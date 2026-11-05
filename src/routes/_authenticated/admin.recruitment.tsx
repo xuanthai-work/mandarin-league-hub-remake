@@ -199,7 +199,7 @@ function RecruitmentAdmin() {
   const drawerPeriod = data?.periods.find((p) => p.id === drawerPeriodId) ?? null;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Đợt tuyển & Câu hỏi"
         actions={

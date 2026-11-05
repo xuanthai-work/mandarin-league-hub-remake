@@ -34,7 +34,7 @@ function DepartmentsPage() {
   if (sel) return <DeptDetail id={sel} all={data.members} members={byDept(sel)} channel={data.channels.find((c) => c.department === sel)} onBack={() => setSel(null)} onPick={setSel} />;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="8 Ban chuyên môn"
         description="Chọn một Ban để xem thành viên, kênh Zalo và tài liệu của Ban."
@@ -78,7 +78,7 @@ function DeptDetail({ id, all, members, channel, onBack, onPick }: { id: string;
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <button onClick={onBack} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" />Tất cả Ban</button>
       <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
         {DEPARTMENTS.map((x) => <button key={x.id} onClick={() => onPick(x.id)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${x.id === id ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-accent"}`}>{x.name}</button>)}

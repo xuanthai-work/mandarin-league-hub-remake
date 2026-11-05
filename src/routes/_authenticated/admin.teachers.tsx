@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Eye, EyeOff, Pencil, Plus, Trash2, UserRound } from "lucide-react";
+import { Eye, EyeOff, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PROGRAM_OPTIONS, resolveTeacherPhotos, TEACHER_BUCKET, TEACHER_STATUS_LABEL, TEACHER_TYPE_LABEL, type TeacherStatus, type TeacherType } from "@/lib/teachers";
@@ -64,14 +64,34 @@ function TeachersPage() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Giáo viên"
         description="Hồ sơ hiển thị ở trang Giảng viên, Khóa học và Đội ngũ Giảng viên trang chủ."
         actions={<button onClick={() => setEdit({ ...EMPTY, sort_order: (data?.length ?? 0) + 1 })} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Thêm giáo viên</button>}
       />
-      <div className="flex flex-wrap gap-2">
-        <input className={`${inp} max-w-xs`} placeholder="Tìm tên hoặc chức danh…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm tên hoặc chức danh…"
+            aria-label="Tìm kiếm giáo viên"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
           <SelectTrigger aria-label="Lọc theo cấp HSK" className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{lv ? `HSK ${lv}` : "Tất cả cấp HSK"}</SelectValue>

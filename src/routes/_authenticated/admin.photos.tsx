@@ -65,7 +65,7 @@ function AdminPhotos() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Ảnh hoạt động trang chủ"
         actions={<button onClick={signOut} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><LogOut className="h-4 w-4" />Đăng xuất</button>}

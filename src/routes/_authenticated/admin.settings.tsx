@@ -27,7 +27,7 @@ const THEMES: { value: Theme; label: string; desc: string; icon: typeof Sun }[] 
 function AdminSettings() {
   const theme = useTheme();
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Cài đặt"
         description="Tuỳ chỉnh trải nghiệm quản trị của bạn."

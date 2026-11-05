@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -317,22 +317,33 @@ function MembersPage() {
   const open = (m: MemberRow) => setSelId(m.id);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Thành viên"
         description="Hồ sơ nhân sự và tài khoản đăng nhập của thành viên. Bấm vào một dòng để xem hồ sơ và quản lý tài khoản."
         actions={canEditMembers ? <button onClick={() => setCreating(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Thêm thành viên</button> : null}
       />
-      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-wrap items-center gap-2.5">
         <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
           <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            className="w-full rounded-xl border border-input bg-card py-2 pl-9 pr-3 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             placeholder="Tìm tên, mã, email…"
+            aria-label="Tìm kiếm thành viên"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         <Select value={deptFilter || "all"} onValueChange={(v) => setDeptFilter(v === "all" ? "" : v)}>

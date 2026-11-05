@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ban, Download, ExternalLink, History, Pencil, Plus, QrCode, RotateCcw, Upload } from "lucide-react";
+import { Ban, Download, ExternalLink, History, Pencil, Plus, QrCode, RotateCcw, Search, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,7 +125,7 @@ function HskAdminPage() {
   const total = edit ? skills.reduce((s, k) => s + (edit[scoreKey(k)] ?? 0), 0) : 0;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Kết quả HSK"
         description="Ghi nhận kết quả thi thử / đánh giá do TML tổ chức hoặc liên kết. Tổng điểm và Đạt/Chưa đạt do hệ thống tự tính."
@@ -140,8 +140,28 @@ function HskAdminPage() {
       />
       <p className="text-xs text-muted-foreground">CSV mẫu (dòng đầu là tiêu đề): <code>ma,ho_ten,cap_do,ngay_thi,nghe,doc,viet,khau_ngu,dot_thi</code> — cấp độ: HSK1…HSK6, HSKK-BEG/INT/ADV; bỏ trống mã để hệ thống tự tạo.</p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mã, tên, đợt thi…" className={`${inp} max-w-xs`} />
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm mã, tên, đợt thi…"
+            aria-label="Tìm kiếm kết quả HSK"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <Select value={level || "all"} onValueChange={(v) => setLevel(v === "all" ? "" : v)}>
           <SelectTrigger aria-label="Lọc theo cấp độ" className="h-9 w-[150px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{level ? (HSK_LEVELS[level] ?? level) : "Mọi cấp độ"}</SelectValue>

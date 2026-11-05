@@ -15,7 +15,7 @@ function Placeholder() {
   const { section } = Route.useParams();
   const s = ADMIN_SECTIONS.find((x) => x.slug === section)!;
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader title={s.label} />
       <div className="rounded-2xl border border-border bg-card p-12 text-center shadow-xs">
         <Construction className="mx-auto h-8 w-8 text-primary" />

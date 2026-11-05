@@ -113,7 +113,7 @@ function Candidates() {
 
   if (!data) {
     return (
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           Đang tải danh sách ứng viên…
         </div>
@@ -124,7 +124,7 @@ function Candidates() {
   const current = data.apps.find((a) => a.id === selectedId);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         actions={
           <>

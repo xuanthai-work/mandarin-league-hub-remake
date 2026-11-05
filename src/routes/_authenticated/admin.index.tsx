@@ -285,7 +285,7 @@ function Overview() {
   const actions = data?.actions ?? [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       {/* Greeting + quick actions */}
       <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-500 motion-reduce:animate-none">

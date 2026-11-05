@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Copy, MessageCircle, Phone, X } from "lucide-react";
+import { Copy, MessageCircle, Phone, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramsAdmin } from "@/components/courses/ProgramsAdmin";
@@ -49,7 +49,7 @@ function CoursesAdmin() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader title="Khóa học & Đơn đăng ký" description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên." />
       <div className="flex flex-wrap gap-2">
         {([["hsk", "Khóa học HSK"], ["programs", "Chương trình học"], ["enroll", "Đơn đăng ký"], ["trash", "Thùng rác"]] as const).map(([k, l]) => (
@@ -71,8 +71,28 @@ function CoursesAdmin() {
         <div><h3 className="mb-2 font-bold">Chương trình học đã xóa</h3><TrashList table="courses" canHardDelete={isAdmin} invalidate={["admin-programs", "public-programs"]} /></div>
       </div>}
       {tab === "enroll" &&       <section className="rounded-2xl border border-border bg-card p-4">
-        <div className="flex flex-wrap gap-2">
-          <input placeholder="Tìm mã, tên, email, SĐT…" className={`${inp} max-w-xs`} value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+            <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="Tìm mã, tên, email, SĐT…"
+              aria-label="Tìm kiếm đơn đăng ký"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                aria-label="Xóa nội dung tìm kiếm"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
           {cid && <button onClick={() => setCid("")} className="rounded-full bg-accent px-3 text-xs font-semibold text-primary">Đang lọc theo chương trình ✕</button>}
           <Select value={kid || "all"} onValueChange={(v) => setKid(v === "all" ? "" : v)}>
             <SelectTrigger aria-label="Lọc theo lớp HSK" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">

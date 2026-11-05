@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Copy, Eye, EyeOff, Pencil, Phone, Plus, Trash2, Upload } from "lucide-react";
+import { Copy, Eye, EyeOff, Pencil, Phone, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/programs";
 import {
@@ -39,7 +39,7 @@ function ActivitiesAdmin() {
   const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const canPublish = useCanPublish();
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Hoạt động"
         description={'Quản lý workshop, cuộc thi, trại, sự kiện. Chương trình học bật "Hiện ở Hoạt động" tự xuất hiện trên trang công khai.'}
@@ -185,9 +185,29 @@ function ListTab() {
   return (
     <div className="space-y-3">
       {dialog}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2.5">
         <button onClick={() => setF({ ...EMPTY })} className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Tạo hoạt động</button>
-        <input className="rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Tìm theo tên…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm theo tên…"
+            aria-label="Tìm kiếm hoạt động"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <Select value={st || "all"} onValueChange={(v) => setSt(v === "all" ? "" : v)}>
           <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{st ? ((MANUAL_LABEL as Record<string, string>)[st] ?? st) : "Mọi trạng thái"}</SelectValue>
@@ -255,7 +275,7 @@ function RegsTab() {
   const digits = (p: string) => p.replace(/\D/g, "").replace(/^84/, "0");
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2.5">
         <Select value={act || "all"} onValueChange={(v) => setAct(v === "all" ? "" : v)}>
           <SelectTrigger aria-label="Lọc theo hoạt động" className="h-9 w-[220px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{act ? title(act) : "Tất cả hoạt động"}</SelectValue>
@@ -274,7 +294,27 @@ function RegsTab() {
             {Object.entries(REG_STATUS).map(([k, v]) => <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>)}
           </SelectContent>
         </Select>
-        <input className="rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Tìm tên, email, mã, SĐT…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm tên, email, mã, SĐT…"
+            aria-label="Tìm kiếm đơn đăng ký"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <span className="self-center text-xs text-muted-foreground">{rows.length} đơn</span>
       </div>
       {err && <p className="text-sm text-destructive">{err}</p>}

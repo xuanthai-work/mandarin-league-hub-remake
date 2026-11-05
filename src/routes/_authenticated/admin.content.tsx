@@ -22,7 +22,7 @@ function useRow(key: ContentKey) {
 function ContentAdmin() {
   const [tab, setTab] = useState<"home" | "site" | "log">("home");
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Trang & Nội dung"
         description='Sửa câu chữ trên website mà không cần lập trình. "Lưu nháp" chỉ bạn thấy khi xem trước; "Xuất bản" mới hiện cho khách. Ô để trống sẽ dùng nội dung mặc định.'

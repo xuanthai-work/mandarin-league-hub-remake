@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ban, Download, ExternalLink, Paperclip, Pencil, Plus, RotateCcw, Sparkles, Wand2 } from "lucide-react";
+import { Ban, Download, ExternalLink, Paperclip, Pencil, Plus, RotateCcw, Search, Sparkles, Wand2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -126,7 +126,7 @@ function CertificatesPage() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Chứng nhận"
         description="Cấp, thu hồi và quản lý chứng nhận tra cứu tại trang Xác minh."
@@ -135,8 +135,28 @@ function CertificatesPage() {
           <button onClick={openNew} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" />Cấp chứng nhận</button>
         </>}
       />
-      <div className="flex flex-wrap gap-2">
-        <input className={`${inp} max-w-xs`} placeholder="Tìm mã, tên, chương trình…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm mã, tên, chương trình…"
+            aria-label="Tìm kiếm chứng nhận"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <Select value={type || "all"} onValueChange={(v) => setType(v === "all" ? "" : v)}>
           <SelectTrigger aria-label="Lọc theo loại chứng nhận" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
             <SelectValue>{type ? (CERT_TYPES[type] ?? type) : "Tất cả loại"}</SelectValue>

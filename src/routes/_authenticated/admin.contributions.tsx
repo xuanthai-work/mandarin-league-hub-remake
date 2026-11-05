@@ -180,7 +180,7 @@ function PointsPage() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto max-w-7xl space-y-5 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Điểm đóng góp"
         description="Điều hành điểm cống hiến: bảng vinh danh, điểm danh hàng loạt và sổ cái kiểm toán đầy đủ."
