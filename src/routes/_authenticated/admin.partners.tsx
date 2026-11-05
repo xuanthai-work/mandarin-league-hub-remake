@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Eye, EyeOff, Handshake, Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { Eye, EyeOff, Handshake, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
@@ -9,13 +10,10 @@ import { PARTNER_BUCKET, withLogos, type PartnerRow } from "@/lib/news-db";
 import { canManagePartners, canViewPartners } from "@/lib/admin-permissions";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  PartnerDrawer,
+  type PartnerForm,
+  type PartnerPosition,
+} from "@/components/admin/partners/PartnerDrawer";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/partners")({
@@ -26,9 +24,7 @@ export const Route = createFileRoute("/_authenticated/admin/partners")({
   component: PartnersAdmin,
 });
 
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-type Form = Omit<PartnerRow, "id" | "logo"> & { id?: string };
-const EMPTY: Form = {
+const EMPTY: PartnerForm = {
   name: "",
   category: PARTNER_CATEGORIES[0]!,
   field: "",
@@ -44,13 +40,10 @@ function PartnersAdmin() {
   const access = useAdminAccess().data;
   const manager = !!access && canManagePartners(access.roles, access.department);
   const viewer = !!access && canViewPartners(access.roles, access.department);
-  const [f, setF] = useState<Form | null>(null);
-  const [sortOrderInput, setSortOrderInput] = useState("1");
-  const [sortOrderHasInput, setSortOrderHasInput] = useState(false);
+  const [f, setF] = useState<PartnerForm | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<PartnerRow | null>(null);
 
   const list = useQuery({
     queryKey: ["admin-partners"],
@@ -93,12 +86,16 @@ function PartnersAdmin() {
     if (f.name.trim().length < 2) return void toast.error("Tên đối tác không hợp lệ");
     if (f.website_url && !/^https?:\/\//.test(f.website_url))
       return void toast.error("Website phải bắt đầu bằng http(s)://");
-    const sortOrder = Number.parseInt(sortOrderInput, 10);
-    if (!Number.isInteger(sortOrder) || sortOrder < 1)
-      return void toast.error("Thứ tự hiển thị phải là số từ 1 trở lên");
-    if (partners.some((partner) => partner.sort_order === sortOrder && partner.id !== f.id))
-      return void toast.error("Thứ tự hiển thị này đã được sử dụng");
-    const { id, ...row } = { ...f, name: f.name.trim(), sort_order: sortOrder };
+    if (!Number.isInteger(f.sort_order) || f.sort_order < 1)
+      return void toast.error("Vị trí hiển thị không hợp lệ");
+
+    // Vị trí cũ của đối tác đang sửa (tạo mới thì coi như đang ở cuối danh sách).
+    const original = partners.find((p) => p.id === f.id);
+    const previousOrder =
+      original && original.sort_order >= 1 ? original.sort_order : nextSortOrder;
+    const occupant = partners.find((p) => p.sort_order === f.sort_order && p.id !== f.id);
+
+    const { id, ...row } = { ...f, name: f.name.trim() };
     setIsSaving(true);
     try {
       const { data, error } = id
@@ -110,6 +107,18 @@ function PartnersAdmin() {
         : await supabase.from("partners").insert(row).select("id");
       if (error) return void toast.error("Không lưu được: " + error.message);
       if (!data?.length) return void toast.error("Không có quyền lưu đối tác");
+
+      // Đổi chỗ: đối tác đang giữ vị trí vừa chọn chuyển sang vị trí cũ.
+      if (occupant) {
+        const swap = await supabase
+          .from("partners")
+          .update({ sort_order: previousOrder, updated_at: new Date().toISOString() })
+          .eq("id", occupant.id)
+          .select("id");
+        if (swap.error || !swap.data?.length)
+          toast.warning(`Đã lưu, nhưng chưa đổi chỗ được với “${occupant.name}”`);
+      }
+
       toast.success("Đã lưu đối tác");
       setF(null);
       setLogoPreview(null);
@@ -139,6 +148,23 @@ function PartnersAdmin() {
     }
   };
 
+  const remove = async () => {
+    if (!f?.id) return;
+    await patch(f.id, { deleted_at: new Date().toISOString() }, "Đã xóa đối tác");
+    setF(null);
+    setLogoPreview(null);
+  };
+
+  const maxPosition = f?.id ? Math.max(nextSortOrder - 1, 1) : nextSortOrder;
+  const positions: PartnerPosition[] = Array.from({ length: maxPosition }, (_, i) => {
+    const value = i + 1;
+    const occupant = partners.find((p) => p.sort_order === value && p.id !== f?.id);
+    return { value, occupant: occupant?.name ?? null };
+  });
+  if (f && !positions.some((p) => p.value === f.sort_order))
+    positions.push({ value: f.sort_order, occupant: null });
+  positions.sort((a, b) => a.value - b.value);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
@@ -152,8 +178,6 @@ function PartnersAdmin() {
           manager ? (
             <button
               onClick={() => {
-                setSortOrderInput(String(nextSortOrder));
-                setSortOrderHasInput(false);
                 setLogoPreview(null);
                 setF({ ...EMPTY, sort_order: nextSortOrder });
               }}
@@ -165,136 +189,13 @@ function PartnersAdmin() {
         }
       />
 
-      {f && manager && (
-        <div className="grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-2">
-          <label className="text-xs text-muted-foreground">
-            Tên đối tác
-            <input
-              className={`${inp} mt-1`}
-              value={f.name}
-              onChange={(e) => setF({ ...f, name: e.target.value })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Phân loại
-            <select
-              className={`${inp} mt-1`}
-              value={f.category}
-              onChange={(e) => setF({ ...f, category: e.target.value })}
-            >
-              {PARTNER_CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Lĩnh vực
-            <input
-              className={`${inp} mt-1`}
-              value={f.field}
-              onChange={(e) => setF({ ...f, field: e.target.value })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Website
-            <input
-              className={`${inp} mt-1`}
-              placeholder="https://"
-              value={f.website_url}
-              onChange={(e) => setF({ ...f, website_url: e.target.value.trim() })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Mô tả
-            <textarea
-              rows={3}
-              className={`${inp} mt-1`}
-              value={f.description}
-              onChange={(e) => setF({ ...f, description: e.target.value })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Thứ tự hiển thị
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              className={`${inp} mt-1`}
-              value={sortOrderInput}
-              onKeyDown={(e) => {
-                if (!sortOrderHasInput && /^[1-9]$/.test(e.key)) {
-                  e.preventDefault();
-                  setSortOrderInput(e.key);
-                  setSortOrderHasInput(true);
-                  setF({ ...f, sort_order: Number(e.key) });
-                }
-              }}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, "");
-                setSortOrderInput(value);
-                setSortOrderHasInput(true);
-                setF({ ...f, sort_order: Number.parseInt(value, 10) || 1 });
-              }}
-              onBlur={() => {
-                const value = Math.max(1, Number.parseInt(sortOrderInput, 10) || 1);
-                setSortOrderInput(String(value));
-                setF({ ...f, sort_order: value });
-              }}
-            />
-            <span className="mt-1 block text-[11px] text-muted-foreground/80">
-              Số nhỏ hơn sẽ hiển thị trước
-            </span>
-          </label>
-          <label className="inline-flex cursor-pointer items-center gap-2 self-end text-sm text-primary">
-            <Upload className="h-4 w-4" />{" "}
-            {isUploading ? "Đang tải logo…" : f.logo_path ? "Đổi logo" : "Tải logo (≤2MB)"}
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              className="hidden"
-              disabled={isUploading || isSaving}
-              onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
-            />
-          </label>
-          {logoPreview && (
-            <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3 sm:col-span-2">
-              <img
-                src={logoPreview}
-                alt="Xem trước logo đối tác"
-                className="h-12 w-20 object-contain"
-              />
-              <span className="text-xs text-muted-foreground">Xem trước logo</span>
-            </div>
-          )}
-          <div className="flex justify-end gap-2 sm:col-span-2">
-            <button
-              onClick={() => setF(null)}
-              disabled={isSaving || isUploading}
-              className="rounded-full border border-border px-4 py-2 text-sm"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={save}
-              disabled={isSaving || isUploading}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isSaving ? "Đang lưu…" : "Lưu"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {!f && (
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <h2 className="text-sm font-semibold text-foreground">Danh sách đối tác</h2>
-          <p className="text-sm text-muted-foreground">
-            Tổng số đối tác:
-            <span className="ml-1 font-semibold text-foreground">{partners.length}</span>
-          </p>
-        </div>
-      )}
+      <div className="flex items-center justify-between border-b border-border pb-3">
+        <h2 className="text-sm font-semibold text-foreground">Danh sách đối tác</h2>
+        <p className="text-sm text-muted-foreground">
+          Tổng số đối tác:
+          <span className="ml-1 font-semibold text-foreground">{partners.length}</span>
+        </p>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
@@ -323,10 +224,11 @@ function PartnersAdmin() {
                     aria-label={`Sửa đối tác ${p.name}`}
                     onClick={() => {
                       const { logo: _l, ...rest } = p;
-                      setSortOrderInput(String(p.sort_order));
-                      setSortOrderHasInput(false);
-                      setLogoPreview(p.logo ?? null);
-                      setF(rest);
+                      setLogoPreview(p.logo || null);
+                      setF({
+                        ...rest,
+                        sort_order: p.sort_order >= 1 ? p.sort_order : nextSortOrder,
+                      });
                     }}
                     className="rounded-lg border border-border p-1.5"
                   >
@@ -343,14 +245,6 @@ function PartnersAdmin() {
                     ) : (
                       <EyeOff className="h-3.5 w-3.5" />
                     )}
-                  </button>
-                  <button
-                    title="Xóa"
-                    aria-label={`Xóa đối tác ${p.name}`}
-                    onClick={() => setDeleteTarget(p)}
-                    className="rounded-lg border border-border p-1.5 text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}
@@ -374,34 +268,31 @@ function PartnersAdmin() {
           </div>
         ))}
       </div>
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xóa đối tác?</DialogTitle>
-            <DialogDescription>
-              Đối tác “{deleteTarget?.name}” sẽ bị ẩn khỏi danh sách quản trị và website.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={() => setDeleteTarget(null)}
-              className="rounded-full border border-border px-4 py-2 text-sm"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={() => {
-                if (!deleteTarget) return;
-                void patch(deleteTarget.id, { deleted_at: new Date().toISOString() }, "Đã xóa");
-                setDeleteTarget(null);
-              }}
-              className="rounded-full bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground"
-            >
-              Xóa đối tác
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+      <AnimatePresence>
+        {f && manager && (
+          <PartnerDrawer
+            value={f}
+            logoPreview={logoPreview}
+            positions={positions}
+            uploading={isUploading}
+            saving={isSaving}
+            onChange={(patch) => setF((x) => (x ? { ...x, ...patch } : x))}
+            onUpload={(file) => void upload(file)}
+            onClearLogo={() => {
+              setLogoPreview(null);
+              setF((x) => x && { ...x, logo_path: "" });
+            }}
+            onSave={() => void save()}
+            onDelete={f.id ? () => void remove() : undefined}
+            onClose={() => {
+              if (isSaving) return;
+              setF(null);
+              setLogoPreview(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
