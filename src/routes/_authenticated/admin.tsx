@@ -29,7 +29,7 @@ function HeaderActions() {
   const header = useAdminHeader();
   if (!header?.headerActions) return null;
   return (
-    <div className="ml-auto flex shrink-0 items-center gap-2 [&_button]:inline-flex [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-xl [&_button]:border [&_button]:border-primary/25 [&_button]:bg-primary [&_button]:px-3 [&_button]:py-1.5 [&_button]:text-xs [&_button]:font-semibold [&_button]:tracking-tight [&_button]:text-primary-foreground [&_button]:shadow-2xs [&_button]:transition-all [&_button]:hover:opacity-90 [&_button]:sm:gap-2.5 [&_button]:sm:px-3.5 [&_button]:sm:py-2 [&_button]:sm:text-sm [&_svg]:h-3.5 [&_svg]:w-3.5">
+    <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 [&_button]:inline-flex [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-xl [&_button]:border [&_button]:border-primary/25 [&_button]:bg-primary [&_button]:px-3 [&_button]:py-1.5 [&_button]:text-xs [&_button]:font-semibold [&_button]:tracking-tight [&_button]:text-primary-foreground [&_button]:shadow-2xs [&_button]:transition-all [&_button]:hover:opacity-90 [&_button]:sm:gap-2.5 [&_button]:sm:px-3.5 [&_button]:sm:py-2 [&_button]:sm:text-sm [&_svg]:h-3.5 [&_svg]:w-3.5 max-sm:[&_:is(button,a)]:size-9 max-sm:[&_:is(button,a)]:shrink-0 max-sm:[&_:is(button,a)]:justify-center max-sm:[&_:is(button,a)]:gap-0! max-sm:[&_:is(button,a)]:px-0! max-sm:[&_:is(button,a)]:py-0! max-sm:[&_:is(button,a)]:text-[0px]! max-sm:[&_:is(button,a)]:leading-none max-sm:[&_svg]:size-4 max-sm:[&_:is(button,a)>svg:not(:first-child)]:hidden">
       {header.headerActions}
     </div>
   );
