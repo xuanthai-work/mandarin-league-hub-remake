@@ -127,6 +127,25 @@ const SKILL_LABEL = {
 } as const;
 const scoreKey = (s: keyof typeof SKILL_LABEL) => `${s}_score` as const;
 
+const HSK_COLS = [
+  { label: "Mã thí sinh", className: "w-[170px]" },
+  { label: "Họ tên", className: "w-[220px]" },
+  { label: "Cấp độ", className: "w-[110px]" },
+  { label: "Ngày thi", className: "w-[120px]" },
+  { label: "Tổng điểm", className: "w-[100px]" },
+  { label: "Kết quả", className: "w-[130px]" },
+  { label: "Thao tác", className: "w-[130px] text-right" },
+] as const;
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  const first = parts[0] ?? "";
+  const last = parts[parts.length - 1] ?? first;
+  if (parts.length === 1) return first.slice(0, 2).toUpperCase();
+  return (first.charAt(0) + last.charAt(0)).toUpperCase();
+}
+
 function HskAdminPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
@@ -617,98 +636,110 @@ function HskAdminPage() {
           </p>
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="p-3">Mã</th>
-                <th className="p-3">Thí sinh</th>
-                <th className="p-3">Cấp độ</th>
-                <th className="p-3">Ngày thi</th>
-                <th className="p-3">Tổng</th>
-                <th className="p-3">Kết quả</th>
-                <th className="p-3 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && (
+        <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full min-w-[980px] table-fixed text-sm">
+              <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
                 <tr>
-                  <td colSpan={7} className="p-6 text-center text-muted-foreground">
-                    Đang tải…
-                  </td>
+                  {HSK_COLS.map((col) => (
+                    <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
+                      {col.label}
+                    </th>
+                  ))}
                 </tr>
-              )}
-              {rows.map((r) => (
-                <tr
-                  key={r.id}
-                  onClick={() => openEdit(r)}
-                  className="cursor-pointer border-t border-border transition-colors hover:bg-muted/40"
-                >
-                  <td className="p-3 font-mono text-xs">{r.candidate_code}</td>
-                  <td className="p-3">
-                    {r.candidate_name}
-                    {r.candidate_name_zh && (
-                      <span className="block text-xs text-muted-foreground">
-                        {r.candidate_name_zh}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3">{HSK_LEVELS[r.level]}</td>
-                  <td className="p-3">{r.exam_date}</td>
-                  <td className="p-3 font-semibold">
-                    {r.total_score}/{r.max_score}
-                  </td>
-                  <td className="p-3">
-                    {r.status === "REVOKED" ? (
-                      <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
-                        Đã hủy
-                      </span>
-                    ) : (
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.passed ? "bg-success/10 text-success" : "bg-warning-soft text-warning-foreground"}`}
-                      >
-                        {r.passed ? "Đạt" : "Chưa đạt"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <div className="flex justify-end gap-1">
-                      <button
-                        title="Mở trang xác minh"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(link(r), "_blank");
-                        }}
-                        className="rounded p-1.5 hover:bg-accent"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </button>
-                      <button
-                        title="Tải mã QR (PNG)"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void downloadQr(r);
-                        }}
-                        className="rounded p-1.5 hover:bg-accent"
-                      >
-                        <QrCode className="h-4 w-4" />
-                      </button>
-                      <button
-                        title="Nhật ký"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setHistoryOf(r);
-                        }}
-                        className="rounded p-1.5 hover:bg-accent"
-                      >
-                        <History className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {isLoading && (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
+                      Đang tải…
+                    </td>
+                  </tr>
+                )}
+                {rows.map((r) => (
+                  <tr
+                    key={r.id}
+                    onClick={() => openEdit(r)}
+                    className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50"
+                  >
+                    <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">
+                      {r.candidate_code}
+                    </td>
+                    <td className="p-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                          {initials(r.candidate_name)}
+                        </span>
+                        <div className="min-w-0">
+                          <span
+                            className="block truncate font-medium text-foreground"
+                            title={r.candidate_name}
+                          >
+                            {r.candidate_name}
+                          </span>
+                          {r.candidate_name_zh && (
+                            <span className="font-han block text-xs text-muted-foreground">
+                              {r.candidate_name_zh}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap p-3 font-medium text-foreground">
+                      {HSK_LEVELS[r.level] ?? r.level}
+                    </td>
+                    <td className="whitespace-nowrap p-3 text-muted-foreground">{r.exam_date}</td>
+                    <td className="p-3 font-mono font-semibold tabular-nums text-foreground">
+                      {r.total_score}/{r.max_score}
+                    </td>
+                    <td className="p-3">
+                      {r.status === "REVOKED" ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-medium text-destructive">
+                          <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                          Đã hủy
+                        </span>
+                      ) : r.passed ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Đạt
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          Chưa đạt
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          title="Mở trang xác minh"
+                          onClick={() => window.open(link(r), "_blank")}
+                          className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          title="Tải mã QR (PNG)"
+                          onClick={() => void downloadQr(r)}
+                          className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          <QrCode className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          title="Nhật ký"
+                          onClick={() => setHistoryOf(r)}
+                          className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          <History className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

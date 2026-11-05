@@ -1,7 +1,9 @@
 # Task 116: HSK Slide-over Drawer and Row Action Cleanup
 
 ## Bối cảnh & Yêu cầu
+
 Dựa trên yêu cầu người dùng đối với trang Quản lý Kết quả HSK (`src/routes/_authenticated/admin.hsk.tsx`):
+
 - Bỏ nút icon cây bút (`Pencil`) trên bảng, click trực tiếp vào hàng bất kỳ để mở form sửa.
 - Gỡ bỏ nút Hủy/Khôi phục (`Ban`/`RotateCcw`) và hàm `window.prompt()` khỏi cột Thao tác trên bảng.
 - Chuyển toàn bộ Center Modal cũ 90vh thành **Slide-over Drawer trượt mép phải (`HskResultDrawer`)** đồng bộ với thiết kế của `TeacherDrawer` và `BenefitDrawer`.
@@ -10,6 +12,7 @@ Dựa trên yêu cầu người dùng đối với trang Quản lý Kết quả 
 ## Các thay đổi đã thực hiện
 
 ### 1. `src/routes/_authenticated/admin.hsk.tsx`
+
 - **Click hàng để mở Drawer**:
   - Gán sự kiện `onClick={() => openEdit(r)}` vào `<tr>` với class `cursor-pointer transition-colors hover:bg-muted/40`.
   - Gỡ bỏ icon `Pencil` và icon `Ban/RotateCcw` khỏi cột Thao tác.
@@ -29,6 +32,7 @@ Dựa trên yêu cầu người dùng đối với trang Quản lý Kết quả 
 ---
 
 ## Verification Gates
+
 - **Typecheck**: `pnpm exec tsc --noEmit` -> **0 errors**.
 - **Lint**: `pnpm run lint` (`eslint .`) -> **0 errors, 29 warnings (pre-existing Fast Refresh warnings)**.
 - **Format**: `pnpm exec prettier --check src/routes/_authenticated/admin.hsk.tsx` -> **PASS 100%**.
