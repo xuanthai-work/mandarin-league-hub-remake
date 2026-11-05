@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { useConfirm } from "@/components/admin/Trash";
 import { deptName } from "@/lib/recruitment";
 import { matchesSearch } from "@/lib/search";
 import { type AdminRole } from "@/lib/admin-nav";
@@ -403,6 +404,7 @@ function MembersPage() {
   const [deptFilter, setDeptFilter] = useState<string>("");
   const [selId, setSelId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const { confirm, dialog } = useConfirm();
   const qc = useQueryClient();
   const access = useAdminAccess();
   const fetchAccounts = useServerFn(getAdminMemberAccounts);
@@ -418,7 +420,12 @@ function MembersPage() {
   };
 
   const rotate = async (m: MemberRow) => {
-    if (!confirm(`Làm mới mã QR của ${m.full_name}? Mã QR cũ sẽ không dùng được nữa.`)) return;
+    const ok = await confirm({
+      title: "Làm mới mã QR?",
+      description: `Mã QR hiện tại của ${m.full_name} sẽ không dùng được nữa. Thành viên cần dùng mã mới trên thẻ.`,
+      confirmLabel: "Làm mới mã QR",
+    });
+    if (!ok) return;
     const { error } = await supabase.rpc("rotate_member_pass", { _member: m.id });
     if (error) toast.error(error.message);
     else toast.success("Đã cấp mã QR mới");
@@ -481,6 +488,7 @@ function MembersPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
+      {dialog}
       <AdminPageHeader
         title="Thành viên"
         description="Hồ sơ nhân sự và tài khoản đăng nhập của thành viên. Bấm vào một dòng để xem hồ sơ và quản lý tài khoản."
@@ -619,6 +627,8 @@ function MembersPage() {
             m={selected}
             isAdmin={isAdmin}
             canEdit={canEditMembers}
+            onRotate={rotate}
+            confirm={confirm}
             onClose={() => setSelId(null)}
             onChanged={refresh}
           />
@@ -643,12 +653,16 @@ function MemberDrawer({
   m,
   isAdmin,
   canEdit,
+  onRotate,
+  confirm,
   onClose,
   onChanged,
 }: {
   m: MemberRow;
   isAdmin: boolean;
   canEdit: boolean;
+  onRotate: (m: MemberRow) => void;
+  confirm: ReturnType<typeof useConfirm>["confirm"];
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -676,7 +690,9 @@ function MemberDrawer({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (document.querySelector('[role="alertdialog"]')) return;
+      onClose();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -753,14 +769,6 @@ function MemberDrawer({
     setBusy(false);
   };
 
-  const rotate = async () => {
-    if (!window.confirm(`Làm mới mã QR của ${m.full_name}? Mã QR cũ sẽ không dùng được nữa.`))
-      return;
-    const { error } = await supabase.rpc("rotate_member_pass", { _member: m.id });
-    if (error) toast.error(error.message);
-    else toast.success("Đã cấp mã QR mới");
-  };
-
   const runPw = async (fn: () => Promise<unknown>, ok: string) => {
     setPwBusy(true);
     setErr("");
@@ -789,12 +797,13 @@ function MemberDrawer({
   };
 
   const removeProfile = async () => {
-    if (
-      !window.confirm(
-        `Xóa vĩnh viễn hồ sơ ${m.member_code} — ${m.full_name}? Thao tác này không thể hoàn tác.`,
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Xóa hồ sơ thành viên?",
+      description: `Hồ sơ ${m.member_code} — ${m.full_name} sẽ bị xóa vĩnh viễn. Thao tác không thể hoàn tác.`,
+      confirmLabel: "Xóa hồ sơ",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     setErr("");
     try {
@@ -935,7 +944,7 @@ function MemberDrawer({
               {isAdmin && (
                 <button
                   type="button"
-                  onClick={rotate}
+                  onClick={() => onRotate(m)}
                   className="group inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold hover:bg-accent"
                 >
                   <QrCode className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45" />

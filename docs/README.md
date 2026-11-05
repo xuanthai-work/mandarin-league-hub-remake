@@ -163,6 +163,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-140-ACCURATE-RECRUITMENT-COUNTS`                              | Đếm hồ sơ bằng truy vấn đếm, tải đủ ứng viên quá 1000 dòng, trang lỗi có nút Thử lại                   | 2026-11-06     | **PASS** | [task-oc-140-accurate-recruitment-counts.md](tasks/task-oc-140-accurate-recruitment-counts.md)                                                           |
 | `TASK-OC-141-PROTECT-ANSWERED-QUESTIONS`                               | Chặn xóa câu hỏi/chủ đề đã có người trả lời, gợi ý Ẩn; mở lại tệp của câu hỏi đã xóa                   | 2026-11-06     | **PASS** | [task-oc-141-protect-answered-questions.md](tasks/task-oc-141-protect-answered-questions.md)                                                             |
 | `TASK-OC-142-SAFE-TEACHER-ASSIGNMENTS`                                 | Cảnh báo nơi giáo viên đang phụ trách trước khi xóa; lưu giáo viên chương trình an toàn                | 2026-11-06     | **PASS** | [task-oc-142-safe-teacher-assignments.md](tasks/task-oc-142-safe-teacher-assignments.md)                                                                 |
+| `TASK-OC-143-CONFIRM-AND-FEEDBACK-CLEANUP`                             | Hộp xác nhận chung ở Thành viên/Quyền lợi, che mật khẩu, xác nhận + toast khi duyệt nhiệm vụ           | 2026-11-06     | **PASS** | [task-oc-143-confirm-and-feedback-cleanup.md](tasks/task-oc-143-confirm-and-feedback-cleanup.md)                                                         |
 
 ---
 

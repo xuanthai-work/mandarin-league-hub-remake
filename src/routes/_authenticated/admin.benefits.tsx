@@ -162,11 +162,18 @@ function BenefitsAdmin() {
     qc.invalidateQueries({ queryKey: ["benefit-logo-urls"] });
   };
   const toggle = async (b: Row) => {
-    await supabase.from("benefits").update({ is_enabled: !b.is_enabled }).eq("id", b.id);
+    const next = !b.is_enabled;
+    const { data, error } = await supabase
+      .from("benefits")
+      .update({ is_enabled: next })
+      .eq("id", b.id)
+      .select("id");
+    if (error) return void toast.error("Không cập nhật được: " + error.message);
+    if (!data?.length) return void toast.error("Không có quyền cập nhật quyền lợi này");
+    toast.success(next ? `Đã bật “${b.name}”` : `Đã tắt “${b.name}”`);
     refresh();
   };
   const remove = async (b: Row) => {
-    if (!confirm(`Xóa quyền lợi "${b.name}"? Các lượt cấp liên quan cũng bị xóa.`)) return;
     const { error } = await supabase.from("benefits").delete().eq("id", b.id);
     if (error) toast.error(error.message);
     else {
@@ -319,6 +326,7 @@ function BenefitCard({
   onGrant: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     if (!copied) return;
@@ -381,8 +389,26 @@ function BenefitCard({
               <div className="flex items-center gap-2">
                 <span className="w-[68px] shrink-0 text-muted-foreground">Mật khẩu</span>
                 <span className="min-w-0 flex-1 truncate font-mono font-medium text-foreground select-text">
-                  {b.secret || "Chưa thiết lập"}
+                  {b.secret ? (revealed ? b.secret : "••••••••") : "Chưa thiết lập"}
                 </span>
+                {b.secret && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRevealed((v) => !v);
+                    }}
+                    aria-label={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    title={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {revealed ? (
+                      <EyeOff className="h-3.5 w-3.5" />
+                    ) : (
+                      <Eye className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -512,6 +538,7 @@ function BenefitDrawer({
   onClose: () => void;
 }) {
   const [showSecret, setShowSecret] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -789,16 +816,29 @@ function BenefitDrawer({
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-foreground">Xóa quyền lợi này</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Xóa vĩnh viễn quyền lợi và thu hồi các quyền truy cập đã cấp.
+                    {confirmDelete
+                      ? "Bấm lần nữa để xác nhận xóa. Các lượt cấp liên quan cũng bị xóa."
+                      : "Xóa vĩnh viễn quyền lợi và thu hồi các quyền truy cập đã cấp."}
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={onDelete}
-                  className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-destructive/30 bg-card px-3 py-2 text-xs font-semibold text-destructive shadow-2xs transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => {
+                    if (!confirmDelete) {
+                      setConfirmDelete(true);
+                      return;
+                    }
+                    setConfirmDelete(false);
+                    onDelete();
+                  }}
+                  className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-2xs transition-colors ${
+                    confirmDelete
+                      ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : "border-destructive/30 bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  }`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  <span>Xóa</span>
+                  <span>{confirmDelete ? "Xác nhận xóa" : "Xóa"}</span>
                 </button>
               </div>
             </section>

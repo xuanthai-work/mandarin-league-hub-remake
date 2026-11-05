@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useConfirm } from "@/components/admin/Trash";
@@ -142,10 +143,17 @@ function TasksPage() {
     setReviewBusy(true);
     const ok = await reviewTasks(reviewTarget.tasks, false, note);
     setReviewBusy(false);
-    if (ok) setReviewTarget(null);
+    if (ok) {
+      toast.success("Đã gửi yêu cầu làm lại");
+      setReviewTarget(null);
+    }
   };
 
   const removeTasks = async (title: string, targets: Task[]) => {
+    if (targets.length === 0) {
+      toast.info("Nhiệm vụ đã hoàn thành nên không xóa được");
+      return;
+    }
     const ok = await confirm({
       title: "Xóa nhiệm vụ?",
       description:
@@ -164,10 +172,25 @@ function TasksPage() {
         return;
       }
     }
+    toast.success(targets.length > 1 ? `Đã xóa ${targets.length} nhiệm vụ` : "Đã xóa nhiệm vụ");
     refresh();
   };
 
-  const approveGroup = (group: GroupedTask) => void reviewTasks(submittedTasks(group), true);
+  const approveGroup = async (group: GroupedTask) => {
+    const targets = submittedTasks(group);
+    if (targets.length === 0) return;
+    const points = targets.reduce((sum, task) => sum + (task.points || 0), 0);
+    const ok = await confirm({
+      title: "Duyệt hoàn thành?",
+      description:
+        targets.length > 1
+          ? `“${group.title}”: ${targets.length} báo cáo sẽ được duyệt và cộng tổng ${points} điểm đóng góp.`
+          : `“${group.title}” sẽ được duyệt và cộng ${points} điểm đóng góp cho người thực hiện.`,
+      confirmLabel: "Duyệt và cộng điểm",
+    });
+    if (!ok) return;
+    if (await reviewTasks(targets, true)) toast.success(`Đã duyệt và cộng ${points} điểm`);
+  };
   const reviseGroup = (group: GroupedTask) => openRevision(group.title, submittedTasks(group));
   const removeGroup = (group: GroupedTask) =>
     void removeTasks(
@@ -178,7 +201,7 @@ function TasksPage() {
   /** Modal actions close the detail view first so the board reflects the new state. */
   const approveFromModal = (group: GroupedTask) => {
     setSelectedGroup(null);
-    approveGroup(group);
+    void approveGroup(group);
   };
   const reviseFromModal = (group: GroupedTask) => {
     setSelectedGroup(null);
