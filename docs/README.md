@@ -158,6 +158,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-VERTICAL-PASS-REDESIGN`                                          | Thiết kế & triển khai Thẻ đứng (Vertical Member Pass ID-1)                                             | 2026-11-03     | **PASS** | [task-vertical-pass-redesign.md](tasks/task-vertical-pass-redesign.md)                                                                                   |
 | `TASK-OC-138-PARTNER-TOOLBAR-AND-CARDS`                                | Danh sách đối tác: tìm kiếm, lọc phân loại/trạng thái, thẻ khung logo, Switch, tải logo                | 2026-11-06     | **PASS** | [task-oc-138-partner-toolbar-and-cards.md](tasks/task-oc-138-partner-toolbar-and-cards.md)                                                               |
 | `TASK-139-ADMIN-PHOTOS-DRAG-REORDER`                                   | Kéo-thả đổi thứ tự ảnh bằng @dnd-kit (chuột + nhấn giữ trên mobile), cập nhật lạc quan                 | 2026-11-06     | **PASS** | [task-139-admin-photos-drag-reorder.md](tasks/task-139-admin-photos-drag-reorder.md)                                                                     |
+| `TASK-140-PHOTO-SIGNED-URL-CACHE`                                      | Dùng lại signed URL ảnh hoạt động còn hạn, ảnh admin/trang chủ hết chớp tải lại                        | 2026-11-06     | **PASS** | [task-140-photo-signed-url-cache.md](tasks/task-140-photo-signed-url-cache.md)                                                                           |
 
 ---
 
