@@ -1,14 +1,5 @@
-import { useMemo, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Crown,
-  Medal,
-  Search,
-  Trophy,
-  UserRound,
-  X,
-} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Crown, Medal, Search, Trophy, UserRound, X } from "lucide-react";
 
 import { TierBadge } from "@/components/TierBadge";
 import {
@@ -27,8 +18,8 @@ interface LeaderboardPanelProps {
   loading: boolean;
 }
 
-/** Rows per page below the podium; five rows keep the column level with the Top 3 cards. */
-const REST_PAGE_SIZE = 5;
+/** Rows are scrolled inside a fixed-height list so the panel never grows with headcount. */
+const LIST_HEIGHT = "h-[300px] sm:h-[320px] xl:h-[332px]";
 
 const RANK_STYLE: Record<
   number,
@@ -188,36 +179,46 @@ function MemberRow({ member, rank }: { member: PointMember; rank: number }) {
 export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("");
-  const [page, setPage] = useState(1);
+  const listRef = useRef<HTMLUListElement>(null);
 
   const depts = useMemo(
     () => [...new Set(members.map((m) => m.department).filter(Boolean))].sort(),
     [members],
   );
 
-  const board = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return members
-      .filter((m) => !dept || m.department === dept)
-      .filter(
-        (m) =>
-          !term ||
-          m.full_name.toLowerCase().includes(term) ||
-          m.member_code.toLowerCase().includes(term),
-      )
-      .sort(
-        (a, b) =>
-          b.contribution_points - a.contribution_points || a.full_name.localeCompare(b.full_name),
-      );
-  }, [members, dept, q]);
+  const rankedList = useMemo(
+    () =>
+      members
+        .filter((m) => !dept || m.department === dept)
+        .sort(
+          (a, b) =>
+            b.contribution_points - a.contribution_points || a.full_name.localeCompare(b.full_name),
+        )
+        .map((member, index) => ({ member, rank: index + 1 })),
+    [members, dept],
+  );
 
-  const resetPage = () => setPage(1);
-  const top = board.slice(0, 3);
-  const rest = board.slice(3);
-  const pageCount = Math.max(1, Math.ceil(rest.length / REST_PAGE_SIZE));
-  const current = Math.min(page, pageCount);
-  const pagedRest = rest.slice((current - 1) * REST_PAGE_SIZE, current * REST_PAGE_SIZE);
+  // The podium follows the department ranking only; it never reacts to the search term.
+  const top = useMemo(() => rankedList.slice(0, 3), [rankedList]);
+
+  // Search narrows the side list only, and each row keeps its real leaderboard rank.
+  const rest = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    const nonTop3 = rankedList.slice(3);
+    if (!term) return nonTop3;
+    return nonTop3.filter(
+      ({ member }) =>
+        member.full_name.toLowerCase().includes(term) ||
+        member.member_code.toLowerCase().includes(term),
+    );
+  }, [rankedList, q]);
+
   const hasFilter = !!(q || dept);
+
+  // New filters start at the top of the list instead of keeping an old scroll offset.
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 });
+  }, [q, dept]);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
@@ -238,7 +239,6 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
-              resetPage();
             }}
             placeholder="Tìm tên hoặc mã thành viên…"
             aria-label="Tìm thành viên trên bảng vinh danh"
@@ -249,7 +249,6 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
               type="button"
               onClick={() => {
                 setQ("");
-                resetPage();
               }}
               aria-label="Xóa tìm kiếm"
               className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -262,7 +261,6 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
           value={dept || "all"}
           onValueChange={(value) => {
             setDept(value === "all" ? "" : value);
-            resetPage();
           }}
         >
           <SelectTrigger
@@ -290,7 +288,7 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
             <div key={i} className="h-12 animate-pulse rounded-xl bg-muted/60" />
           ))}
         </div>
-      ) : board.length === 0 ? (
+      ) : rankedList.length === 0 ? (
         <div className="flex flex-col items-center gap-1.5 px-6 py-14 text-center">
           <span className="grid h-11 w-11 place-items-center rounded-full bg-muted text-muted-foreground">
             <UserRound aria-hidden className="h-5 w-5" />
@@ -318,14 +316,11 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
                       : "grid-cols-3",
                 )}
               >
-                {top.map((member, index) => {
-                  const rank = index + 1;
-                  return (
-                    <div key={member.id} className="h-full">
-                      <PodiumCard member={member} rank={rank} />
-                    </div>
-                  );
-                })}
+                {top.map(({ member, rank }) => (
+                  <div key={member.id} className="h-full">
+                    <PodiumCard member={member} rank={rank} />
+                  </div>
+                ))}
               </div>
             </div>
             <p className="mt-2.5 hidden items-center justify-center gap-1.5 text-center text-[10px] text-muted-foreground sm:flex">
@@ -334,63 +329,22 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
             </p>
           </div>
 
-          <div className="min-w-0">
-            <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
-              {pagedRest.map((member, index) => {
-                const rank = (current - 1) * REST_PAGE_SIZE + index + 4;
-                return <MemberRow key={member.id} member={member} rank={rank} />;
-              })}
-              {pagedRest.length === 0 && (
+          <div className={cn("flex min-w-0 flex-col", LIST_HEIGHT)}>
+            <ul
+              ref={listRef}
+              className="custom-scrollbar min-h-0 flex-1 divide-y divide-border/60 overflow-y-auto rounded-xl border border-border/60"
+            >
+              {rest.map(({ member, rank }) => (
+                <MemberRow key={member.id} member={member} rank={rank} />
+              ))}
+              {rest.length === 0 && (
                 <li className="px-4 py-6 text-center text-xs text-muted-foreground">
-                  {top.length > 0 ? "Không có thêm thành viên nào." : "Chưa có thành viên."}
+                  {q.trim()
+                    ? "Không tìm thấy thành viên phù hợp ngoài Top 3."
+                    : "Không có thêm thành viên nào."}
                 </li>
               )}
             </ul>
-            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 px-1 text-xs">
-              <span className="text-[10px] text-muted-foreground">
-                {rest.length > 0 ? (
-                  <>
-                    Hiển thị{" "}
-                    <b className="text-foreground">
-                      {(current - 1) * REST_PAGE_SIZE + 4} -{" "}
-                      {Math.min(current * REST_PAGE_SIZE + 3, board.length)}
-                    </b>{" "}
-                    / {board.length} thành viên
-                  </>
-                ) : (
-                  <>
-                    Hiển thị <b className="text-foreground">{board.length}</b> / {board.length}{" "}
-                    thành viên
-                  </>
-                )}
-              </span>
-
-              {pageCount > 1 && (
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={current <= 1}
-                    aria-label="Trang trước"
-                    className="grid h-7 w-7 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    {current} / {pageCount}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                    disabled={current >= pageCount}
-                    aria-label="Trang sau"
-                    className="grid h-7 w-7 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       )}
