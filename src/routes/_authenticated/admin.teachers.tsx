@@ -6,7 +6,6 @@ import { Plus, Search, Star, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  PROGRAM_OPTIONS,
   resolveTeacherPhotos,
   TEACHER_BUCKET,
   TEACHER_TYPE_LABEL,
@@ -379,14 +378,20 @@ function TeacherCard({
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] text-muted-foreground">Phụ trách:</span>
             {t.teaching_levels && t.teaching_levels.length > 0 ? (
-              t.teaching_levels.map((l) => (
-                <span
-                  key={l}
-                  className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary"
-                >
-                  HSK {l}
+              t.teaching_levels.length === 6 ? (
+                <span className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
+                  HSK 1 - 6
                 </span>
-              ))
+              ) : (
+                t.teaching_levels.map((l) => (
+                  <span
+                    key={l}
+                    className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary"
+                  >
+                    HSK {l}
+                  </span>
+                ))
+              )
             ) : (
               <span className="text-[11px] italic text-muted-foreground">Chưa xếp cấp</span>
             )}
@@ -617,85 +622,74 @@ function TeacherDrawer({
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Năng lực chuyên môn & Giảng dạy
             </h3>
-            <div className="text-xs text-muted-foreground">
-              <span>Trình độ Hán ngữ</span>
-              <Select
-                value={value.chinese_level || ""}
-                onValueChange={(v) => onChange({ chinese_level: v })}
-              >
-                <SelectTrigger
-                  aria-label="Trình độ Hán ngữ"
-                  className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="text-xs text-muted-foreground">
+                <span>Trình độ Hán ngữ</span>
+                <Select
+                  value={value.chinese_level || ""}
+                  onValueChange={(v) => onChange({ chinese_level: v })}
                 >
-                  <SelectValue placeholder="Chọn trình độ HSK (HSK 4 - 9)">
-                    {value.chinese_level || "Chưa chọn trình độ"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {CHINESE_LEVELS.map((level) => (
-                    <SelectItem key={level} value={level} className="text-xs">
-                      {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs text-muted-foreground">Cấp HSK phụ trách</label>
-              <div className="flex flex-wrap gap-1.5">
-                {LEVELS.map((l) => {
-                  const active = value.teaching_levels.includes(l);
-                  return (
-                    <button
-                      type="button"
-                      key={l}
-                      onClick={() =>
-                        onChange({
-                          teaching_levels: active
-                            ? value.teaching_levels.filter((x) => x !== l)
-                            : [...value.teaching_levels, l].sort(),
-                        })
-                      }
-                      className={`cursor-pointer rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                        active
-                          ? "bg-primary text-primary-foreground shadow-2xs"
-                          : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      HSK {l}
-                    </button>
-                  );
-                })}
+                  <SelectTrigger
+                    aria-label="Trình độ Hán ngữ"
+                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                  >
+                    <SelectValue placeholder="Chọn trình độ HSK (HSK 4 - 9)">
+                      {value.chinese_level || "Chưa chọn trình độ"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {CHINESE_LEVELS.map((level) => (
+                      <SelectItem key={level} value={level} className="text-xs">
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs text-muted-foreground">Chương trình khác</label>
-              <div className="flex flex-wrap gap-1.5">
-                {PROGRAM_OPTIONS.map((p) => {
-                  const active = value.programs.includes(p);
-                  return (
-                    <button
-                      type="button"
-                      key={p}
-                      onClick={() =>
-                        onChange({
-                          programs: active
-                            ? value.programs.filter((x) => x !== p)
-                            : [...value.programs, p],
-                        })
-                      }
-                      className={`cursor-pointer rounded-xl px-2.5 py-1 text-xs font-medium transition-colors ${
-                        active
-                          ? "bg-primary text-primary-foreground shadow-2xs"
-                          : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  );
-                })}
+              <div className="text-xs text-muted-foreground">
+                <span>Cấp HSK phụ trách</span>
+                <Select
+                  value={
+                    value.teaching_levels.length === 6
+                      ? "all"
+                      : value.teaching_levels.length === 1
+                        ? String(value.teaching_levels[0])
+                        : value.teaching_levels.length > 0
+                          ? value.teaching_levels.join(",")
+                          : ""
+                  }
+                  onValueChange={(v) => {
+                    if (v === "all") {
+                      onChange({ teaching_levels: [1, 2, 3, 4, 5, 6] });
+                    } else {
+                      onChange({ teaching_levels: [Number(v)] });
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    aria-label="Cấp HSK phụ trách"
+                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                  >
+                    <SelectValue placeholder="Chọn cấp HSK phụ trách">
+                      {value.teaching_levels.length === 6
+                        ? "Tất cả các cấp (HSK 1 - 6)"
+                        : value.teaching_levels.length > 0
+                          ? value.teaching_levels.map((l) => `HSK ${l}`).join(", ")
+                          : "Chưa chọn cấp HSK"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="all" className="text-xs">
+                      Tất cả các cấp (HSK 1 - 6)
+                    </SelectItem>
+                    {LEVELS.map((l) => (
+                      <SelectItem key={l} value={String(l)} className="text-xs">
+                        HSK {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
