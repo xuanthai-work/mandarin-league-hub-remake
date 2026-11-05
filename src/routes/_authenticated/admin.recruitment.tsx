@@ -146,18 +146,27 @@ async function load() {
     .update({ status: "ended" })
     .eq("status", "open")
     .lt("ends_on", today);
-  const [p, pos, t, q, apps] = await Promise.all([
+  const [p, pos, t, q] = await Promise.all([
     supabase.from("recruitment_periods").select("*").order("created_at", { ascending: false }),
     supabase.from("recruitment_positions").select("*"),
     supabase.from("recruitment_topics").select("*").order("sort_order"),
     supabase.from("recruitment_questions").select("*").order("sort_order"),
-    supabase.from("candidate_applications").select("period_id"),
   ]);
+  const periods = (p.data ?? []) as Period[];
+  const counts = await Promise.all(
+    periods.map((period) =>
+      supabase
+        .from("candidate_applications")
+        .select("id", { count: "exact", head: true })
+        .eq("period_id", period.id),
+    ),
+  );
   const appCountByPeriod: Record<string, number> = {};
-  for (const a of (apps.data ?? []) as { period_id: string }[])
-    appCountByPeriod[a.period_id] = (appCountByPeriod[a.period_id] ?? 0) + 1;
+  periods.forEach((period, i) => {
+    appCountByPeriod[period.id] = counts[i]?.count ?? 0;
+  });
   return {
-    periods: (p.data ?? []) as Period[],
+    periods,
     positions: (pos.data ?? []) as Position[],
     topics: (t.data ?? []) as Topic[],
     questions: (q.data ?? []) as Question[],

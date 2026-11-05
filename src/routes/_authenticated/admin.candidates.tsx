@@ -14,6 +14,7 @@ import {
   EMPTY_FILTERS,
   choicesOf,
   openStorageFile,
+  type CandidateApp,
   type CandidateFilters,
 } from "@/components/admin/candidates/shared";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,17 +27,40 @@ export const Route = createFileRoute("/_authenticated/admin/candidates")({
   component: Candidates,
 });
 
+const PAGE_SIZE = 1000;
+
+/** Supabase trả tối đa 1000 dòng mỗi lần, nên tải lần lượt từng trang đến khi hết. */
+async function loadAllApplications() {
+  const rows: CandidateApp[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("candidate_applications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...((data ?? []) as CandidateApp[]));
+    if (!data || data.length < PAGE_SIZE) return rows;
+  }
+}
+
 async function load() {
-  const [a, p, q] = await Promise.all([
-    supabase.from("candidate_applications").select("*").order("created_at", { ascending: false }),
+  const [apps, p, q] = await Promise.all([
+    loadAllApplications(),
     supabase.from("recruitment_periods").select("id, name"),
     supabase.from("recruitment_questions").select("id, prompt, kind"),
   ]);
-  return { apps: a.data ?? [], periods: p.data ?? [], questions: q.data ?? [] };
+  if (p.error) throw new Error(p.error.message);
+  if (q.error) throw new Error(q.error.message);
+  return { apps, periods: p.data ?? [], questions: q.data ?? [] };
 }
 
 function Candidates() {
-  const { data } = useQuery({ queryKey: ["admin-candidates"], queryFn: load });
+  const { data, isError, refetch, isFetching } = useQuery({
+    queryKey: ["admin-candidates"],
+    queryFn: load,
+  });
   const [filters, setFilters] = useState<CandidateFilters>(EMPTY_FILTERS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [freeOpen, setFreeOpen] = useState(false);
@@ -107,6 +131,25 @@ function Candidates() {
     }).click();
     URL.revokeObjectURL(url);
   };
+
+  if (isError && !data) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
+          <p className="text-sm font-medium text-foreground">Không tải được danh sách ứng viên</p>
+          <p className="mt-1 text-xs text-muted-foreground">Kiểm tra kết nối mạng rồi thử lại.</p>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
+          >
+            {isFetching ? "Đang thử lại…" : "Thử lại"}
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   if (!data) {
     return (

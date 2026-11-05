@@ -160,6 +160,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-139-ADMIN-PHOTOS-DRAG-REORDER`                                   | Kéo-thả đổi thứ tự ảnh bằng @dnd-kit (chuột + nhấn giữ trên mobile), cập nhật lạc quan                 | 2026-11-06     | **PASS** | [task-139-admin-photos-drag-reorder.md](tasks/task-139-admin-photos-drag-reorder.md)                                                                     |
 | `TASK-140-PHOTO-SIGNED-URL-CACHE`                                      | Dùng lại signed URL ảnh hoạt động còn hạn, ảnh admin/trang chủ hết chớp tải lại                        | 2026-11-06     | **PASS** | [task-140-photo-signed-url-cache.md](tasks/task-140-photo-signed-url-cache.md)                                                                           |
 | `TASK-OC-139-CSV-FORMULA-INJECTION`                                    | Chặn công thức Excel khi xuất CSV, gom 4 nơi về src/lib/csv.ts kèm unit test                           | 2026-11-06     | **PASS** | [task-oc-139-csv-formula-injection.md](tasks/task-oc-139-csv-formula-injection.md)                                                                       |
+| `TASK-OC-140-ACCURATE-RECRUITMENT-COUNTS`                              | Đếm hồ sơ bằng truy vấn đếm, tải đủ ứng viên quá 1000 dòng, trang lỗi có nút Thử lại                   | 2026-11-06     | **PASS** | [task-oc-140-accurate-recruitment-counts.md](tasks/task-oc-140-accurate-recruitment-counts.md)                                                           |
 
 ---
 

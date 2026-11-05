@@ -101,28 +101,39 @@ async function loadMembers(): Promise<MembersBlock | null> {
 }
 
 async function loadRecruitment(): Promise<RecruitmentBlock | null> {
-  const [periods, applications] = await Promise.all([
+  const periods = await supabase
+    .from("recruitment_periods")
+    .select("id, name, status, starts_on")
+    .order("starts_on", { ascending: false });
+  if (periods.error) return null;
+  const latest = (periods.data ?? [])[0];
+
+  const [pendingCount, pendingRows, latestCount] = await Promise.all([
     supabase
-      .from("recruitment_periods")
-      .select("id, name, status, starts_on")
-      .order("starts_on", { ascending: false }),
+      .from("candidate_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "submitted"),
     supabase
       .from("candidate_applications")
       .select("id, full_name, status, created_at, period_id")
+      .eq("status", "submitted")
       .order("created_at", { ascending: false })
-      .limit(300),
+      .limit(4),
+    latest
+      ? supabase
+          .from("candidate_applications")
+          .select("id", { count: "exact", head: true })
+          .eq("period_id", latest.id)
+      : Promise.resolve({ count: 0, error: null }),
   ]);
-  if (periods.error && applications.error) return null;
-  const latest = (periods.data ?? [])[0];
-  const apps = applications.data ?? [];
-  const pendingRows = apps.filter((a) => a.status === "submitted");
+
   return {
     latestName: latest?.name ?? null,
     latestStatus: latest ? periodStatusLabel(latest.status) : null,
     open: (periods.data ?? []).some((p) => p.status === "open"),
-    appsInLatest: latest ? apps.filter((a) => a.period_id === latest.id).length : 0,
-    pending: pendingRows.length,
-    pendingRows: pendingRows.slice(0, 4),
+    appsInLatest: latestCount.count ?? 0,
+    pending: pendingCount.count ?? 0,
+    pendingRows: pendingRows.data ?? [],
   };
 }
 
