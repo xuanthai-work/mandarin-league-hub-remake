@@ -7,12 +7,13 @@ import {
   Paperclip,
   Plus,
   Search,
-  Sparkles,
   UserPlus,
   X,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -32,19 +33,6 @@ interface AdjustmentModalProps {
   onClose: () => void;
   onDone: () => void;
 }
-
-const PRESETS: Record<AdjustMode, { label: string; reason: string }[]> = {
-  bonus: [
-    { label: "Hỗ trợ sự kiện", reason: "Hỗ trợ sự kiện của Liên Đoàn" },
-    { label: "Ý tưởng xuất sắc", reason: "Đóng góp ý tưởng xuất sắc cho Ban" },
-    { label: "Vượt tiến độ dự án", reason: "Hoàn thành dự án vượt tiến độ" },
-  ],
-  penalty: [
-    { label: "Vắng họp không phép", reason: "Vắng họp không phép" },
-    { label: "Trễ hạn nhiệm vụ", reason: "Trễ hạn nhiệm vụ được giao" },
-    { label: "Vi phạm quy tắc ứng xử", reason: "Vi phạm quy tắc ứng xử của Liên Đoàn" },
-  ],
-};
 
 const labelClass = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
@@ -311,7 +299,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
       >
         <header className="flex shrink-0 items-start gap-2 border-b border-border/70 px-4 py-3.5 sm:px-5">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Sparkles aria-hidden className="h-4 w-4" />
+            <Zap aria-hidden className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-bold text-foreground">Thưởng / Trừ điểm</h2>
@@ -353,7 +341,20 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
               </button>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-[150px_1fr]">
+            <div className="grid gap-2 sm:grid-cols-[1fr_150px]">
+              <div className="relative">
+                <Search
+                  aria-hidden
+                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Tìm tên hoặc mã thành viên…"
+                  aria-label="Tìm thành viên"
+                  className="h-9 w-full rounded-xl border-input bg-background pl-8 pr-3 text-xs shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                />
+              </div>
               <Select
                 value={dept || "all"}
                 onValueChange={(value) => setDept(value === "all" ? "" : value)}
@@ -375,19 +376,6 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                   ))}
                 </SelectContent>
               </Select>
-              <div className="relative">
-                <Search
-                  aria-hidden
-                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Tìm tên hoặc mã thành viên…"
-                  aria-label="Tìm thành viên"
-                  className="w-full rounded-xl border border-input bg-background py-2 pl-8 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
             </div>
 
             <div className="custom-scrollbar max-h-64 overflow-y-auto rounded-xl border border-border">
@@ -484,31 +472,6 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                     >
                       <Icon aria-hidden className="h-3.5 w-3.5" />
                       {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className={labelClass}>Mẫu nhanh</span>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESETS[mode].map((preset) => {
-                  const active = reason === preset.reason;
-                  return (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => setReason(preset.reason)}
-                      aria-pressed={active}
-                      className={cn(
-                        "rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors",
-                        active
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-                      )}
-                    >
-                      {preset.label}
                     </button>
                   );
                 })}
@@ -639,12 +602,6 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                     ? ` · tổng ${mode === "bonus" ? "+" : "-"}${Math.abs(delta) * pending.length} điểm`
                     : ""}
                   {evidence.length > 0 ? ` · ${evidence.length} tệp minh chứng` : ""}.
-                </span>
-              </p>
-              <p className="mt-1.5 flex items-start gap-1.5">
-                <Sparkles aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
-                <span>
-                  Chỉ Quản trị viên được thưởng/trừ điểm; trưởng Ban chỉ ghi nhận điểm danh.
                 </span>
               </p>
             </div>

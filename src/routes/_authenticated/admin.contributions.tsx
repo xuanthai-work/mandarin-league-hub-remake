@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { ClipboardCheck, Sparkles } from "lucide-react";
+import { ClipboardCheck, Zap } from "lucide-react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdjustmentModal } from "@/components/admin/contributions/AdjustmentModal";
@@ -143,7 +143,7 @@ function PointsPage() {
             title="Thưởng / Trừ điểm"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:px-3.5"
           >
-            <Sparkles aria-hidden className="h-4 w-4" />
+            <Zap aria-hidden className="h-4 w-4" />
             <span className="hidden sm:inline">Thưởng / Trừ điểm</span>
           </button>
         )}

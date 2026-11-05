@@ -232,7 +232,7 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
         <div className="relative w-full flex-1">
           <Search
             aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           />
           <input
             value={q}
@@ -242,7 +242,7 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
             }}
             placeholder="Tìm tên hoặc mã thành viên…"
             aria-label="Tìm thành viên trên bảng vinh danh"
-            className="w-full rounded-xl border-none bg-background py-1.5 pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border-none bg-background py-2 pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           {q && (
             <button
