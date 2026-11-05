@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
+  AlertTriangle,
   Award,
-  Ban,
   Calendar,
   CheckCircle2,
   Download,
@@ -11,10 +12,8 @@ import {
   FileSpreadsheet,
   GraduationCap,
   History,
-  Pencil,
   Plus,
   QrCode,
-  RotateCcw,
   Search,
   ShieldCheck,
   UploadCloud,
@@ -134,6 +133,7 @@ function HskAdminPage() {
   const [level, setLevel] = useState("");
   const [status, setStatus] = useState("");
   const [edit, setEdit] = useState<Draft | null>(null);
+  const [editing, setEditing] = useState<Row | null>(null);
   const [saving, setSaving] = useState(false);
   const [historyOf, setHistoryOf] = useState<Row | null>(null);
   const [prefix, setPrefix] = useState<string>("TMLHSK");
@@ -202,6 +202,7 @@ function HskAdminPage() {
     ((await supabase.rpc("suggest_hsk_code_v2", { _prefix: p })).data as string) ?? "";
   const openNew = async () => {
     setCustomCode(false);
+    setEditing(null);
     setEdit({ ...EMPTY, exam_date: today(), candidate_code: await genCode(prefix) });
   };
   const pickClass = (id: string) => {
@@ -232,8 +233,19 @@ function HskAdminPage() {
     a.download = `QR-${r.candidate_code}.png`;
     a.click();
   };
+  const changePrefix = async (p: string) => {
+    setPrefix(p);
+    if (edit && !edit.id) setEdit({ ...edit, candidate_code: await genCode(p) });
+  };
+
+  const regenerateCode = async () => {
+    if (!edit || edit.id) return;
+    setEdit({ ...edit, candidate_code: await genCode(prefix) });
+  };
+
   const openEdit = (r: Row) => {
     setCustomCode(false);
+    setEditing(r);
     setEdit({
       id: r.id,
       candidate_code: r.candidate_code,
@@ -297,25 +309,43 @@ function HskAdminPage() {
     }
     toast.success(id ? "Đã cập nhật kết quả" : "Đã ghi nhận kết quả");
     setEdit(null);
+    setEditing(null);
     refresh();
   };
 
-  const setRevoked = async (r: Row, revoke: boolean) => {
-    const reason = window.prompt(revoke ? "Lý do hủy kết quả:" : "Lý do khôi phục:") ?? "";
-    if (revoke && !reason.trim()) return;
+  const revokeResult = async (reason: string) => {
+    if (!edit?.id) return;
+    const note = reason.trim();
+    if (!note) {
+      toast.error("Vui lòng nhập lý do hủy kết quả");
+      return;
+    }
     const { error } = await supabase
       .from("hsk_results")
-      .update({
-        status: revoke ? "REVOKED" : "VALID",
-        revoked_reason: revoke ? reason : "",
-        change_reason: reason || "Khôi phục",
-      })
-      .eq("id", r.id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success(revoke ? "Đã hủy kết quả" : "Đã khôi phục");
-      refresh();
+      .update({ status: "REVOKED", revoked_reason: note, change_reason: note })
+      .eq("id", edit.id);
+    if (error) {
+      toast.error(error.message);
+      return;
     }
+    toast.success("Đã hủy kết quả");
+    setEditing((prev) => (prev ? { ...prev, status: "REVOKED", revoked_reason: note } : prev));
+    refresh();
+  };
+
+  const restoreResult = async () => {
+    if (!edit?.id) return;
+    const { error } = await supabase
+      .from("hsk_results")
+      .update({ status: "VALID", revoked_reason: "", change_reason: "Khôi phục" })
+      .eq("id", edit.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Đã khôi phục kết quả");
+    setEditing((prev) => (prev ? { ...prev, status: "VALID", revoked_reason: "" } : prev));
+    refresh();
   };
 
   const link = (r: Row) =>
@@ -427,10 +457,6 @@ function HskAdminPage() {
       refresh();
     }
   };
-
-  const skills = edit ? hskSkills(edit.level) : [];
-  const rule = edit ? hskRule(edit.level) : { max: 0, pass: 0 };
-  const total = edit ? skills.reduce((s, k) => s + (edit[scoreKey(k)] ?? 0), 0) : 0;
 
   return (
     <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
@@ -613,7 +639,11 @@ function HskAdminPage() {
                 </tr>
               )}
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-border">
+                <tr
+                  key={r.id}
+                  onClick={() => openEdit(r)}
+                  className="cursor-pointer border-t border-border transition-colors hover:bg-muted/40"
+                >
                   <td className="p-3 font-mono text-xs">{r.candidate_code}</td>
                   <td className="p-3">
                     {r.candidate_name}
@@ -645,49 +675,34 @@ function HskAdminPage() {
                     <div className="flex justify-end gap-1">
                       <button
                         title="Mở trang xác minh"
-                        onClick={() => window.open(link(r), "_blank")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(link(r), "_blank");
+                        }}
                         className="rounded p-1.5 hover:bg-accent"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </button>
                       <button
                         title="Tải mã QR (PNG)"
-                        onClick={() => downloadQr(r)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void downloadQr(r);
+                        }}
                         className="rounded p-1.5 hover:bg-accent"
                       >
                         <QrCode className="h-4 w-4" />
                       </button>
                       <button
                         title="Nhật ký"
-                        onClick={() => setHistoryOf(r)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHistoryOf(r);
+                        }}
                         className="rounded p-1.5 hover:bg-accent"
                       >
                         <History className="h-4 w-4" />
                       </button>
-                      <button
-                        title="Sửa"
-                        onClick={() => openEdit(r)}
-                        className="rounded p-1.5 hover:bg-accent"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      {r.status === "VALID" ? (
-                        <button
-                          title="Hủy kết quả"
-                          onClick={() => setRevoked(r, true)}
-                          className="rounded p-1.5 text-destructive hover:bg-destructive/10"
-                        >
-                          <Ban className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <button
-                          title="Khôi phục"
-                          onClick={() => setRevoked(r, false)}
-                          className="rounded p-1.5 hover:bg-accent"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -704,291 +719,31 @@ function HskAdminPage() {
         onImport={importCsv}
       />
 
-      {edit && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40 p-4"
-          onClick={() => setEdit(null)}
-        >
-          <div
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-card p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-bold">{edit.id ? "Sửa kết quả" : "Nhập kết quả HSK"}</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="text-sm sm:col-span-2">
-                Mã kết quả
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {!edit.id && (
-                    <Select
-                      value={prefix}
-                      onValueChange={async (v) => {
-                        setPrefix(v);
-                        setEdit({ ...edit, candidate_code: await genCode(v) });
-                      }}
-                    >
-                      <SelectTrigger
-                        aria-label="Tiền tố mã"
-                        className="h-9 w-[110px] rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none"
-                      >
-                        <SelectValue>{prefix}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        {HSK_PREFIXES.map((p) => (
-                          <SelectItem key={p} value={p} className="text-sm">
-                            {p}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <input
-                    readOnly={!customCode}
-                    className={`${inp} flex-1 font-mono uppercase ${customCode ? "" : "bg-muted"}`}
-                    value={edit.candidate_code}
-                    onChange={(e) =>
-                      setEdit({
-                        ...edit,
-                        candidate_code: e.target.value.replace(/[^A-Za-z0-9_-]/g, "").toUpperCase(),
-                      })
-                    }
-                  />
-                  {!edit.id && (
-                    <button
-                      type="button"
-                      onClick={async () =>
-                        setEdit({ ...edit, candidate_code: await genCode(prefix) })
-                      }
-                      className="rounded-lg border border-border px-3 text-xs"
-                    >
-                      Tạo mã khác
-                    </button>
-                  )}
-                  <label className="inline-flex items-center gap-1 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={customCode}
-                      onChange={(e) => setCustomCode(e.target.checked)}
-                    />{" "}
-                    Tự nhập mã
-                  </label>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Mã tự sinh ngẫu nhiên, không trùng (VD: TMLHSK2026K7P3QX9A). Chỉ bật "Tự nhập mã"
-                  khi có số báo danh đặc thù.
-                </p>
-              </div>
-              <div className="text-sm">
-                <span className="block">Cấp độ</span>
-                <Select value={edit.level} onValueChange={(v) => setEdit({ ...edit, level: v })}>
-                  <SelectTrigger
-                    aria-label="Cấp độ"
-                    className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-                  >
-                    <SelectValue>{HSK_LEVELS[edit.level] ?? edit.level}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {Object.entries(HSK_LEVELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-sm">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <label className="text-sm">
-                Họ và tên thí sinh
-                <input
-                  className={`${inp} mt-1`}
-                  value={edit.candidate_name}
-                  onChange={(e) => setEdit({ ...edit, candidate_name: e.target.value })}
-                />
-              </label>
-              <label className="text-sm">
-                Tên chữ Hán (tuỳ chọn)
-                <input
-                  className={`${inp} mt-1`}
-                  value={edit.candidate_name_zh}
-                  onChange={(e) => setEdit({ ...edit, candidate_name_zh: e.target.value })}
-                />
-              </label>
-              <label className="text-sm">
-                Ngày đánh giá / thi
-                <input
-                  type="date"
-                  className={`${inp} mt-1`}
-                  value={edit.exam_date}
-                  onChange={(e) => setEdit({ ...edit, exam_date: e.target.value })}
-                />
-              </label>
-              <div className="text-sm">
-                <span className="block">Lớp học (tự điền giáo viên, thời gian)</span>
-                <Select
-                  value={edit.hsk_class_id ?? "none"}
-                  onValueChange={(v) => pickClass(v === "none" ? "" : v)}
-                >
-                  <SelectTrigger
-                    aria-label="Lớp học"
-                    className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-                  >
-                    <SelectValue>
-                      {(classes ?? []).find((c) => c.id === edit.hsk_class_id)?.name ??
-                        "— Không gắn lớp —"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="none" className="text-sm">
-                      — Không gắn lớp —
-                    </SelectItem>
-                    {(classes ?? []).map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-sm">
-                        HSK {c.level} · {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="text-sm">
-                <span className="block">Giáo viên giảng dạy</span>
-                <Select
-                  value={edit.teacher_id ?? "none"}
-                  onValueChange={(v) => setEdit({ ...edit, teacher_id: v === "none" ? null : v })}
-                >
-                  <SelectTrigger
-                    aria-label="Giáo viên giảng dạy"
-                    className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-                  >
-                    <SelectValue>
-                      {(teachers ?? []).find((t) => t.id === edit.teacher_id)?.full_name ??
-                        "— Chưa chọn —"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="none" className="text-sm">
-                      — Chưa chọn —
-                    </SelectItem>
-                    {(teachers ?? []).map((t) => (
-                      <SelectItem key={t.id} value={t.id} className="text-sm">
-                        {t.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <label className="text-sm">
-                Khóa học
-                <input
-                  className={`${inp} mt-1`}
-                  value={edit.course_name}
-                  onChange={(e) => setEdit({ ...edit, course_name: e.target.value })}
-                  placeholder="VD: HSK 4"
-                />
-              </label>
-              <label className="text-sm">
-                Đợt đánh giá
-                <input
-                  className={`${inp} mt-1`}
-                  value={edit.exam_session}
-                  onChange={(e) => setEdit({ ...edit, exam_session: e.target.value })}
-                  placeholder="VD: Cuối khóa 11/2026"
-                />
-              </label>
-              <label className="text-sm">
-                Học từ ngày
-                <input
-                  type="date"
-                  className={`${inp} mt-1`}
-                  value={edit.study_start ?? ""}
-                  onChange={(e) => setEdit({ ...edit, study_start: e.target.value || null })}
-                />
-              </label>
-              <label className="text-sm">
-                Đến ngày
-                <input
-                  type="date"
-                  className={`${inp} mt-1`}
-                  value={edit.study_end ?? ""}
-                  onChange={(e) => setEdit({ ...edit, study_end: e.target.value || null })}
-                />
-              </label>
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {skills.map((s) => (
-                <label key={s} className="text-sm">
-                  {SKILL_LABEL[s]} (0–100)
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    className={`${inp} mt-1`}
-                    value={edit[scoreKey(s)] ?? ""}
-                    onChange={(e) =>
-                      setEdit({
-                        ...edit,
-                        [scoreKey(s)]: e.target.value === "" ? null : Number(e.target.value),
-                      })
-                    }
-                  />
-                </label>
-              ))}
-            </div>
-            <p className="mt-3 rounded-lg bg-muted/60 p-3 text-sm">
-              Tổng tạm tính:{" "}
-              <b>
-                {total}/{rule.max}
-              </b>{" "}
-              · Ngưỡng đạt {rule.pass} ·{" "}
-              <b className={total >= rule.pass ? "text-success" : "text-destructive"}>
-                {total >= rule.pass ? "Đạt" : "Chưa đạt"}
-              </b>{" "}
-              <span className="text-xs text-muted-foreground">(hệ thống tính lại khi lưu)</span>
-            </p>
-            <label className="mt-3 block text-sm">
-              Đơn vị ghi nhận / tổ chức
-              <input
-                className={`${inp} mt-1`}
-                value={edit.issuer}
-                onChange={(e) => setEdit({ ...edit, issuer: e.target.value })}
-              />
-            </label>
-            <label className="mt-3 block text-sm">
-              Ghi chú nội bộ
-              <textarea
-                className={`${inp} mt-1`}
-                rows={2}
-                value={edit.notes}
-                onChange={(e) => setEdit({ ...edit, notes: e.target.value })}
-              />
-            </label>
-            {edit.id && (
-              <label className="mt-3 block text-sm">
-                Lý do chỉnh sửa *
-                <input
-                  className={`${inp} mt-1`}
-                  value={edit.change_reason}
-                  onChange={(e) => setEdit({ ...edit, change_reason: e.target.value })}
-                  placeholder="VD: Phúc khảo phần Viết"
-                />
-              </label>
-            )}
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                onClick={() => setEdit(null)}
-                className="rounded-lg border border-border px-4 py-2 text-sm"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={save}
-                disabled={saving}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                {saving ? "Đang lưu…" : "Lưu kết quả"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <AnimatePresence>
+        {edit && (
+          <HskResultDrawer
+            value={edit}
+            record={editing}
+            classes={classes ?? []}
+            teachers={teachers ?? []}
+            prefix={prefix}
+            customCode={customCode}
+            saving={saving}
+            onChange={(patch) => setEdit((prev) => (prev ? { ...prev, ...patch } : prev))}
+            onPrefixChange={(p) => void changePrefix(p)}
+            onCustomCodeChange={setCustomCode}
+            onGenCode={() => void regenerateCode()}
+            onPickClass={pickClass}
+            onSave={() => void save()}
+            onRevoke={revokeResult}
+            onRestore={restoreResult}
+            onClose={() => {
+              setEdit(null);
+              setEditing(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
       {historyOf && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40 p-4"
@@ -1145,5 +900,486 @@ function CsvImportDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------- result drawer
+
+type HskClassOpt = { id: string; name: string; level: number };
+type HskTeacherOpt = { id: string; full_name: string };
+
+const SECTION_TITLE = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
+function HskResultDrawer({
+  value,
+  record,
+  classes,
+  teachers,
+  prefix,
+  customCode,
+  saving,
+  onChange,
+  onPrefixChange,
+  onCustomCodeChange,
+  onGenCode,
+  onPickClass,
+  onSave,
+  onRevoke,
+  onRestore,
+  onClose,
+}: {
+  value: Draft;
+  record: Row | null;
+  classes: HskClassOpt[];
+  teachers: HskTeacherOpt[];
+  prefix: string;
+  customCode: boolean;
+  saving: boolean;
+  onChange: (patch: Partial<Draft>) => void;
+  onPrefixChange: (p: string) => void;
+  onCustomCodeChange: (c: boolean) => void;
+  onGenCode: () => void;
+  onPickClass: (id: string) => void;
+  onSave: () => void;
+  onRevoke: (reason: string) => Promise<void>;
+  onRestore: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const [revokeReason, setRevokeReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  const skills = hskSkills(value.level);
+  const rule = hskRule(value.level);
+  const total = skills.reduce((sum, k) => sum + (value[scoreKey(k)] ?? 0), 0);
+  const passed = total >= rule.pass;
+  const isRevoked = record?.status === "REVOKED";
+
+  const runRevoke = async () => {
+    setBusy(true);
+    await onRevoke(revokeReason);
+    setBusy(false);
+  };
+
+  const runRestore = async () => {
+    setBusy(true);
+    await onRestore();
+    setBusy(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="fixed inset-0 bg-black/20 backdrop-blur-xs"
+        onClick={onClose}
+      />
+
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Kết quả HSK ${value.candidate_name}`}
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="relative z-10 flex h-full w-full max-w-[580px] flex-col border-l border-border bg-card shadow-2xl"
+      >
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 font-mono text-xs font-bold text-primary ring-2 ring-primary/20">
+              {HSK_LEVELS[value.level]?.replace("HSK", "H") ?? "HSK"}
+            </span>
+            <div className="min-w-0">
+              <h2 className="truncate text-base font-bold text-foreground">
+                {value.candidate_name || "Thí sinh mới"}
+              </h2>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className="truncate font-mono text-xs text-muted-foreground">
+                  {value.candidate_code || "Chưa có mã"}
+                </span>
+                {value.candidate_name_zh && (
+                  <span className="font-han truncate text-xs text-muted-foreground/70">
+                    ({value.candidate_name_zh})
+                  </span>
+                )}
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    isRevoked ? "bg-destructive/10 text-destructive" : "bg-success/15 text-success"
+                  }`}
+                >
+                  {isRevoked ? "Đã hủy" : "Hợp lệ"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            title="Đóng (Esc)"
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="custom-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Thí sinh & Mã định danh</h3>
+            <div className="text-xs text-muted-foreground">
+              Mã kết quả
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                {!value.id && (
+                  <Select value={prefix} onValueChange={onPrefixChange}>
+                    <SelectTrigger
+                      aria-label="Tiền tố mã"
+                      className="h-9 w-[110px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                    >
+                      <SelectValue>{prefix}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {HSK_PREFIXES.map((p) => (
+                        <SelectItem key={p} value={p} className="text-xs">
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <input
+                  readOnly={!customCode}
+                  className={`${inp} flex-1 font-mono uppercase ${customCode ? "" : "bg-muted"}`}
+                  value={value.candidate_code}
+                  onChange={(e) =>
+                    onChange({
+                      candidate_code: e.target.value.replace(/[^A-Za-z0-9_-]/g, "").toUpperCase(),
+                    })
+                  }
+                />
+                {!value.id && (
+                  <button
+                    type="button"
+                    onClick={onGenCode}
+                    className="cursor-pointer rounded-xl border border-border px-3 py-2 text-xs hover:bg-muted"
+                  >
+                    Tạo mã khác
+                  </button>
+                )}
+                <label className="inline-flex cursor-pointer items-center gap-1 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={customCode}
+                    onChange={(e) => onCustomCodeChange(e.target.checked)}
+                  />
+                  Tự nhập mã
+                </label>
+              </div>
+            </div>
+
+            <label className="block text-xs text-muted-foreground">
+              Họ và tên thí sinh <span className="text-destructive">*</span>
+              <input
+                className={`${inp} mt-1`}
+                value={value.candidate_name}
+                onChange={(e) => onChange({ candidate_name: e.target.value })}
+              />
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Tên chữ Hán (tuỳ chọn)
+              <input
+                className={`${inp} mt-1 font-han`}
+                value={value.candidate_name_zh}
+                onChange={(e) => onChange({ candidate_name_zh: e.target.value })}
+              />
+            </label>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Cấp độ HSK & Lớp học liên kết</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="text-xs text-muted-foreground">
+                <span>Cấp độ HSK</span>
+                <Select value={value.level} onValueChange={(v) => onChange({ level: v })}>
+                  <SelectTrigger
+                    aria-label="Cấp độ"
+                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                  >
+                    <SelectValue>{HSK_LEVELS[value.level] ?? value.level}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {Object.entries(HSK_LEVELS).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <span>Giáo viên giảng dạy</span>
+                <Select
+                  value={value.teacher_id ?? "none"}
+                  onValueChange={(v) => onChange({ teacher_id: v === "none" ? null : v })}
+                >
+                  <SelectTrigger
+                    aria-label="Giáo viên giảng dạy"
+                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                  >
+                    <SelectValue>
+                      {teachers.find((t) => t.id === value.teacher_id)?.full_name ??
+                        "— Chưa chọn —"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="none" className="text-xs">
+                      — Chưa chọn —
+                    </SelectItem>
+                    {teachers.map((t) => (
+                      <SelectItem key={t.id} value={t.id} className="text-xs">
+                        {t.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              <span>Lớp học (tự điền giáo viên, thời gian)</span>
+              <Select
+                value={value.hsk_class_id ?? "none"}
+                onValueChange={(v) => onPickClass(v === "none" ? "" : v)}
+              >
+                <SelectTrigger
+                  aria-label="Lớp học"
+                  className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                >
+                  <SelectValue>
+                    {classes.find((c) => c.id === value.hsk_class_id)?.name ?? "— Không gắn lớp —"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="none" className="text-xs">
+                    — Không gắn lớp —
+                  </SelectItem>
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                      HSK {c.level} · {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Điểm số kỹ năng</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {skills.map((s) => (
+                <label key={s} className="text-xs text-muted-foreground">
+                  {SKILL_LABEL[s]} (0–100)
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    className={`${inp} mt-1`}
+                    value={value[scoreKey(s)] ?? ""}
+                    onChange={(e) =>
+                      onChange({
+                        [scoreKey(s)]: e.target.value === "" ? null : Number(e.target.value),
+                      })
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4">
+              <div>
+                <p className="text-[11px] text-muted-foreground">Tổng điểm tạm tính</p>
+                <p className="text-2xl font-bold tracking-tight text-foreground">
+                  {total}
+                  <span className="text-sm font-normal text-muted-foreground">/{rule.max}</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground">Ngưỡng đạt {rule.pass}</p>
+              </div>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  passed
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    : "bg-warning-soft text-warning-foreground"
+                }`}
+              >
+                {passed ? "Đạt" : "Chưa đạt"}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Hệ thống sẽ tính lại tổng điểm và trạng thái khi lưu.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Đợt đánh giá & Thời gian học</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-xs text-muted-foreground">
+                Khóa học
+                <input
+                  className={`${inp} mt-1`}
+                  value={value.course_name}
+                  onChange={(e) => onChange({ course_name: e.target.value })}
+                  placeholder="VD: HSK 4"
+                />
+              </label>
+              <label className="text-xs text-muted-foreground">
+                Đợt đánh giá
+                <input
+                  className={`${inp} mt-1`}
+                  value={value.exam_session}
+                  onChange={(e) => onChange({ exam_session: e.target.value })}
+                  placeholder="VD: Cuối khóa 11/2026"
+                />
+              </label>
+              <label className="text-xs text-muted-foreground">
+                Ngày đánh giá / thi
+                <input
+                  type="date"
+                  className={`${inp} mt-1`}
+                  value={value.exam_date}
+                  onChange={(e) => onChange({ exam_date: e.target.value })}
+                />
+              </label>
+              <label className="text-xs text-muted-foreground">
+                Học từ ngày
+                <input
+                  type="date"
+                  className={`${inp} mt-1`}
+                  value={value.study_start ?? ""}
+                  onChange={(e) => onChange({ study_start: e.target.value || null })}
+                />
+              </label>
+              <label className="text-xs text-muted-foreground">
+                Đến ngày
+                <input
+                  type="date"
+                  className={`${inp} mt-1`}
+                  value={value.study_end ?? ""}
+                  onChange={(e) => onChange({ study_end: e.target.value || null })}
+                />
+              </label>
+              <label className="text-xs text-muted-foreground">
+                Đơn vị ghi nhận / tổ chức
+                <input
+                  className={`${inp} mt-1`}
+                  value={value.issuer}
+                  onChange={(e) => onChange({ issuer: e.target.value })}
+                />
+              </label>
+            </div>
+            <label className="block text-xs text-muted-foreground">
+              Ghi chú nội bộ
+              <textarea
+                className={`${inp} mt-1`}
+                rows={2}
+                value={value.notes}
+                onChange={(e) => onChange({ notes: e.target.value })}
+              />
+            </label>
+          </section>
+
+          {value.id && (
+            <section className="space-y-3">
+              <h3 className={SECTION_TITLE}>Lý do chỉnh sửa</h3>
+              <label className="block text-xs text-muted-foreground">
+                Bắt buộc — được ghi vào nhật ký kiểm toán{" "}
+                <span className="text-destructive">*</span>
+                <input
+                  className={`${inp} mt-1`}
+                  value={value.change_reason}
+                  onChange={(e) => onChange({ change_reason: e.target.value })}
+                  placeholder="VD: Phúc khảo phần Viết"
+                />
+              </label>
+            </section>
+          )}
+
+          {value.id && (
+            <section className="space-y-2 pt-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                Vùng nguy hiểm
+              </h3>
+              {isRevoked ? (
+                <div className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground">Kết quả đã bị hủy</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Lý do: {record?.revoked_reason || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void runRestore()}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600/90 disabled:opacity-60"
+                  >
+                    Khôi phục kết quả
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground">Hủy kết quả này</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Kết quả sẽ không còn hiệu lực tra cứu công khai. Hành động được ghi nhật ký.
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    className={`${inp} bg-card`}
+                    value={revokeReason}
+                    onChange={(e) => setRevokeReason(e.target.value)}
+                    placeholder="Lý do hủy kết quả (bắt buộc)"
+                    aria-label="Lý do hủy kết quả"
+                  />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void runRevoke()}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-destructive px-3 py-2 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-60"
+                  >
+                    Hủy kết quả này
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+        </div>
+
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="w-full cursor-pointer rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:opacity-60 sm:w-auto"
+          >
+            {saving ? "Đang lưu…" : "Lưu kết quả"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
