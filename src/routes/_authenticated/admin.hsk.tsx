@@ -156,7 +156,6 @@ function HskAdminPage() {
   const [saving, setSaving] = useState(false);
   const [historyOf, setHistoryOf] = useState<Row | null>(null);
   const [prefix, setPrefix] = useState<string>("TMLHSK");
-  const [customCode, setCustomCode] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -220,7 +219,6 @@ function HskAdminPage() {
   const genCode = async (p: string) =>
     ((await supabase.rpc("suggest_hsk_code_v2", { _prefix: p })).data as string) ?? "";
   const openNew = async () => {
-    setCustomCode(false);
     setEditing(null);
     setEdit({ ...EMPTY, exam_date: today(), candidate_code: await genCode(prefix) });
   };
@@ -257,13 +255,7 @@ function HskAdminPage() {
     if (edit && !edit.id) setEdit({ ...edit, candidate_code: await genCode(p) });
   };
 
-  const regenerateCode = async () => {
-    if (!edit || edit.id) return;
-    setEdit({ ...edit, candidate_code: await genCode(prefix) });
-  };
-
   const openEdit = (r: Row) => {
-    setCustomCode(false);
     setEditing(r);
     setEdit({
       id: r.id,
@@ -758,12 +750,9 @@ function HskAdminPage() {
             classes={classes ?? []}
             teachers={teachers ?? []}
             prefix={prefix}
-            customCode={customCode}
             saving={saving}
             onChange={(patch) => setEdit((prev) => (prev ? { ...prev, ...patch } : prev))}
             onPrefixChange={(p) => void changePrefix(p)}
-            onCustomCodeChange={setCustomCode}
-            onGenCode={() => void regenerateCode()}
             onPickClass={pickClass}
             onSave={() => void save()}
             onRevoke={revokeResult}
@@ -947,12 +936,9 @@ function HskResultDrawer({
   classes,
   teachers,
   prefix,
-  customCode,
   saving,
   onChange,
   onPrefixChange,
-  onCustomCodeChange,
-  onGenCode,
   onPickClass,
   onSave,
   onRevoke,
@@ -964,12 +950,9 @@ function HskResultDrawer({
   classes: HskClassOpt[];
   teachers: HskTeacherOpt[];
   prefix: string;
-  customCode: boolean;
   saving: boolean;
   onChange: (patch: Partial<Draft>) => void;
   onPrefixChange: (p: string) => void;
-  onCustomCodeChange: (c: boolean) => void;
-  onGenCode: () => void;
   onPickClass: (id: string) => void;
   onSave: () => void;
   onRevoke: (reason: string) => Promise<void>;
@@ -1069,9 +1052,9 @@ function HskResultDrawer({
         <div className="custom-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
           <section className="space-y-3">
             <h3 className={SECTION_TITLE}>Thí sinh & Mã định danh</h3>
-            <div className="text-xs text-muted-foreground">
-              Mã kết quả
-              <div className="mt-1 flex flex-wrap items-center gap-2">
+            <div>
+              <span className="text-xs text-muted-foreground">Mã kết quả</span>
+              <div className="mt-1 flex items-center gap-2">
                 {!value.id && (
                   <Select value={prefix} onValueChange={onPrefixChange}>
                     <SelectTrigger
@@ -1090,33 +1073,16 @@ function HskResultDrawer({
                   </Select>
                 )}
                 <input
-                  readOnly={!customCode}
-                  className={`${inp} flex-1 font-mono uppercase ${customCode ? "" : "bg-muted"}`}
+                  readOnly
+                  className={`${inp} flex-1 cursor-not-allowed bg-muted/60 font-mono uppercase text-muted-foreground`}
                   value={value.candidate_code}
-                  onChange={(e) =>
-                    onChange({
-                      candidate_code: e.target.value.replace(/[^A-Za-z0-9_-]/g, "").toUpperCase(),
-                    })
-                  }
                 />
-                {!value.id && (
-                  <button
-                    type="button"
-                    onClick={onGenCode}
-                    className="cursor-pointer rounded-xl border border-border px-3 py-2 text-xs hover:bg-muted"
-                  >
-                    Tạo mã khác
-                  </button>
-                )}
-                <label className="inline-flex cursor-pointer items-center gap-1 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={customCode}
-                    onChange={(e) => onCustomCodeChange(e.target.checked)}
-                  />
-                  Tự nhập mã
-                </label>
               </div>
+              {!value.id && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Hệ thống tự động sinh mã định danh duy nhất theo tiền tố.
+                </p>
+              )}
             </div>
 
             <label className="block text-xs text-muted-foreground">

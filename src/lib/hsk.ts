@@ -17,7 +17,7 @@ export const HSK_LEVELS: Record<string, string> = {
 };
 
 /** Code prefixes the admin can tag a result with. */
-export const HSK_PREFIXES = ["TMLHSK", "TMLHSKK", "TMLTEST"] as const;
+export const HSK_PREFIXES = ["TMLHSK", "TMLHSKK"] as const;
 
 /** Which score boxes a level uses — mirrors the database trigger that computes totals. */
 export function hskSkills(level: string): ("listening" | "reading" | "writing" | "speaking")[] {
