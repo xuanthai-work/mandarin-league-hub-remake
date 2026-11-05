@@ -144,7 +144,8 @@ function TeachersPage() {
       body as Partial<Teacher> & { visible?: boolean; created_at?: string; member_id?: string }
     ).visible;
     delete (body as { created_at?: string }).created_at;
-    const payload = { ...body, full_name: body.full_name.trim(), status: "visible" as const };
+    const status = body.status || "visible";
+    const payload = { ...body, full_name: body.full_name.trim(), status };
     const { error } = id
       ? await supabase.from("teachers").update(payload).eq("id", id)
       : await supabase.from("teachers").insert(payload);
@@ -156,8 +157,18 @@ function TeachersPage() {
     setEdit(null);
     refresh();
   };
-  const toggleHome = async (t: Teacher) => {
-    await supabase.from("teachers").update({ show_on_home: !t.show_on_home }).eq("id", t.id);
+  const toggleStatus = async (t: Teacher) => {
+    const nextStatus = t.status === "visible" ? "hidden" : "visible";
+    const { error } = await supabase.from("teachers").update({ status: nextStatus }).eq("id", t.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(
+      nextStatus === "visible"
+        ? `Đã kích hoạt giáo viên ${t.full_name}`
+        : `Đã dừng hoạt động giáo viên ${t.full_name}`,
+    );
     refresh();
   };
   const remove = async (t: Teacher) => {
@@ -274,7 +285,7 @@ function TeachersPage() {
               key={t.id}
               t={t}
               onEdit={() => setEdit(t)}
-              onToggleHome={() => void toggleHome(t)}
+              onToggleStatus={() => void toggleStatus(t)}
             />
           ))}
         </div>
@@ -305,16 +316,18 @@ function TeachersPage() {
 function TeacherCard({
   t,
   onEdit,
-  onToggleHome,
+  onToggleStatus,
 }: {
   t: Teacher;
   onEdit: () => void;
-  onToggleHome: () => void;
+  onToggleStatus: () => void;
 }) {
   return (
     <article
       onClick={onEdit}
-      className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+      className={`group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md ${
+        t.status === "visible" ? "" : "opacity-75"
+      }`}
     >
       <div>
         <div className="flex items-start gap-3.5">
@@ -353,18 +366,18 @@ function TeacherCard({
                 )}
               </div>
               <Switch
-                checked={t.show_on_home}
-                onCheckedChange={onToggleHome}
+                checked={t.status === "visible"}
+                onCheckedChange={onToggleStatus}
                 onClick={(e) => e.stopPropagation()}
                 aria-label={
-                  t.show_on_home
-                    ? `Ẩn ${t.full_name} khỏi trang chủ`
-                    : `Hiện ${t.full_name} ở trang chủ`
+                  t.status === "visible"
+                    ? `Dừng hoạt động ${t.full_name}`
+                    : `Kích hoạt hoạt động ${t.full_name}`
                 }
                 title={
-                  t.show_on_home
-                    ? "Đang hiện ở Trang chủ (click để ẩn)"
-                    : "Chưa hiện ở Trang chủ (click để bật)"
+                  t.status === "visible"
+                    ? "Đang hoạt động (click để dừng hoạt động)"
+                    : "Dừng hoạt động (click để kích hoạt)"
                 }
               />
             </div>
@@ -421,11 +434,18 @@ function TeacherCard({
           </span>
           <span
             className={`rounded-full px-2 py-0.5 font-medium ${
-              t.show_on_home ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
+              t.status === "visible"
+                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                : "bg-muted text-muted-foreground"
             }`}
           >
-            {t.show_on_home ? "★ Hiện trang chủ" : "Không hiện trang chủ"}
+            {t.status === "visible" ? "Đang hoạt động" : "Dừng hoạt động"}
           </span>
+          {t.show_on_home && (
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+              ★ Trang chủ
+            </span>
+          )}
         </div>
         <span className="shrink-0 font-mono text-xs text-muted-foreground/70">#{t.sort_order}</span>
       </div>
@@ -517,6 +537,15 @@ function TeacherDrawer({
                     ({value.chinese_name})
                   </span>
                 )}
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    value.status === "visible"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {value.status === "visible" ? "Đang hoạt động" : "Dừng hoạt động"}
+                </span>
               </div>
             </div>
           </div>
