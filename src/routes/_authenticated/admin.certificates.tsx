@@ -25,6 +25,7 @@ import { matchesSearch } from "@/lib/search";
 import { extractCertificate } from "@/lib/certificate-extract.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MemberCombobox } from "@/components/admin/MemberCombobox";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -927,25 +928,34 @@ function CertificateDrawer({
             <div className="space-y-2.5">
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block font-medium text-foreground">
+                  <label
+                    htmlFor="cert-issue-date"
+                    className="mb-1 block font-medium text-foreground"
+                  >
                     Ngày cấp <span className="text-destructive">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
+                    id="cert-issue-date"
                     value={value.issue_date}
-                    onChange={(e) => onChange({ issue_date: e.target.value })}
-                    className={FIELD}
+                    onChange={(dateISO) => onChange({ issue_date: dateISO })}
+                    placeholder="Chọn ngày cấp"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-foreground">
+                  <label
+                    htmlFor="cert-expiry-date"
+                    className="mb-1 block font-medium text-foreground"
+                  >
                     Hiệu lực đến (bỏ trống nếu vĩnh viễn)
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
+                    id="cert-expiry-date"
                     value={value.expiry_date ?? ""}
-                    onChange={(e) => onChange({ expiry_date: e.target.value || null })}
-                    className={FIELD}
+                    onChange={(dateISO) => onChange({ expiry_date: dateISO || null })}
+                    {...(value.issue_date ? { min: value.issue_date } : {})}
+                    placeholder="Vĩnh viễn"
+                    clearable
+                    clearLabel="Bỏ trống (vĩnh viễn)"
                   />
                 </div>
               </div>

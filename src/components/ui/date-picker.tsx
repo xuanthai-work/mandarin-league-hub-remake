@@ -20,6 +20,10 @@ export interface DatePickerProps {
   disabled?: boolean;
   className?: string;
   id?: string;
+  /** Show a footer button that clears the date (onChange receives ""). Off by default. */
+  clearable?: boolean;
+  /** Label of the clear button. */
+  clearLabel?: string;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -53,6 +57,8 @@ export function DatePicker({
   disabled,
   className,
   id,
+  clearable = false,
+  clearLabel = "Xóa ngày",
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const selectedDate = parseISO(value);
@@ -101,6 +107,20 @@ export function DatePicker({
           disabled={matchers}
           className="w-auto p-2.5 [--cell-size:2rem] [&_.rdp-caption_label]:text-xs [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:text-[0.7rem]"
         />
+        {clearable && selectedDate && (
+          <div className="border-t border-border p-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+              }}
+              className="w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {clearLabel}
+            </button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
