@@ -281,7 +281,7 @@ export function TransactionLedger({
         flash && "ring-2 ring-primary/50 shadow-lg",
       )}
     >
-      <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
+      <header className="flex flex-wrap items-center gap-2 px-4 py-3">
         <h2 className="mr-auto flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
           <ReceiptText aria-hidden className="h-4 w-4 text-primary" />
           Sổ cái lịch sử điểm
@@ -297,7 +297,7 @@ export function TransactionLedger({
         </button>
       </header>
 
-      <div className="border-b border-border/50 p-3">
+      <div className="p-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[210px] flex-1">
             <Search

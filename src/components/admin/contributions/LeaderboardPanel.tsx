@@ -221,14 +221,14 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
-      <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
+      <header className="flex flex-wrap items-center gap-2 px-4 py-3">
         <h2 className="mr-auto flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
           <Trophy aria-hidden className="h-4 w-4 text-gold" />
           Bảng vinh danh
         </h2>
       </header>
 
-      <div className="flex flex-col items-stretch gap-2 border-b border-border/50 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4">
+      <div className="flex flex-col items-stretch gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4">
         <div className="relative w-full flex-1">
           <Search
             aria-hidden
