@@ -228,8 +228,8 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
         </h2>
       </header>
 
-      <div className="flex flex-col items-stretch gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4">
-        <div className="relative w-full flex-1">
+      <div className="flex flex-wrap items-center gap-2.5 px-3 py-2.5 sm:px-4">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
           <Search
             aria-hidden
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -242,7 +242,7 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
             }}
             placeholder="Tìm tên hoặc mã thành viên…"
             aria-label="Tìm thành viên trên bảng vinh danh"
-            className="w-full rounded-xl border-none bg-background py-2 pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           {q && (
             <button
@@ -252,7 +252,7 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
                 resetPage();
               }}
               aria-label="Xóa tìm kiếm"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -267,7 +267,7 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
         >
           <SelectTrigger
             aria-label="Lọc bảng vinh danh theo Ban"
-            className="h-9 w-full rounded-xl border-input bg-card text-[11px] font-normal shadow-none sm:w-[160px]"
+            className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[180px]"
           >
             <SelectValue>{dept ? deptName(dept) : "Mọi Ban"}</SelectValue>
           </SelectTrigger>

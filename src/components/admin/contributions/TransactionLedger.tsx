@@ -46,7 +46,7 @@ interface TransactionLedgerProps {
 
 const PAGE_SIZE = 15;
 const trigger =
-  "h-9 w-full rounded-xl border-input bg-card text-[11px] font-normal shadow-xs sm:w-[155px]";
+  "h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[160px]";
 
 function KindBadge({ kind }: { kind: string }) {
   const meta = KIND_META[kind] ?? {
@@ -298,8 +298,8 @@ export function TransactionLedger({
       </header>
 
       <div className="p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[210px] flex-1">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
             <Search
               aria-hidden
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -309,14 +309,14 @@ export function TransactionLedger({
               onChange={(e) => patch({ q: e.target.value })}
               placeholder="Tìm lý do, thành viên, mã hoặc người ghi nhận…"
               aria-label="Tìm kiếm giao dịch điểm"
-              className="w-full rounded-xl border-none bg-background py-2 pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             {filters.q && (
               <button
                 type="button"
                 onClick={() => patch({ q: "" })}
                 aria-label="Xóa nội dung tìm kiếm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
