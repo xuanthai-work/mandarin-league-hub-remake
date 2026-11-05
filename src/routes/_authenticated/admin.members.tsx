@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deptName } from "@/lib/recruitment";
+import { matchesSearch } from "@/lib/search";
 import { type AdminRole } from "@/lib/admin-nav";
 import {
   createAccount,
@@ -450,13 +451,8 @@ function MembersPage() {
   });
 
   const all = data ?? [];
-  const term = q.trim().toLowerCase();
   const matchesQuery = (m: MemberRow) =>
-    !term ||
-    m.full_name.toLowerCase().includes(term) ||
-    m.member_code.toLowerCase().includes(term) ||
-    m.email.toLowerCase().includes(term) ||
-    (m.account?.email.toLowerCase().includes(term) ?? false);
+    matchesSearch(`${m.full_name} ${m.member_code} ${m.email ?? ""} ${m.account?.email ?? ""}`, q);
 
   const rows = all.filter(
     (m) =>

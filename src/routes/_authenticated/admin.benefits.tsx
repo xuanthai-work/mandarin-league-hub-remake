@@ -10,7 +10,6 @@ import {
   EyeOff,
   ExternalLink,
   Layers,
-  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -25,12 +24,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   BENEFIT_ICONS,
   BENEFIT_LOGO_BUCKET,
-  BENEFIT_STATUS,
   BenefitIcon,
   daysLeft,
   useBenefitLogoUrls,
 } from "@/lib/benefits";
 import { ACCOUNT_DEPTS } from "@/lib/accounts";
+import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   Select,
@@ -172,6 +171,7 @@ function BenefitsAdmin() {
     if (error) toast.error(error.message);
     else {
       toast.success("Đã xóa");
+      setF(null);
       refresh();
     }
   };
@@ -263,7 +263,6 @@ function BenefitsAdmin() {
               }
               onToggle={() => toggle(b)}
               onEdit={() => setF(b)}
-              onDelete={() => remove(b)}
               onGrant={() => setGrantFor(b)}
             />
           ))}
@@ -283,6 +282,7 @@ function BenefitsAdmin() {
               setPreview(null);
             }}
             onSave={() => void save()}
+            onDelete={f.id ? () => void remove(f as Row) : undefined}
             onClose={() => setF(null)}
           />
         )}
@@ -309,7 +309,6 @@ function BenefitCard({
   activeGrants,
   onToggle,
   onEdit,
-  onDelete,
   onGrant,
 }: {
   b: Row;
@@ -317,30 +316,35 @@ function BenefitCard({
   activeGrants: number;
   onToggle: () => void;
   onEdit: () => void;
-  onDelete: () => void;
   onGrant: () => void;
 }) {
-  const [showSecret, setShowSecret] = useState(false);
-  const [copied, setCopied] = useState<"login" | "secret" | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!copied) return;
-    const t = setTimeout(() => setCopied(null), 2000);
+    const t = setTimeout(() => setCopied(false), 2000);
     return () => clearTimeout(t);
   }, [copied]);
 
-  const copy = async (which: "login" | "secret", text: string) => {
-    if (!text) return;
-    await navigator.clipboard.writeText(text);
-    setCopied(which);
-    toast.success("Đã sao chép");
+  const copyCredentials = async () => {
+    if (!b.login && !b.secret) return;
+    const lines: string[] = [];
+    if (b.login) lines.push(`Tài khoản: ${b.login}`);
+    if (b.secret) lines.push(`Mật khẩu: ${b.secret}`);
+    if (b.access_url) lines.push(`Đăng nhập: ${b.access_url}`);
+    await navigator.clipboard.writeText(lines.join("\n"));
+    setCopied(true);
+    toast.success("Đã sao chép tài khoản & mật khẩu");
   };
 
   const left = daysLeft(b.ends_on);
   const expiringSoon = left !== null && left <= 15;
 
   return (
-    <article className="group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-md">
+    <article
+      onClick={onEdit}
+      className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+    >
       <div>
         <div className="flex items-start gap-3">
           <BenefitIcon iconKey={b.icon_key} size="md" logoUrl={logoUrl} />
@@ -352,6 +356,7 @@ function BenefitCard({
               <Switch
                 checked={b.is_enabled}
                 onCheckedChange={onToggle}
+                onClick={(e) => e.stopPropagation()}
                 aria-label={b.is_enabled ? `Ẩn ${b.name}` : `Bật ${b.name}`}
               />
             </div>
@@ -361,83 +366,71 @@ function BenefitCard({
           </div>
         </div>
 
-        <div className="mt-4 space-y-1.5 rounded-xl border border-border/60 bg-muted/30 p-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-[68px] shrink-0 text-muted-foreground">Tài khoản</span>
-            <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-              {b.login || "Chưa thiết lập"}
-            </span>
-            {b.login && (
-              <button
-                type="button"
-                onClick={() => copy("login", b.login)}
-                aria-label="Sao chép tài khoản"
-                title="Sao chép tài khoản"
-                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {copied === "login" ? (
-                  <Check className="h-3.5 w-3.5 text-success" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-              </button>
-            )}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="mt-4 cursor-text space-y-1.5 rounded-xl border border-border/60 bg-muted/30 p-3 text-xs select-text"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="w-[68px] shrink-0 text-muted-foreground">Tài khoản</span>
+                <span className="min-w-0 flex-1 truncate font-medium text-foreground select-text">
+                  {b.login || "Chưa thiết lập"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-[68px] shrink-0 text-muted-foreground">Mật khẩu</span>
+                <span className="min-w-0 flex-1 truncate font-mono font-medium text-foreground select-text">
+                  {b.secret || "Chưa thiết lập"}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={!b.login && !b.secret}
+              onClick={(e) => {
+                e.stopPropagation();
+                void copyCredentials();
+              }}
+              aria-label="Sao chép tài khoản và mật khẩu"
+              title={
+                b.login || b.secret
+                  ? "Sao chép tài khoản & mật khẩu"
+                  : "Chưa thiết lập tài khoản & mật khẩu"
+              }
+              className={`shrink-0 rounded-lg p-2 transition-colors ${
+                b.login || b.secret
+                  ? "cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
+                  : "cursor-not-allowed text-muted-foreground/30"
+              }`}
+            >
+              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+            </button>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-[68px] shrink-0 text-muted-foreground">Mật khẩu</span>
-            <span className="min-w-0 flex-1 truncate font-mono font-medium text-foreground">
-              {b.secret ? (showSecret ? b.secret : "••••••••") : "Chưa thiết lập"}
-            </span>
-            {b.secret && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowSecret((v) => !v)}
-                  aria-label={showSecret ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  title={showSecret ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  {showSecret ? (
-                    <EyeOff className="h-3.5 w-3.5" />
-                  ) : (
-                    <Eye className="h-3.5 w-3.5" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => copy("secret", b.secret)}
-                  aria-label="Sao chép mật khẩu"
-                  title="Sao chép mật khẩu"
-                  className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  {copied === "secret" ? (
-                    <Check className="h-3.5 w-3.5 text-success" />
-                  ) : (
-                    <Copy className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              </>
-            )}
-          </div>
+
           {(b.access_url || b.usage_note) && (
-            <div className="flex items-start gap-2">
-              <span className="w-[68px] shrink-0 text-muted-foreground">Truy cập</span>
-              <div className="min-w-0 flex-1">
-                {b.access_url && (
-                  <a
-                    href={b.access_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                  >
-                    Mở trang đăng nhập <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-                {b.usage_note && (
-                  <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
-                    {b.usage_note}
-                  </p>
-                )}
+            <div className="mt-2 border-t border-border/40 pt-1.5">
+              <div className="flex items-start gap-2">
+                <span className="w-[68px] shrink-0 text-muted-foreground">Truy cập</span>
+                <div className="min-w-0 flex-1">
+                  {b.access_url && (
+                    <a
+                      href={b.access_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    >
+                      Mở trang đăng nhập <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                  {b.usage_note && (
+                    <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+                      {b.usage_note}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -470,19 +463,17 @@ function BenefitCard({
               Vô thời hạn
             </span>
           )}
-          {!b.is_enabled && (
-            <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              Đang ẩn
-            </span>
-          )}
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
+      <div className="mt-4 border-t border-border/60 pt-3">
         <button
           type="button"
-          onClick={onGrant}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+          onClick={(e) => {
+            e.stopPropagation();
+            onGrant();
+          }}
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
         >
           <UserPlus className="h-3.5 w-3.5" />
           Cấp quyền{" "}
@@ -491,24 +482,6 @@ function BenefitCard({
               {activeGrants}
             </span>
           )}
-        </button>
-        <button
-          type="button"
-          onClick={onEdit}
-          aria-label={`Sửa ${b.name}`}
-          title="Sửa"
-          className="rounded-xl border border-border/70 p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label={`Xóa ${b.name}`}
-          title="Xóa"
-          className="rounded-xl border border-border/70 p-2 text-destructive transition-colors hover:bg-destructive/10"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
     </article>
@@ -525,6 +498,7 @@ function BenefitDrawer({
   onUpload,
   onClearLogo,
   onSave,
+  onDelete,
   onClose,
 }: {
   value: B;
@@ -534,6 +508,7 @@ function BenefitDrawer({
   onUpload: (file: File) => void;
   onClearLogo: () => void;
   onSave: () => void;
+  onDelete: (() => void) | undefined;
   onClose: () => void;
 }) {
   const [showSecret, setShowSecret] = useState(false);
@@ -806,21 +781,35 @@ function BenefitDrawer({
           </section>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-border px-4 py-2 text-sm font-medium"
-          >
-            Hủy
-          </button>
-          <button
-            type="button"
-            onClick={onSave}
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-          >
-            Lưu
-          </button>
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
+          {value.id && onDelete ? (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Xóa</span>
+            </button>
+          ) : (
+            <div />
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            >
+              Lưu
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
@@ -836,6 +825,60 @@ type GrantMember = {
   department: string;
   contribution_points: number;
 };
+
+function GrantMemberRow({
+  member,
+  active,
+  grant,
+  onToggle,
+  onEndsOn,
+}: {
+  member: GrantMember;
+  active: boolean;
+  grant: Grant | undefined;
+  onToggle: (active: boolean) => void;
+  onEndsOn: (grant: Grant, ends: string | null) => void;
+}) {
+  const dept = ACCOUNT_DEPTS.find((d) => d.id === member.department)?.name ?? member.department;
+  return (
+    <li className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-sm">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+        {initials(member.full_name)}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium">{member.full_name}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          <span className="font-mono text-primary">{member.member_code}</span> · {dept} ·{" "}
+          {member.contribution_points} điểm
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        {active && grant && (
+          <input
+            type="date"
+            className="h-9 rounded-xl border border-input bg-background px-2 text-xs shadow-xs"
+            value={grant.ends_on ?? ""}
+            onChange={(e) => onEndsOn(grant, e.target.value || null)}
+            title="Hạn riêng"
+            aria-label={`Hạn riêng của ${member.full_name}`}
+          />
+        )}
+        <span
+          className={`w-16 text-right text-[11px] font-medium ${
+            active ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+          }`}
+        >
+          {active ? "Đang bật" : "Chưa cấp"}
+        </span>
+        <Switch
+          checked={active}
+          onCheckedChange={onToggle}
+          aria-label={`${active ? "Thu hồi" : "Cấp"} quyền lợi cho ${member.full_name}`}
+        />
+      </div>
+    </li>
+  );
+}
 
 function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }) {
   const [q, setQ] = useState("");
@@ -863,33 +906,69 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  const set = async (memberId: string, status: string | null, ends_on?: string | null) => {
-    const { error } =
-      status === null
+  const today = new Date().toISOString().slice(0, 10);
+  const grants = data.data?.grants ?? [];
+  const overrideOf = (memberId: string) => grants.find((x) => x.member_id === memberId);
+  /** Shared rule: the benefit is open to everyone or to members with enough contribution points. */
+  const ruleAccess = (m: GrantMember) =>
+    benefit.grant_all ||
+    (benefit.min_points != null && m.contribution_points >= benefit.min_points);
+  /** Effective access: a manual override wins, otherwise the shared rule applies. */
+  const hasAccess = (m: GrantMember) => {
+    const g = overrideOf(m.id);
+    if (!g) return ruleAccess(m);
+    if (g.status !== "active") return false;
+    return !g.ends_on || g.ends_on >= today;
+  };
+
+  const toggleAccess = async (m: GrantMember, active: boolean) => {
+    const g = overrideOf(m.id);
+    const { error } = active
+      ? await supabase.from("member_benefits").upsert(
+          {
+            benefit_id: benefit.id,
+            member_id: m.id,
+            status: "active",
+            // Keep a still-valid custom expiry, but never keep an expired one (it would hide the grant).
+            ends_on: g?.ends_on && g.ends_on >= today ? g.ends_on : null,
+          },
+          { onConflict: "benefit_id,member_id" },
+        )
+      : ruleAccess(m)
         ? await supabase
+            .from("member_benefits")
+            .upsert(
+              { benefit_id: benefit.id, member_id: m.id, status: "revoked" },
+              { onConflict: "benefit_id,member_id" },
+            )
+        : await supabase
             .from("member_benefits")
             .delete()
             .eq("benefit_id", benefit.id)
-            .eq("member_id", memberId)
-        : await supabase.from("member_benefits").upsert(
-            {
-              benefit_id: benefit.id,
-              member_id: memberId,
-              status,
-              ...(ends_on !== undefined ? { ends_on } : {}),
-            },
-            { onConflict: "benefit_id,member_id" },
-          );
-    if (error) toast.error(error.message);
-    else data.refetch();
+            .eq("member_id", m.id);
+    if (error) return void toast.error(error.message);
+    toast.success(
+      active ? `Đã cấp quyền lợi cho ${m.full_name}` : `Đã thu hồi quyền lợi của ${m.full_name}`,
+    );
+    await data.refetch();
   };
 
-  const k = q.trim().toLowerCase();
-  const members = (data.data?.members ?? []).filter(
-    (m) =>
-      (!dept || m.department === dept) &&
-      (!k || m.full_name.toLowerCase().includes(k) || m.member_code.toLowerCase().includes(k)),
+  const setEndsOn = async (m: GrantMember, g: Grant, ends: string | null) => {
+    const { error } = await supabase
+      .from("member_benefits")
+      .upsert(
+        { benefit_id: benefit.id, member_id: m.id, status: g.status, ends_on: ends },
+        { onConflict: "benefit_id,member_id" },
+      );
+    if (error) toast.error(error.message);
+    else await data.refetch();
+  };
+
+  const filtered = (data.data?.members ?? []).filter(
+    (m) => (!dept || m.department === dept) && matchesSearch(`${m.full_name} ${m.member_code}`, q),
   );
+  const granted = filtered.filter(hasAccess);
+  const unapproved = filtered.filter((m) => !hasAccess(m));
 
   return (
     <div
@@ -900,7 +979,7 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
         role="dialog"
         aria-modal="true"
         aria-label={`Cấp ${benefit.name}`}
-        className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl border border-border bg-card p-5 shadow-2xl"
+        className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl border border-border bg-card p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
@@ -918,10 +997,6 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Trạng thái cấp riêng sẽ ghi đè quy tắc chung (tất cả / theo điểm). “Mặc định” = theo quy
-          tắc chung.
-        </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-2.5">
           <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
@@ -974,65 +1049,69 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
             </SelectContent>
           </Select>
           <span className="ml-auto self-center whitespace-nowrap text-xs text-muted-foreground">
-            {members.length} thành viên
+            {filtered.length} thành viên
           </span>
         </div>
 
-        <ul className="mt-3 min-h-0 flex-1 divide-y divide-border/70 overflow-y-auto custom-scrollbar pr-1">
-          {members.map((m) => {
-            const g = data.data?.grants.find((x) => x.member_id === m.id);
-            return (
-              <li key={m.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {initials(m.full_name)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{m.full_name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    <span className="font-mono text-primary">{m.member_code}</span> ·{" "}
-                    {m.contribution_points} điểm
-                  </p>
-                </div>
-                <select
-                  className="h-9 rounded-xl border border-input bg-background px-2 text-xs shadow-xs"
-                  value={g?.status ?? ""}
-                  onChange={(e) => set(m.id, e.target.value || null)}
-                  aria-label={`Trạng thái của ${m.full_name}`}
-                >
-                  <option value="">Mặc định</option>
-                  {["active", "pending", "paused", "revoked"].map((s) => (
-                    <option key={s} value={s}>
-                      {BENEFIT_STATUS[s]!.label}
-                    </option>
-                  ))}
-                </select>
-                {g && (
-                  <input
-                    type="date"
-                    className="h-9 rounded-xl border border-input bg-background px-2 text-xs shadow-xs"
-                    value={g.ends_on ?? ""}
-                    onChange={(e) => set(m.id, g.status, e.target.value || null)}
-                    title="Hạn riêng"
-                    aria-label={`Hạn riêng của ${m.full_name}`}
+        <div className="custom-scrollbar mt-3 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 px-1">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <h3 className="text-sm font-bold text-foreground">Đã cấp quyền lợi</h3>
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                {granted.length} thành viên
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+              <ul className="divide-y divide-border/60">
+                {granted.map((m) => (
+                  <GrantMemberRow
+                    key={m.id}
+                    member={m}
+                    active
+                    grant={overrideOf(m.id)}
+                    onToggle={(v) => void toggleAccess(m, v)}
+                    onEndsOn={(g, ends) => void setEndsOn(m, g, ends)}
                   />
+                ))}
+                {granted.length === 0 && (
+                  <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    Chưa có thành viên nào được cấp quyền lợi này.
+                  </li>
                 )}
-              </li>
-            );
-          })}
-          {members.length === 0 && (
-            <li className="py-8 text-center text-sm text-muted-foreground">
-              Không tìm thấy thành viên phù hợp.
-            </li>
-          )}
-        </ul>
+              </ul>
+            </div>
+          </section>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-3 self-end rounded-xl border border-border px-4 py-2 text-sm font-medium"
-        >
-          Đóng
-        </button>
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 px-1">
+              <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
+              <h3 className="text-sm font-bold text-foreground">Chưa cấp quyền lợi</h3>
+              <span className="rounded-full bg-secondary px-2 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
+                {unapproved.length} thành viên
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+              <ul className="divide-y divide-border/60">
+                {unapproved.map((m) => (
+                  <GrantMemberRow
+                    key={m.id}
+                    member={m}
+                    active={false}
+                    grant={overrideOf(m.id)}
+                    onToggle={(v) => void toggleAccess(m, v)}
+                    onEndsOn={(g, ends) => void setEndsOn(m, g, ends)}
+                  />
+                ))}
+                {unapproved.length === 0 && (
+                  <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    Tất cả thành viên trong danh sách đều đã được cấp quyền.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

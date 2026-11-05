@@ -23,6 +23,7 @@ import {
 } from "@/components/admin/tasks/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { getAssignableMembers } from "@/lib/tasks.functions";
+import { matchesSearch } from "@/lib/search";
 
 export const Route = createFileRoute("/_authenticated/admin/tasks")({
   staticData: { sitemap: false },
@@ -94,15 +95,12 @@ function TasksPage() {
 
   /** Search + non-status filters, shared by the status pills and the visible rows. */
   const scoped = useMemo(() => {
-    const term = filters.q.trim().toLowerCase();
     return all.filter((task) => {
       const member = memberById.get(task.assignee_id);
-      const matchesTerm =
-        !term ||
-        task.title.toLowerCase().includes(term) ||
-        task.description.toLowerCase().includes(term) ||
-        (member?.full_name.toLowerCase().includes(term) ?? false) ||
-        (member?.member_code.toLowerCase().includes(term) ?? false);
+      const matchesTerm = matchesSearch(
+        `${task.title} ${task.description} ${member?.full_name ?? ""} ${member?.member_code ?? ""}`,
+        filters.q,
+      );
       return (
         matchesTerm &&
         (!filters.dept || task.department === filters.dept) &&

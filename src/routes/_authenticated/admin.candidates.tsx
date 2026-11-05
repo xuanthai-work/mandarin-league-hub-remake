@@ -18,6 +18,7 @@ import {
 } from "@/components/admin/candidates/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_STATUS, deptName } from "@/lib/recruitment";
+import { matchesSearch } from "@/lib/search";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({
   staticData: { sitemap: false },
@@ -45,13 +46,10 @@ function Candidates() {
     () =>
       (data?.apps ?? []).filter((app) => {
         const choices = choicesOf(app);
-        const term = filters.q.trim().toLowerCase();
-        const matchesTerm =
-          !term ||
-          app.full_name.toLowerCase().includes(term) ||
-          app.email.toLowerCase().includes(term) ||
-          app.phone.toLowerCase().includes(term) ||
-          app.code.toLowerCase().includes(term);
+        const matchesTerm = matchesSearch(
+          `${app.full_name} ${app.email} ${app.phone} ${app.code}`,
+          filters.q,
+        );
         return (
           matchesTerm &&
           (!filters.period || app.period_id === filters.period) &&
