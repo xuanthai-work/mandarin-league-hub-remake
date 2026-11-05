@@ -16,6 +16,7 @@ import {
   QrCode,
   Search,
   ShieldCheck,
+  Trash2,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -375,6 +376,27 @@ function HskAdminPage() {
     }
     toast.success("Đã khôi phục kết quả");
     setEditing((prev) => (prev ? { ...prev, status: "VALID", revoked_reason: "" } : prev));
+    refresh();
+  };
+
+  const deleteResult = async () => {
+    if (!editing?.id) return;
+    const { data, error } = await supabase
+      .from("hsk_results")
+      .delete()
+      .eq("id", editing.id)
+      .select("id");
+    if (error) {
+      toast.error(`Xóa thất bại: ${error.message}`);
+      return;
+    }
+    if (!data?.length) {
+      toast.error("Không xóa được: chỉ admin mới xóa được kết quả đã bị hủy.");
+      return;
+    }
+    toast.success("Đã xóa kết quả vĩnh viễn");
+    setEdit(null);
+    setEditing(null);
     refresh();
   };
 
@@ -776,6 +798,7 @@ function HskAdminPage() {
             onSave={() => void save()}
             onRevoke={revokeResult}
             onRestore={restoreResult}
+            onDelete={deleteResult}
             onClose={() => {
               setEdit(null);
               setEditing(null);
@@ -962,6 +985,7 @@ function HskResultDrawer({
   onSave,
   onRevoke,
   onRestore,
+  onDelete,
   onClose,
 }: {
   value: Draft;
@@ -976,10 +1000,12 @@ function HskResultDrawer({
   onSave: () => void;
   onRevoke: (reason: string) => Promise<void>;
   onRestore: () => Promise<void>;
+  onDelete: () => Promise<void>;
   onClose: () => void;
 }) {
   const [revokeReason, setRevokeReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -988,6 +1014,11 @@ function HskResultDrawer({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  // Never keep a half-armed delete when the drawer switches to another record.
+  useEffect(() => {
+    setConfirmDelete(false);
+  }, [value.id, record?.id]);
 
   const skills = hskSkills(value.level);
   const rule = hskRule(value.level);
@@ -1024,6 +1055,12 @@ function HskResultDrawer({
   const runRestore = async () => {
     setBusy(true);
     await onRestore();
+    setBusy(false);
+  };
+
+  const runDelete = async () => {
+    setBusy(true);
+    await onDelete();
     setBusy(false);
   };
 
@@ -1380,14 +1417,36 @@ function HskResultDrawer({
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void runRestore()}
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600/90 disabled:opacity-60"
-                  >
-                    Khôi phục kết quả
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void runRestore()}
+                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600/90 disabled:opacity-60"
+                    >
+                      Khôi phục kết quả
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        if (!confirmDelete) {
+                          setConfirmDelete(true);
+                          return;
+                        }
+                        setConfirmDelete(false);
+                        void runDelete();
+                      }}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-2xs transition-colors disabled:opacity-60 ${
+                        confirmDelete
+                          ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          : "border-destructive/30 bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      }`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>{confirmDelete ? "Xác nhận xóa vĩnh viễn" : "Xóa kết quả"}</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
