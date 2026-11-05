@@ -659,7 +659,7 @@ function TeacherDrawer({
                     aria-label="Trình độ Hán ngữ"
                     className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
                   >
-                    <SelectValue placeholder="Chọn trình độ HSK (HSK 4 - 9)">
+                    <SelectValue placeholder="Chọn trình độ HSK">
                       {value.chinese_level || "Chưa chọn trình độ"}
                     </SelectValue>
                   </SelectTrigger>

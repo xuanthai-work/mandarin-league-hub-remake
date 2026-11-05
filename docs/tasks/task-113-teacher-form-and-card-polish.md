@@ -1,7 +1,9 @@
 # Task 113: Teacher Form and Card Polish
 
 ## Bối cảnh & Yêu cầu
+
 Dựa trên phản hồi người dùng:
+
 1. **Trình độ Hán ngữ**: Bỏ mục `HSK 7-9`, danh sách chỉ giữ lại các cấp đơn lẻ từ `HSK 4` đến `HSK 9`.
 2. **Cấp HSK phụ trách**:
    - Bỏ tùy chọn `Tất cả các cấp (HSK 1 - 6)`.
@@ -14,6 +16,7 @@ Dựa trên phản hồi người dùng:
 ## Các thay đổi đã thực hiện
 
 ### 1. `src/routes/_authenticated/admin.teachers.tsx`
+
 - **Cập nhật `CHINESE_LEVELS`**:
   - Gỡ bỏ `"HSK 7-9"`, chỉ giữ lại `["HSK 4", "HSK 5", "HSK 6", "HSK 7", "HSK 8", "HSK 9"]`.
 - **Triển khai Select Checkbox cho Cấp HSK phụ trách**:
@@ -27,6 +30,7 @@ Dựa trên phản hồi người dùng:
 ---
 
 ## Verification Gates
+
 - **Typecheck**: `pnpm exec tsc --noEmit` -> **0 errors**.
 - **Lint**: `pnpm run lint` (`eslint .`) -> **0 errors, 29 warnings (pre-existing Fast Refresh warnings)**.
 - **Format**: `pnpm exec prettier --check src/routes/_authenticated/admin.teachers.tsx` -> **PASS 100%**.
