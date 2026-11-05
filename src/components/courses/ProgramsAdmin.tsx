@@ -450,21 +450,40 @@ function ProgramForm({
       return;
     }
     const courseId = res.data.id;
-    const del = await supabase.from("course_teachers").delete().eq("course_id", courseId);
-    const ins =
-      !del.error && picks.length
-        ? await supabase.from("course_teachers").insert(
-            picks.map((x, i) => ({
-              course_id: courseId,
-              teacher_id: x.teacher_id,
-              role: x.role,
-              sort_order: i,
-            })),
-          )
-        : { error: del.error };
+    const keepIds = picks.map((x) => x.teacher_id);
+
+    // 1) Thêm hoặc cập nhật danh sách mới trước. Lỗi ở bước này thì danh sách cũ vẫn còn nguyên.
+    const up = picks.length
+      ? await supabase.from("course_teachers").upsert(
+          picks.map((x, i) => ({
+            course_id: courseId,
+            teacher_id: x.teacher_id,
+            role: x.role,
+            sort_order: i,
+          })),
+          { onConflict: "course_id,teacher_id" },
+        )
+      : { error: null };
+
+    // 2) Sau đó mới gỡ những giáo viên không còn trong danh sách.
+    const del = up.error
+      ? { error: up.error }
+      : keepIds.length
+        ? await supabase
+            .from("course_teachers")
+            .delete()
+            .eq("course_id", courseId)
+            .not("teacher_id", "in", `(${keepIds.join(",")})`)
+        : await supabase.from("course_teachers").delete().eq("course_id", courseId);
+
     setBusy(false);
-    if (ins.error) toast.error("Đã lưu chương trình nhưng chưa lưu được danh sách giáo viên");
-    else {
+    if (up.error) {
+      toast.error(
+        "Đã lưu chương trình nhưng chưa lưu được danh sách giáo viên (danh sách cũ vẫn giữ nguyên)",
+      );
+    } else if (del.error) {
+      toast.error("Đã lưu chương trình nhưng chưa gỡ được giáo viên cũ, hãy thử lưu lại");
+    } else {
       toast.success("Đã lưu chương trình");
       onSaved();
     }

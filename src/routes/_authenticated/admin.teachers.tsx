@@ -475,6 +475,44 @@ function TeacherDrawer({
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  /** Where this teacher is assigned, so deleting never silently strips programs and classes. */
+  const usage = useQuery({
+    queryKey: ["teacher-usage", value.id],
+    enabled: !!value.id,
+    queryFn: async () => {
+      const id = value.id!;
+      const [programs, classes, levels] = await Promise.all([
+        supabase
+          .from("course_teachers")
+          .select("id", { count: "exact", head: true })
+          .eq("teacher_id", id),
+        supabase
+          .from("hsk_classes")
+          .select("id", { count: "exact", head: true })
+          .eq("teacher_id", id)
+          .is("deleted_at", null),
+        supabase
+          .from("course_settings")
+          .select("level", { count: "exact", head: true })
+          .eq("lead_teacher_id", id),
+      ]);
+      const error = programs.error ?? classes.error ?? levels.error;
+      if (error) throw new Error(error.message);
+      return {
+        programs: programs.count ?? 0,
+        classes: classes.count ?? 0,
+        levels: levels.count ?? 0,
+      };
+    },
+  });
+  const usageParts = usage.data
+    ? [
+        usage.data.programs > 0 && `${usage.data.programs} chương trình học`,
+        usage.data.classes > 0 && `${usage.data.classes} lớp HSK`,
+        usage.data.levels > 0 && `${usage.data.levels} cấp HSK (phụ trách chính)`,
+      ].filter((x): x is string => typeof x === "string")
+    : [];
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -859,6 +897,17 @@ function TeacherDrawer({
                       ? "Bấm lần nữa để xác nhận xóa vĩnh viễn hồ sơ này."
                       : "Hành động này sẽ xóa vĩnh viễn giáo viên khỏi hệ thống."}
                   </p>
+                  {usageParts.length > 0 && (
+                    <p className="mt-1 text-[11px] font-medium text-destructive">
+                      Đang phụ trách {usageParts.join(", ")}. Xóa sẽ gỡ giáo viên khỏi tất cả các
+                      nơi này. Nếu chỉ muốn ẩn, hãy tắt “Đang hoạt động” thay vì xóa.
+                    </p>
+                  )}
+                  {usage.isError && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Chưa kiểm tra được giáo viên đang phụ trách những đâu.
+                    </p>
+                  )}
                 </div>
                 <button
                   type="button"

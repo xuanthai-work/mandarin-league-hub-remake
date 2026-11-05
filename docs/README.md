@@ -162,6 +162,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-139-CSV-FORMULA-INJECTION`                                    | Chặn công thức Excel khi xuất CSV, gom 4 nơi về src/lib/csv.ts kèm unit test                           | 2026-11-06     | **PASS** | [task-oc-139-csv-formula-injection.md](tasks/task-oc-139-csv-formula-injection.md)                                                                       |
 | `TASK-OC-140-ACCURATE-RECRUITMENT-COUNTS`                              | Đếm hồ sơ bằng truy vấn đếm, tải đủ ứng viên quá 1000 dòng, trang lỗi có nút Thử lại                   | 2026-11-06     | **PASS** | [task-oc-140-accurate-recruitment-counts.md](tasks/task-oc-140-accurate-recruitment-counts.md)                                                           |
 | `TASK-OC-141-PROTECT-ANSWERED-QUESTIONS`                               | Chặn xóa câu hỏi/chủ đề đã có người trả lời, gợi ý Ẩn; mở lại tệp của câu hỏi đã xóa                   | 2026-11-06     | **PASS** | [task-oc-141-protect-answered-questions.md](tasks/task-oc-141-protect-answered-questions.md)                                                             |
+| `TASK-OC-142-SAFE-TEACHER-ASSIGNMENTS`                                 | Cảnh báo nơi giáo viên đang phụ trách trước khi xóa; lưu giáo viên chương trình an toàn                | 2026-11-06     | **PASS** | [task-oc-142-safe-teacher-assignments.md](tasks/task-oc-142-safe-teacher-assignments.md)                                                                 |
 
 ---
 
