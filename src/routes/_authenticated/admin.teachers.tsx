@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Plus, Search, Star, Trash2, UserRound, X } from "lucide-react";
+import { ChevronDown, Plus, Search, Star, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,6 +15,12 @@ import {
 import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -73,7 +79,7 @@ const EMPTY: Omit<Teacher, "id"> = {
 };
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const LEVELS = [1, 2, 3, 4, 5, 6];
-const CHINESE_LEVELS = ["HSK 4", "HSK 5", "HSK 6", "HSK 7", "HSK 8", "HSK 9", "HSK 7-9"];
+const CHINESE_LEVELS = ["HSK 4", "HSK 5", "HSK 6", "HSK 7", "HSK 8", "HSK 9"];
 
 function TeachersPage() {
   const qc = useQueryClient();
@@ -432,15 +438,6 @@ function TeacherCard({
           >
             {TEACHER_TYPE_LABEL[t.teacher_type] ?? t.teacher_type}
           </span>
-          <span
-            className={`rounded-full px-2 py-0.5 font-medium ${
-              t.status === "visible"
-                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {t.status === "visible" ? "Đang hoạt động" : "Dừng hoạt động"}
-          </span>
           {t.show_on_home && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
               ★ Trang chủ
@@ -678,47 +675,48 @@ function TeacherDrawer({
 
               <div className="text-xs text-muted-foreground">
                 <span>Cấp HSK phụ trách</span>
-                <Select
-                  value={
-                    value.teaching_levels.length === 6
-                      ? "all"
-                      : value.teaching_levels.length === 1
-                        ? String(value.teaching_levels[0])
-                        : value.teaching_levels.length > 0
-                          ? value.teaching_levels.join(",")
-                          : ""
-                  }
-                  onValueChange={(v) => {
-                    if (v === "all") {
-                      onChange({ teaching_levels: [1, 2, 3, 4, 5, 6] });
-                    } else {
-                      onChange({ teaching_levels: [Number(v)] });
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    aria-label="Cấp HSK phụ trách"
-                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Cấp HSK phụ trách"
+                      className="mt-1 flex h-9 w-full items-center justify-between rounded-xl border border-input bg-card px-3 text-xs font-normal shadow-xs transition-colors hover:bg-accent/60"
+                    >
+                      <span className="truncate">
+                        {value.teaching_levels.length === 0
+                          ? "Chưa chọn cấp HSK"
+                          : value.teaching_levels.length === 6
+                            ? "HSK 1 - 6"
+                            : value.teaching_levels.map((l) => `HSK ${l}`).join(", ")}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-[--radix-dropdown-menu-trigger-width] min-w-[180px] rounded-xl p-1"
                   >
-                    <SelectValue placeholder="Chọn cấp HSK phụ trách">
-                      {value.teaching_levels.length === 6
-                        ? "Tất cả các cấp (HSK 1 - 6)"
-                        : value.teaching_levels.length > 0
-                          ? value.teaching_levels.map((l) => `HSK ${l}`).join(", ")
-                          : "Chưa chọn cấp HSK"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="all" className="text-xs">
-                      Tất cả các cấp (HSK 1 - 6)
-                    </SelectItem>
-                    {LEVELS.map((l) => (
-                      <SelectItem key={l} value={String(l)} className="text-xs">
-                        HSK {l}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    {LEVELS.map((l) => {
+                      const checked = value.teaching_levels.includes(l);
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={l}
+                          checked={checked}
+                          onCheckedChange={() => {
+                            const next = checked
+                              ? value.teaching_levels.filter((x) => x !== l)
+                              : [...value.teaching_levels, l].sort();
+                            onChange({ teaching_levels: next });
+                          }}
+                          onSelect={(e) => e.preventDefault()}
+                          className="text-xs"
+                        >
+                          HSK {l}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
