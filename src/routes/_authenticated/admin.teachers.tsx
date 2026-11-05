@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Eye, EyeOff, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { Plus, Search, Star, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -13,7 +14,9 @@ import {
   type TeacherStatus,
   type TeacherType,
 } from "@/lib/teachers";
+import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -77,6 +80,8 @@ function TeachersPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [lv, setLv] = useState(0);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [edit, setEditRaw] = useState<(Omit<Teacher, "id"> & { id?: string }) | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -96,11 +101,16 @@ function TeachersPage() {
     qc.invalidateQueries({ queryKey: ["public-teachers"] });
   };
 
-  const rows = (data ?? []).filter(
-    (t) =>
-      (!q || `${t.full_name} ${t.title}`.toLowerCase().includes(q.toLowerCase())) &&
-      (!lv || t.teaching_levels.includes(lv)),
-  );
+  const rows = (data ?? []).filter((t) => {
+    if (q.trim()) {
+      const searchTarget = `${t.full_name} ${t.chinese_name || ""} ${t.title || ""} ${t.specialty || ""}`;
+      if (!matchesSearch(searchTarget, q)) return false;
+    }
+    if (lv && !t.teaching_levels.includes(lv)) return false;
+    if (typeFilter !== "all" && t.teacher_type !== typeFilter) return false;
+    if (statusFilter !== "all" && t.status !== statusFilter) return false;
+    return true;
+  });
 
   const upload = async (file: File) => {
     if (!edit) return;
@@ -161,10 +171,13 @@ function TeachersPage() {
     refresh();
   };
   const remove = async (t: Teacher) => {
-    if (!confirm(`Xóa hồ sơ ${t.full_name}?`)) return;
     const { error } = await supabase.from("teachers").delete().eq("id", t.id);
     if (error) toast.error(error.message);
-    else refresh();
+    else {
+      toast.success("Đã xóa hồ sơ giáo viên");
+      setEdit(null);
+      refresh();
+    }
   };
 
   return (
@@ -210,7 +223,7 @@ function TeachersPage() {
         <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
           <SelectTrigger
             aria-label="Lọc theo cấp HSK"
-            className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+            className="h-9 w-[140px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
           >
             <SelectValue>{lv ? `HSK ${lv}` : "Tất cả cấp HSK"}</SelectValue>
           </SelectTrigger>
@@ -225,257 +238,472 @@ function TeachersPage() {
             ))}
           </SelectContent>
         </Select>
-      </div>
-      <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-secondary text-left text-xs text-muted-foreground">
-            <tr>
-              {[
-                "",
-                "Họ tên",
-                "Chức danh",
-                "Cấp HSK",
-                "Loại",
-                "Thứ tự",
-                "Trạng thái",
-                "Trang chủ",
-                "",
-              ].map((h, i) => (
-                <th key={i} className="p-3">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={9} className="p-6 text-center text-muted-foreground">
-                  Đang tải…
-                </td>
-              </tr>
-            )}
-            {!isLoading && rows.length === 0 && (
-              <tr>
-                <td colSpan={9} className="p-6 text-center text-muted-foreground">
-                  Chưa có giáo viên.
-                </td>
-              </tr>
-            )}
-            {rows.map((t) => (
-              <tr key={t.id} className="border-t border-border">
-                <td className="p-3">
-                  <Avatar url={t.photo ?? ""} />
-                </td>
-                <td className="p-3 font-medium">
-                  {t.full_name}
-                  {t.chinese_name && (
-                    <div className="text-xs text-muted-foreground">{t.chinese_name}</div>
-                  )}
-                </td>
-                <td className="p-3">{t.title || "—"}</td>
-                <td className="p-3 text-xs">
-                  {t.teaching_levels.length
-                    ? t.teaching_levels.map((l) => `HSK ${l}`).join(", ")
-                    : "—"}
-                </td>
-                <td className="p-3 text-xs">{TEACHER_TYPE_LABEL[t.teacher_type]}</td>
-                <td className="p-3">{t.sort_order}</td>
-                <td className="p-3 text-xs">{TEACHER_STATUS_LABEL[t.status]}</td>
-                <td className="p-3 text-xs">
-                  <button
-                    onClick={() => toggleHome(t)}
-                    className={`rounded-full px-2 py-0.5 font-semibold ${t.show_on_home ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
-                  >
-                    {t.show_on_home ? "Đang hiện" : "Không"}
-                  </button>
-                  {t.is_featured && <div className="mt-1 text-gold">★ Nổi bật</div>}
-                </td>
-                <td className="p-3">
-                  <div className="flex justify-end gap-1">
-                    <button
-                      title={t.status === "visible" ? "Ẩn" : "Hiện"}
-                      onClick={() => toggle(t)}
-                      className="rounded p-2 hover:bg-accent"
-                    >
-                      {t.status === "visible" ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                    <button
-                      title="Sửa"
-                      onClick={() => setEdit(t)}
-                      className="rounded p-2 hover:bg-accent"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      title="Xóa"
-                      onClick={() => remove(t)}
-                      className="rounded p-2 text-destructive hover:bg-accent"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger
+            aria-label="Lọc theo loại giáo viên"
+            className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+          >
+            <SelectValue>
+              {typeFilter === "all"
+                ? "Tất cả loại"
+                : (TEACHER_TYPE_LABEL[typeFilter as TeacherType] ?? typeFilter)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Tất cả loại
+            </SelectItem>
+            {Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => (
+              <SelectItem key={k} value={k} className="text-xs">
+                {v}
+              </SelectItem>
             ))}
-          </tbody>
-        </table>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger
+            aria-label="Lọc theo trạng thái"
+            className="h-9 w-[150px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+          >
+            <SelectValue>
+              {statusFilter === "all"
+                ? "Tất cả trạng thái"
+                : (TEACHER_STATUS_LABEL[statusFilter as TeacherStatus] ?? statusFilter)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Tất cả trạng thái
+            </SelectItem>
+            {Object.entries(TEACHER_STATUS_LABEL).map(([k, v]) => (
+              <SelectItem key={k} value={k} className="text-xs">
+                {v}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="ml-auto font-mono text-xs text-muted-foreground">
+          {rows.length} giáo viên
+        </span>
       </div>
 
-      {edit && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4"
-          onClick={() => setEdit(null)}
-        >
-          <div
-            className="max-h-[90vh] w-full max-w-2xl space-y-3 overflow-y-auto rounded-2xl bg-card p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-bold">
-              {edit.id ? "Sửa hồ sơ giáo viên" : "Thêm giáo viên"}
-            </h2>
-            <label className="block text-sm">
-              Họ tên *
-              <input
-                className={inp}
-                value={edit.full_name}
-                onChange={(e) => setEdit({ ...edit, full_name: e.target.value })}
+      {isLoading ? (
+        <p className="mt-4 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+          Đang tải danh sách giáo viên…
+        </p>
+      ) : rows.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+          <UserRound className="mx-auto h-8 w-8 text-muted-foreground" />
+          <p className="mt-3 text-sm font-medium">Không tìm thấy giáo viên phù hợp</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Thử xóa từ khóa hoặc chọn lại bộ lọc cấp HSK, loại và trạng thái.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {rows.map((t) => (
+            <TeacherCard
+              key={t.id}
+              t={t}
+              onEdit={() => setEdit(t)}
+              onToggle={() => void toggle(t)}
+              onToggleHome={() => void toggleHome(t)}
+            />
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {edit && (
+          <TeacherDrawer
+            value={edit}
+            preview={preview}
+            uploading={uploading}
+            onChange={(patch) => setEditRaw((prev) => (prev ? { ...prev, ...patch } : null))}
+            onUpload={(file) => void upload(file)}
+            onClearPhoto={() => {
+              setPreview(null);
+              setEditRaw((prev) => (prev ? { ...prev, avatar_url: "", photo: "" } : null));
+            }}
+            onSave={() => void save()}
+            onDelete={edit.id ? () => void remove(edit as Teacher) : undefined}
+            onClose={() => setEdit(null)}
+          />
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
+function TeacherCard({
+  t,
+  onEdit,
+  onToggle,
+  onToggleHome,
+}: {
+  t: Teacher;
+  onEdit: () => void;
+  onToggle: () => void;
+  onToggleHome: () => void;
+}) {
+  return (
+    <article
+      onClick={onEdit}
+      className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+    >
+      <div>
+        <div className="flex items-start gap-3.5">
+          <div className="relative shrink-0">
+            {t.photo ? (
+              <img
+                src={t.photo}
+                alt={t.full_name}
+                className="h-14 w-14 rounded-2xl object-cover shadow-xs ring-2 ring-border/80"
               />
-            </label>
-            <label className="block text-sm">
-              Tên tiếng Trung
-              <input
-                className={inp}
-                placeholder="VD: 阮老师"
-                value={edit.chinese_name}
-                onChange={(e) => setEdit({ ...edit, chinese_name: e.target.value })}
-              />
-            </label>
-            <label className="block text-sm">
-              Chức danh
-              <input
-                className={inp}
-                placeholder="VD: Giảng viên HSK"
-                value={edit.title}
-                onChange={(e) => setEdit({ ...edit, title: e.target.value })}
-              />
-            </label>
-            <div className="text-sm">
-              Ảnh chân dung
-              <div className="mt-1 flex items-center gap-3">
-                <Avatar url={preview ?? edit.photo ?? ""} />
-                <label className="cursor-pointer rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent">
-                  {uploading ? "Đang tải lên…" : "Chọn ảnh từ máy"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    disabled={uploading}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (f) void upload(f);
-                    }}
-                  />
-                </label>
-                {edit.avatar_url && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPreview(null);
-                      setEdit({ ...edit, avatar_url: "", photo: "" });
-                    }}
-                    className="text-xs text-destructive"
-                  >
-                    Gỡ ảnh
-                  </button>
+            ) : (
+              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary shadow-xs ring-2 ring-primary/20">
+                <UserRound className="h-7 w-7" />
+              </div>
+            )}
+            {t.is_featured && (
+              <span
+                title="Giảng viên nổi bật"
+                className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-gold text-[10px] font-bold text-black shadow-xs"
+              >
+                <Star className="h-3 w-3" fill="currentColor" />
+              </span>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="truncate text-base font-bold tracking-tight text-foreground">
+                  {t.full_name}
+                </h3>
+                {t.chinese_name && (
+                  <p className="font-han truncate text-xs text-muted-foreground">
+                    {t.chinese_name}
+                  </p>
                 )}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">JPG, PNG hoặc WebP, tối đa 5MB.</p>
+              <Switch
+                checked={t.status === "visible"}
+                onCheckedChange={onToggle}
+                onClick={(e) => e.stopPropagation()}
+                aria-label={t.status === "visible" ? `Ẩn ${t.full_name}` : `Hiện ${t.full_name}`}
+              />
             </div>
+            <p className="mt-1 truncate text-xs font-medium text-primary">
+              {t.title || "Giảng viên"}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-2.5 rounded-xl border border-border/60 bg-muted/20 p-3 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">Phụ trách:</span>
+            {t.teaching_levels && t.teaching_levels.length > 0 ? (
+              t.teaching_levels.map((l) => (
+                <span
+                  key={l}
+                  className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary"
+                >
+                  HSK {l}
+                </span>
+              ))
+            ) : (
+              <span className="text-[11px] italic text-muted-foreground">Chưa xếp cấp</span>
+            )}
+          </div>
+
+          {(t.chinese_level || t.specialty) && (
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              {t.chinese_level && (
+                <span className="font-medium text-foreground">{t.chinese_level}</span>
+              )}
+              {t.chinese_level && t.specialty && <span>·</span>}
+              {t.specialty && <span className="truncate">{t.specialty}</span>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-3 text-[11px]">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span
+            className={`rounded-full px-2 py-0.5 font-medium ${
+              t.teacher_type === "official"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : t.teacher_type === "collaborator"
+                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-300"
+                  : "bg-blue-500/10 text-blue-600 dark:text-blue-300"
+            }`}
+          >
+            {TEACHER_TYPE_LABEL[t.teacher_type] ?? t.teacher_type}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleHome();
+            }}
+            title={t.show_on_home ? "Ẩn khỏi trang chủ" : "Hiện ở trang chủ"}
+            className={`rounded-full px-2 py-0.5 font-medium transition-colors ${
+              t.show_on_home
+                ? "bg-primary/10 text-primary hover:bg-primary/15"
+                : "bg-secondary text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {t.show_on_home ? "Trang chủ" : "Ẩn khỏi trang chủ"}
+          </button>
+        </div>
+        <span className="shrink-0 font-mono text-xs text-muted-foreground/70">#{t.sort_order}</span>
+      </div>
+    </article>
+  );
+}
+
+// ---------------------------------------------------------------- edit drawer
+
+function TeacherDrawer({
+  value,
+  preview,
+  uploading,
+  onChange,
+  onUpload,
+  onClearPhoto,
+  onSave,
+  onDelete,
+  onClose,
+}: {
+  value: Omit<Teacher, "id"> & { id?: string };
+  preview: string | null;
+  uploading: boolean;
+  onChange: (patch: Partial<Teacher>) => void;
+  onUpload: (file: File) => void;
+  onClearPhoto: () => void;
+  onSave: () => void;
+  onDelete: (() => void) | undefined;
+  onClose: () => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  const photoUrl = preview ?? value.photo ?? "";
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={value.id ? `Sửa hồ sơ ${value.full_name}` : "Thêm giáo viên mới"}
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 32, stiffness: 320 }}
+        className="relative z-10 flex h-full w-full max-w-[580px] flex-col border-l border-border bg-card shadow-2xl"
+      >
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="relative shrink-0">
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt=""
+                  className="h-11 w-11 rounded-xl object-cover shadow-xs ring-2 ring-border/80"
+                />
+              ) : (
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary shadow-xs ring-2 ring-primary/20">
+                  <UserRound className="h-5 w-5" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <h2 className="truncate text-base font-bold text-foreground">
+                {value.id ? "Sửa hồ sơ giáo viên" : "Thêm giáo viên mới"}
+              </h2>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className="truncate text-xs text-muted-foreground">
+                  {value.full_name || "Giáo viên mới"}
+                </span>
+                {value.chinese_name && (
+                  <span className="font-han text-xs text-muted-foreground/70">
+                    ({value.chinese_name})
+                  </span>
+                )}
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    value.status === "visible"
+                      ? "bg-success/15 text-success"
+                      : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  {value.status === "visible" ? "Đang hiển thị" : "Bản nháp / Đang ẩn"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            title="Đóng (Esc)"
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Định danh & Ảnh chân dung
+            </h3>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm">
-                Chuyên môn
+              <label className="block text-xs text-muted-foreground">
+                Họ tên tiếng Việt <span className="text-destructive">*</span>
                 <input
-                  className={inp}
-                  placeholder="VD: Ngữ pháp, luyện thi HSK"
-                  value={edit.specialty}
-                  onChange={(e) => setEdit({ ...edit, specialty: e.target.value })}
+                  className={`${inp} mt-1`}
+                  placeholder="VD: Nguyễn Văn A"
+                  value={value.full_name}
+                  onChange={(e) => onChange({ full_name: e.target.value })}
                 />
               </label>
-              <label className="block text-sm">
+              <label className="block text-xs text-muted-foreground">
+                Tên tiếng Trung (tùy chọn)
+                <input
+                  className={`${inp} mt-1 font-han`}
+                  placeholder="VD: 阮老师"
+                  value={value.chinese_name}
+                  onChange={(e) => onChange({ chinese_name: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <label className="block text-xs text-muted-foreground">
+              Chức danh công tác
+              <input
+                className={`${inp} mt-1`}
+                placeholder="VD: Giảng viên HSK ĐH Quốc Gia, Cố vấn học thuật"
+                value={value.title}
+                onChange={(e) => onChange({ title: e.target.value })}
+              />
+            </label>
+
+            <div className="rounded-xl border border-border/70 bg-muted/20 p-3.5">
+              <span className="block text-xs font-medium text-foreground">
+                Ảnh đại diện chân dung
+              </span>
+              <div className="mt-2.5 flex items-center gap-3.5">
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt=""
+                    className="h-16 w-16 rounded-2xl object-cover shadow-xs ring-2 ring-primary/20"
+                  />
+                ) : (
+                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary shadow-xs ring-2 ring-primary/20">
+                    <UserRound className="h-8 w-8" />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted">
+                      {uploading ? "Đang tải lên…" : "Tải ảnh từ máy"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.target.value = "";
+                          if (f) void onUpload(f);
+                        }}
+                      />
+                    </label>
+                    {value.avatar_url && (
+                      <button
+                        type="button"
+                        onClick={onClearPhoto}
+                        className="cursor-pointer rounded-lg px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                      >
+                        Gỡ ảnh
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Hỗ trợ định dạng JPG, PNG hoặc WebP. Tối đa 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Năng lực chuyên môn & Giảng dạy
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-xs text-muted-foreground">
                 Trình độ Hán ngữ
                 <input
-                  className={inp}
-                  placeholder="VD: HSK 6"
-                  value={edit.chinese_level}
-                  onChange={(e) => setEdit({ ...edit, chinese_level: e.target.value })}
+                  className={`${inp} mt-1`}
+                  placeholder="VD: HSK 6, Thạc sĩ Ngôn ngữ"
+                  value={value.chinese_level}
+                  onChange={(e) => onChange({ chinese_level: e.target.value })}
+                />
+              </label>
+              <label className="block text-xs text-muted-foreground">
+                Chuyên môn chính
+                <input
+                  className={`${inp} mt-1`}
+                  placeholder="VD: Ngữ pháp, Luyện đề HSK 5-6"
+                  value={value.specialty}
+                  onChange={(e) => onChange({ specialty: e.target.value })}
                 />
               </label>
             </div>
-            <label className="block text-sm">
-              Chứng chỉ{" "}
-              <span className="text-xs text-muted-foreground">
-                (mỗi dòng một chứng chỉ, chỉ nhập thông tin đã xác minh)
-              </span>
-              <textarea
-                rows={2}
-                className={inp}
-                value={edit.certificates}
-                onChange={(e) => setEdit({ ...edit, certificates: e.target.value })}
-              />
-            </label>
-            <label className="block text-sm">
-              Kinh nghiệm giảng dạy
-              <textarea
-                rows={2}
-                className={inp}
-                value={edit.experience}
-                onChange={(e) => setEdit({ ...edit, experience: e.target.value })}
-              />
-            </label>
-            <label className="block text-sm">
-              Giới thiệu (tiếng Việt)
-              <textarea
-                rows={4}
-                maxLength={2000}
-                className={inp}
-                value={edit.bio}
-                onChange={(e) => setEdit({ ...edit, bio: e.target.value })}
-              />
-            </label>
-            <label className="block text-sm">
-              Giới thiệu (tiếng Trung, tùy chọn)
-              <textarea
-                rows={3}
-                maxLength={2000}
-                className={inp}
-                value={edit.bio_zh}
-                onChange={(e) => setEdit({ ...edit, bio_zh: e.target.value })}
-              />
-            </label>
-            <div className="text-sm">
-              Cấp HSK phụ trách
-              <div className="mt-1 flex flex-wrap gap-2">
+
+            <div className="space-y-1.5">
+              <label className="block text-xs text-muted-foreground">Cấp HSK phụ trách</label>
+              <div className="flex flex-wrap gap-1.5">
                 {LEVELS.map((l) => {
-                  const on = edit.teaching_levels.includes(l);
+                  const active = value.teaching_levels.includes(l);
                   return (
                     <button
                       type="button"
                       key={l}
                       onClick={() =>
-                        setEdit({
-                          ...edit,
-                          teaching_levels: on
-                            ? edit.teaching_levels.filter((x) => x !== l)
-                            : [...edit.teaching_levels, l].sort(),
+                        onChange({
+                          teaching_levels: active
+                            ? value.teaching_levels.filter((x) => x !== l)
+                            : [...value.teaching_levels, l].sort(),
                         })
                       }
-                      className={`rounded-full px-3 py-1 text-xs ${on ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+                      className={`cursor-pointer rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        active
+                          ? "bg-primary text-primary-foreground shadow-2xs"
+                          : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
                     >
                       HSK {l}
                     </button>
@@ -483,24 +711,28 @@ function TeachersPage() {
                 })}
               </div>
             </div>
-            <div className="text-sm">
-              Chương trình khác
-              <div className="mt-1 flex flex-wrap gap-2">
+
+            <div className="space-y-1.5">
+              <label className="block text-xs text-muted-foreground">Chương trình khác</label>
+              <div className="flex flex-wrap gap-1.5">
                 {PROGRAM_OPTIONS.map((p) => {
-                  const on = edit.programs.includes(p);
+                  const active = value.programs.includes(p);
                   return (
                     <button
                       type="button"
                       key={p}
                       onClick={() =>
-                        setEdit({
-                          ...edit,
-                          programs: on
-                            ? edit.programs.filter((x) => x !== p)
-                            : [...edit.programs, p],
+                        onChange({
+                          programs: active
+                            ? value.programs.filter((x) => x !== p)
+                            : [...value.programs, p],
                         })
                       }
-                      className={`rounded-full px-3 py-1 text-xs ${on ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+                      className={`cursor-pointer rounded-xl px-2.5 py-1 text-xs font-medium transition-colors ${
+                        active
+                          ? "bg-primary text-primary-foreground shadow-2xs"
+                          : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
                     >
                       {p}
                     </button>
@@ -508,106 +740,195 @@ function TeachersPage() {
                 })}
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="text-sm">
-                <span className="block">Loại giáo viên</span>
+
+            <label className="block text-xs text-muted-foreground">
+              Chứng chỉ đạt được (mỗi dòng một chứng chỉ)
+              <textarea
+                rows={2}
+                className={`${inp} mt-1`}
+                placeholder="VD: HSK 6 - 280 điểm&#10;TOCFL Band C"
+                value={value.certificates}
+                onChange={(e) => onChange({ certificates: e.target.value })}
+              />
+            </label>
+
+            <label className="block text-xs text-muted-foreground">
+              Kinh nghiệm giảng dạy
+              <textarea
+                rows={2}
+                className={`${inp} mt-1`}
+                placeholder="VD: 5 năm giảng dạy HSK tại các trung tâm lớn..."
+                value={value.experience}
+                onChange={(e) => onChange({ experience: e.target.value })}
+              />
+            </label>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Giới thiệu bản thân
+            </h3>
+            <label className="block text-xs text-muted-foreground">
+              Giới thiệu (tiếng Việt)
+              <textarea
+                rows={3}
+                maxLength={2000}
+                className={`${inp} mt-1`}
+                placeholder="Tóm tắt tiểu sử, phong cách giảng dạy..."
+                value={value.bio}
+                onChange={(e) => onChange({ bio: e.target.value })}
+              />
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Giới thiệu (tiếng Trung, tùy chọn)
+              <textarea
+                rows={3}
+                maxLength={2000}
+                className={`${inp} mt-1 font-han`}
+                placeholder="个人简介..."
+                value={value.bio_zh}
+                onChange={(e) => onChange({ bio_zh: e.target.value })}
+              />
+            </label>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Cấu hình hiển thị
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="text-xs text-muted-foreground">
+                <span>Phân loại giảng viên</span>
                 <Select
-                  value={edit.teacher_type}
-                  onValueChange={(v) => setEdit({ ...edit, teacher_type: v as TeacherType })}
+                  value={value.teacher_type}
+                  onValueChange={(v) => onChange({ teacher_type: v as TeacherType })}
                 >
                   <SelectTrigger
-                    aria-label="Loại giáo viên"
-                    className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+                    aria-label="Phân loại giảng viên"
+                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs shadow-none"
                   >
                     <SelectValue>
-                      {TEACHER_TYPE_LABEL[edit.teacher_type] ?? edit.teacher_type}
+                      {TEACHER_TYPE_LABEL[value.teacher_type] ?? value.teacher_type}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-sm">
+                      <SelectItem key={k} value={k} className="text-xs">
                         {v}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="text-sm">
-                <span className="block">Trạng thái hồ sơ</span>
-                <Select
-                  value={edit.status}
-                  onValueChange={(v) => setEdit({ ...edit, status: v as TeacherStatus })}
-                >
-                  <SelectTrigger
-                    aria-label="Trạng thái hồ sơ"
-                    className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-                  >
-                    <SelectValue>{TEACHER_STATUS_LABEL[edit.status] ?? edit.status}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {Object.entries(TEACHER_STATUS_LABEL).map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-sm">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <label className="block text-sm">
-                Thứ tự
+
+              <label className="block text-xs text-muted-foreground">
+                Thứ tự ưu tiên hiển thị
                 <input
                   type="number"
-                  className={inp}
-                  value={edit.sort_order}
-                  onChange={(e) => setEdit({ ...edit, sort_order: Number(e.target.value) })}
+                  className={`${inp} mt-1`}
+                  value={value.sort_order}
+                  onChange={(e) => onChange({ sort_order: Number(e.target.value) })}
                 />
               </label>
             </div>
-            <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={edit.show_on_home}
-                  onChange={(e) => setEdit({ ...edit, show_on_home: e.target.checked })}
-                />
-                Hiện ở Đội ngũ Giảng viên trang chủ
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={edit.is_featured}
-                  onChange={(e) => setEdit({ ...edit, is_featured: e.target.checked })}
-                />
-                Đánh dấu nổi bật
-              </label>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setEdit(null)}
-                className="rounded-lg border border-border px-4 py-2 text-sm"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={save}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Lưu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
 
-function Avatar({ url }: { url: string }) {
-  return url ? (
-    <img src={url} alt="" className="h-10 w-10 rounded-full object-cover" />
-  ) : (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-primary">
-      <UserRound className="h-5 w-5" />
+            <div className="space-y-2 pt-1">
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-medium text-foreground">Hiển thị công khai</span>
+                  <p className="text-[11px] text-muted-foreground">
+                    Bật để học viên có thể thấy hồ sơ trên website
+                  </p>
+                </div>
+                <Switch
+                  checked={value.status === "visible"}
+                  onCheckedChange={(v) => onChange({ status: v ? "visible" : "hidden" })}
+                  aria-label="Hiển thị công khai"
+                />
+              </label>
+
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-medium text-foreground">
+                    Hiện ở Đội ngũ Giảng viên trang chủ
+                  </span>
+                  <p className="text-[11px] text-muted-foreground">
+                    Đưa giáo viên vào slider danh dự trên trang chủ
+                  </p>
+                </div>
+                <Switch
+                  checked={value.show_on_home}
+                  onCheckedChange={(v) => onChange({ show_on_home: v })}
+                  aria-label="Hiện ở Đội ngũ Giảng viên trang chủ"
+                />
+              </label>
+
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-medium text-foreground">
+                    Đánh dấu giảng viên nổi bật (★)
+                  </span>
+                  <p className="text-[11px] text-muted-foreground">
+                    Gắn huy hiệu sao vàng danh dự trên thẻ
+                  </p>
+                </div>
+                <Switch
+                  checked={value.is_featured}
+                  onCheckedChange={(v) => onChange({ is_featured: v })}
+                  aria-label="Đánh dấu giảng viên nổi bật"
+                />
+              </label>
+            </div>
+          </section>
+
+          {value.id && onDelete && (
+            <section className="space-y-2 pt-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                Vùng nguy hiểm
+              </h3>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-foreground">Xóa hồ sơ giáo viên</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {confirmDelete
+                      ? "Bấm lần nữa để xác nhận xóa vĩnh viễn hồ sơ này."
+                      : "Hành động này sẽ xóa vĩnh viễn giáo viên khỏi hệ thống."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!confirmDelete) {
+                      setConfirmDelete(true);
+                      return;
+                    }
+                    setConfirmDelete(false);
+                    onDelete();
+                  }}
+                  className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-2xs transition-colors ${
+                    confirmDelete
+                      ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : "border-destructive/30 bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  }`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>{confirmDelete ? "Xác nhận xóa" : "Xóa giáo viên"}</span>
+                </button>
+              </div>
+            </section>
+          )}
+        </div>
+
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
+          <button
+            type="button"
+            onClick={onSave}
+            className="w-full cursor-pointer rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-xs transition hover:bg-primary/90 sm:w-auto"
+          >
+            {value.id ? "Lưu thay đổi" : "Tạo hồ sơ giáo viên"}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

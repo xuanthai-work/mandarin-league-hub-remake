@@ -779,37 +779,40 @@ function BenefitDrawer({
               />
             </label>
           </section>
+
+          {value.id && onDelete && (
+            <section className="space-y-2 pt-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                Vùng nguy hiểm
+              </h3>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-foreground">Xóa quyền lợi này</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Xóa vĩnh viễn quyền lợi và thu hồi các quyền truy cập đã cấp.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-destructive/30 bg-card px-3 py-2 text-xs font-semibold text-destructive shadow-2xs transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Xóa</span>
+                </button>
+              </div>
+            </section>
+          )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          {value.id && onDelete ? (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Xóa</span>
-            </button>
-          ) : (
-            <div />
-          )}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border border-border px-4 py-2 text-sm font-medium"
-            >
-              Hủy
-            </button>
-            <button
-              type="button"
-              onClick={onSave}
-              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-            >
-              Lưu
-            </button>
-          </div>
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
+          <button
+            type="button"
+            onClick={onSave}
+            className="w-full cursor-pointer rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-xs transition hover:bg-primary/90 sm:w-auto"
+          >
+            {value.id ? "Lưu thay đổi" : "Tạo quyền lợi"}
+          </button>
         </div>
       </motion.div>
     </div>
