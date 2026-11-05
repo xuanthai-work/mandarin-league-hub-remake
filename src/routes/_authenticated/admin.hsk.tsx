@@ -1024,6 +1024,8 @@ function HskResultDrawer({
   const rule = hskRule(value.level);
   const total = skills.reduce((sum, k) => sum + (value[scoreKey(k)] ?? 0), 0);
   const passed = total >= rule.pass;
+  const totalPct = rule.max > 0 ? Math.min(100, (total / rule.max) * 100) : 0;
+  const passPct = rule.max > 0 ? Math.min(100, (rule.pass / rule.max) * 100) : 0;
   const isRevoked = record?.status === "REVOKED";
 
   const availableLevels = Object.entries(HSK_LEVELS).filter(([k]) =>
@@ -1286,19 +1288,41 @@ function HskResultDrawer({
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <div>
-                <p className="text-[11px] text-muted-foreground">Tổng điểm tạm tính</p>
-                <p className="text-2xl font-bold tracking-tight text-foreground">
-                  {total}
-                  <span className="text-sm font-normal text-muted-foreground">/{rule.max}</span>
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  Ngưỡng đạt {rule.pass}/{rule.max}
-                </p>
+            <div
+              role="meter"
+              aria-label="Tổng điểm tạm tính"
+              aria-valuemin={0}
+              aria-valuemax={rule.max}
+              aria-valuenow={total}
+              aria-valuetext={`${total}/${rule.max} điểm, ${passed ? "đạt" : "chưa đạt"} (ngưỡng ${rule.pass})`}
+              title="Hệ thống sẽ tính lại tổng điểm và trạng thái khi lưu."
+              className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2"
+            >
+              <p className="shrink-0 text-xs text-muted-foreground">
+                Tổng <span className="text-sm font-bold tabular-nums text-foreground">{total}</span>
+                <span className="tabular-nums">/{rule.max}</span>
+              </p>
+
+              <div className="relative h-1.5 min-w-16 flex-1 rounded-full bg-muted">
+                <div
+                  className={`h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none ${
+                    passed ? "bg-emerald-500" : "bg-amber-400"
+                  }`}
+                  style={{ width: `${totalPct}%` }}
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-foreground/40"
+                  style={{ left: `${passPct}%` }}
+                />
               </div>
+
+              <span className="hidden shrink-0 text-[11px] tabular-nums text-muted-foreground sm:inline">
+                Đạt từ {rule.pass}
+              </span>
+
               <span
-                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                   passed
                     ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                     : "bg-warning-soft text-warning-foreground"
@@ -1307,9 +1331,6 @@ function HskResultDrawer({
                 {passed ? "Đạt" : "Chưa đạt"}
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Hệ thống sẽ tính lại tổng điểm và trạng thái khi lưu.
-            </p>
           </section>
 
           <section className="space-y-3">
