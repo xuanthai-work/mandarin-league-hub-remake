@@ -33,25 +33,29 @@ interface AdjustmentModalProps {
   onDone: () => void;
 }
 
-const PRESETS: Record<AdjustMode, { label: string; amount: number; reason: string }[]> = {
+const PRESETS: Record<AdjustMode, { label: string; reason: string }[]> = {
   bonus: [
-    { label: "Hỗ trợ sự kiện", amount: 15, reason: "Hỗ trợ sự kiện của Liên Đoàn" },
-    { label: "Ý tưởng xuất sắc", amount: 20, reason: "Đóng góp ý tưởng xuất sắc cho Ban" },
-    { label: "Vượt tiến độ dự án", amount: 10, reason: "Hoàn thành dự án vượt tiến độ" },
+    { label: "Hỗ trợ sự kiện", reason: "Hỗ trợ sự kiện của Liên Đoàn" },
+    { label: "Ý tưởng xuất sắc", reason: "Đóng góp ý tưởng xuất sắc cho Ban" },
+    { label: "Vượt tiến độ dự án", reason: "Hoàn thành dự án vượt tiến độ" },
   ],
   penalty: [
-    { label: "Vắng họp không phép", amount: 10, reason: "Vắng họp không phép" },
-    { label: "Trễ hạn nhiệm vụ", amount: 5, reason: "Trễ hạn nhiệm vụ được giao" },
-    { label: "Vi phạm quy tắc ứng xử", amount: 20, reason: "Vi phạm quy tắc ứng xử của Liên Đoàn" },
+    { label: "Vắng họp không phép", reason: "Vắng họp không phép" },
+    { label: "Trễ hạn nhiệm vụ", reason: "Trễ hạn nhiệm vụ được giao" },
+    { label: "Vi phạm quy tắc ứng xử", reason: "Vi phạm quy tắc ứng xử của Liên Đoàn" },
   ],
 };
 
 const labelClass = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
-/** Manual adjustments move in 5-point steps; the DB rejects a 0-point bonus/penalty. */
-const AMOUNT_MIN = 5;
-const AMOUNT_MAX = 20;
-const AMOUNT_STEP = 5;
+/** The three point levels an adjustment can apply; the DB rejects a 0-point bonus/penalty. */
+const AMOUNT_OPTIONS = [
+  { value: 5, label: "5đ", hint: "Việc nhỏ" },
+  { value: 10, label: "10đ", hint: "Việc vừa" },
+  { value: 20, label: "20đ", hint: "Dự án lớn" },
+] as const;
+
+const AMOUNT_VALUES: number[] = AMOUNT_OPTIONS.map((option) => option.value);
 
 /** Proof files: private admin-only bucket, at most 5 files of 10MB each. */
 const EVIDENCE_BUCKET = "point-evidence";
@@ -66,15 +70,15 @@ const fmtSize = (bytes: number) =>
 
 /**
  * Admin-only bonus/penalty adjustment. The DB enforces admin rights, a unified
- * 1–100 range and the bonus/penalty sign rule; the UI limits the amount to
- * 5-point steps between 5 and 20 and requires a 10-character audit reason.
+ * 1–100 range and the bonus/penalty sign rule; the UI offers the three point
+ * levels 5/10/20 and requires a 10-character audit reason.
  */
 export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalProps) {
   const [mode, setMode] = useState<AdjustMode>("bonus");
   const [selected, setSelected] = useState<string[]>([]);
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("");
-  const [amount, setAmount] = useState(15);
+  const [amount, setAmount] = useState(10);
   const [reason, setReason] = useState("");
   const [evidence, setEvidence] = useState<{ id: string; file: File }[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -132,7 +136,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
 
   const switchMode = (next: AdjustMode) => {
     setMode(next);
-    setAmount(PRESETS[next][0]?.amount ?? 10);
+    setAmount(10);
     setReason("");
     setEvidence([]);
     setRecorded({});
@@ -209,13 +213,8 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
       setErr("Chọn ít nhất một thành viên chưa được ghi nhận.");
       return;
     }
-    if (
-      !Number.isInteger(amount) ||
-      amount < AMOUNT_MIN ||
-      amount > AMOUNT_MAX ||
-      amount % AMOUNT_STEP !== 0
-    ) {
-      setErr(`Số điểm phải là bội số của ${AMOUNT_STEP} trong khoảng ${AMOUNT_MIN}–${AMOUNT_MAX}.`);
+    if (!AMOUNT_VALUES.includes(amount)) {
+      setErr("Vui lòng chọn mức điểm 5, 10 hoặc 20.");
       return;
     }
     const trimmed = reason.trim();
@@ -495,15 +494,12 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
               <span className={labelClass}>Mẫu nhanh</span>
               <div className="flex flex-wrap gap-1.5">
                 {PRESETS[mode].map((preset) => {
-                  const active = amount === preset.amount && reason === preset.reason;
+                  const active = reason === preset.reason;
                   return (
                     <button
                       key={preset.label}
                       type="button"
-                      onClick={() => {
-                        setAmount(preset.amount);
-                        setReason(preset.reason);
-                      }}
+                      onClick={() => setReason(preset.reason)}
                       aria-pressed={active}
                       className={cn(
                         "rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors",
@@ -512,8 +508,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                           : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
                       )}
                     >
-                      {preset.label} ({mode === "bonus" ? "+" : "-"}
-                      {preset.amount})
+                      {preset.label}
                     </button>
                   );
                 })}
@@ -522,44 +517,42 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
 
             <div className="space-y-1.5">
               <span className={labelClass}>
-                Số điểm ({mode === "bonus" ? "+" : "-"}
-                {AMOUNT_MIN}–{AMOUNT_MAX})
+                {mode === "bonus" ? "Điểm thưởng cống hiến" : "Điểm trừ cống hiến"}
               </span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "grid h-9 w-9 shrink-0 place-items-center rounded-xl font-bold",
-                    mode === "bonus"
-                      ? "bg-primary/10 text-primary"
-                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-                  )}
-                >
-                  {mode === "bonus" ? (
-                    <Plus aria-hidden className="h-4 w-4" />
-                  ) : (
-                    <Minus aria-hidden className="h-4 w-4" />
-                  )}
-                </span>
-                <input
-                  type="number"
-                  min={AMOUNT_MIN}
-                  max={AMOUNT_MAX}
-                  step={AMOUNT_STEP}
-                  value={Number.isFinite(amount) ? amount : ""}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  onBlur={() =>
-                    setAmount((current) =>
-                      Number.isFinite(current)
-                        ? Math.min(
-                            AMOUNT_MAX,
-                            Math.max(AMOUNT_MIN, Math.round(current / AMOUNT_STEP) * AMOUNT_STEP),
-                          )
-                        : AMOUNT_MIN,
-                    )
-                  }
-                  aria-label="Số điểm điều chỉnh"
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2 font-mono text-lg font-bold tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+              <div
+                role="group"
+                aria-label="Mức điểm điều chỉnh"
+                className="grid grid-cols-3 gap-1.5"
+              >
+                {AMOUNT_OPTIONS.map((option) => {
+                  const active = amount === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setAmount(option.value)}
+                      aria-pressed={active}
+                      className={cn(
+                        "flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2 text-xs transition-colors",
+                        active
+                          ? mode === "bonus"
+                            ? "border-primary bg-primary font-semibold text-primary-foreground shadow-xs"
+                            : "border-rose-500 bg-rose-500 font-semibold text-white shadow-xs"
+                          : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      <span className="font-semibold">{option.label}</span>
+                      <span
+                        className={cn(
+                          "text-[10px]",
+                          active ? "opacity-80" : "text-muted-foreground",
+                        )}
+                      >
+                        {option.hint}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

@@ -242,7 +242,7 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
             }}
             placeholder="Tìm tên hoặc mã thành viên…"
             aria-label="Tìm thành viên trên bảng vinh danh"
-            className="w-full rounded-xl border border-input bg-background py-1.5 pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border-none bg-background py-1.5 pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           {q && (
             <button

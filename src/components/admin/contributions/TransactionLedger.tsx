@@ -309,7 +309,7 @@ export function TransactionLedger({
               onChange={(e) => patch({ q: e.target.value })}
               placeholder="Tìm lý do, thành viên, mã hoặc người ghi nhận…"
               aria-label="Tìm kiếm giao dịch điểm"
-              className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-8 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-xl border-none bg-background py-2 pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             {filters.q && (
               <button
