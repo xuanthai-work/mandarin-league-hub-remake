@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
-  ArrowLeft,
   Download,
   GraduationCap,
   Trash2,
@@ -12,12 +11,21 @@ import {
   FolderOpen,
   ListChecks,
   MessageCircle,
+  Search,
   Users,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEPARTMENTS } from "@/lib/data/departments";
 import { csvCell } from "@/lib/csv";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/departments")({
   staticData: { sitemap: false },
@@ -50,60 +58,19 @@ async function load() {
 
 function DepartmentsPage() {
   const { data, isLoading } = useQuery({ queryKey: ["admin-departments"], queryFn: load });
-  const [sel, setSel] = useState<string | null>(null);
+  const [sel, setSel] = useState<string>(DEPARTMENTS[0]?.id ?? "");
   if (isLoading || !data)
     return <p className="p-10 text-center text-muted-foreground">Đang tải…</p>;
   const byDept = (id: string) => data.members.filter((m) => m.department === id);
 
-  if (sel)
-    return (
-      <DeptDetail
-        id={sel}
-        all={data.members}
-        members={byDept(sel)}
-        channel={data.channels.find((c) => c.department === sel)}
-        onBack={() => setSel(null)}
-        onPick={setSel}
-      />
-    );
-
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
-      <AdminPageHeader
-        title="8 Ban chuyên môn"
-        description="Chọn một Ban để xem thành viên, kênh Zalo và tài liệu của Ban."
-      />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {DEPARTMENTS.map((d) => {
-          const ms = byDept(d.id);
-          const head = ms.find((m) => m.position === "Trưởng Ban");
-          return (
-            <button
-              key={d.id}
-              onClick={() => setSel(d.id)}
-              className="flex flex-col rounded-2xl border border-border bg-card p-5 text-left transition hover:border-gold hover:shadow-md"
-            >
-              <div className="font-bold text-primary-deep">{d.name}</div>
-              <div className="text-xs text-muted-foreground">{d.nameEn}</div>
-              <div className="mt-4 text-sm">
-                <span className="text-muted-foreground">Trưởng Ban: </span>
-                {head?.full_name ?? (
-                  <span className="italic text-muted-foreground">Đang khuyết</span>
-                )}
-              </div>
-              <div className="mt-1 flex items-center gap-1 text-sm">
-                <Users className="h-4 w-4 text-gold" />
-                {ms.length} thành viên
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {ms.filter((m) => m.hasAccount).length}/{ms.length} đã có tài khoản
-              </div>
-              <span className="mt-4 text-sm font-semibold text-primary">Vào Ban →</span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    <DeptDetail
+      id={sel}
+      all={data.members}
+      members={byDept(sel)}
+      channel={data.channels.find((c) => c.department === sel)}
+      onPick={setSel}
+    />
   );
 }
 
@@ -115,24 +82,31 @@ function DeptDetail({
   all,
   members,
   channel,
-  onBack,
   onPick,
 }: {
   id: string;
   all: Member[];
   members: Member[];
   channel: Channel | undefined;
-  onBack: () => void;
   onPick: (id: string) => void;
 }) {
+  const [q, setQ] = useState("");
   const d = DEPARTMENTS.find((x) => x.id === id)!;
   const sorted = [...members].sort(
     (a, b) =>
       (RANK[a.position] ?? 9) - (RANK[b.position] ?? 9) ||
       a.member_code.localeCompare(b.member_code),
   );
-  const leaders = sorted.filter((m) => m.position in RANK);
-  const rest = sorted.filter((m) => !(m.position in RANK));
+  const term = q.trim().toLowerCase();
+  const visible = term
+    ? sorted.filter((m) =>
+        `${m.member_code} ${m.full_name} ${m.email} ${m.position}`.toLowerCase().includes(term),
+      )
+    : sorted;
+  const leaders = visible.filter((m) => m.position in RANK);
+  const rest = visible.filter((m) => !(m.position in RANK));
+  const countDept = (deptId: string) => all.filter((m) => m.department === deptId).length;
+  const emptyText = term ? "Không có thành viên khớp tìm kiếm." : "Chưa có thành viên.";
 
   const exportCsv = () => {
     const head = [
@@ -167,33 +141,15 @@ function DeptDetail({
 
   return (
     <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Tất cả Ban
-      </button>
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
-        {DEPARTMENTS.map((x) => (
-          <button
-            key={x.id}
-            onClick={() => onPick(x.id)}
-            className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${x.id === id ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-accent"}`}
-          >
-            {x.name}
-          </button>
-        ))}
-      </div>
       <AdminPageHeader
-        className="mt-3"
+        className="mb-4"
         title={d.name}
         description={d.description}
         actions={
           <>
             <Link
               to="/admin/tasks"
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
             >
               <ListChecks className="h-4 w-4" />
               Giao việc cho Ban
@@ -209,10 +165,66 @@ function DeptDetail({
         }
       />
 
+      <div className="mb-4 flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="text"
+            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm tên, mã, email, chức vụ…"
+            aria-label="Tìm kiếm thành viên trong Ban"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Xóa nội dung tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        <Select value={id} onValueChange={onPick}>
+          <SelectTrigger
+            aria-label="Chọn Ban"
+            className="h-9 w-[260px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+          >
+            <SelectValue>
+              <span className="flex min-w-0 items-center gap-2">
+                <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="truncate">{d.name}</span>
+                <span className="ml-auto text-muted-foreground">({countDept(id)})</span>
+              </span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            {DEPARTMENTS.map((x) => (
+              <SelectItem key={x.id} value={x.id} className="text-xs">
+                <span className="flex w-full items-center justify-between gap-2">
+                  <span className="truncate">{x.name}</span>
+                  <span className="text-muted-foreground">({countDept(x.id)})</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Group title="Lãnh đạo Ban" rows={leaders} empty="Chưa có Trưởng Ban / Phó Ban." />
-          <Group title="Thành viên" rows={rest} empty="Chưa có thành viên." />
+          <Group
+            title="Lãnh đạo Ban"
+            rows={leaders}
+            empty={term ? "Không có lãnh đạo khớp tìm kiếm." : "Chưa có Trưởng Ban / Phó Ban."}
+          />
+          <Group title="Thành viên" rows={rest} empty={emptyText} />
         </div>
         <div className="space-y-6">
           <AdvisorBox key={id} dept={id} all={all} />
