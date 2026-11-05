@@ -976,62 +976,78 @@ function CertificateDrawer({
           <section className="space-y-3">
             <h3 className={SECTION_TITLE}>Tệp chứng nhận gốc & AI Scanner</h3>
             <div className="space-y-2">
-              <label
-                className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-3.5 transition-colors hover:bg-secondary/40"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  onPickFile(e.dataTransfer.files[0]);
-                }}
-              >
-                <Paperclip className="h-4 w-4 shrink-0 text-primary" />
-                <span className="flex-1 truncate text-xs text-muted-foreground">
-                  {file
-                    ? `${file.name} · ${(file.size / 1024).toFixed(0)}KB`
-                    : value.file_path
-                      ? `Đã đính kèm: ${value.file_name} — chọn tệp khác để thay thế`
-                      : "Kéo thả hoặc bấm để chọn tệp (PDF/Ảnh ≤ 1MB)"}
-                </span>
-                <input
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  onChange={(e) => onPickFile(e.target.files?.[0])}
-                />
-              </label>
+              <div className="flex items-stretch gap-2">
+                <label
+                  title="Kéo thả hoặc bấm để chọn tệp khác"
+                  className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-3.5 transition-colors hover:bg-secondary/40"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    onPickFile(e.dataTransfer.files[0]);
+                  }}
+                >
+                  <Paperclip className="h-4 w-4 shrink-0 text-primary" />
+                  {file || value.file_path ? (
+                    <>
+                      <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+                        {file
+                          ? `${file.name} · ${(file.size / 1024).toFixed(0)}KB`
+                          : value.file_name || "Tệp đã đính kèm"}
+                      </span>
+                      <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">
+                        Bấm để thay
+                      </span>
+                    </>
+                  ) : (
+                    <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                      Kéo thả hoặc bấm để chọn tệp (PDF/Ảnh ≤ 1MB)
+                    </span>
+                  )}
+                  <input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => onPickFile(e.target.files?.[0])}
+                  />
+                </label>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {file && (
-                  <button
-                    type="button"
-                    disabled={extracting}
-                    onClick={onRunExtract}
-                    className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
-                  >
-                    <Wand2 className="h-3.5 w-3.5" />
-                    {extracting ? "AI đang đọc…" : "AI đọc & điền sẵn thông tin"}
-                  </button>
-                )}
                 {value.file_path && (
                   <button
                     type="button"
                     onClick={onViewFile}
-                    className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-lg border border-border px-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                    title="Xem tệp gốc"
+                    aria-label="Xem tệp gốc"
+                    className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                    Xem tệp gốc
+                    <span className="hidden sm:inline">Xem</span>
                   </button>
                 )}
                 {(file || value.file_path) && (
                   <button
                     type="button"
                     onClick={onRemoveFile}
-                    className="inline-flex h-8 cursor-pointer items-center rounded-lg px-2 text-xs text-destructive hover:underline"
+                    title="Gỡ tệp đính kèm"
+                    aria-label="Gỡ tệp đính kèm"
+                    className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-destructive/30 px-3 text-xs text-destructive transition-colors hover:bg-destructive/10"
                   >
-                    Gỡ tệp đính kèm
+                    <X className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Gỡ</span>
                   </button>
                 )}
               </div>
+
+              {file && (
+                <button
+                  type="button"
+                  disabled={extracting}
+                  onClick={onRunExtract}
+                  className="inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-lg bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
+                >
+                  <Wand2 className="h-3.5 w-3.5" />
+                  {extracting ? "AI đang đọc…" : "AI đọc & điền sẵn thông tin"}
+                </button>
+              )}
 
               {aiNote && (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
