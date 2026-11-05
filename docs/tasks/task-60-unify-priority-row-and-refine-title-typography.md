@@ -1,6 +1,7 @@
 # Task Archive: TASK-60-UNIFY-PRIORITY-ROW-AND-REFINE-TITLE-TYPOGRAPHY
 
 ## 1. Metadata
+
 - **Task ID**: `TASK-60-UNIFY-PRIORITY-ROW-AND-REFINE-TITLE-TYPOGRAPHY`
 - **Tên Task**: Gộp hàng ngang Mức độ ưu tiên (`Select`) + Hạn chót (`DatePicker`) và tinh chỉnh Typography ô Tiêu đề nhiệm vụ
 - **Ngày hoàn thành**: 2026-11-04
@@ -11,6 +12,7 @@
 ---
 
 ## 2. Mục tiêu & Phạm vi
+
 1. **Đồng nhất "Mức độ ưu tiên" và gộp ngang với "Hạn chót"**:
    - `TaskCreateModal.tsx`: Chuyển "Mức độ ưu tiên" từ 3 nút bấm sang component `Select` (chuẩn hóa đồng bộ với `TaskDetailModal.tsx`).
    - Xếp "Mức độ ưu tiên" (`Select`) và "Hạn chót" (`DatePicker`) song song trên cùng 1 hàng ngang bằng `<div className="grid grid-cols-2 gap-3">`.
@@ -22,12 +24,14 @@
 ---
 
 ## 3. Files Modified
+
 - `src/components/admin/tasks/TaskCreateModal.tsx`
 - `src/components/admin/tasks/TaskDetailModal.tsx`
 
 ---
 
 ## 4. Acceptance Criteria Verification
+
 - [x] Chữ trong ô Tiêu đề nhiệm vụ được tinh chỉnh vừa vặn (`text-sm font-semibold`, padding `px-2.5 py-1.5`), không bị quá to so với khung viền ẩn, chữ không bị chạm mép bo góc `rounded-xl`.
 - [x] Cả `TaskCreateModal` và `TaskDetailModal` đều sử dụng component `Select` cho "Mức độ ưu tiên" (Thấp, Vừa, Cao).
 - [x] "Mức độ ưu tiên" và "Hạn chót" nằm trên **cùng 1 hàng ngang** (chia 2 cột cân xứng `grid-cols-2 gap-3`).

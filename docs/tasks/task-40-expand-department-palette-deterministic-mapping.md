@@ -3,12 +3,15 @@
 ## Status: PASS
 
 ## Metadata
+
 - **Completed at**: 2026-11-03
 - **Auditor**: Gemini (BA & QA Auditor)
 - **Component**: `src/components/admin/tasks/shared.ts`
 
 ## Details
+
 Mở rộng bảng màu nhận diện pastel cho các thẻ nhiệm vụ:
+
 1. Ánh xạ trực tiếp màu nhận diện riêng biệt cho 9 Ban chính thức của TML:
    - `executive`: Royal Indigo
    - `academic`: Sky Blue

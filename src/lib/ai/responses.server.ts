@@ -3,7 +3,11 @@ import { streamText, type ModelMessage } from "ai";
 import { createLovableAiGatewayRunIdFetch, getLovableAiGatewayRunId } from "./run-id.server";
 
 /** One-shot Responses call through Lovable AI Gateway; streamed, final text consumed server-side. */
-export async function runResponsesText(request: Request, instructions: string, messages: ModelMessage[]) {
+export async function runResponsesText(
+  request: Request,
+  instructions: string,
+  messages: ModelMessage[],
+) {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("AI chưa được cấu hình.");
   const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));

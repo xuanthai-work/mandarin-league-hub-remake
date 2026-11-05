@@ -10,7 +10,9 @@
 ---
 
 ## 1. Mục tiêu & Bối cảnh
+
 Trước đây, thanh điều hướng quản trị (`/admin`) hiển thị một danh sách phẳng gồm 18 module liên tiếp, gây khó theo dõi và chưa mang tính nhận diện thương hiệu cao. Task này tái thiết kế toàn diện Sidebar Admin:
+
 - Phân nhóm 18 module thành 4 nhóm nghiệp vụ logic.
 - Nâng cấp trải nghiệm thị giác (Visual Craft) theo tiêu chuẩn Impeccable: nhận diện thương hiệu The Mandarin League viền gold, typography có chiều sâu, trạng thái active/hover thanh thoát với dot indicator.
 - Tích hợp User Profile Card cố định ở chân sidebar (hiển thị email, chức danh, nút Thẻ thành viên và Đăng xuất).
@@ -21,6 +23,7 @@ Trước đây, thanh điều hướng quản trị (`/admin`) hiển thị mộ
 ## 2. Chi tiết thực hiện
 
 ### 2.1. Cấu trúc dữ liệu điều hướng (`src/lib/admin-nav.ts`)
+
 - Định nghĩa kiểu dữ liệu nhóm `AdminNavGroup`:
   ```ts
   export type AdminNavGroup = { title?: string; sections: AdminSection[] };
@@ -34,6 +37,7 @@ Trước đây, thanh điều hướng quản trị (`/admin`) hiển thị mộ
 - Cung cấp hàm `navGroupsFor(allowed)`: lọc thông minh các module người dùng được phép truy cập và tự động ẩn các nhóm không còn mục nào.
 
 ### 2.2. Giao diện Sidebar & Mobile Drawer (`src/routes/_authenticated/admin.tsx`)
+
 - Tạo component `SidebarPanel` dùng chung cho cả desktop sidebar và mobile slide-out drawer:
   - **Brand Header**: Logo TML trong khung tròn viền gold ánh kim, hiệu ứng đổ bóng mềm, tên tổ chức dùng font `font-han` cùng tag `ADMIN PORTAL` (`text-[9px] tracking-widest font-mono text-gold bg-gold/10`).
   - **Nhóm điều hướng**: Tiêu đề nhóm `text-[10px] font-bold uppercase tracking-wider text-muted-foreground`, khoảng cách nhịp điệu `pt-5 pb-1.5`.
@@ -46,15 +50,16 @@ Trước đây, thanh điều hướng quản trị (`/admin`) hiển thị mộ
 
 ## 3. Kết quả QA & Verification Gates
 
-| Hạng mục kiểm tra | Lệnh thực hiện | Kết quả | Ghi chú |
-| :--- | :--- | :--- | :--- |
-| **Logic & Syntax Check** | `tsc --noEmit` | **PASS** | Không phát sinh lỗi kiểu dữ liệu mới |
-| **Test Suites** | `pnpm test` | **PASS** | 15 test suites, 77/77 tests passed |
-| **Production Build** | `pnpm run build` | **PASS** | Hoàn thành trong 2.69s, bundle Nitro/Vite sạch sẽ |
-| **Quyền truy cập (RLS & Roles)**| Audit code review | **PASS** | `allowedSections` và kiểm tra quyền được bảo toàn |
-| **UX & Responsive** | Audit code review | **PASS** | Hoạt động đồng bộ cả Desktop (w-272px) và Mobile Drawer (w-288px) |
+| Hạng mục kiểm tra                | Lệnh thực hiện    | Kết quả  | Ghi chú                                                           |
+| :------------------------------- | :---------------- | :------- | :---------------------------------------------------------------- |
+| **Logic & Syntax Check**         | `tsc --noEmit`    | **PASS** | Không phát sinh lỗi kiểu dữ liệu mới                              |
+| **Test Suites**                  | `pnpm test`       | **PASS** | 15 test suites, 77/77 tests passed                                |
+| **Production Build**             | `pnpm run build`  | **PASS** | Hoàn thành trong 2.69s, bundle Nitro/Vite sạch sẽ                 |
+| **Quyền truy cập (RLS & Roles)** | Audit code review | **PASS** | `allowedSections` và kiểm tra quyền được bảo toàn                 |
+| **UX & Responsive**              | Audit code review | **PASS** | Hoạt động đồng bộ cả Desktop (w-272px) và Mobile Drawer (w-288px) |
 
 ---
 
 ## 4. Kết luận
+
 Task 07 đã hoàn thành xuất sắc và đáp ứng 100% tiêu chí nghiệm thu. Đã sẵn sàng commit vào nhánh chính.

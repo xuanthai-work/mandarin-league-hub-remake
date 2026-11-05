@@ -8,7 +8,9 @@
 ---
 
 ## 1. Objective
+
 Chuẩn hóa cấu hình Supabase Client, Auth Storage và Drizzle ORM để loại bỏ hoàn toàn các tham chiếu và cơ chế đặc thù của Lovable Cloud:
+
 - Thay thế cơ chế postMessage iframe chuyên biệt cho Lovable preview domains (`lovable.app`, `lovableproject.com`) trong `src/integrations/supabase/previewAuthStorage.ts` bằng storage tiêu chuẩn (`localStorage`).
 - Dọn dẹp các thông báo lỗi hardcode `"Connect Supabase in Lovable Cloud."` trong `client.ts`, `client.server.ts` và `auth-middleware.ts`.
 - Chuẩn hóa biến kết nối migration trong `drizzle.config.ts` sang `DATABASE_URL` / `DIRECT_URL`.
@@ -16,6 +18,7 @@ Chuẩn hóa cấu hình Supabase Client, Auth Storage và Drizzle ORM để lo�
 ---
 
 ## 2. Changes Made
+
 1. **`src/integrations/supabase/previewAuthStorage.ts`**:
    - Rút gọn từ 143 dòng code phức tạp xử lý postMessage iframe trên các domain `lovable.app` xuống còn 13 dòng.
    - Hàm `browserAuthStorage()` trả về trực tiếp `window.localStorage` khi ở môi trường trình duyệt client, và `undefined` khi render SSR.
@@ -31,6 +34,7 @@ Chuẩn hóa cấu hình Supabase Client, Auth Storage và Drizzle ORM để lo�
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 4/4 tiêu chí.
 - **Verification Gates**:
   - `pnpm test`: PASS (15 test suites, 77/77 tests passed).

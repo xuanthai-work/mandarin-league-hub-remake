@@ -1,5 +1,14 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Crown, Medal, Search, Trophy, UserRound, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Crown,
+  Medal,
+  Search,
+  Trophy,
+  UserRound,
+  X,
+} from "lucide-react";
 
 import { TierBadge } from "@/components/TierBadge";
 import {
@@ -391,9 +400,7 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
               })}
               {pagedRest.length === 0 && (
                 <li className="px-4 py-6 text-center text-xs text-muted-foreground">
-                  {top.length > 0
-                    ? "Không có thêm thành viên nào."
-                    : "Chưa có thành viên."}
+                  {top.length > 0 ? "Không có thêm thành viên nào." : "Chưa có thành viên."}
                 </li>
               )}
             </ul>
@@ -410,8 +417,8 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
                   </>
                 ) : (
                   <>
-                    Hiển thị <b className="text-foreground">{board.length}</b> / {board.length} thành
-                    viên
+                    Hiển thị <b className="text-foreground">{board.length}</b> / {board.length}{" "}
+                    thành viên
                   </>
                 )}
               </span>

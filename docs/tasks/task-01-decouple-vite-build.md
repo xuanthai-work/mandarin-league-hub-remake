@@ -8,11 +8,13 @@
 ---
 
 ## 1. Objective
+
 Tách hoàn toàn cấu hình build khỏi `@lovable.dev/vite-tanstack-config`, chuyển `vite.config.ts` sang cấu hình chuẩn độc lập sử dụng plugins chính thức từ hệ sinh thái Vite/TanStack Start, đồng thời gỡ bỏ các package `@lovable.dev/*` liên quan đến build khỏi `package.json` và `bunfig.toml`.
 
 ---
 
 ## 2. Changes Made
+
 1. **`vite.config.ts`**:
    - Viết lại độc lập hoàn toàn bằng `defineConfig` và `loadEnv` từ `vite`.
    - Cấu hình tường minh các plugin:
@@ -41,6 +43,7 @@ Tách hoàn toàn cấu hình build khỏi `@lovable.dev/vite-tanstack-config`, 
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 4/4 tiêu chí.
 - **Verification Gates**:
   - `pnpm test`: PASS (15 test suites, 77/77 tests passed).

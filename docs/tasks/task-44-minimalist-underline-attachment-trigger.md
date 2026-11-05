@@ -7,7 +7,9 @@
 ---
 
 ### 1. Bối cảnh & Yêu cầu từ User
+
 Sau khi tính năng "Tài liệu liên quan" được tích hợp, User muốn giao diện trở nên tối giản và thanh lịch hơn:
+
 1. Bỏ dòng chữ tiêu đề "TÀI LIỆU LIÊN QUAN".
 2. Bỏ viền nét đứt và khối button capsule.
 3. Chuyển thành một dòng text link gạch chân tối giản (`📎 Thêm tài liệu liên quan`) ngay bên dưới ô mô tả.
@@ -17,6 +19,7 @@ Sau khi tính năng "Tài liệu liên quan" được tích hợp, User muốn g
 ### 2. Kế hoạch triển khai & Thay đổi thực tế
 
 #### File mục tiêu: `src/components/admin/tasks/TaskDetailModal.tsx`
+
 - Loại bỏ tiêu đề `<span className={label}>Tài liệu liên quan</span>`.
 - Thay thế nút capsule có viền nét đứt thành text link gạch chân tối giản:
   ```tsx
@@ -35,6 +38,7 @@ Sau khi tính năng "Tài liệu liên quan" được tích hợp, User muốn g
 ---
 
 ### 3. Verification Gates
+
 - `pnpm exec tsc --noEmit` -> PASS (Dev đã chạy và xác nhận 0 lỗi).
 - `pnpm run test` -> PASS (Dev đã chạy và xác nhận pass).
 - Tuân thủ quy định không chạy `pnpm run build`.

@@ -8,11 +8,13 @@
 ---
 
 ## 1. Objective
+
 Loại bỏ cơ chế tự động gộp nhóm (auto-grouping theo title + thời gian tạo) trên bảng Kanban. Khi một công việc được giao cho nhiều thành viên, mỗi thành viên sẽ có một thẻ card Kanban riêng biệt hiển thị duy nhất avatar và họ tên của chính mình. Tiến độ của từng người (Chờ tiếp nhận, Đang làm, Chờ duyệt, Hoàn thành) được hiển thị và di chuyển độc lập ở đúng cột trạng thái tương ứng.
 
 ---
 
 ## 2. Changes Made
+
 1. **`src/components/admin/tasks/shared.ts`**:
    - Cập nhật hàm `groupTasks`: Bỏ gom nhóm theo `buckets` và `GROUP_WINDOW_MS`. Ánh xạ 1-1 mỗi bản ghi `task` thành một `GroupedTask` riêng biệt với `assignees: [assignee]` và `rawTasks: [task]`.
    - Mỗi thẻ card Kanban luôn mang `assignees.length === 1`, hiển thị avatar đơn và họ tên thành viên nhận việc.
@@ -24,6 +26,7 @@ Loại bỏ cơ chế tự động gộp nhóm (auto-grouping theo title + thờ
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 3/3 tiêu chí.
 - **Verification Gates**:
   - `pnpm exec tsc --noEmit`: PASS (0 lỗi type).

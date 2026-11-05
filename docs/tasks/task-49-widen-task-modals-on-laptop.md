@@ -8,11 +8,13 @@
 ---
 
 ## 1. Objective
+
 Tăng chiều rộng tối đa (max-width) của hai modal quản lý nhiệm vụ (`TaskCreateModal` và `TaskDetailModal`) từ `max-w-4xl` (896px) lên `lg:max-w-5xl xl:max-w-6xl` (1024px ~ 1152px) trên màn hình laptop và desktop để bố cục 2 cột Bento 7/5 thoáng mắt, không bị co cụm các trường thuộc tính.
 
 ---
 
 ## 2. Changes Made
+
 1. **`src/components/admin/tasks/TaskCreateModal.tsx`**:
    - Container dialog nâng lên `max-w-4xl lg:max-w-5xl xl:max-w-6xl`.
 2. **`src/components/admin/tasks/TaskDetailModal.tsx`**:
@@ -22,6 +24,7 @@ Tăng chiều rộng tối đa (max-width) của hai modal quản lý nhiệm v�
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 3/3 tiêu chí.
 - **Verification Gates**:
   - `pnpm exec tsc --noEmit`: PASS (0 lỗi type).

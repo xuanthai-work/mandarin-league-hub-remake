@@ -8,11 +8,13 @@
 ---
 
 ## 1. Objective
+
 Loại bỏ hoàn toàn ô input text nhập số tự do ở mục "Điểm thưởng cống hiến", thay thế bằng cụm 3 nút chọn phân đoạn (Segmented Buttons) chuẩn hóa cố định gồm 3 mức: **5đ** (Việc nhỏ), **10đ** (Việc vừa), **20đ** (Dự án lớn). Áp dụng đồng bộ cho cả `TaskCreateModal` và `TaskDetailModal`.
 
 ---
 
 ## 2. Changes Made
+
 1. **`src/components/admin/tasks/TaskCreateModal.tsx`**:
    - Xóa bỏ thẻ `<input type="number">`.
    - Bổ sung cụm 3 nút chọn dạng `grid grid-cols-3 gap-1.5` hiển thị `5đ / 10đ / 20đ` kèm nhãn gợi ý (`Việc nhỏ`, `Việc vừa`, `Dự án lớn`).
@@ -28,6 +30,7 @@ Loại bỏ hoàn toàn ô input text nhập số tự do ở mục "Điểm th�
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 5/5 tiêu chí.
 - **Verification Gates**:
   - `pnpm exec tsc --noEmit`: PASS (0 lỗi type).

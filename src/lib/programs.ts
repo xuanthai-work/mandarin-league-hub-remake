@@ -5,10 +5,30 @@ import { supabase } from "@/integrations/supabase/client";
 export type CourseType = "FREE_COMMUNITY" | "PAID" | "SPECIAL_PROGRAM";
 export type ProgramStatus = "enrolling" | "upcoming" | "ongoing" | "ended";
 export type Program = {
-  id: string; title: string; slug: string; short_description: string; description: string; thumbnail_path: string;
-  level: string; course_type: CourseType; teacher_id: string | null; duration: string; schedule: string; format: string;
-  price: number; capacity: number; facebook_url: string; registration_url: string; website_url: string;
-  status: ProgramStatus; is_published: boolean; show_in_courses: boolean; show_in_activities: boolean; created_by: string | null; created_at: string; deleted_at: string | null;
+  id: string;
+  title: string;
+  slug: string;
+  short_description: string;
+  description: string;
+  thumbnail_path: string;
+  level: string;
+  course_type: CourseType;
+  teacher_id: string | null;
+  duration: string;
+  schedule: string;
+  format: string;
+  price: number;
+  capacity: number;
+  facebook_url: string;
+  registration_url: string;
+  website_url: string;
+  status: ProgramStatus;
+  is_published: boolean;
+  show_in_courses: boolean;
+  show_in_activities: boolean;
+  created_by: string | null;
+  created_at: string;
+  deleted_at: string | null;
   thumb?: string;
 };
 
@@ -19,14 +39,28 @@ export const TYPE_LABEL: Record<CourseType, { label: string; tone: string }> = {
   SPECIAL_PROGRAM: { label: "Chương trình đặc biệt", tone: "bg-gold/20 text-primary-deep" },
 };
 export const STATUS_LABEL: Record<ProgramStatus, string> = {
-  enrolling: "Đang tuyển sinh", upcoming: "Sắp mở", ongoing: "Đang diễn ra", ended: "Đã kết thúc",
+  enrolling: "Đang tuyển sinh",
+  upcoming: "Sắp mở",
+  ongoing: "Đang diễn ra",
+  ended: "Đã kết thúc",
 };
 
 export const programFee = (p: Pick<Program, "course_type" | "price">) =>
-  p.course_type === "FREE_COMMUNITY" ? "Miễn phí cộng đồng" : p.price > 0 ? `${p.price.toLocaleString("vi-VN")} VNĐ` : "Liên hệ";
+  p.course_type === "FREE_COMMUNITY"
+    ? "Miễn phí cộng đồng"
+    : p.price > 0
+      ? `${p.price.toLocaleString("vi-VN")} VNĐ`
+      : "Liên hệ";
 
 export const slugify = (s: string) =>
-  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
 
 export async function withThumbs(rows: Program[]): Promise<Program[]> {
   const paths = rows.map((r) => r.thumbnail_path).filter(Boolean);
@@ -41,7 +75,12 @@ export function usePublishedPrograms() {
   return useQuery({
     queryKey: ["public-programs"],
     queryFn: async () => {
-      const { data } = await supabase.from("courses").select("*").eq("is_published", true).is("deleted_at", null).order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("is_published", true)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
       return withThumbs((data ?? []) as Program[]);
     },
   });
@@ -51,7 +90,13 @@ export function useProgram(slug: string) {
   return useQuery({
     queryKey: ["public-program", slug],
     queryFn: async () => {
-      const { data } = await supabase.from("courses").select("*").eq("slug", slug).eq("is_published", true).is("deleted_at", null).maybeSingle();
+      const { data } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("slug", slug)
+        .eq("is_published", true)
+        .is("deleted_at", null)
+        .maybeSingle();
       return data ? (await withThumbs([data as Program]))[0] : null;
     },
   });

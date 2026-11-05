@@ -30,13 +30,7 @@ import { CandidatePreviewDrawer } from "./CandidatePreviewDrawer";
 import { DepartmentRail } from "./DepartmentRail";
 import { deptOf } from "./rail";
 import { TopicAccordionCard } from "./TopicAccordionCard";
-import {
-  isChoiceKind,
-  type Confirm,
-  type Run,
-  type StudioData,
-  type Swap,
-} from "./types";
+import { isChoiceKind, type Confirm, type Run, type StudioData, type Swap } from "./types";
 
 /** Marks the whole-bank seed action in `loadingBank`. */
 const ALL = "all";
@@ -203,9 +197,7 @@ export function QuestionBankStudio({
 
   /** Removes a saved custom position from every topic of the selected department. */
   const deleteDepartmentPosition = async (position: string) => {
-    const affected = deptTopics.filter((t) =>
-      parseTopicPositions(t.position).includes(position),
-    );
+    const affected = deptTopics.filter((t) => parseTopicPositions(t.position).includes(position));
     if (affected.length === 0) return;
     await run(
       Promise.all(

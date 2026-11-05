@@ -42,8 +42,16 @@ export type Course = {
 };
 
 export type ActivityType =
-  | "Workshop" | "Cuộc thi" | "Webinar" | "Camp" | "Giao lưu Việt Nam – Trung Quốc"
-  | "Hoạt động thanh niên" | "AIGC" | "Học bổng" | "Dự án cộng đồng" | "Tình nguyện";
+  | "Workshop"
+  | "Cuộc thi"
+  | "Webinar"
+  | "Camp"
+  | "Giao lưu Việt Nam – Trung Quốc"
+  | "Hoạt động thanh niên"
+  | "AIGC"
+  | "Học bổng"
+  | "Dự án cộng đồng"
+  | "Tình nguyện";
 
 export type Activity = {
   id: string;
@@ -59,8 +67,14 @@ export type Activity = {
 };
 
 export type NewsCategory =
-  | "Học tiếng Trung" | "HSK" | "Giáo dục" | "AI" | "Thanh niên"
-  | "Văn hóa Trung Hoa" | "Hoạt động TML" | "Cơ hội học tập";
+  | "Học tiếng Trung"
+  | "HSK"
+  | "Giáo dục"
+  | "AI"
+  | "Thanh niên"
+  | "Văn hóa Trung Hoa"
+  | "Hoạt động TML"
+  | "Cơ hội học tập";
 
 export type NewsArticle = {
   slug: string;
@@ -74,7 +88,8 @@ export type NewsArticle = {
   demo: boolean;
 };
 
-export type PartnerCategory = "Giáo dục" | "Công nghệ" | "Cộng đồng" | "Truyền thông" | "Doanh nghiệp" | "Tổ chức xã hội";
+export type PartnerCategory =
+  "Giáo dục" | "Công nghệ" | "Cộng đồng" | "Truyền thông" | "Doanh nghiệp" | "Tổ chức xã hội";
 
 export type Partner = {
   id: string;

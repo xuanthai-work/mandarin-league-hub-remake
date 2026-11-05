@@ -1,7 +1,9 @@
 # TASK-14-CLEANUP-DEPRECATION-WARNINGS
 
 ## 1. Overview & Objective
+
 Dọn dẹp triệt để các cảnh báo lỗi thời (Deprecation Warnings) xuất hiện trong terminal khi chạy môi trường dev và build:
+
 1. Di chuyển toàn bộ cú pháp TanStack Start `createServerFn().inputValidator(...)` sang cú pháp chuẩn mới `createServerFn().validator(...)`.
 2. Thay thế plugin ngoài `vite-tsconfig-paths` bằng tùy chọn gốc có sẵn của Vite `resolve.tsconfigPaths: true` trong `vite.config.ts`.
 3. Giữ terminal sạch sẽ 100%, không còn bị spam warning màu vàng khi bundle hoặc SSR build.
@@ -9,6 +11,7 @@ Dọn dẹp triệt để các cảnh báo lỗi thời (Deprecation Warnings) x
 ---
 
 ## 2. Scope & Files Impacted
+
 - **11 file Server Functions trong `src/lib/*.functions.ts`**:
   - `src/lib/accounts.functions.ts`
   - `src/lib/activities.functions.ts`
@@ -27,6 +30,7 @@ Dọn dẹp triệt để các cảnh báo lỗi thời (Deprecation Warnings) x
 ---
 
 ## 3. Implementation Details
+
 1. **Thay thế `.inputValidator` thành `.validator`**:
    - Quét qua toàn bộ 11 file server functions trong thư mục `src/lib/`.
    - Chuyển đổi toàn bộ 19 vị trí `.inputValidator((d) => ...)` sang `.validator((d) => ...)`.
@@ -38,6 +42,7 @@ Dọn dẹp triệt để các cảnh báo lỗi thời (Deprecation Warnings) x
 ---
 
 ## 4. Verification & QA Audit Results
+
 - **Acceptance Criteria Verification**:
   - [x] Không còn file nào trong codebase sử dụng `.inputValidator(`.
   - [x] Không còn warning vàng từ TanStack Start về `inputValidator` trong terminal.

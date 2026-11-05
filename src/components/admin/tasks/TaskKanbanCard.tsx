@@ -80,9 +80,7 @@ export function TaskKanbanCard({
         </span>
       </div>
 
-      <h3 className="mt-2 text-[13px] font-semibold leading-snug text-foreground">
-        {group.title}
-      </h3>
+      <h3 className="mt-2 text-[13px] font-semibold leading-snug text-foreground">{group.title}</h3>
 
       {group.status === "revision" && revisionNote && (
         <p className="mt-2 line-clamp-2 rounded-lg bg-destructive/5 px-2 py-1 text-[10px] text-destructive">

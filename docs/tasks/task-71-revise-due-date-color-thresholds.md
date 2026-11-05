@@ -1,6 +1,7 @@
 # Task Archive: TASK-71-REVISE-DUE-DATE-COLOR-THRESHOLDS
 
 ## 1. Metadata
+
 - **Task ID**: `TASK-71-REVISE-DUE-DATE-COLOR-THRESHOLDS`
 - **Tên Task**: Điều chỉnh lại các mốc màu sắc cảnh báo hạn thời gian theo logic người dùng
 - **Ngày hoàn thành**: 2026-11-04
@@ -11,6 +12,7 @@
 ---
 
 ## 2. Mục tiêu & Phạm vi
+
 - **Vấn đề**: Hạn chót "Còn 1 ngày" vốn là sát nút deadline nhưng lại hiển thị màu xanh dương (`text-sky-600`), gây cảm giác sai lệch về độ khẩn cấp.
 - **Giải pháp**: Cập nhật hàm `dueBadgeTone(due)` trong `src/components/admin/tasks/shared.ts` theo đúng 4 mốc màu logic:
   1. Không hạn: Màu xám (`text-muted-foreground`).
@@ -21,11 +23,13 @@
 ---
 
 ## 3. Files Modified
+
 - `src/components/admin/tasks/shared.ts`
 
 ---
 
 ## 4. Acceptance Criteria Verification
+
 - [x] Quá hạn: chữ màu Đỏ.
 - [x] Hạn hôm nay hoặc còn 1, 2, 3 ngày: chữ màu Cam.
 - [x] Còn trên 3 ngày: chữ màu Xanh dương.

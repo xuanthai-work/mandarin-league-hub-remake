@@ -9,7 +9,15 @@ import { parseDob } from "@/lib/recruitment";
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Popup date-of-birth picker with quick month/year dropdowns; value is DD/MM/YYYY. */
-export function DobPicker({ value, onChange, className }: { value: string; onChange: (v: string) => void; className?: string }) {
+export function DobPicker({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const iso = parseDob(value);
   const selected = iso ? new Date(iso + "T00:00:00") : undefined;
@@ -17,7 +25,14 @@ export function DobPicker({ value, onChange, className }: { value: string; onCha
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" className={cn(className, "flex items-center gap-2 text-left", !selected && "text-muted-foreground")}>
+        <button
+          type="button"
+          className={cn(
+            className,
+            "flex items-center gap-2 text-left",
+            !selected && "text-muted-foreground",
+          )}
+        >
           <CalendarIcon className="h-4 w-4 shrink-0 text-gold" />
           {selected ? value : "Chọn ngày tháng năm sinh"}
         </button>

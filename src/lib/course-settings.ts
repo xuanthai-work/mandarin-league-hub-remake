@@ -1,7 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type CourseSetting = { level: number; registration_open: boolean; fee_type: "free" | "paid"; fee_amount: number; capacity: number; lead_teacher_id?: string | null; co_teacher_ids?: string[]; assistant_ids?: string[] };
+export type CourseSetting = {
+  level: number;
+  registration_open: boolean;
+  fee_type: "free" | "paid";
+  fee_amount: number;
+  capacity: number;
+  lead_teacher_id?: string | null;
+  co_teacher_ids?: string[];
+  assistant_ids?: string[];
+};
 
 export const ENROLL_STATUS: Record<string, { label: string; tone: string }> = {
   pending: { label: "Đang chờ xét duyệt", tone: "bg-accent text-primary" },
@@ -19,6 +28,8 @@ export function formatFee(s?: Pick<CourseSetting, "fee_type" | "fee_amount">) {
 export function useCourseSettings() {
   return useQuery({
     queryKey: ["course-settings"],
-    queryFn: async () => ((await supabase.from("course_settings").select("*").order("level")).data ?? []) as CourseSetting[],
+    queryFn: async () =>
+      ((await supabase.from("course_settings").select("*").order("level")).data ??
+        []) as CourseSetting[],
   });
 }

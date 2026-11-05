@@ -3,6 +3,7 @@
 ## Status: PASS
 
 ### 1. Objective
+
 1. Cho phép thành viên chưa cấp email nội bộ vẫn hiển thị bình thường trong danh sách "Đang hoạt động" khi hồ sơ của họ ở trạng thái `active`.
 2. Tại cột "Tài khoản & Trạng thái", hiển thị rõ text `Chưa cấp email nội bộ` và nút `+ Cấp`.
 3. Chỉ thành viên đã có tài khoản nội bộ (`member_accounts`) mới xuất hiện trong danh sách giao nhiệm vụ (`admin.tasks.tsx` / `TaskCreateModal.tsx`).
@@ -11,6 +12,7 @@
 ---
 
 ### 2. Verification Results
+
 - `npx tsc --noEmit`: PASS
 - `npm test`: PASS (18 test files, 114 tests)
 - `npm run build`: PASS

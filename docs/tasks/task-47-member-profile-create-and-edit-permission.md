@@ -8,11 +8,13 @@
 ---
 
 ## 1. Objective
+
 Cập nhật quyền chi tiết `members.edit` từ "Chỉnh sửa thành viên" thành "Tạo & Chỉnh sửa thành viên", đồng thời mở rộng thẩm quyền trên cả tầng RLS database và UI Admin để nhân sự nắm giữ quyền này có thể tạo mới và chỉnh sửa hồ sơ thành viên (members profile) mà không cần phải cấp quyền Quản trị viên tối cao (`admin`). Các thao tác quản trị tài khoản hệ thống (tạo user Auth, cấp mật khẩu, gán vai trò hệ thống) vẫn được bảo toàn nguyên vẹn cho Quản trị viên (`admin`).
 
 ---
 
 ## 2. Changes Made
+
 1. **`src/lib/accounts.ts`**:
    - Cập nhật nhãn hiển thị trong danh mục `PERMISSIONS`: `["members.edit", "Tạo & Chỉnh sửa thành viên"]`. Giữ nguyên key `members.edit` để đảm bảo tương thích dữ liệu mảng permissions trong database.
 2. **`drizzle/migrations/0044_member_profile_edit_permission.sql` & `scripts/combined_migrations.sql`**:
@@ -30,7 +32,7 @@ Cập nhật quyền chi tiết `members.edit` từ "Chỉnh sửa thành viên"
 5. **`src/routes/_authenticated/admin.members.tsx`**:
    - Khai báo cờ `canEditMembers = isAdmin || permissions.includes("members.edit")`.
    - Nút Header "Thêm thành viên" hiển thị khi `canEditMembers`.
-   - `NewMemberDrawer`: Nhận cờ `canCreateAccount={isAdmin}`. Nếu không phải Admin, ẩn checkbox và khu vực cấp tài khoản đăng nhập nội bộ, hiển thị hướng dẫn rõ ràng: *"Tạo hồ sơ nhân sự. Tài khoản đăng nhập do Quản trị viên cấp sau."*
+   - `NewMemberDrawer`: Nhận cờ `canCreateAccount={isAdmin}`. Nếu không phải Admin, ẩn checkbox và khu vực cấp tài khoản đăng nhập nội bộ, hiển thị hướng dẫn rõ ràng: _"Tạo hồ sơ nhân sự. Tài khoản đăng nhập do Quản trị viên cấp sau."_
    - `MemberDrawer`: Nhận cờ `canEdit={canEditMembers}`. Cho phép người có quyền chỉnh sửa thông tin hồ sơ nhân sự (họ tên, SĐT, email, ban, vị trí, trạng thái). Khu vực quản trị tài khoản, reset mật khẩu và vai trò hệ thống vẫn chỉ hiển thị cho `isAdmin`.
 6. **`AGENTS.md`**:
    - Bổ sung ghi nhận quy tắc kiến trúc về phân quyền cấp độ hồ sơ của `members.edit`.
@@ -38,6 +40,7 @@ Cập nhật quyền chi tiết `members.edit` từ "Chỉnh sửa thành viên"
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 4/4 tiêu chí.
 - **Verification Gates**:
   - `pnpm exec tsc --noEmit`: **PASS** (0 lỗi type).

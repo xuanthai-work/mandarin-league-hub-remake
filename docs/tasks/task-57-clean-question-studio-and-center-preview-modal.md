@@ -3,6 +3,7 @@
 ## Status: PASS
 
 ### 1. Objective
+
 1. Đưa nút "Xem trước dạng ứng viên" lên cùng hàng với Tab tuyển dụng (`admin.recruitment.tsx`).
 2. Chuyển "Xem trước dạng ứng viên" từ Drawer trượt phải sang Modal Popup căn giữa màn hình với `motion.div`.
 3. Bỏ dòng kẻ ngang `<DropdownMenuSeparator />` trong dropdown menu lọc loại câu hỏi.
@@ -14,6 +15,7 @@
 ---
 
 ### 2. Verification Results
+
 - `npx tsc --noEmit`: PASS
 - `npm test`: PASS (18 test files, 114 tests)
 - `npm run build`: PASS

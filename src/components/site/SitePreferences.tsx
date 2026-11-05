@@ -12,9 +12,39 @@ import {
 
 function Flag({ code }: { code: Lang }) {
   const cls = "h-4 w-6 shrink-0 overflow-hidden rounded-[3px] shadow-sm ring-1 ring-border";
-  if (code === "vi") return (<svg viewBox="0 0 30 20" className={cls}><rect width="30" height="20" fill="#DA251D" /><polygon fill="#FFFF00" points="15,4 16.2,8.2 20.5,8.2 17,10.7 18.3,15 15,12.4 11.7,15 13,10.7 9.5,8.2 13.8,8.2" /></svg>);
-  if (code === "zh") return (<svg viewBox="0 0 30 20" className={cls}><rect width="30" height="20" fill="#DE2910" /><polygon fill="#FFDE00" points="5,2 5.9,4.8 8.8,4.8 6.5,6.5 7.4,9.3 5,7.6 2.6,9.3 3.5,6.5 1.2,4.8 4.1,4.8" /><circle cx="10" cy="2" r=".8" fill="#FFDE00" /><circle cx="12" cy="4" r=".8" fill="#FFDE00" /><circle cx="12" cy="7" r=".8" fill="#FFDE00" /><circle cx="10" cy="9" r=".8" fill="#FFDE00" /></svg>);
-  return (<svg viewBox="0 0 60 30" className={cls}><rect width="60" height="30" fill="#012169" /><path d="M0,0 60,30M60,0 0,30" stroke="#fff" strokeWidth="6" /><path d="M0,0 60,30M60,0 0,30" stroke="#C8102E" strokeWidth="2" /><path d="M30,0v30M0,15h60" stroke="#fff" strokeWidth="10" /><path d="M30,0v30M0,15h60" stroke="#C8102E" strokeWidth="6" /></svg>);
+  if (code === "vi")
+    return (
+      <svg viewBox="0 0 30 20" className={cls}>
+        <rect width="30" height="20" fill="#DA251D" />
+        <polygon
+          fill="#FFFF00"
+          points="15,4 16.2,8.2 20.5,8.2 17,10.7 18.3,15 15,12.4 11.7,15 13,10.7 9.5,8.2 13.8,8.2"
+        />
+      </svg>
+    );
+  if (code === "zh")
+    return (
+      <svg viewBox="0 0 30 20" className={cls}>
+        <rect width="30" height="20" fill="#DE2910" />
+        <polygon
+          fill="#FFDE00"
+          points="5,2 5.9,4.8 8.8,4.8 6.5,6.5 7.4,9.3 5,7.6 2.6,9.3 3.5,6.5 1.2,4.8 4.1,4.8"
+        />
+        <circle cx="10" cy="2" r=".8" fill="#FFDE00" />
+        <circle cx="12" cy="4" r=".8" fill="#FFDE00" />
+        <circle cx="12" cy="7" r=".8" fill="#FFDE00" />
+        <circle cx="10" cy="9" r=".8" fill="#FFDE00" />
+      </svg>
+    );
+  return (
+    <svg viewBox="0 0 60 30" className={cls}>
+      <rect width="60" height="30" fill="#012169" />
+      <path d="M0,0 60,30M60,0 0,30" stroke="#fff" strokeWidth="6" />
+      <path d="M0,0 60,30M60,0 0,30" stroke="#C8102E" strokeWidth="2" />
+      <path d="M30,0v30M0,15h60" stroke="#fff" strokeWidth="10" />
+      <path d="M30,0v30M0,15h60" stroke="#C8102E" strokeWidth="6" />
+    </svg>
+  );
 }
 
 const OPTIONS: { code: Lang; name: string; short: string }[] = [
@@ -42,7 +72,9 @@ export function SitePreferences({ className = "" }: { className?: string }) {
         <Settings className="h-[18px] w-[18px]" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-48">
-        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">{tr("Ngôn ngữ")}</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          {tr("Ngôn ngữ")}
+        </DropdownMenuLabel>
         {OPTIONS.map((o) => (
           <DropdownMenuItem key={o.code} onClick={() => setLang(o.code)} className="gap-3 py-2">
             <Flag code={o.code} />
@@ -51,8 +83,15 @@ export function SitePreferences({ className = "" }: { className?: string }) {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">{tr("Giao diện")}</DropdownMenuLabel>
-        {([["light", "Chế độ sáng", Sun], ["dark", "Chế độ tối", Moon]] as const).map(([value, label, Icon]) => (
+        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          {tr("Giao diện")}
+        </DropdownMenuLabel>
+        {(
+          [
+            ["light", "Chế độ sáng", Sun],
+            ["dark", "Chế độ tối", Moon],
+          ] as const
+        ).map(([value, label, Icon]) => (
           <DropdownMenuItem key={value} onClick={() => setTheme(value)} className="gap-3 py-2">
             <Icon className="h-4 w-4 text-primary" />
             <span className="flex-1">{tr(label)}</span>

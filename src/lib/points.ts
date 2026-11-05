@@ -17,12 +17,20 @@ export const TIERS: Tier[] = [
 
 export const LEADER_TONE = { key: "black", label: "Lãnh đạo / Cố vấn" } as const;
 
-export const tierOf = (points: number) => TIERS.find((t) => points >= t.min) ?? TIERS[TIERS.length - 1]!;
+export const tierOf = (points: number) =>
+  TIERS.find((t) => points >= t.min) ?? TIERS[TIERS.length - 1]!;
 
 const LEADER_ROLES = ["admin", "department_head", "deputy_head"];
 /** Leaders (Executive Board, heads, deputies, admins, professional advisors) keep their points but are left off the leaderboard. */
-export const isLeader = (m: { department: string; position: string | null }, roles: string[] = [], isAdvisor = false) =>
-  isAdvisor || m.department === "executive" || /trưởng|phó|quản trị|cố vấn|co-founder|founder/i.test(m.position ?? "") || roles.some((r) => LEADER_ROLES.includes(r));
+export const isLeader = (
+  m: { department: string; position: string | null },
+  roles: string[] = [],
+  isAdvisor = false,
+) =>
+  isAdvisor ||
+  m.department === "executive" ||
+  /trưởng|phó|quản trị|cố vấn|co-founder|founder/i.test(m.position ?? "") ||
+  roles.some((r) => LEADER_ROLES.includes(r));
 
 export const TASK_STATUS: Record<string, { label: string; className: string }> = {
   assigned: { label: "Chờ tiếp nhận", className: "bg-secondary text-foreground" },
@@ -35,7 +43,10 @@ export const TASK_STATUS: Record<string, { label: string; className: string }> =
 export const PRIORITY: Record<string, string> = { low: "Thấp", medium: "Vừa", high: "Cao" };
 
 export const POINT_KIND: Record<string, string> = {
-  task: "Nhiệm vụ", attendance: "Điểm danh", bonus: "Thưởng", penalty: "Trừ điểm",
+  task: "Nhiệm vụ",
+  attendance: "Điểm danh",
+  bonus: "Thưởng",
+  penalty: "Trừ điểm",
 };
 
 export const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "—");

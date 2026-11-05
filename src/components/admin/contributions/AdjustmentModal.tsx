@@ -57,8 +57,7 @@ const AMOUNT_STEP = 5;
 const EVIDENCE_BUCKET = "point-evidence";
 const EVIDENCE_MAX_FILES = 5;
 const EVIDENCE_MAX_BYTES = 10 * 1024 * 1024;
-const EVIDENCE_ACCEPT =
-  "image/png,image/jpeg,image/webp,application/pdf,.doc,.docx,.xls,.xlsx";
+const EVIDENCE_ACCEPT = "image/png,image/jpeg,image/webp,application/pdf,.doc,.docx,.xls,.xlsx";
 
 const fmtSize = (bytes: number) =>
   bytes >= 1024 * 1024
@@ -116,8 +115,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
     () => pool.filter((m) => recorded[m.id] === undefined),
     [pool, recorded],
   );
-  const allSelected =
-    selectable.length > 0 && selectable.every((m) => selected.includes(m.id));
+  const allSelected = selectable.length > 0 && selectable.every((m) => selected.includes(m.id));
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -211,13 +209,20 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
       setErr("Chọn ít nhất một thành viên chưa được ghi nhận.");
       return;
     }
-    if (!Number.isInteger(amount) || amount < AMOUNT_MIN || amount > AMOUNT_MAX || amount % AMOUNT_STEP !== 0) {
+    if (
+      !Number.isInteger(amount) ||
+      amount < AMOUNT_MIN ||
+      amount > AMOUNT_MAX ||
+      amount % AMOUNT_STEP !== 0
+    ) {
       setErr(`Số điểm phải là bội số của ${AMOUNT_STEP} trong khoảng ${AMOUNT_MIN}–${AMOUNT_MAX}.`);
       return;
     }
     const trimmed = reason.trim();
     if (trimmed.length < POINT_LIMITS.adjustmentReasonMin) {
-      setErr(`Minh chứng tối thiểu ${POINT_LIMITS.adjustmentReasonMin} ký tự để phục vụ kiểm toán.`);
+      setErr(
+        `Minh chứng tối thiểu ${POINT_LIMITS.adjustmentReasonMin} ký tự để phục vụ kiểm toán.`,
+      );
       return;
     }
     if (trimmed.length > POINT_LIMITS.reasonMax) {
@@ -547,10 +552,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                       Number.isFinite(current)
                         ? Math.min(
                             AMOUNT_MAX,
-                            Math.max(
-                              AMOUNT_MIN,
-                              Math.round(current / AMOUNT_STEP) * AMOUNT_STEP,
-                            ),
+                            Math.max(AMOUNT_MIN, Math.round(current / AMOUNT_STEP) * AMOUNT_STEP),
                           )
                         : AMOUNT_MIN,
                     )
@@ -633,9 +635,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                   Sẽ áp dụng{" "}
                   <b
                     className={
-                      mode === "bonus"
-                        ? "text-primary"
-                        : "text-rose-600 dark:text-rose-400"
+                      mode === "bonus" ? "text-primary" : "text-rose-600 dark:text-rose-400"
                     }
                   >
                     {mode === "bonus" ? "+" : "-"}
@@ -645,8 +645,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                   {pending.length > 0
                     ? ` · tổng ${mode === "bonus" ? "+" : "-"}${Math.abs(delta) * pending.length} điểm`
                     : ""}
-                  {evidence.length > 0 ? ` · ${evidence.length} tệp minh chứng` : ""}
-                  .
+                  {evidence.length > 0 ? ` · ${evidence.length} tệp minh chứng` : ""}.
                 </span>
               </p>
               <p className="mt-1.5 flex items-start gap-1.5">
@@ -712,9 +711,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
               disabled={!canSubmit}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
-                mode === "bonus"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-rose-600 text-white",
+                mode === "bonus" ? "bg-primary text-primary-foreground" : "bg-rose-600 text-white",
               )}
             >
               {busy ? (

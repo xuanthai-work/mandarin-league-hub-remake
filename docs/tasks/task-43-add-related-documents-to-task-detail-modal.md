@@ -7,6 +7,7 @@
 ---
 
 ### 1. Bối cảnh & Yêu cầu từ User
+
 Bổ sung tính năng cho phép người giao việc hoặc Trưởng Ban đính kèm các tài liệu tham khảo, brief thiết kế, file dữ liệu, link Google Drive, Google Docs, Figma... ngay bên dưới ô Mô tả công việc trong Modal Chi tiết & Chỉnh sửa nhiệm vụ (`TaskDetailModal`).
 
 ---
@@ -14,6 +15,7 @@ Bổ sung tính năng cho phép người giao việc hoặc Trưởng Ban đính
 ### 2. Kế hoạch triển khai & Thay đổi thực tế
 
 #### File mục tiêu: `src/components/admin/tasks/TaskDetailModal.tsx`
+
 - **Data Parsing & Persistence**:
   - Tách (parse) tự động block `📎 Tài liệu liên quan:` từ `group.description` thành danh sách `attachments: Array<{ id, title, url }>`.
   - Giữ ô textarea `Mô tả công việc` thuần khiết, sạch sẽ.
@@ -26,6 +28,7 @@ Bổ sung tính năng cho phép người giao việc hoặc Trưởng Ban đính
 ---
 
 ### 3. Verification Gates
+
 - `pnpm exec tsc --noEmit` -> PASS (Dev đã chạy và xác nhận 0 lỗi).
 - `pnpm run test` -> PASS (Dev đã chạy và xác nhận pass).
 - Tuân thủ quy định không chạy `pnpm run build`.

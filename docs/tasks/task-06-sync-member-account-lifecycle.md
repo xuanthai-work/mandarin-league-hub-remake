@@ -8,7 +8,9 @@
 ---
 
 ## 1. Objective
+
 Đồng bộ hóa vòng đời giữa **Tài khoản nội bộ** (`member_accounts`) và **Hồ sơ thành viên** (`members`):
+
 1. **Khi xóa tài khoản nội bộ**: Xóa toàn bộ thông tin đăng nhập/Auth của thành viên; hệ thống **tự động** chuyển trạng thái hồ sơ thành viên tương ứng sang **`Đã rời` (`status: "left"`)**, gán ngày rời `left_on = hôm nay`, tự động ẩn khỏi web công khai (`is_public = false`) và ghi nhận lý do vào `status_note`.
 2. **Quy tắc trạng thái `Đã rời`**: Trạng thái `Đã rời` trở thành trạng thái **hệ thống tự động kích hoạt** khi xóa tài khoản; **loại bỏ** khả năng người dùng/Admin chọn thủ công trạng thái `Đã rời` trong form cập nhật trạng thái thành viên.
 3. **Cập nhật giao diện**:
@@ -19,6 +21,7 @@
 ---
 
 ## 2. Changes Made
+
 1. **`src/lib/accounts.functions.ts`**:
    - `deleteAccount`:
      - Bỏ tham số `deleteProfile`.
@@ -39,6 +42,7 @@
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 5/5 tiêu chí.
 - **Verification Gates**:
   - `pnpm test`: PASS (15 test suites, 77/77 tests passed).

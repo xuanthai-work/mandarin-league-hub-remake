@@ -25,6 +25,7 @@ web
 The Mandarin League Hub (TML Hub) là hệ sinh thái số hợp nhất của The Mandarin League — Liên Minh Tiếng Trung. Hệ thống số hóa toàn diện quy trình điều hành nhân sự, đào tạo, tuyển dụng và quyền lợi thành viên của tổ chức, đồng thời cung cấp cổng thông tin, học tập và tra cứu minh bạch, bảo mật cho cộng đồng người học tiếng Trung.
 
 Thành công của sản phẩm đo bằng:
+
 - Hiệu suất điều hành vượt trội cho Ban quản trị (thao tác nhanh, không lỗi phân quyền, dữ liệu trực quan).
 - Trải nghiệm tự hào và gắn kết của thành viên qua Smart Pass, bảng điểm cống hiến và hệ thống quyền lợi.
 - Tính chính xác, an toàn và bảo mật cao trong tra cứu chứng chỉ, điểm số và hồ sơ ứng tuyển.
@@ -32,6 +33,7 @@ Thành công của sản phẩm đo bằng:
 ## Positioning
 
 Mandarin League Hub không phải là một dashboard mẫu thông thường (generic template) hay một LMS cồng kềnh, mà là một **Executive Command Center** chuyên biệt cho một liên minh tiếng Trung:
+
 - Kiến trúc bảo mật đa tầng: phân tách rành mạch giữa hồ sơ thành viên (`members`), tài khoản đăng nhập (`member_accounts`) và vai trò bảo vệ bởi RLS (`user_roles`).
 - Bản sắc văn hóa độc tôn: giao diện số hóa kết hợp tinh hoa họa tiết Trống đồng Đông Sơn và Chim Lạc cùng công nghệ Web hiện đại (Smart Pass 3D, Hologram Sheen, Dynamic Theme).
 - Dữ liệu xác thực bảo chứng: các chứng chỉ và điểm HSK được mã hóa, bảo vệ bởi RPC chuyên dụng chống giả mạo.

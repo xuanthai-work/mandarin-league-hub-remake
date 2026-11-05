@@ -5,9 +5,11 @@
 ## Task ID: TASK-29-REDESIGN-RECRUITMENT-CAMPAIGNS-TAB-AND-DRAWER
 
 ### 1. Bối cảnh & Mục tiêu (Executive Campaign Matrix)
+
 Màn hình **Đợt tuyển & Câu hỏi** (`src/routes/_authenticated/admin.recruitment.tsx`) hiện là trung tâm điều hành toàn bộ các chiến dịch tuyển quân của CLB.
 
 Các hạng mục đã triển khai:
+
 1. **Top Header & Segmented Tab Switcher**:
    - Đưa nút `+ Tạo đợt tuyển` lên góc phải Top Header (thông qua `AdminPageHeader actions={...}`).
    - Hai Tab: `[Đợt tuyển dụng]` và `[Chủ đề & Câu hỏi]` với vệt trượt Spring Pill Framer Motion (`layoutId="recruitment-tab-pill"`).
@@ -28,6 +30,7 @@ Các hạng mục đã triển khai:
 ---
 
 ### 2. Verification Results
+
 - `pnpm test`: PASS
 - `pnpm run build`: PASS
 - Responsive mobile: PASS

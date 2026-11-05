@@ -14,12 +14,18 @@ function readLang(): Lang {
   try {
     const v = localStorage.getItem(KEY);
     if (v === "vi" || v === "zh" || v === "en") return v;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return "vi";
 }
 
 export function setLang(l: Lang) {
-  try { localStorage.setItem(KEY, l); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(KEY, l);
+  } catch {
+    /* ignore */
+  }
   document.cookie = `${KEY}=${l}; path=/; max-age=31536000; samesite=lax`;
   document.documentElement.lang = LANGS.find((x) => x.code === l)?.html ?? "vi";
   window.dispatchEvent(new CustomEvent(EVT, { detail: l }));

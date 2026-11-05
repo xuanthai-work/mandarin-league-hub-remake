@@ -1,6 +1,7 @@
 # Task Archive: TASK-90-UNIFY-FILTER-TOOLBARS-WITH-MEMBER-STANDARD
 
 ## 1. Metadata
+
 - **Task ID**: `TASK-90-UNIFY-FILTER-TOOLBARS-WITH-MEMBER-STANDARD`
 - **Tên Task**: Quy chuẩn đồng bộ thanh công cụ tìm kiếm & bộ lọc theo chuẩn trang Thành viên (Floating Pill Toolbar)
 - **Ngày hoàn thành**: 2026-11-05
@@ -11,6 +12,7 @@
 ---
 
 ## 2. Mục tiêu & Phạm vi
+
 - **Vấn đề**:
   - Tại trang Nhiệm vụ (`TaskFilterToolbar`) và Ứng viên (`CandidateFilterToolbar`), thanh lọc bị bao trong một thẻ card viền xám (`rounded-2xl border border-border bg-card p-3`), gây hiệu ứng card lồng trong card thô ráp. Ô tìm kiếm bị kéo dài không có giới hạn tối đa và nền lại là `bg-background` (xám đục).
   - Các trang Chứng nhận, HSK, Giáo viên, Khóa học, Hoạt động: Ô tìm kiếm chưa có icon kính lúp `Search`, chưa có nút xóa nhanh `X`, và chưa đồng bộ kích thước chuẩn `h-9 text-xs shadow-xs`.
@@ -24,6 +26,7 @@
 ---
 
 ## 3. Files Modified
+
 - [src/components/admin/tasks/TaskFilterToolbar.tsx](file:///D:/work/Madarin/mandarin-league-hub-remake/src/components/admin/tasks/TaskFilterToolbar.tsx)
 - [src/components/admin/candidates/CandidateFilterToolbar.tsx](file:///D:/work/Madarin/mandarin-league-hub-remake/src/components/admin/candidates/CandidateFilterToolbar.tsx)
 - [src/routes/_authenticated/admin.certificates.tsx](file:///D:/work/Madarin/mandarin-league-hub-remake/src/routes/_authenticated/admin.certificates.tsx)
@@ -35,6 +38,7 @@
 ---
 
 ## 4. Acceptance Criteria Verification
+
 - [x] Thẻ bao card ngoài (`rounded-2xl border border-border bg-card p-3`) trong `TaskFilterToolbar` và `CandidateFilterToolbar` đã được gỡ bỏ; các control nằm phẳng trực tiếp trên nền trang.
 - [x] Ô tìm kiếm trên tất cả các trang tuân thủ tuyệt đối quy chuẩn trang Thành viên:
   - Có icon kính lúp `Search` căn trái.

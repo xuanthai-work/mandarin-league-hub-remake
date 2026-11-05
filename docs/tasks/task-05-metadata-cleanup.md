@@ -8,7 +8,9 @@
 ---
 
 ## 1. Objective
+
 Dọn dẹp triệt để toàn bộ thư mục `.lovable/`, các comment, tài liệu hướng dẫn và biến môi trường còn vướng tham chiếu tới Lovable trên toàn bộ repository:
+
 - Xóa bỏ thư mục `.lovable/`.
 - Cập nhật `AGENTS.md` (gỡ bỏ warning banner của Lovable và chuẩn hóa các nguyên tắc kiến trúc).
 - Cập nhật `README.md` (chỉnh sửa lại mục email, backup và hướng dẫn vận hành độc lập).
@@ -18,6 +20,7 @@ Dọn dẹp triệt để toàn bộ thư mục `.lovable/`, các comment, tài 
 ---
 
 ## 2. Changes Made
+
 1. **Xóa bỏ thư mục `.lovable/`**:
    - Đã xóa toàn bộ thư mục `.lovable/` (bao gồm `project.json` và các file kế hoạch cũ).
 2. **Cập nhật tài liệu cấu hình & môi trường**:
@@ -33,6 +36,7 @@ Dọn dẹp triệt để toàn bộ thư mục `.lovable/`, các comment, tài 
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 4/4 tiêu chí.
 - **Verification Gates**:
   - `pnpm test`: PASS (15 test suites, 77/77 tests passed).

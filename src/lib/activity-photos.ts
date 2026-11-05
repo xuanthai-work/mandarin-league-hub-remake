@@ -14,9 +14,10 @@ export type ActivityPhoto = {
 
 async function withUrls(rows: Omit<ActivityPhoto, "url">[]): Promise<ActivityPhoto[]> {
   if (!rows.length) return [];
-  const { data } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .createSignedUrls(rows.map((r) => r.storage_path), 60 * 60 * 6);
+  const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(
+    rows.map((r) => r.storage_path),
+    60 * 60 * 6,
+  );
   return rows.map((r, i) => ({ ...r, url: data?.[i]?.signedUrl ?? null }));
 }
 
@@ -48,19 +49,30 @@ function newPath(file: File) {
 
 export async function uploadPhoto(file: File, caption: string, nextOrder: number) {
   const path = newPath(file);
-  const up = await supabase.storage.from(PHOTO_BUCKET).upload(path, file, { contentType: file.type });
+  const up = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(path, file, { contentType: file.type });
   if (up.error) throw up.error;
-  const { error } = await supabase
-    .from("activity_photos")
-    .insert({ storage_path: path, caption, alt_text: caption, visible: true, sort_order: nextOrder });
+  const { error } = await supabase.from("activity_photos").insert({
+    storage_path: path,
+    caption,
+    alt_text: caption,
+    visible: true,
+    sort_order: nextOrder,
+  });
   if (error) throw error;
 }
 
 export async function replacePhoto(photo: ActivityPhoto, file: File) {
   const path = newPath(file);
-  const up = await supabase.storage.from(PHOTO_BUCKET).upload(path, file, { contentType: file.type });
+  const up = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(path, file, { contentType: file.type });
   if (up.error) throw up.error;
-  const { error } = await supabase.from("activity_photos").update({ storage_path: path }).eq("id", photo.id);
+  const { error } = await supabase
+    .from("activity_photos")
+    .update({ storage_path: path })
+    .eq("id", photo.id);
   if (error) throw error;
   await supabase.storage.from(PHOTO_BUCKET).remove([photo.storage_path]);
 }

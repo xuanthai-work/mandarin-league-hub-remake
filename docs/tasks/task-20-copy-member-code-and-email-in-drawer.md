@@ -7,7 +7,9 @@
 ---
 
 ## 1. Yêu cầu & Bối cảnh
+
 Tối ưu hóa thao tác người dùng (UX) trong Drawer chi tiết thành viên (`MemberDrawer`):
+
 1. **Sao chép Mã thành viên tại Header**:
    - Dưới tên thành viên, hiển thị mã thành viên kèm nút icon copy ở cuối mã.
    - Khi bấm: sao chép `m.member_code` vào Clipboard, hiển thị toast thông báo thành công và chuyển sang icon `Check` tạm thời (2s).
@@ -19,11 +21,13 @@ Tối ưu hóa thao tác người dùng (UX) trong Drawer chi tiết thành viê
 ---
 
 ## 2. File thay đổi
+
 - `src/routes/_authenticated/admin.members.tsx`
 
 ---
 
 ## 3. Kết quả QA Audit
+
 - [x] Dưới tên thành viên trong `MemberDrawer`, mã thành viên có kèm icon `Copy` ở cuối.
 - [x] Bấm nút copy mã thành viên sao chép chính xác `m.member_code` vào Clipboard, hiển thị toast `"Đã sao chép mã thành viên"` và chuyển icon sang `Check` trong 2s.
 - [x] Trong mục "Tài khoản & bảo mật", địa chỉ email hiển thị rõ ràng, tương phản tốt (`text-foreground font-medium`).

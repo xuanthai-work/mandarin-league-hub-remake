@@ -1,6 +1,7 @@
 # Task Archive: TASK-91-REDESIGN-ADMIN-BENEFITS-BENTO-GRID-AND-DRAWER
 
 ## 1. Metadata
+
 - **Task ID**: `TASK-91-REDESIGN-ADMIN-BENEFITS-BENTO-GRID-AND-DRAWER`
 - **Tên Task**: Tái thiết kế toàn diện trang Quản trị Quyền lợi Thành viên thành Software License Command Center
 - **Ngày hoàn thành**: 2026-11-05
@@ -11,6 +12,7 @@
 ---
 
 ## 2. Mục tiêu & Phạm vi
+
 - **Vấn đề**:
   - Giao diện cũ dùng một thẻ `<table>` kéo dài 100% màn hình, gây trống trải và lãng phí không gian.
   - Thiếu toàn bộ các chỉ số điều hành tổng quan (Metrics).
@@ -27,11 +29,13 @@
 ---
 
 ## 3. Files Modified
+
 - [src/routes/_authenticated/admin.benefits.tsx](file:///D:/work/Madarin/mandarin-league-hub-remake/src/routes/_authenticated/admin.benefits.tsx)
 
 ---
 
 ## 4. Acceptance Criteria Verification
+
 - [x] Bảng table cũ được thay thế hoàn toàn bằng **License Bento Grid** (thẻ ứng dụng 2-3 cột).
 - [x] Có băng 4 chỉ số điều hành phía trên danh sách.
 - [x] Từng thẻ ứng dụng hiển thị đầy đủ: Logo, Tên, Switch bật/tắt nhanh, Email/Mật khẩu dùng chung có nút Copy và Xem/Ẩn, Quy tắc áp dụng, Số thành viên đang dùng, Hạn sử dụng.

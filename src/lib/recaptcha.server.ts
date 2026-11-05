@@ -3,7 +3,8 @@ export const CAPTCHA_ERROR = "Xác minh bảo mật không thành công, vui lò
 /** Verifies a reCAPTCHA v2 token with Google. Server-only. */
 export async function verifyRecaptcha(token: unknown): Promise<boolean> {
   const secret = process.env["RECAPTCHA_SECRET_KEY"];
-  if (!secret || typeof token !== "string" || token.length < 20 || token.length > 4000) return false;
+  if (!secret || typeof token !== "string" || token.length < 20 || token.length > 4000)
+    return false;
   try {
     const res = await fetch("https://www.google.com/recaptcha/api/siteverify", {
       method: "POST",

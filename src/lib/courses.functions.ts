@@ -8,13 +8,24 @@ const submitSchema = z.object({
   hsk_class_id: z.string().uuid().optional(),
   full_name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(255),
-  phone: z.string().trim().regex(/^[0-9+ .()-]{8,20}$/),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[0-9+ .()-]{8,20}$/),
   current_level: z.string().trim().max(120).default(""),
   goal: z.string().trim().max(120).default(""),
   message: z.string().trim().max(1500).default(""),
 });
 
-const fmtTime = (d: Date) => new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+const fmtTime = (d: Date) =>
+  new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(d);
 
 /** Public course registration — rules re-checked on the server. */
 export const submitEnrollment = createServerFn({ method: "POST" })
@@ -22,7 +33,12 @@ export const submitEnrollment = createServerFn({ method: "POST" })
   .handler(async ({ data: raw }) => {
     const parsed = submitSchema.safeParse(raw);
     if (!parsed.success) {
-      const LABEL: Record<string, string> = { full_name: "Họ và tên", email: "Email", phone: "Số điện thoại", message: "Lời nhắn (quá dài)" };
+      const LABEL: Record<string, string> = {
+        full_name: "Họ và tên",
+        email: "Email",
+        phone: "Số điện thoại",
+        message: "Lời nhắn (quá dài)",
+      };
       const key = String(parsed.error.issues[0]?.path[0] ?? "");
       return { ok: false as const, error: `Vui lòng kiểm tra lại: ${LABEL[key] ?? key}.` };
     }
@@ -31,38 +47,88 @@ export const submitEnrollment = createServerFn({ method: "POST" })
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     let courseName = "";
     if (d.hsk_class_id) {
-      const { data: k } = await db.from("hsk_classes").select("level, name, status, is_published, deleted_at, registration_url, max_students").eq("id", d.hsk_class_id).maybeSingle();
+      const { data: k } = await db
+        .from("hsk_classes")
+        .select("level, name, status, is_published, deleted_at, registration_url, max_students")
+        .eq("id", d.hsk_class_id)
+        .maybeSingle();
       if (!k || !k.is_published || k.deleted_at || k.status !== "enrolling" || k.registration_url)
         return { ok: false as const, error: "Lớp học này hiện không nhận đăng ký trên website." };
-      const { count: seats } = await db.from("course_enrollments").select("id", { count: "exact", head: true }).eq("hsk_class_id", d.hsk_class_id).eq("status", "approved");
-      if ((seats ?? 0) >= k.max_students) return { ok: false as const, error: "Lớp học đã đủ sĩ số." };
-      d.level = k.level; courseName = k.name;
+      const { count: seats } = await db
+        .from("course_enrollments")
+        .select("id", { count: "exact", head: true })
+        .eq("hsk_class_id", d.hsk_class_id)
+        .eq("status", "approved");
+      if ((seats ?? 0) >= k.max_students)
+        return { ok: false as const, error: "Lớp học đã đủ sĩ số." };
+      d.level = k.level;
+      courseName = k.name;
     } else if (d.course_id) {
-      const { data: c } = await db.from("courses").select("title, status, is_published, deleted_at, registration_url").eq("id", d.course_id).maybeSingle();
+      const { data: c } = await db
+        .from("courses")
+        .select("title, status, is_published, deleted_at, registration_url")
+        .eq("id", d.course_id)
+        .maybeSingle();
       if (!c || !c.is_published || c.deleted_at || c.status !== "enrolling" || c.registration_url)
-        return { ok: false as const, error: "Chương trình này hiện không nhận đăng ký trên website." };
+        return {
+          ok: false as const,
+          error: "Chương trình này hiện không nhận đăng ký trên website.",
+        };
       courseName = c.title;
     } else {
       if (d.level < 1) return { ok: false as const, error: "Khóa học không hợp lệ." };
-      const { data: setting } = await db.from("course_settings").select("*").eq("level", d.level).maybeSingle();
-      if (!setting?.registration_open) return { ok: false as const, error: "Khóa học này hiện đã đóng đăng ký." };
+      const { data: setting } = await db
+        .from("course_settings")
+        .select("*")
+        .eq("level", d.level)
+        .maybeSingle();
+      if (!setting?.registration_open)
+        return { ok: false as const, error: "Khóa học này hiện đã đóng đăng ký." };
     }
-    let dup = db.from("course_enrollments").select("id", { count: "exact", head: true }).eq("email", email).eq("status", "pending");
-    dup = d.hsk_class_id ? dup.eq("hsk_class_id", d.hsk_class_id) : d.course_id ? dup.eq("course_id", d.course_id) : dup.eq("level", d.level).is("course_id", null).is("hsk_class_id", null);
+    let dup = db
+      .from("course_enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("email", email)
+      .eq("status", "pending");
+    dup = d.hsk_class_id
+      ? dup.eq("hsk_class_id", d.hsk_class_id)
+      : d.course_id
+        ? dup.eq("course_id", d.course_id)
+        : dup.eq("level", d.level).is("course_id", null).is("hsk_class_id", null);
     const { count } = await dup;
-    if ((count ?? 0) > 0) return { ok: false as const, error: "Email này đã có đơn đăng ký khóa này đang chờ xét duyệt." };
+    if ((count ?? 0) > 0)
+      return {
+        ok: false as const,
+        error: "Email này đã có đơn đăng ký khóa này đang chờ xét duyệt.",
+      };
 
-    const { data: row, error } = await db.from("course_enrollments").insert({ ...d, course_id: d.course_id ?? null, hsk_class_id: d.hsk_class_id ?? null, email }).select("code, created_at").single();
-    if (error || !row) { console.error(error); return { ok: false as const, error: "Không gửi được đơn, vui lòng thử lại." }; }
+    const { data: row, error } = await db
+      .from("course_enrollments")
+      .insert({ ...d, course_id: d.course_id ?? null, hsk_class_id: d.hsk_class_id ?? null, email })
+      .select("code, created_at")
+      .single();
+    if (error || !row) {
+      console.error(error);
+      return { ok: false as const, error: "Không gửi được đơn, vui lòng thử lại." };
+    }
     const submittedAt = fmtTime(new Date(row.created_at));
     try {
       const { sendTemplateEmail } = await import("./email-templates/send-email");
       await sendTemplateEmail("enrollment-confirmation", email, {
-        templateData: { fullName: d.full_name, code: row.code, level: d.level, courseName, phone: d.phone, submittedAt },
+        templateData: {
+          fullName: d.full_name,
+          code: row.code,
+          level: d.level,
+          courseName,
+          phone: d.phone,
+          submittedAt,
+        },
         idempotencyKey: `enrollment-confirm-${row.code}`,
         replyTo: "community@themandarinleague.bond",
       });
-    } catch (e) { console.error("enrollment confirmation email failed", e); }
+    } catch (e) {
+      console.error("enrollment confirmation email failed", e);
+    }
     return { ok: true as const, code: row.code, submittedAt };
   });
 
@@ -81,22 +147,44 @@ export const reviewEnrollment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (data.zaloLink && !/^https:\/\/(zalo\.me|chat\.zalo\.me)\//i.test(data.zaloLink))
       return { ok: false as const, error: "Link nhóm Zalo phải bắt đầu bằng https://zalo.me/" };
-    if (data.status === "approved" && !data.zaloLink) return { ok: false as const, error: "Vui lòng nhập link nhóm Zalo của lớp." };
-    const { data: row, error } = await context.supabase.from("course_enrollments")
-      .update({ status: data.status, admin_note: data.note, reviewed_by: context.userId, reviewed_at: new Date().toISOString() })
-      .eq("id", data.id).select("code, full_name, email, level, hsk_classes(name), courses(title)").maybeSingle();
-    if (error || !row) return { ok: false as const, error: "Bạn không có quyền hoặc đơn không tồn tại." };
+    if (data.status === "approved" && !data.zaloLink)
+      return { ok: false as const, error: "Vui lòng nhập link nhóm Zalo của lớp." };
+    const { data: row, error } = await context.supabase
+      .from("course_enrollments")
+      .update({
+        status: data.status,
+        admin_note: data.note,
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", data.id)
+      .select("code, full_name, email, level, hsk_classes(name), courses(title)")
+      .maybeSingle();
+    if (error || !row)
+      return { ok: false as const, error: "Bạn không có quyền hoặc đơn không tồn tại." };
     let emailed = false;
     if (data.status === "approved") {
       try {
         const { sendTemplateEmail } = await import("./email-templates/send-email");
         const r = await sendTemplateEmail("enrollment-approved", row.email, {
-          templateData: { fullName: row.full_name, code: row.code, level: row.level, courseName: (row.hsk_classes as { name: string } | null)?.name || (row.courses as { title: string } | null)?.title || "", zaloLink: data.zaloLink, feeNote: data.feeNote },
+          templateData: {
+            fullName: row.full_name,
+            code: row.code,
+            level: row.level,
+            courseName:
+              (row.hsk_classes as { name: string } | null)?.name ||
+              (row.courses as { title: string } | null)?.title ||
+              "",
+            zaloLink: data.zaloLink,
+            feeNote: data.feeNote,
+          },
           idempotencyKey: `enrollment-approved-${row.code}-${data.zaloLink}`,
           replyTo: "community@themandarinleague.bond",
         });
         emailed = !!r?.sent;
-      } catch (e) { console.error("enrollment approval email failed", e); }
+      } catch (e) {
+        console.error("enrollment approval email failed", e);
+      }
     }
     return { ok: true as const, emailed };
   });

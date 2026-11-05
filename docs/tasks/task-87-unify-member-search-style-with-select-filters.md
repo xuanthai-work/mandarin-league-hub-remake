@@ -1,6 +1,7 @@
 # Task Archive: TASK-87-UNIFY-MEMBER-SEARCH-STYLE-WITH-SELECT-FILTERS
 
 ## 1. Metadata
+
 - **Task ID**: `TASK-87-UNIFY-MEMBER-SEARCH-STYLE-WITH-SELECT-FILTERS`
 - **Tên Task**: Đồng bộ hóa style thanh tìm kiếm với các bộ lọc Select tại trang Thành viên
 - **Ngày hoàn thành**: 2026-11-05
@@ -11,6 +12,7 @@
 ---
 
 ## 2. Mục tiêu & Phạm vi
+
 - **Vấn đề**: Tại trang quản trị Thành viên ([admin.members.tsx](file:///D:/work/Madarin/mandarin-league-hub-remake/src/routes/_authenticated/admin.members.tsx#L326-L365)), thanh tìm kiếm (`input`) đang bị lệch style so với 2 bộ lọc `Select` bên cạnh:
   - Chiều cao input dùng `py-2 text-sm` (~38px), trong khi các SelectTrigger dùng cố định `h-9` (36px).
   - Cỡ chữ placeholder & văn bản nhập là `text-sm` (14px), trong khi các SelectTrigger dùng `text-xs font-normal` (12px).
@@ -24,11 +26,13 @@
 ---
 
 ## 3. Files Modified
+
 - [src/routes/_authenticated/admin.members.tsx](file:///D:/work/Madarin/mandarin-league-hub-remake/src/routes/_authenticated/admin.members.tsx)
 
 ---
 
 ## 4. Acceptance Criteria Verification
+
 - [x] Ô input tìm kiếm có chiều cao cố định `h-9` (36px), thẳng hàng hoàn hảo với 2 bộ lọc Select bên cạnh.
 - [x] Cỡ chữ (placeholder và input value) là `text-xs` (12px), đồng bộ với `text-xs font-normal` của các Select.
 - [x] Giữ nguyên các thuộc tính theme: `rounded-xl`, `border-input`, `bg-card`, `shadow-xs`, focus ring.

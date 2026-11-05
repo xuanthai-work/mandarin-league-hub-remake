@@ -5,12 +5,14 @@
 ---
 
 ### 1. Mục tiêu (Objective)
+
 Loại bỏ dòng text `Hiển thị x / y nhiệm vụ` (`Hiển thị 6 / 6 nhiệm vụ`) ở góc phải thanh lọc `TaskFilterToolbar` trên trang Quản lý nhiệm vụ (`admin.tasks.tsx`).
 Dọn dẹp các props thừa (`shown`, `total`) trong interface và component liên quan.
 
 ---
 
 ### 2. Chi tiết triển khai (Implementation Details)
+
 - **`src/components/admin/tasks/TaskFilterToolbar.tsx`**:
   - Xóa `shown` và `total` khỏi `interface TaskFilterToolbarProps`.
   - Xóa `shown, total` khỏi danh sách tham số component.
@@ -21,5 +23,6 @@ Dọn dẹp các props thừa (`shown`, `total`) trong interface và component l
 ---
 
 ### 3. Verification Results
+
 - `pnpm exec tsc --noEmit`: PASS (0 lỗi).
 - Developer verify: PASS.

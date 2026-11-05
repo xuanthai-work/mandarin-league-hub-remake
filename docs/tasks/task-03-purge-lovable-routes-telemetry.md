@@ -8,7 +8,9 @@
 ---
 
 ## 1. Objective
+
 Loại bỏ hoàn toàn các server routes, middleware bypass và module telemetry/error reporting nội bộ của Lovable khỏi dự án:
+
 - Xóa bỏ toàn bộ thư mục `src/routes/lovable/`.
 - Xóa bypass `/lovable/*` trong `src/start.ts`.
 - Xóa bỏ module `src/lib/lovable-error-reporting.ts` và gỡ việc gọi hàm báo lỗi này trong `src/routes/__root.tsx`.
@@ -17,6 +19,7 @@ Loại bỏ hoàn toàn các server routes, middleware bypass và module telemet
 ---
 
 ## 2. Changes Made
+
 1. **Xóa routes Lovable**:
    - Đã xóa `src/routes/lovable/email/auth/preview.ts`
    - Đã xóa `src/routes/lovable/email/auth/webhook.ts`
@@ -36,6 +39,7 @@ Loại bỏ hoàn toàn các server routes, middleware bypass và module telemet
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 5/5 tiêu chí.
 - **Verification Gates**:
   - `pnpm test`: PASS (15 test suites, 77/77 tests passed).

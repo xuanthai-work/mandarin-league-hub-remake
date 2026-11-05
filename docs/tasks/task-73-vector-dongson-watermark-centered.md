@@ -1,6 +1,7 @@
 # Task Archive: TASK-73-VECTOR-DONGSON-WATERMARK-CENTERED
 
 ## 1. Metadata
+
 - **Task ID**: `TASK-73-VECTOR-DONGSON-WATERMARK-CENTERED`
 - **Tên Task**: Thay watermark Trống đồng bằng vector SVG trong suốt & căn giữa thẻ thành viên
 - **Ngày hoàn thành**: 2026-11-04
@@ -11,6 +12,7 @@
 ---
 
 ## 2. Mục tiêu & Phạm vi
+
 - **Vấn đề**:
   - Watermark Trống đồng dùng ảnh PNG (`/dongson-gold.png` 360×360) nên bị mờ/vỡ hạt khi phóng to trên desktop.
   - File `public/dongson-vector.svg` (vectorize từ ảnh gốc) còn nguyên mảng nền đỏ `#DE2E1E` cùng toàn bộ sắc đỏ bóng đổ.
@@ -24,6 +26,7 @@
 ---
 
 ## 3. Files Modified
+
 - `public/dongson-vector.svg`
 - `src/routes/_authenticated/member.dashboard.tsx`
 - `src/styles.css`
@@ -31,6 +34,7 @@
 ---
 
 ## 4. Acceptance Criteria Verification
+
 - [x] `public/dongson-vector.svg` không còn mảng nền đỏ nào (1.043 path còn lại, 100% `fill="#D9A02C"`), nền trong suốt.
 - [x] SVG có `viewBox="0 0 779 779"` nên sắc nét ở mọi độ phân giải.
 - [x] Trống đồng nằm chính giữa thẻ, căn tâm trên cả thẻ ngang và thẻ đứng, cả mặt trước và mặt sau.
@@ -45,5 +49,6 @@
 ---
 
 ## 5. Ghi chú kỹ thuật
+
 - File SVG gốc do VTracer sinh ra từ ảnh bitmap: 2.272 path phủ kín nền đỏ. Bộ lọc theo hue (đỏ < 25°, vàng ≥ 25°) giữ lại 1.043 path hoa văn, giảm dung lượng từ 1.17 MB xuống 538 KB sau khi làm tròn toạ độ 1 chữ số thập phân.
 - `.tml-drum` / `.tml-emblem` giữ `mix-blend-mode: multiply` để hoà vào nền sứ của thẻ thay vì đè lên như sticker.

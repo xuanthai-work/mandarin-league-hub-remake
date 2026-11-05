@@ -211,12 +211,7 @@ function TasksPage() {
         }
       />
 
-      <TaskFilterToolbar
-        filters={filters}
-        depts={depts}
-        givers={givers}
-        onChange={setFilters}
-      />
+      <TaskFilterToolbar filters={filters} depts={depts} givers={givers} onChange={setFilters} />
 
       {person && (
         <p className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">

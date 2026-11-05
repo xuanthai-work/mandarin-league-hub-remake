@@ -18,7 +18,10 @@ describe("admin permissions", () => {
   it("members.edit opens the members section on its own, members.view does not", () => {
     expect(allowedSections(["member"], "design", ["members.edit"])).toEqual(["members"]);
     expect(allowedSections(["member"], "design", ["members.view"])).toEqual([]);
-    expect(allowedSections(["member"], "finance", ["members.edit"])).toEqual(["members", "partners"]);
+    expect(allowedSections(["member"], "finance", ["members.edit"])).toEqual([
+      "members",
+      "partners",
+    ]);
   });
   it("only comms heads/deputies and admin can publish news", () => {
     expect(canReviewNews(["member"], "comms")).toBe(false);

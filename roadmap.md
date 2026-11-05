@@ -1,4 +1,5 @@
 # Roadmap
+
 - [ ] TML Member Pass Chặng 2: đã thêm xác thực QR chính chủ và phiên Thư viện có hạn; còn kiểm thử đăng nhập/quét QR/làm mới mã thực tế và kiểm tra bảo mật (tạm dừng vì hết credits); kho tài liệu/CMS thuộc Chặng 3.
 - [x] Fix Home/logo navigation from recruitment and member portals; 13 domain tests passed, desktop/mobile join Home clicks reach main origin and preview Home stays local (production-host behavior verified through local proxy).
 - [x] Thu gọn TML AI thành hỏi đáp Liên Đoàn, bỏ AI Tutor và chọn trình độ theo xác nhận của Daniel; 28 tests đạt, giao diện/gợi ý/xóa được kiểm tra, build OK; chặn chế độ tutor cũ.

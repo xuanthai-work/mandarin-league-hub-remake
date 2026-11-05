@@ -5,6 +5,7 @@
 ## Task ID: TASK-31-MINIMALIST-CIRCULAR-DATE-PICKER
 
 ### 1. Bối cảnh
+
 DatePicker (thay `<input type="date">` trong 2 drawer) cần khớp phong cách **Minimalist / Apple-Linear**: header tháng căn giữa, mũi tên hai góc, các ô ngày là hình tròn hoàn hảo, ngày chọn tô đậm "ink", hôm nay có chấm nhỏ bên dưới.
 
 ---
@@ -12,6 +13,7 @@ DatePicker (thay `<input type="date">` trong 2 drawer) cần khớp phong cách 
 ### 2. Triển khai
 
 #### 2.1. `src/components/ui/date-picker.tsx`
+
 - Trigger giữ nguyên: `PopoverTrigger asChild` + `<button type="button">`, `DD/MM/YYYY`, icon `CalendarIcon`, `rounded-lg border-input px-3 py-1.5 text-xs`.
 - Thêm `CircularDayButton` (thay `components.DayButton` của Calendar):
   - `h-9 w-9 rounded-full flex items-center justify-center text-xs`.
@@ -30,15 +32,18 @@ DatePicker (thay `<input type="date">` trong 2 drawer) cần khớp phong cách 
 - Popover: `z-[70]`, `w-auto`, `rounded-2xl border-border/80 p-0 shadow-xl`; Calendar `p-4`. Không còn footer "Hôm nay / Xoá" — popover chỉ gồm lịch.
 
 #### 2.2. Áp dụng
+
 - `PeriodDrawer` và `CreatePeriodDrawer` đều dùng `<DatePicker>`; ngày kết thúc truyền `min={f.starts_on}`; popover tự đóng sau khi chọn.
 
 #### 2.3. Hero mobile (đã xong ở task trước, xác nhận lại)
+
 - Nút `Xem hồ sơ` chỉ hiện desktop (`hidden @min-[880px]:flex`).
 - 2 thẻ metric `grid grid-cols-2 gap-3`; không còn thẻ "Thời hạn còn lại".
 
 ---
 
 ### 3. Verification Results
+
 - `pnpm exec tsc --noEmit`: PASS
 - `pnpm test`: PASS (15 files / 77 tests)
 - `pnpm run build`: PASS

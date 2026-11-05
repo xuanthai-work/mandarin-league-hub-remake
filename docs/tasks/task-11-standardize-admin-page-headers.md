@@ -29,9 +29,11 @@
 ---
 
 ## 1. Mục tiêu & Bối cảnh
+
 Trước đây, các trang trong phân hệ Quản trị (`/admin/*`) sử dụng ít nhất 5 kiểu container và padding khác nhau (từ full-width `p-4 sm:p-6`, căn giữa `max-w-3xl`, `max-w-5xl`, đến `max-w-6xl` hay `max-w-7xl`). Điều này khiến tiêu đề `<h1>` và lề trái nội dung liên tục bị nhảy giật sang trái, sang phải khi người dùng điều hướng qua lại giữa các menu.
 
 Task này giải quyết triệt để vấn đề trên bằng cách:
+
 - Xây dựng component chuẩn dùng chung `AdminPageHeader.tsx`.
 - Thống nhất container bọc ngoài của toàn bộ 19 trang Admin về cùng một tiêu chuẩn căn lề:
   ```tsx
@@ -45,12 +47,14 @@ Task này giải quyết triệt để vấn đề trên bằng cách:
 ## 2. Chi tiết thực hiện
 
 ### 2.1. Component `AdminPageHeader.tsx`
+
 - Tiêu chuẩn hóa Typography: `text-2xl font-bold tracking-tight text-primary-deep sm:text-3xl`.
 - Hỗ trợ mô tả phụ: `mt-1.5 text-sm text-muted-foreground`.
 - Hỗ trợ cụm nút thao tác bên phải: `actions` slot tự động xuống dòng và co dãn linh hoạt trên mobile.
 - Hairline divider thanh thoát: `border-b border-border/50 pb-5 mb-6 sm:mb-8`.
 
 ### 2.2. Chuẩn hóa toàn bộ 19 Route Quản trị
+
 - **Trang dữ liệu / Bảng biểu**: `members`, `accounts`, `candidates`, `courses`, `activities`, `tasks`, `teachers`, `benefits`, `hsk`, `certificates`, `content`, `contributions`, `departments`, `news`, `partners`, `photos`:
   - Chuyển container từ `p-4 sm:p-6` sang `mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8`.
   - Gom các nút "Thêm mới", "Tạo tài khoản", "Xuất/Nhập CSV", "Đăng bài" vào `actions`.
@@ -64,14 +68,15 @@ Task này giải quyết triệt để vấn đề trên bằng cách:
 
 ## 3. Kết quả QA & Verification Gates
 
-| Hạng mục kiểm tra | Lệnh thực hiện | Kết quả | Ghi chú |
-| :--- | :--- | :---: | :--- |
-| **Kiểm tra TypeScript** | `pnpm exec tsc --noEmit` | **PASS** | Không phát sinh lỗi cú pháp hay kiểu dữ liệu |
-| **Unit / Integration Tests** | `pnpm test` | **PASS** | 15 test suites, 77/77 tests passed 100% |
-| **Production Build** | `pnpm run build` | **PASS** | Hoàn thành trong 2.23s, output Nitro/Vite sạch sẽ |
-| **Thẩm mỹ & Trục tọa độ** | Review code | **PASS** | Tiêu đề và lề trái thẳng hàng 100% trên toàn bộ các trang Admin |
+| Hạng mục kiểm tra            | Lệnh thực hiện           | Kết quả  | Ghi chú                                                         |
+| :--------------------------- | :----------------------- | :------: | :-------------------------------------------------------------- |
+| **Kiểm tra TypeScript**      | `pnpm exec tsc --noEmit` | **PASS** | Không phát sinh lỗi cú pháp hay kiểu dữ liệu                    |
+| **Unit / Integration Tests** | `pnpm test`              | **PASS** | 15 test suites, 77/77 tests passed 100%                         |
+| **Production Build**         | `pnpm run build`         | **PASS** | Hoàn thành trong 2.23s, output Nitro/Vite sạch sẽ               |
+| **Thẩm mỹ & Trục tọa độ**    | Review code              | **PASS** | Tiêu đề và lề trái thẳng hàng 100% trên toàn bộ các trang Admin |
 
 ---
 
 ## 4. Kết luận
+
 Task 11 đã hoàn thành xuất sắc và đáp ứng 100% tiêu chí nghiệm thu. Đã sẵn sàng commit vào nhánh chính.

@@ -7,7 +7,9 @@
 ---
 
 ## 1. Yêu cầu & Bối cảnh
+
 Nâng cấp hiệu ứng chuyển động và micro-interactions cho màn Quản lý Thành viên (`admin.members.tsx`):
+
 1. **Drawer Spring Animation & Exit Animation**:
    - Sử dụng `AnimatePresence` và `motion.div` từ `motion/react` cho cả `MemberDrawer` và `NewMemberDrawer`.
    - Trượt mở vào với gia tốc đàn hồi tự nhiên (Spring Physics: `damping: 32, stiffness: 320`), backdrop kính quang học mờ dần vào (`opacity: 0 -> 1`).
@@ -24,12 +26,14 @@ Nâng cấp hiệu ứng chuyển động và micro-interactions cho màn Quản
 ---
 
 ## 2. File thay đổi
+
 - `package.json` & `bun.lock`
 - `src/routes/_authenticated/admin.members.tsx`
 
 ---
 
 ## 3. Kết quả QA Audit
+
 - [x] Drawer mở với hiệu ứng Spring Physics tự nhiên và đóng trượt êm ái về cạnh phải (Exit Animation mượt mà).
 - [x] Backdrop kính mờ quang học fade-in và fade-out đồng bộ theo Drawer.
 - [x] Chuyển đổi giữa 3 nút trạng thái có vệt sáng trượt đàn hồi (`layoutId`).

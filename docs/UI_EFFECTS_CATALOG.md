@@ -1,6 +1,6 @@
 # TML UI Animation & Effects Catalog
 
-> **Mục đích**: Tài liệu này đóng vai trò là kim chỉ nam về hiệu ứng giao diện (UI Animation, Micro-interactions & Visual Effects) cho toàn bộ dự án **Mandarin League Hub (TML Hub)**. 
+> **Mục đích**: Tài liệu này đóng vai trò là kim chỉ nam về hiệu ứng giao diện (UI Animation, Micro-interactions & Visual Effects) cho toàn bộ dự án **Mandarin League Hub (TML Hub)**.
 > Mỗi khi phát triển tính năng mới hoặc nâng cấp UI, hãy tham chiếu tài liệu này để lựa chọn giải pháp hiệu ứng tinh tế, mượt mà và tối ưu hiệu năng nhất.
 
 ---
@@ -60,7 +60,7 @@
 
 ### C. Nhóm Motion Engine & Scrolling
 
-1. **Motion v14 (`motion`)** — *Đã có sẵn trong dự án*
+1. **Motion v14 (`motion`)** — _Đã có sẵn trong dự án_
    - Dùng cho các hiệu ứng chuyển đổi trạng thái layout phức tạp với `layoutId` (chuyển tab trượt vệt sáng, modal mở rộng).
    - Gestures: Hover scale, tap depression, drag & drop.
 
@@ -78,15 +78,15 @@
 
 ## 3. Ma trận Gợi ý Hiệu ứng theo Tính năng của TML Hub
 
-| Phân hệ / Tính năng | Hiệu ứng đề xuất | Thư viện / Công nghệ | Mục đích trải nghiệm |
-| :--- | :--- | :--- | :--- |
-| **Thẻ Thành viên (Smart Pass)** | 3D Tilt Card, Hologram Sheen, Border Beam | CSS 3D Preserve + Motion + Magic UI | Thể hiện đẳng cấp thẻ điện tử, tự hào thành viên |
-| **Bảng Thành viên / Nhân sự** | Smooth filter / Row transition, Custom Scrollbar | AutoAnimate (`@formkit/auto-animate`) + `.custom-scrollbar` | Lọc ban và tìm kiếm không bị giật, cuộn ngang thanh mảnh |
-| **Điểm cống hiến & Thống kê** | Animated Number Ticker | NumberFlow (`@number-flow/react`) | Số nhảy mượt như bảng điện tử khi được cộng/trừ điểm |
-| **Nhiệm vụ / Cấp tài khoản** | Pháo hoa giấy ăn mừng (Celebration) | `canvas-confetti` | Tạo cảm xúc phấn khởi khi hoàn thành công việc |
-| **Hero Sections / Landing Pages** | Spotlight, Animated Beams, Shimmer Text | Aceternity UI + Magic UI | Ấn tượng thị giác mạnh mẽ ngay từ cái nhìn đầu tiên |
-| **Bộ lọc Tabs & Navigation** | Shared layout transition (Vệt sáng trượt theo tab) | Motion `layoutId` | Chuyển đổi tab liền mạch, định vị rõ ngữ cảnh |
-| **Modal / Drawer Slide-over** | Backdrop kính quang học + Smooth ease-out slide | CSS `backdrop-blur-sm bg-black/15` + Radix Dialog | Không bị đục sương mù, mở mượt mà không che lấp nền |
+| Phân hệ / Tính năng               | Hiệu ứng đề xuất                                   | Thư viện / Công nghệ                                        | Mục đích trải nghiệm                                     |
+| :-------------------------------- | :------------------------------------------------- | :---------------------------------------------------------- | :------------------------------------------------------- |
+| **Thẻ Thành viên (Smart Pass)**   | 3D Tilt Card, Hologram Sheen, Border Beam          | CSS 3D Preserve + Motion + Magic UI                         | Thể hiện đẳng cấp thẻ điện tử, tự hào thành viên         |
+| **Bảng Thành viên / Nhân sự**     | Smooth filter / Row transition, Custom Scrollbar   | AutoAnimate (`@formkit/auto-animate`) + `.custom-scrollbar` | Lọc ban và tìm kiếm không bị giật, cuộn ngang thanh mảnh |
+| **Điểm cống hiến & Thống kê**     | Animated Number Ticker                             | NumberFlow (`@number-flow/react`)                           | Số nhảy mượt như bảng điện tử khi được cộng/trừ điểm     |
+| **Nhiệm vụ / Cấp tài khoản**      | Pháo hoa giấy ăn mừng (Celebration)                | `canvas-confetti`                                           | Tạo cảm xúc phấn khởi khi hoàn thành công việc           |
+| **Hero Sections / Landing Pages** | Spotlight, Animated Beams, Shimmer Text            | Aceternity UI + Magic UI                                    | Ấn tượng thị giác mạnh mẽ ngay từ cái nhìn đầu tiên      |
+| **Bộ lọc Tabs & Navigation**      | Shared layout transition (Vệt sáng trượt theo tab) | Motion `layoutId`                                           | Chuyển đổi tab liền mạch, định vị rõ ngữ cảnh            |
+| **Modal / Drawer Slide-over**     | Backdrop kính quang học + Smooth ease-out slide    | CSS `backdrop-blur-sm bg-black/15` + Radix Dialog           | Không bị đục sương mù, mở mượt mà không che lấp nền      |
 
 ---
 

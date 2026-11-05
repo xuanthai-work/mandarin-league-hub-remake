@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { AnyRoute } from "@tanstack/react-router";
 import { getRouterInstance } from "@tanstack/react-start";
 import { getCourses } from "@/lib/data/courses";
-import { isSitemapRouteIncluded, sitemapPathForLocation, sitemapStaticPaths, sitemapXML, type SitemapEntry } from "@/lib/sitemap";
+import {
+  isSitemapRouteIncluded,
+  sitemapPathForLocation,
+  sitemapStaticPaths,
+  sitemapXML,
+  type SitemapEntry,
+} from "@/lib/sitemap";
 
 const BASE_URL = "https://themandarinleague.bond";
 
@@ -14,13 +20,28 @@ export const Route = createFileRoute("/sitemap.xml")({
         const router = await getRouterInstance();
         const entries: SitemapEntry[] = sitemapStaticPaths(router).map((path) => ({ path }));
         const dynamic: Array<[string, string, string, string[]]> = [
-          ["/courses/hsk/$courseId", "/courses/hsk/$courseId", "courseId", getCourses().map((c) => c.id)],
+          [
+            "/courses/hsk/$courseId",
+            "/courses/hsk/$courseId",
+            "courseId",
+            getCourses().map((c) => c.id),
+          ],
           ["/news/$slug", "/news/$slug", "slug", [] as string[]],
         ];
         for (const [routeId, to, param, values] of dynamic) {
-          if (!isSitemapRouteIncluded((router.routesById as unknown as Record<string, AnyRoute>)[routeId])) continue;
+          if (
+            !isSitemapRouteIncluded(
+              (router.routesById as unknown as Record<string, AnyRoute>)[routeId],
+            )
+          )
+            continue;
           for (const value of values) {
-            const location = router.buildLocation({ to, params: { [param]: value }, search: () => ({}), hash: "" } as never);
+            const location = router.buildLocation({
+              to,
+              params: { [param]: value },
+              search: () => ({}),
+              hash: "",
+            } as never);
             const path = sitemapPathForLocation(router, location, routeId);
             if (path) entries.push({ path });
           }

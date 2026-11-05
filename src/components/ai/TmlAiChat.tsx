@@ -37,11 +37,7 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { liveChatService } from "@/lib/tml-ai-live";
-import {
-  suggestedPrompts,
-  type ChatMessage,
-  type ChatService,
-} from "@/lib/tml-ai";
+import { suggestedPrompts, type ChatMessage, type ChatService } from "@/lib/tml-ai";
 
 function IconAction({
   label,
@@ -231,15 +227,13 @@ function ChatWorkspace({ service }: { service: ChatService }) {
             <span className="font-han text-base font-semibold text-primary-deep dark:text-foreground">
               小龙
             </span>{" "}
-            <span className="font-medium text-foreground">(Tiểu Long)</span>, trợ lý AI của TML.
-            Tôi hỗ trợ giải đáp câu hỏi về Liên Đoàn Hán Ngữ.
+            <span className="font-medium text-foreground">(Tiểu Long)</span>, trợ lý AI của TML. Tôi
+            hỗ trợ giải đáp câu hỏi về Liên Đoàn Hán Ngữ.
           </p>
         </div>
       </header>
 
       <div className="mx-auto max-w-5xl">
-
-
         <section
           className="flex min-w-0 flex-col rounded-md border border-border bg-card"
           aria-label="Hội thoại TML AI"

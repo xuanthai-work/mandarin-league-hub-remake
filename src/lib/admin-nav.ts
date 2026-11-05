@@ -1,7 +1,23 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard, UserPlus, Users, ListChecks, Award, Image, Building2, GraduationCap,
-  BookOpen, CalendarDays, Newspaper, Handshake, BadgeCheck, FileCheck2, FileText, Settings, Megaphone, Gift,
+  LayoutDashboard,
+  UserPlus,
+  Users,
+  ListChecks,
+  Award,
+  Image,
+  Building2,
+  GraduationCap,
+  BookOpen,
+  CalendarDays,
+  Newspaper,
+  Handshake,
+  BadgeCheck,
+  FileCheck2,
+  FileText,
+  Settings,
+  Megaphone,
+  Gift,
 } from "lucide-react";
 
 export type AdminRole = "admin" | "department_head" | "deputy_head" | "member";

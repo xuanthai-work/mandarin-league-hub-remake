@@ -13,7 +13,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ADMIN_SECTIONS, OVERVIEW_ICON, ROLE_LABELS, ROLE_PRIORITY, navGroupsFor, type AdminNavGroup,
+  ADMIN_SECTIONS,
+  OVERVIEW_ICON,
+  ROLE_LABELS,
+  ROLE_PRIORITY,
+  navGroupsFor,
+  type AdminNavGroup,
 } from "@/lib/admin-nav";
 import { allowedSections } from "@/lib/admin-permissions";
 import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
@@ -30,7 +35,8 @@ function HeaderActions() {
   );
 }
 
-export const Route = createFileRoute("/_authenticated/admin")({ staticData: { sitemap: false },
+export const Route = createFileRoute("/_authenticated/admin")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Quản trị | The Mandarin League" },
@@ -50,13 +56,31 @@ export function useAdminAccess() {
     queryKey: ["admin-access"],
     queryFn: async () => {
       const { data } = await supabase.rpc("my_account");
-      const me = data as unknown as { email: string; roles: string[]; account: { account_status: string; must_change_password: boolean; permissions?: string[] } | null; member: { department: string; full_name: string } | null };
+      const me = data as unknown as {
+        email: string;
+        roles: string[];
+        account: {
+          account_status: string;
+          must_change_password: boolean;
+          permissions?: string[];
+        } | null;
+        member: { department: string; full_name: string } | null;
+      };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
-      const department = blocked ? null : me.member?.department ?? null;
-      const permissions = blocked ? [] : me.account?.permissions ?? [];
+      const department = blocked ? null : (me.member?.department ?? null);
+      const permissions = blocked ? [] : (me.account?.permissions ?? []);
       const allowed = allowedSections(roles, department, permissions);
-      return { email: me.email ?? "", name: blocked ? "" : me.member?.full_name ?? "", roles, department, allowed, permissions, hasAccount: !!me.account, mustChange: !!me.account?.must_change_password };
+      return {
+        email: me.email ?? "",
+        name: blocked ? "" : (me.member?.full_name ?? ""),
+        roles,
+        department,
+        allowed,
+        permissions,
+        hasAccount: !!me.account,
+        mustChange: !!me.account?.must_change_password,
+      };
     },
   });
 }
@@ -88,7 +112,18 @@ function readCollapsedGroups(): Record<string, boolean> {
   }
 }
 
-function SidebarPanel({ email, name, roleLabel, groups, currentSlug, collapsed, onToggleGroup, onNavigate, onSignOut, onClose }: {
+function SidebarPanel({
+  email,
+  name,
+  roleLabel,
+  groups,
+  currentSlug,
+  collapsed,
+  onToggleGroup,
+  onNavigate,
+  onSignOut,
+  onClose,
+}: {
   email: string;
   name: string;
   roleLabel: string;
@@ -100,7 +135,11 @@ function SidebarPanel({ email, name, roleLabel, groups, currentSlug, collapsed, 
   onSignOut: () => void;
   onClose?: () => void;
 }) {
-  const initials = (email.split("@")[0] ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "TML";
+  const initials =
+    (email.split("@")[0] ?? "")
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 2)
+      .toUpperCase() || "TML";
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
       <div className="relative flex h-[73px] shrink-0 items-center gap-3 border-b border-border/60 px-4">
@@ -109,7 +148,9 @@ function SidebarPanel({ email, name, roleLabel, groups, currentSlug, collapsed, 
           <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full object-cover" />
         </span>
         <div className="min-w-0">
-          <p className="font-han truncate text-[13px] font-semibold leading-tight tracking-tight text-foreground">The Mandarin League</p>
+          <p className="font-han truncate text-[13px] font-semibold leading-tight tracking-tight text-foreground">
+            The Mandarin League
+          </p>
           <span className="mt-1 inline-block rounded-md border border-gold/30 bg-gold/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-[color:var(--metal-gold-lo)] shadow-2xs dark:text-gold">
             Admin Portal
           </span>
@@ -121,7 +162,10 @@ function SidebarPanel({ email, name, roleLabel, groups, currentSlug, collapsed, 
         )}
       </div>
 
-      <nav aria-label="Điều hướng quản trị" className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pl-3 pr-2 pb-4">
+      <nav
+        aria-label="Điều hướng quản trị"
+        className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pl-3 pr-2 pb-4"
+      >
         <div className="px-1 pt-2">
           <Link
             to="/admin"
@@ -190,16 +234,29 @@ function SidebarPanel({ email, name, roleLabel, groups, currentSlug, collapsed, 
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-foreground">{name || email}</p>
-            <p className="truncate text-[10px] text-muted-foreground">{name ? email : "Chưa có email"}</p>
+            <p className="truncate text-[10px] text-muted-foreground">
+              {name ? email : "Chưa có email"}
+            </p>
             <span className="mt-1 inline-block rounded-md border border-primary/20 bg-primary/5 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary-deep dark:text-gold">
               {roleLabel}
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <Link to="/member/dashboard" onClick={onNavigate} className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="Thẻ thành viên" title="Thẻ thành viên">
+            <Link
+              to="/member/dashboard"
+              onClick={onNavigate}
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label="Thẻ thành viên"
+              title="Thẻ thành viên"
+            >
               <IdCard className="h-4 w-4" />
             </Link>
-            <button onClick={onSignOut} className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label="Đăng xuất" title="Đăng xuất">
+            <button
+              onClick={onSignOut}
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              aria-label="Đăng xuất"
+              title="Đăng xuất"
+            >
               <LogOut className="h-4 w-4" />
             </button>
           </div>
@@ -214,12 +271,18 @@ function AdminLayout() {
   const navigate = useNavigate();
   const access = useAdminAccess();
   const [open, setOpen] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(readCollapsedGroups);
-  const toggleGroup = (title: string) => setCollapsedGroups((prev) => {
-    const next = { ...prev, [title]: !prev[title] };
-    try { window.localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next)); } catch { /* storage unavailable: keep the in-memory state */ }
-    return next;
-  });
+  const [collapsedGroups, setCollapsedGroups] =
+    useState<Record<string, boolean>>(readCollapsedGroups);
+  const toggleGroup = (title: string) =>
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [title]: !prev[title] };
+      try {
+        window.localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next));
+      } catch {
+        /* storage unavailable: keep the in-memory state */
+      }
+      return next;
+    });
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const signOut = async () => {
@@ -240,17 +303,25 @@ function AdminLayout() {
   }, [access.data, hasAny, navigate]);
 
   // Close the drawer on navigation; Escape closes it; body scroll stays locked while open.
-  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
   }, [open]);
 
-  if (access.isLoading) return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
+  if (access.isLoading)
+    return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
 
   const roles = access.data?.roles ?? [];
   const roleLabel = roles[0] ? ROLE_LABELS[roles[0]] : "Thành viên";
@@ -264,8 +335,15 @@ function AdminLayout() {
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
         <h1 className="mt-4 text-xl font-bold">Tài khoản chưa được cấp quyền</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Vui lòng liên hệ Ban Công nghệ & Hệ thống để được phân quyền.</p>
-        <button onClick={signOut} className="mt-6 rounded-full bg-primary px-6 py-2 font-semibold text-primary-foreground">Đăng xuất</button>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Vui lòng liên hệ Ban Công nghệ & Hệ thống để được phân quyền.
+        </p>
+        <button
+          onClick={signOut}
+          className="mt-6 rounded-full bg-primary px-6 py-2 font-semibold text-primary-foreground"
+        >
+          Đăng xuất
+        </button>
       </div>
     );
   }
@@ -294,7 +372,10 @@ function AdminLayout() {
 
           {open && (
             <div className="fixed inset-0 z-50 lg:hidden">
-              <div className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200" onClick={() => setOpen(false)} />
+              <div
+                className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200"
+                onClick={() => setOpen(false)}
+              />
               <aside
                 role="dialog"
                 aria-modal="true"
@@ -358,9 +439,13 @@ function AdminLayout() {
                 <div className="mx-auto max-w-md px-4 py-20 text-center">
                   <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
                   <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
-                  <p className="mt-2 text-sm text-muted-foreground">Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.
+                  </p>
                 </div>
-              ) : <Outlet />}
+              ) : (
+                <Outlet />
+              )}
             </main>
           </div>
         </div>

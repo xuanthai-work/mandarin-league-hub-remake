@@ -6,14 +6,20 @@ import { Briefcase, GraduationCap, Handshake, Mail, Megaphone, Users } from "luc
 import { PageHero, CONTACT } from "@/components/site/SiteLayout";
 import { pageMeta } from "@/lib/seo";
 
-export const Route = createFileRoute("/contact")({ staticData: { sitemap: true },
-  head: () => ({ meta: pageMeta("Liên hệ", "Liên hệ The Mandarin League qua community@themandarinleague.bond.") }),
+export const Route = createFileRoute("/contact")({
+  staticData: { sitemap: true },
+  head: () => ({
+    meta: pageMeta("Liên hệ", "Liên hệ The Mandarin League qua community@themandarinleague.bond."),
+  }),
   component: PContact,
 });
 
 const GROUPS = [
-  { icon: Users, t: "Cộng đồng" }, { icon: Handshake, t: "Hợp tác" }, { icon: GraduationCap, t: "Giáo viên" },
-  { icon: Briefcase, t: "Đối tác" }, { icon: Megaphone, t: "Truyền thông" },
+  { icon: Users, t: "Cộng đồng" },
+  { icon: Handshake, t: "Hợp tác" },
+  { icon: GraduationCap, t: "Giáo viên" },
+  { icon: Briefcase, t: "Đối tác" },
+  { icon: Megaphone, t: "Truyền thông" },
 ];
 
 const schema = z.object({
@@ -42,32 +48,75 @@ function PContact() {
     setSent(true);
   }
 
-  const field = "mt-1 w-full rounded-xl border border-input bg-background px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-ring/30";
+  const field =
+    "mt-1 w-full rounded-xl border border-input bg-background px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-ring/30";
   return (
     <>
-      <PageHero eyebrow="Liên hệ" title="Kết nối với TML" desc="Chúng tôi luôn sẵn lòng lắng nghe." />
+      <PageHero
+        eyebrow="Liên hệ"
+        title="Kết nối với TML"
+        desc="Chúng tôi luôn sẵn lòng lắng nghe."
+      />
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:px-6 lg:grid-cols-[1fr_1.3fr]">
         <div>
-          <a href={`mailto:${CONTACT.email}`} className="flex items-center gap-3 rounded-2xl bg-brand-gradient p-6 font-semibold text-primary-foreground"><Mail className="h-6 w-6" />{CONTACT.email}</a>
+          <a
+            href={`mailto:${CONTACT.email}`}
+            className="flex items-center gap-3 rounded-2xl bg-brand-gradient p-6 font-semibold text-primary-foreground"
+          >
+            <Mail className="h-6 w-6" />
+            {CONTACT.email}
+          </a>
           <div className="mt-6 grid grid-cols-2 gap-3">
             {GROUPS.map((g) => (
-              <a key={g.t} href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(`[${g.t}] `)}`} className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 font-medium hover:border-primary/50"><g.icon className="h-5 w-5 text-primary" />{tr(g.t)}</a>
+              <a
+                key={g.t}
+                href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(`[${g.t}] `)}`}
+                className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 font-medium hover:border-primary/50"
+              >
+                <g.icon className="h-5 w-5 text-primary" />
+                {tr(g.t)}
+              </a>
             ))}
           </div>
         </div>
-        <form onSubmit={onSubmit} noValidate className="space-y-4 rounded-2xl border border-border bg-card p-6 md:p-8">
-          {([["name", "Họ và tên"], ["email", "Email"], ["subject", "Chủ đề"]] as const).map(([k, l]) => (
-            <label key={k} className="block text-sm font-medium">{tr(l)}
+        <form
+          onSubmit={onSubmit}
+          noValidate
+          className="space-y-4 rounded-2xl border border-border bg-card p-6 md:p-8"
+        >
+          {(
+            [
+              ["name", "Họ và tên"],
+              ["email", "Email"],
+              ["subject", "Chủ đề"],
+            ] as const
+          ).map(([k, l]) => (
+            <label key={k} className="block text-sm font-medium">
+              {tr(l)}
               <input name={k} type={k === "email" ? "email" : "text"} className={field} />
-              {errors[k] && <span className="mt-1 block text-xs text-destructive">{tr(errors[k])}</span>}
+              {errors[k] && (
+                <span className="mt-1 block text-xs text-destructive">{tr(errors[k])}</span>
+              )}
             </label>
           ))}
-          <label className="block text-sm font-medium">{tr("Nội dung")}
+          <label className="block text-sm font-medium">
+            {tr("Nội dung")}
             <textarea name="message" rows={5} className={field} />
-            {errors["message"] && <span className="mt-1 block text-xs text-destructive">{tr(errors["message"])}</span>}
+            {errors["message"] && (
+              <span className="mt-1 block text-xs text-destructive">{tr(errors["message"])}</span>
+            )}
           </label>
-          <button type="submit" className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90">{tr("Gửi liên hệ")}</button>
-          {sent && <p className="text-center text-sm text-success">{tr("Ứng dụng email của bạn đã được mở để gửi tin nhắn.")}</p>}
+          <button
+            type="submit"
+            className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90"
+          >
+            {tr("Gửi liên hệ")}
+          </button>
+          {sent && (
+            <p className="text-center text-sm text-success">
+              {tr("Ứng dụng email của bạn đã được mở để gửi tin nhắn.")}
+            </p>
+          )}
         </form>
       </div>
     </>

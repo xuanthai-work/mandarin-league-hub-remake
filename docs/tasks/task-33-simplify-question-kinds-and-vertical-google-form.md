@@ -7,9 +7,11 @@
 ---
 
 ## 1. Yêu cầu & Bối cảnh
+
 Trước đây hệ thống câu hỏi có 6 loại phân mảnh và giao diện câu hỏi trắc nghiệm dùng các nút pill tròn dàn ngang (`flex-wrap gap-2`), không trực quan khi câu trả lời dài.
 
 Mục tiêu:
+
 1. Rút gọn còn 4 loại câu hỏi chuẩn:
    - Gộp `short` và `long` -> "Đoạn văn" (`long`).
    - Gộp `dropdown` và `single` -> "Một lựa chọn" (`single`).
@@ -22,6 +24,7 @@ Mục tiêu:
 ---
 
 ## 2. File thay đổi
+
 - `src/lib/recruitment.ts`
 - `src/components/recruitment/ChoiceAnswerList.tsx`
 - `src/components/recruitment/ApplicationForm.tsx`
@@ -33,6 +36,7 @@ Mục tiêu:
 ---
 
 ## 3. Kết quả QA Audit
+
 - [x] Đã hoàn thành và xác minh: 4 loại câu hỏi chuẩn hóa, giao diện trắc nghiệm dạng danh sách dọc hoạt động hoàn hảo.
 - [x] Verification Gates:
   - `npx tsc --noEmit`: PASS không lỗi.

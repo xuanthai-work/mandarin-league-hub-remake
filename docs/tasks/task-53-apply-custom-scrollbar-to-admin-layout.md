@@ -8,11 +8,13 @@
 ---
 
 ## 1. Objective
+
 Gắn class `.custom-scrollbar` vào thẻ `<main>` (vùng cuộn nội dung chính của mọi trang trong cổng Admin) và các container cuộn liên quan, thay thế hoàn toàn thanh cuộn màu xám dày thô nguyên bản của hệ điều hành Windows bằng thanh cuộn 6px bo tròn tinh gọn của dự án.
 
 ---
 
 ## 2. Changes Made
+
 1. **`src/routes/_authenticated/admin.tsx`**:
    - Thêm class `custom-scrollbar` vào `<main className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">`.
    - Gắn `custom-scrollbar` cho thẻ `<nav>` sidebar điều hướng quản trị, loại bỏ các utility inline trùng lặp.
@@ -24,6 +26,7 @@ Gắn class `.custom-scrollbar` vào thẻ `<main>` (vùng cuộn nội dung ch�
 ---
 
 ## 3. QA Audit Verification Results
+
 - **Acceptance Criteria**: Đạt 3/3 tiêu chí.
 - **Verification Gates**:
   - `pnpm exec tsc --noEmit`: PASS (0 lỗi type).

@@ -14,7 +14,13 @@ export function CrystalParticles() {
         <span
           key={i}
           className={`crystal ${p.gold ? "crystal-gold" : "crystal-blue"}`}
-          style={{ left: `${p.left}%`, width: p.size, height: p.size, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}
+          style={{
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.size,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.dur}s`,
+          }}
         />
       ))}
     </div>

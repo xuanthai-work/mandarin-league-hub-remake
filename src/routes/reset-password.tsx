@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import { routeAfterLogin } from "@/lib/portal";
 
-export const Route = createFileRoute("/reset-password")({ staticData: { sitemap: false },
+export const Route = createFileRoute("/reset-password")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Đặt lại mật khẩu | The Mandarin League" },
@@ -23,7 +24,9 @@ function ResetPassword() {
   const navigate = useNavigate();
   const [ready, setReady] = useState<boolean | null>(null);
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((ev, s) => { if (s && (ev === "PASSWORD_RECOVERY" || ev === "SIGNED_IN")) setReady(true); });
+    const { data: sub } = supabase.auth.onAuthStateChange((ev, s) => {
+      if (s && (ev === "PASSWORD_RECOVERY" || ev === "SIGNED_IN")) setReady(true);
+    });
     supabase.auth.getSession().then(({ data }) => setReady((r) => r || !!data.session));
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -32,9 +35,22 @@ function ResetPassword() {
       <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
         <h1 className="text-center text-2xl font-bold text-primary-deep">Đặt mật khẩu mới</h1>
         <div className="mt-6">
-          {ready === null ? <p className="text-center text-sm text-muted-foreground">Đang kiểm tra liên kết…</p>
-            : ready ? <NewPasswordForm onDone={async () => { const d = await routeAfterLogin(); navigate({ to: d === "blocked" || d === "none" || d === "/change-password" ? "/login" : d }); }} />
-            : <p className="text-center text-sm text-muted-foreground">Liên kết không hợp lệ hoặc đã hết hạn. Hãy yêu cầu liên kết mới tại trang đăng nhập.</p>}
+          {ready === null ? (
+            <p className="text-center text-sm text-muted-foreground">Đang kiểm tra liên kết…</p>
+          ) : ready ? (
+            <NewPasswordForm
+              onDone={async () => {
+                const d = await routeAfterLogin();
+                navigate({
+                  to: d === "blocked" || d === "none" || d === "/change-password" ? "/login" : d,
+                });
+              }}
+            />
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">
+              Liên kết không hợp lệ hoặc đã hết hạn. Hãy yêu cầu liên kết mới tại trang đăng nhập.
+            </p>
+          )}
         </div>
       </div>
     </section>

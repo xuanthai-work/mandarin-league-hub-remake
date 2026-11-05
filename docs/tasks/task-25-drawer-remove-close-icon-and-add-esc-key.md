@@ -7,7 +7,9 @@
 ---
 
 ## 1. Yêu cầu & Bối cảnh
+
 Chuẩn hóa trải nghiệm đóng/thoát modal Drawer trên màn Quản trị Thành viên (`admin.members.tsx`):
+
 1. **Loại bỏ nút đóng "X" ở Header**:
    - Xóa bỏ nút icon `X` ở Header của cả 2 Drawer (`MemberDrawer` và `NewMemberDrawer`), chỉ giữ lại nút bấm ở Footer để giao diện tinh gọn, thoáng đãng.
 2. **Đồng bộ nhãn nút Footer thành "Hủy"**:
@@ -18,11 +20,13 @@ Chuẩn hóa trải nghiệm đóng/thoát modal Drawer trên màn Quản trị 
 ---
 
 ## 2. File thay đổi
+
 - `src/routes/_authenticated/admin.members.tsx`
 
 ---
 
 ## 3. Kết quả QA Audit
+
 - [x] Đã xóa hoàn toàn nút icon `X` ở Header góc trên bên phải của cả `MemberDrawer` và `NewMemberDrawer`.
 - [x] Nút ở Footer `MemberDrawer` hiển thị đúng chữ **"Hủy"**.
 - [x] Bấm phím **`Escape` (Esc)** trên bàn phím máy tính đóng Drawer mượt mà qua exit animation.

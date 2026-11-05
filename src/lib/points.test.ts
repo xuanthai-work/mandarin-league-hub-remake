@@ -24,6 +24,19 @@ t2("professional advisors are left off the leaderboard", () => {
 
 import { tierOf } from "./points";
 t2("tier thresholds 0/100/300/600/1000/1600/2200", () => {
-  const cases: [number, string][] = [[0, "Tập sự"], [99, "Tập sự"], [100, "Chính thức"], [299, "Chính thức"], [300, "Tích cực"], [600, "Nòng cốt"], [999, "Nòng cốt"], [1000, "Xuất sắc"], [1599, "Xuất sắc"], [1600, "Ưu tú"], [2199, "Ưu tú"], [2200, "Danh dự"]];
+  const cases: [number, string][] = [
+    [0, "Tập sự"],
+    [99, "Tập sự"],
+    [100, "Chính thức"],
+    [299, "Chính thức"],
+    [300, "Tích cực"],
+    [600, "Nòng cốt"],
+    [999, "Nòng cốt"],
+    [1000, "Xuất sắc"],
+    [1599, "Xuất sắc"],
+    [1600, "Ưu tú"],
+    [2199, "Ưu tú"],
+    [2200, "Danh dự"],
+  ];
   for (const [p, l] of cases) e2(tierOf(p).label).toBe(l);
 });

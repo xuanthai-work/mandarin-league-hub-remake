@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Paperclip, ReceiptText, Search, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Paperclip,
+  ReceiptText,
+  Search,
+  X,
+} from "lucide-react";
 
 import {
   Select,
@@ -100,9 +108,7 @@ function EvidenceLinks({ paths }: { paths: string[] }) {
     setBusy(true);
     const resolved: { name: string; url: string }[] = [];
     for (const path of paths) {
-      const { data } = await supabase.storage
-        .from("point-evidence")
-        .createSignedUrl(path, 300);
+      const { data } = await supabase.storage.from("point-evidence").createSignedUrl(path, 300);
       if (data?.signedUrl) resolved.push({ name: fileName(path), url: data.signedUrl });
     }
     setLinks(resolved);

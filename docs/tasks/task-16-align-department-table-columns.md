@@ -1,7 +1,9 @@
 # TASK-16-ALIGN-DEPARTMENT-TABLE-COLUMNS
 
 ## 1. Overview & Objective
+
 Khắc phục hiện tượng các bảng thành viên của các Ban bị lệch cột zíc zắc theo trục dọc khi hiển thị đồng thời nhiều khối Ban trên trang Quản trị Thành viên (`src/routes/_authenticated/admin.members.tsx`):
+
 - Nguyên nhân: Các bảng `<table>` độc lập dùng `table-layout: auto` mặc định, tự động tính toán độ rộng cột theo độ dài chuỗi ký tự trong từng dòng riêng biệt của ban đó.
 - Giải pháp: Cấu hình `table-fixed` kết hợp mảng độ rộng chuẩn dùng chung `MEMBER_COLS` cho tất cả các bảng `DepartmentSection`.
 - Kết quả: Tất cả các cột giữa các khối Ban (`Mã thành viên`, `Họ tên`, `Tài khoản & Trạng thái`, `Chức vụ`, `Ngày gia nhập`, `Điểm`, `Thao tác`) thẳng hàng tuyệt đối 100% theo trục dọc.
@@ -9,11 +11,13 @@ Khắc phục hiện tượng các bảng thành viên của các Ban bị lệc
 ---
 
 ## 2. Scope & Files Impacted
+
 - `src/routes/_authenticated/admin.members.tsx`
 
 ---
 
 ## 3. Implementation Details
+
 1. **Định nghĩa `MEMBER_COLS`**:
    - `Mã thành viên`: `w-[160px]`
    - `Họ tên`: `w-[200px]`
@@ -29,6 +33,7 @@ Khắc phục hiện tượng các bảng thành viên của các Ban bị lệc
 ---
 
 ## 4. QA Audit Verification Results
+
 - **Acceptance Criteria Verification**:
   - [x] Tất cả các bảng thành viên của từng Ban đều dùng chung `table-fixed` và bộ khung `MEMBER_COLS`.
   - [x] Tiêu đề và nội dung các cột giữa các khối Ban gióng hàng thẳng tắp 100% theo trục dọc.

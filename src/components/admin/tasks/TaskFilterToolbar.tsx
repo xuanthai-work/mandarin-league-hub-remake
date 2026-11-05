@@ -21,12 +21,7 @@ interface TaskFilterToolbarProps {
 const trigger =
   "h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[180px]";
 
-export function TaskFilterToolbar({
-  filters,
-  depts,
-  givers,
-  onChange,
-}: TaskFilterToolbarProps) {
+export function TaskFilterToolbar({ filters, depts, givers, onChange }: TaskFilterToolbarProps) {
   const patch = (part: Partial<TaskFilters>) => onChange({ ...filters, ...part });
 
   return (

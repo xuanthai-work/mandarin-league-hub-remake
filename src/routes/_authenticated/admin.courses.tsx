@@ -11,18 +11,50 @@ import { classFee, type HskClass } from "@/lib/hsk-classes";
 import { reviewEnrollment } from "@/lib/courses.functions";
 import { TrashList } from "@/components/admin/Trash";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAdminAccess } from "./admin";
-import { ENROLL_STATUS, formatFee, useCourseSettings, type CourseSetting } from "@/lib/course-settings";
+import {
+  ENROLL_STATUS,
+  formatFee,
+  useCourseSettings,
+  type CourseSetting,
+} from "@/lib/course-settings";
 
-export const Route = createFileRoute("/_authenticated/admin/courses")({ staticData: { sitemap: false },
-  head: () => ({ meta: [{ title: "Khóa học & Đăng ký | TML Admin" }, { name: "robots", content: "noindex" }] }),
+export const Route = createFileRoute("/_authenticated/admin/courses")({
+  staticData: { sitemap: false },
+  head: () => ({
+    meta: [{ title: "Khóa học & Đăng ký | TML Admin" }, { name: "robots", content: "noindex" }],
+  }),
   component: CoursesAdmin,
 });
 
-type Enrollment = { id: string; code: string; level: number; full_name: string; email: string; phone: string; current_level: string; goal: string; message: string; status: string; admin_note: string; created_at: string; course_id: string | null; hsk_class_id: string | null };
+type Enrollment = {
+  id: string;
+  code: string;
+  level: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  current_level: string;
+  goal: string;
+  message: string;
+  status: string;
+  admin_note: string;
+  created_at: string;
+  course_id: string | null;
+  hsk_class_id: string | null;
+};
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-const zaloOf = (p: string) => { const d = p.replace(/\D/g, ""); return `https://zalo.me/${d.startsWith("84") ? "0" + d.slice(2) : d}`; };
+const zaloOf = (p: string) => {
+  const d = p.replace(/\D/g, "");
+  return `https://zalo.me/${d.startsWith("84") ? "0" + d.slice(2) : d}`;
+};
 
 function CoursesAdmin() {
   const qc = useQueryClient();
@@ -35,176 +67,512 @@ function CoursesAdmin() {
   const [tab, setTab] = useState<"hsk" | "programs" | "enroll" | "trash">("hsk");
   const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const [kid, setKid] = useState("");
-  const { data: classes } = useQuery({ queryKey: ["admin-class-names"], queryFn: async () => ((await supabase.from("hsk_classes").select("id, name, level, fee_type, fee_amount").is("deleted_at", null)).data ?? []) as Pick<HskClass, "id" | "name" | "level" | "fee_type" | "fee_amount">[] });
+  const { data: classes } = useQuery({
+    queryKey: ["admin-class-names"],
+    queryFn: async () =>
+      ((
+        await supabase
+          .from("hsk_classes")
+          .select("id, name, level, fee_type, fee_amount")
+          .is("deleted_at", null)
+      ).data ?? []) as Pick<HskClass, "id" | "name" | "level" | "fee_type" | "fee_amount">[],
+  });
   const { data: rows, isLoading } = useQuery({
     queryKey: ["admin-enrollments"],
-    queryFn: async () => ((await supabase.from("course_enrollments").select("*").order("created_at", { ascending: false }).limit(1000)).data ?? []) as Enrollment[],
+    queryFn: async () =>
+      ((
+        await supabase
+          .from("course_enrollments")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(1000)
+      ).data ?? []) as Enrollment[],
   });
-  const list = (rows ?? []).filter((r) => (!cid || r.course_id === cid) && (!kid || r.hsk_class_id === kid) && (!lv || r.level === lv) && (!stF || r.status === stF) && (!q || `${r.code} ${r.full_name} ${r.email} ${r.phone}`.toLowerCase().includes(q.toLowerCase())));
-  const count = (l: number, s: string) => (rows ?? []).filter((r) => !r.course_id && !r.hsk_class_id && r.level === l && r.status === s).length;
+  const list = (rows ?? []).filter(
+    (r) =>
+      (!cid || r.course_id === cid) &&
+      (!kid || r.hsk_class_id === kid) &&
+      (!lv || r.level === lv) &&
+      (!stF || r.status === stF) &&
+      (!q ||
+        `${r.code} ${r.full_name} ${r.email} ${r.phone}`.toLowerCase().includes(q.toLowerCase())),
+  );
+  const count = (l: number, s: string) =>
+    (rows ?? []).filter((r) => !r.course_id && !r.hsk_class_id && r.level === l && r.status === s)
+      .length;
 
   const saveSetting = async (s: CourseSetting, patch: Partial<CourseSetting>) => {
-    const { error } = await supabase.from("course_settings").update({ ...patch, updated_at: new Date().toISOString() }).eq("level", s.level);
-    if (error) toast.error("Không lưu được (cần quyền Admin/Ban Chuyên môn)"); else { toast.success("Đã lưu"); qc.invalidateQueries({ queryKey: ["course-settings"] }); }
+    const { error } = await supabase
+      .from("course_settings")
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq("level", s.level);
+    if (error) toast.error("Không lưu được (cần quyền Admin/Ban Chuyên môn)");
+    else {
+      toast.success("Đã lưu");
+      qc.invalidateQueries({ queryKey: ["course-settings"] });
+    }
   };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
-      <AdminPageHeader title="Khóa học & Đơn đăng ký" description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên." />
+      <AdminPageHeader
+        title="Khóa học & Đơn đăng ký"
+        description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên."
+      />
       <div className="flex flex-wrap gap-2">
-        {([["hsk", "Khóa học HSK"], ["programs", "Chương trình học"], ["enroll", "Đơn đăng ký"], ["trash", "Thùng rác"]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{l}</button>
+        {(
+          [
+            ["hsk", "Khóa học HSK"],
+            ["programs", "Chương trình học"],
+            ["enroll", "Đơn đăng ký"],
+            ["trash", "Thùng rác"],
+          ] as const
+        ).map(([k, l]) => (
+          <button
+            key={k}
+            onClick={() => setTab(k)}
+            className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
+          >
+            {l}
+          </button>
         ))}
       </div>
 
-      {tab === "hsk" && <>
-        <HskClassesAdmin pendingCounts={(rows ?? []).reduce((m, r) => (r.hsk_class_id && r.status === "pending" ? m.set(r.hsk_class_id, (m.get(r.hsk_class_id) ?? 0) + 1) : m), new Map<string, number>())} onFilter={(id) => { setKid(id); setCid(""); setStF(""); setLv(0); setTab("enroll"); }} />
-        <h3 className="pt-4 font-bold">Đăng ký chung theo cấp độ <span className="text-sm font-normal text-muted-foreground">(khi chưa có lớp cụ thể)</span></h3>
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {(settings ?? []).map((s) => <SettingCard key={s.level} s={s} pending={count(s.level, "pending")} approved={count(s.level, "approved")} onSave={(p) => saveSetting(s, p)} />)}
-        </section>
-      </>}
-      {tab === "programs" && <ProgramsAdmin enrollCounts={(rows ?? []).reduce((m, r) => (r.course_id ? m.set(r.course_id, (m.get(r.course_id) ?? 0) + 1) : m), new Map<string, number>())} onFilter={(id) => { setCid(id); setKid(""); setStF(""); setLv(0); setTab("enroll"); }} />}
+      {tab === "hsk" && (
+        <>
+          <HskClassesAdmin
+            pendingCounts={(rows ?? []).reduce(
+              (m, r) =>
+                r.hsk_class_id && r.status === "pending"
+                  ? m.set(r.hsk_class_id, (m.get(r.hsk_class_id) ?? 0) + 1)
+                  : m,
+              new Map<string, number>(),
+            )}
+            onFilter={(id) => {
+              setKid(id);
+              setCid("");
+              setStF("");
+              setLv(0);
+              setTab("enroll");
+            }}
+          />
+          <h3 className="pt-4 font-bold">
+            Đăng ký chung theo cấp độ{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              (khi chưa có lớp cụ thể)
+            </span>
+          </h3>
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {(settings ?? []).map((s) => (
+              <SettingCard
+                key={s.level}
+                s={s}
+                pending={count(s.level, "pending")}
+                approved={count(s.level, "approved")}
+                onSave={(p) => saveSetting(s, p)}
+              />
+            ))}
+          </section>
+        </>
+      )}
+      {tab === "programs" && (
+        <ProgramsAdmin
+          enrollCounts={(rows ?? []).reduce(
+            (m, r) => (r.course_id ? m.set(r.course_id, (m.get(r.course_id) ?? 0) + 1) : m),
+            new Map<string, number>(),
+          )}
+          onFilter={(id) => {
+            setCid(id);
+            setKid("");
+            setStF("");
+            setLv(0);
+            setTab("enroll");
+          }}
+        />
+      )}
 
-      {tab === "trash" && <div className="space-y-6">
-        <div><h3 className="mb-2 font-bold">Lớp HSK đã xóa</h3><TrashList table="hsk_classes" canHardDelete={isAdmin} invalidate={["admin-hsk-classes", "public-hsk-classes"]} /></div>
-        <div><h3 className="mb-2 font-bold">Chương trình học đã xóa</h3><TrashList table="courses" canHardDelete={isAdmin} invalidate={["admin-programs", "public-programs"]} /></div>
-      </div>}
-      {tab === "enroll" &&       <section className="rounded-2xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-            <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="Tìm mã, tên, email, SĐT…"
-              aria-label="Tìm kiếm đơn đăng ký"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
+      {tab === "trash" && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="mb-2 font-bold">Lớp HSK đã xóa</h3>
+            <TrashList
+              table="hsk_classes"
+              canHardDelete={isAdmin}
+              invalidate={["admin-hsk-classes", "public-hsk-classes"]}
             />
-            {q && (
+          </div>
+          <div>
+            <h3 className="mb-2 font-bold">Chương trình học đã xóa</h3>
+            <TrashList
+              table="courses"
+              canHardDelete={isAdmin}
+              invalidate={["admin-programs", "public-programs"]}
+            />
+          </div>
+        </div>
+      )}
+      {tab === "enroll" && (
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+              <Search
+                aria-hidden
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="text"
+                className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Tìm mã, tên, email, SĐT…"
+                aria-label="Tìm kiếm đơn đăng ký"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+              {q && (
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  aria-label="Xóa nội dung tìm kiếm"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {cid && (
               <button
-                type="button"
-                onClick={() => setQ("")}
-                aria-label="Xóa nội dung tìm kiếm"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                onClick={() => setCid("")}
+                className="rounded-full bg-accent px-3 text-xs font-semibold text-primary"
               >
-                <X className="h-3.5 w-3.5" />
+                Đang lọc theo chương trình ✕
               </button>
             )}
+            <Select value={kid || "all"} onValueChange={(v) => setKid(v === "all" ? "" : v)}>
+              <SelectTrigger
+                aria-label="Lọc theo lớp HSK"
+                className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+              >
+                <SelectValue>
+                  {kid
+                    ? (classes?.find((c) => c.id === kid)?.name ?? "Lớp HSK")
+                    : "Mọi lớp HSK cụ thể"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all" className="text-xs">
+                  Mọi lớp HSK cụ thể
+                </SelectItem>
+                {(classes ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs">
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
+              <SelectTrigger
+                aria-label="Lọc theo cấp độ"
+                className="h-9 w-[130px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+              >
+                <SelectValue>{lv ? `HSK ${lv}` : "Mọi cấp độ"}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="0" className="text-xs">
+                  Mọi cấp độ
+                </SelectItem>
+                {[1, 2, 3, 4, 5, 6].map((l) => (
+                  <SelectItem key={l} value={String(l)} className="text-xs">
+                    HSK {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={stF || "all"} onValueChange={(v) => setStF(v === "all" ? "" : v)}>
+              <SelectTrigger
+                aria-label="Lọc theo trạng thái"
+                className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+              >
+                <SelectValue>
+                  {stF ? (ENROLL_STATUS[stF]?.label ?? stF) : "Mọi trạng thái"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all" className="text-xs">
+                  Mọi trạng thái
+                </SelectItem>
+                {Object.entries(ENROLL_STATUS).map(([k, v]) => (
+                  <SelectItem key={k} value={k} className="text-xs">
+                    {v.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          {cid && <button onClick={() => setCid("")} className="rounded-full bg-accent px-3 text-xs font-semibold text-primary">Đang lọc theo chương trình ✕</button>}
-          <Select value={kid || "all"} onValueChange={(v) => setKid(v === "all" ? "" : v)}>
-            <SelectTrigger aria-label="Lọc theo lớp HSK" className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
-              <SelectValue>{kid ? (classes?.find((c) => c.id === kid)?.name ?? "Lớp HSK") : "Mọi lớp HSK cụ thể"}</SelectValue>
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="all" className="text-xs">Mọi lớp HSK cụ thể</SelectItem>
-              {(classes ?? []).map((c) => <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={String(lv)} onValueChange={(v) => setLv(Number(v))}>
-            <SelectTrigger aria-label="Lọc theo cấp độ" className="h-9 w-[130px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
-              <SelectValue>{lv ? `HSK ${lv}` : "Mọi cấp độ"}</SelectValue>
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="0" className="text-xs">Mọi cấp độ</SelectItem>
-              {[1, 2, 3, 4, 5, 6].map((l) => <SelectItem key={l} value={String(l)} className="text-xs">HSK {l}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={stF || "all"} onValueChange={(v) => setStF(v === "all" ? "" : v)}>
-            <SelectTrigger aria-label="Lọc theo trạng thái" className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs">
-              <SelectValue>{stF ? (ENROLL_STATUS[stF]?.label ?? stF) : "Mọi trạng thái"}</SelectValue>
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="all" className="text-xs">Mọi trạng thái</SelectItem>
-              {Object.entries(ENROLL_STATUS).map(([k, v]) => <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase text-muted-foreground"><tr><th className="p-2">Mã</th><th className="p-2">Họ tên</th><th className="p-2">Liên hệ</th><th className="p-2">Lớp</th><th className="p-2">Ngày</th><th className="p-2">Trạng thái</th></tr></thead>
-            <tbody>
-              {isLoading && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Đang tải…</td></tr>}
-              {!isLoading && list.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Chưa có đơn đăng ký.</td></tr>}
-              {list.map((r) => (
-                <tr key={r.id} onClick={() => setSel(r)} className="cursor-pointer border-t border-border hover:bg-muted/50">
-                  <td className="p-2 font-mono text-xs">{r.code}</td><td className="p-2 font-medium">{r.full_name}</td>
-                  <td className="p-2 text-xs">{r.phone}<div className="text-muted-foreground">{r.email}</div></td>
-                  <td className="p-2">{r.hsk_class_id ? classes?.find((c) => c.id === r.hsk_class_id)?.name ?? `HSK ${r.level}` : r.course_id ? "Chương trình" : `HSK ${r.level}`}</td><td className="p-2 text-xs">{new Date(r.created_at).toLocaleString("vi-VN")}</td>
-                  <td className="p-2"><span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ENROLL_STATUS[r.status]?.tone}`}>{ENROLL_STATUS[r.status]?.label}</span></td>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="p-2">Mã</th>
+                  <th className="p-2">Họ tên</th>
+                  <th className="p-2">Liên hệ</th>
+                  <th className="p-2">Lớp</th>
+                  <th className="p-2">Ngày</th>
+                  <th className="p-2">Trạng thái</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>}
-      {sel && <ReviewDialog r={sel} setting={sel.hsk_class_id ? (() => { const c = classes?.find((x) => x.id === sel.hsk_class_id); return c ? { fee_type: c.fee_type, fee_amount: c.fee_amount, label: c.name } : undefined; })() : (() => { const st = settings?.find((x) => x.level === sel.level); return st ? { fee_type: st.fee_type, fee_amount: st.fee_amount, label: `HSK ${sel.level}` } : undefined; })()} onClose={() => setSel(null)} onDone={() => { setSel(null); qc.invalidateQueries({ queryKey: ["admin-enrollments"] }); }} />}
+              </thead>
+              <tbody>
+                {isLoading && (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                      Đang tải…
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && list.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                      Chưa có đơn đăng ký.
+                    </td>
+                  </tr>
+                )}
+                {list.map((r) => (
+                  <tr
+                    key={r.id}
+                    onClick={() => setSel(r)}
+                    className="cursor-pointer border-t border-border hover:bg-muted/50"
+                  >
+                    <td className="p-2 font-mono text-xs">{r.code}</td>
+                    <td className="p-2 font-medium">{r.full_name}</td>
+                    <td className="p-2 text-xs">
+                      {r.phone}
+                      <div className="text-muted-foreground">{r.email}</div>
+                    </td>
+                    <td className="p-2">
+                      {r.hsk_class_id
+                        ? (classes?.find((c) => c.id === r.hsk_class_id)?.name ?? `HSK ${r.level}`)
+                        : r.course_id
+                          ? "Chương trình"
+                          : `HSK ${r.level}`}
+                    </td>
+                    <td className="p-2 text-xs">
+                      {new Date(r.created_at).toLocaleString("vi-VN")}
+                    </td>
+                    <td className="p-2">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ENROLL_STATUS[r.status]?.tone}`}
+                      >
+                        {ENROLL_STATUS[r.status]?.label}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+      {sel && (
+        <ReviewDialog
+          r={sel}
+          setting={
+            sel.hsk_class_id
+              ? (() => {
+                  const c = classes?.find((x) => x.id === sel.hsk_class_id);
+                  return c
+                    ? { fee_type: c.fee_type, fee_amount: c.fee_amount, label: c.name }
+                    : undefined;
+                })()
+              : (() => {
+                  const st = settings?.find((x) => x.level === sel.level);
+                  return st
+                    ? {
+                        fee_type: st.fee_type,
+                        fee_amount: st.fee_amount,
+                        label: `HSK ${sel.level}`,
+                      }
+                    : undefined;
+                })()
+          }
+          onClose={() => setSel(null)}
+          onDone={() => {
+            setSel(null);
+            qc.invalidateQueries({ queryKey: ["admin-enrollments"] });
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function SettingCard({ s, pending, approved, onSave }: { s: CourseSetting; pending: number; approved: number; onSave: (p: Partial<CourseSetting>) => void }) {
-  const [fee, setFee] = useState({ fee_type: s.fee_type, fee_amount: s.fee_amount, capacity: s.capacity });
-  const { data: teachers } = useQuery({ queryKey: ["admin-teacher-setting-options"], queryFn: async () => ((await supabase.from("teachers").select("id, full_name, teaching_levels").neq("status", "hidden").order("sort_order")).data ?? []) as { id: string; full_name: string; teaching_levels: number[] }[] });
+function SettingCard({
+  s,
+  pending,
+  approved,
+  onSave,
+}: {
+  s: CourseSetting;
+  pending: number;
+  approved: number;
+  onSave: (p: Partial<CourseSetting>) => void;
+}) {
+  const [fee, setFee] = useState({
+    fee_type: s.fee_type,
+    fee_amount: s.fee_amount,
+    capacity: s.capacity,
+  });
+  const { data: teachers } = useQuery({
+    queryKey: ["admin-teacher-setting-options"],
+    queryFn: async () =>
+      ((
+        await supabase
+          .from("teachers")
+          .select("id, full_name, teaching_levels")
+          .neq("status", "hidden")
+          .order("sort_order")
+      ).data ?? []) as { id: string; full_name: string; teaching_levels: number[] }[],
+  });
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
-        <span className="rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">HSK {s.level}</span>
-        <button onClick={() => onSave({ registration_open: !s.registration_open })} className={`rounded-full px-3 py-1 text-xs font-semibold ${s.registration_open ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
+        <span className="rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">
+          HSK {s.level}
+        </span>
+        <button
+          onClick={() => onSave({ registration_open: !s.registration_open })}
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${s.registration_open ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}
+        >
           {s.registration_open ? "● Đang mở đăng ký" : "○ Đã đóng đăng ký"}
         </button>
       </div>
-      <div className="mt-2 text-xs text-muted-foreground">{pending} chờ duyệt · {approved}/{s.capacity} trúng tuyển · {formatFee(s)}</div>
+      <div className="mt-2 text-xs text-muted-foreground">
+        {pending} chờ duyệt · {approved}/{s.capacity} trúng tuyển · {formatFee(s)}
+      </div>
       <div className="mt-3 text-xs text-muted-foreground">
         <span className="block">Giảng viên phụ trách chính (hiện trên trang khóa)</span>
-        <Select value={s.lead_teacher_id ?? "auto"} onValueChange={(v) => onSave({ lead_teacher_id: v === "auto" ? null : v })}>
-          <SelectTrigger aria-label="Giảng viên phụ trách chính" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none">
-            <SelectValue>{(teachers ?? []).find((t) => t.id === s.lead_teacher_id)?.full_name ?? "Tự động (nổi bật / xếp đầu)"}</SelectValue>
+        <Select
+          value={s.lead_teacher_id ?? "auto"}
+          onValueChange={(v) => onSave({ lead_teacher_id: v === "auto" ? null : v })}
+        >
+          <SelectTrigger
+            aria-label="Giảng viên phụ trách chính"
+            className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none"
+          >
+            <SelectValue>
+              {(teachers ?? []).find((t) => t.id === s.lead_teacher_id)?.full_name ??
+                "Tự động (nổi bật / xếp đầu)"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="auto" className="text-sm">Tự động (nổi bật / xếp đầu)</SelectItem>
+            <SelectItem value="auto" className="text-sm">
+              Tự động (nổi bật / xếp đầu)
+            </SelectItem>
             {(teachers ?? []).map((t) => (
               <SelectItem key={t.id} value={t.id} className="text-sm">
-                {t.full_name}{(t.teaching_levels ?? []).includes(s.level) ? "" : " (chưa gán cấp này)"}
+                {t.full_name}
+                {(t.teaching_levels ?? []).includes(s.level) ? "" : " (chưa gán cấp này)"}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      {([["co_teacher_ids", "Giảng viên đồng hành"], ["assistant_ids", "Trợ giảng"]] as const).map(([key, label]) => {
+      {(
+        [
+          ["co_teacher_ids", "Giảng viên đồng hành"],
+          ["assistant_ids", "Trợ giảng"],
+        ] as const
+      ).map(([key, label]) => {
         const ids: string[] = Array.isArray(s[key]) ? (s[key] as string[]) : [];
         return (
-          <div key={key} className="mt-3 text-xs text-muted-foreground">{label} <span className="opacity-70">(tùy chọn)</span>
+          <div key={key} className="mt-3 text-xs text-muted-foreground">
+            {label} <span className="opacity-70">(tùy chọn)</span>
             <div className="mt-1 flex flex-wrap gap-1.5">
-              {(teachers ?? []).filter((t) => t.id !== s.lead_teacher_id).map((t) => {
-                const on = ids.includes(t.id);
-                return <button key={t.id} type="button" onClick={() => onSave({ [key]: on ? ids.filter((x) => x !== t.id) : [...ids, t.id] })} className={`rounded-full border px-2.5 py-1 ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}>{t.full_name}</button>;
-              })}
+              {(teachers ?? [])
+                .filter((t) => t.id !== s.lead_teacher_id)
+                .map((t) => {
+                  const on = ids.includes(t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() =>
+                        onSave({ [key]: on ? ids.filter((x) => x !== t.id) : [...ids, t.id] })
+                      }
+                      className={`rounded-full border px-2.5 py-1 ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                    >
+                      {t.full_name}
+                    </button>
+                  );
+                })}
             </div>
           </div>
         );
       })}
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <Select value={fee.fee_type} onValueChange={(v) => setFee({ ...fee, fee_type: v as "free" | "paid" })}>
-          <SelectTrigger aria-label="Loại học phí" className="h-9 w-full rounded-lg border-input bg-background text-sm shadow-none">
+        <Select
+          value={fee.fee_type}
+          onValueChange={(v) => setFee({ ...fee, fee_type: v as "free" | "paid" })}
+        >
+          <SelectTrigger
+            aria-label="Loại học phí"
+            className="h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+          >
             <SelectValue>{fee.fee_type === "free" ? "Miễn phí" : "Có phí"}</SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="free" className="text-sm">Miễn phí</SelectItem>
-            <SelectItem value="paid" className="text-sm">Có phí</SelectItem>
+            <SelectItem value="free" className="text-sm">
+              Miễn phí
+            </SelectItem>
+            <SelectItem value="paid" className="text-sm">
+              Có phí
+            </SelectItem>
           </SelectContent>
         </Select>
-        <input type="number" min={1} className={inp} title="Sĩ số tối đa" value={fee.capacity} onChange={(e) => setFee({ ...fee, capacity: Number(e.target.value) })} />
-        {fee.fee_type === "paid" && <input type="number" min={0} step={10000} placeholder="Học phí (VNĐ)" className={`${inp} col-span-2`} value={fee.fee_amount} onChange={(e) => setFee({ ...fee, fee_amount: Number(e.target.value) })} />}
+        <input
+          type="number"
+          min={1}
+          className={inp}
+          title="Sĩ số tối đa"
+          value={fee.capacity}
+          onChange={(e) => setFee({ ...fee, capacity: Number(e.target.value) })}
+        />
+        {fee.fee_type === "paid" && (
+          <input
+            type="number"
+            min={0}
+            step={10000}
+            placeholder="Học phí (VNĐ)"
+            className={`${inp} col-span-2`}
+            value={fee.fee_amount}
+            onChange={(e) => setFee({ ...fee, fee_amount: Number(e.target.value) })}
+          />
+        )}
       </div>
-      <button onClick={() => onSave({ ...fee, fee_amount: fee.fee_type === "free" ? 0 : Math.max(0, fee.fee_amount), capacity: Math.max(1, fee.capacity) })} className="mt-3 w-full rounded-full border border-primary py-1.5 text-sm font-semibold text-primary hover:bg-accent">Lưu học phí & sĩ số</button>
+      <button
+        onClick={() =>
+          onSave({
+            ...fee,
+            fee_amount: fee.fee_type === "free" ? 0 : Math.max(0, fee.fee_amount),
+            capacity: Math.max(1, fee.capacity),
+          })
+        }
+        className="mt-3 w-full rounded-full border border-primary py-1.5 text-sm font-semibold text-primary hover:bg-accent"
+      >
+        Lưu học phí & sĩ số
+      </button>
     </div>
   );
 }
 
-function ReviewDialog({ r, setting, onClose, onDone }: { r: Enrollment; setting: { fee_type: "free" | "paid"; fee_amount: number; label: string } | undefined; onClose: () => void; onDone: () => void }) {
+function ReviewDialog({
+  r,
+  setting,
+  onClose,
+  onDone,
+}: {
+  r: Enrollment;
+  setting: { fee_type: "free" | "paid"; fee_amount: number; label: string } | undefined;
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const review = useServerFn(reviewEnrollment);
   const [status, setStatus] = useState(r.status === "pending" ? "approved" : r.status);
   const [note, setNote] = useState(r.admin_note);
@@ -214,45 +582,152 @@ function ReviewDialog({ r, setting, onClose, onDone }: { r: Enrollment; setting:
   const go = async () => {
     setBusy(true);
     try {
-      const res = await review({ data: { id: r.id, status: status as "approved", note, zaloLink: zalo, feeNote } });
+      const res = await review({
+        data: { id: r.id, status: status as "approved", note, zaloLink: zalo, feeNote },
+      });
       if (!res.ok) toast.error(res.error);
-      else { toast.success(status === "approved" ? (res.emailed ? "Đã duyệt và gửi thư mời qua email" : "Đã duyệt — email chưa gửi được, hãy liên hệ qua Zalo") : "Đã cập nhật"); onDone(); }
-    } catch { toast.error("Không cập nhật được"); }
+      else {
+        toast.success(
+          status === "approved"
+            ? res.emailed
+              ? "Đã duyệt và gửi thư mời qua email"
+              : "Đã duyệt — email chưa gửi được, hãy liên hệ qua Zalo"
+            : "Đã cập nhật",
+        );
+        onDone();
+      }
+    } catch {
+      toast.error("Không cập nhật được");
+    }
     setBusy(false);
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={onClose}>
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between"><div><div className="font-mono text-xs text-muted-foreground">{r.code}</div><h2 className="text-xl font-bold">{r.full_name}</h2><div className="text-sm">{setting?.label ?? `HSK ${r.level}`}</div></div><button onClick={onClose} aria-label="Đóng"><X className="h-5 w-5" /></button></div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between">
+          <div>
+            <div className="font-mono text-xs text-muted-foreground">{r.code}</div>
+            <h2 className="text-xl font-bold">{r.full_name}</h2>
+            <div className="text-sm">{setting?.label ?? `HSK ${r.level}`}</div>
+          </div>
+          <button onClick={onClose} aria-label="Đóng">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
         <dl className="mt-4 space-y-1 text-sm">
-          <div><b>Email:</b> {r.email}</div><div><b>SĐT/Zalo:</b> {r.phone}</div>
-          <div><b>Trình độ:</b> {r.current_level || "—"}</div><div><b>Mục tiêu:</b> {r.goal || "—"}</div>
-          <div className="whitespace-pre-line"><b>Lời nhắn:</b> {r.message || "—"}</div>
+          <div>
+            <b>Email:</b> {r.email}
+          </div>
+          <div>
+            <b>SĐT/Zalo:</b> {r.phone}
+          </div>
+          <div>
+            <b>Trình độ:</b> {r.current_level || "—"}
+          </div>
+          <div>
+            <b>Mục tiêu:</b> {r.goal || "—"}
+          </div>
+          <div className="whitespace-pre-line">
+            <b>Lời nhắn:</b> {r.message || "—"}
+          </div>
         </dl>
         <div className="mt-3 flex flex-wrap gap-2">
-          <a href={zaloOf(r.phone)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"><MessageCircle className="h-3.5 w-3.5" />Mở Zalo</a>
-          <a href={`tel:${r.phone}`} className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"><Phone className="h-3.5 w-3.5" />Gọi điện</a>
-          <button onClick={() => { navigator.clipboard.writeText(r.phone); toast.success("Đã sao chép SĐT"); }} className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"><Copy className="h-3.5 w-3.5" />Sao chép SĐT</button>
+          <a
+            href={zaloOf(r.phone)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Mở Zalo
+          </a>
+          <a
+            href={`tel:${r.phone}`}
+            className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"
+          >
+            <Phone className="h-3.5 w-3.5" />
+            Gọi điện
+          </a>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(r.phone);
+              toast.success("Đã sao chép SĐT");
+            }}
+            className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Sao chép SĐT
+          </button>
         </div>
         <div className="mt-5 space-y-3 border-t border-border pt-4">
           <div className="block text-sm">
             <span className="block">Kết quả</span>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger aria-label="Kết quả duyệt đơn" className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none">
+              <SelectTrigger
+                aria-label="Kết quả duyệt đơn"
+                className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+              >
                 <SelectValue>{ENROLL_STATUS[status]?.label ?? status}</SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                {Object.entries(ENROLL_STATUS).map(([k, v]) => <SelectItem key={k} value={k} className="text-sm">{v.label}</SelectItem>)}
+                {Object.entries(ENROLL_STATUS).map(([k, v]) => (
+                  <SelectItem key={k} value={k} className="text-sm">
+                    {v.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          {status === "approved" && <>
-            <label className="block text-sm">Link nhóm Zalo lớp học *<input placeholder="https://zalo.me/g/..." className={inp} value={zalo} onChange={(e) => setZalo(e.target.value)} /></label>
-            {setting?.fee_type === "paid" && <label className="block text-sm">Hướng dẫn đóng học phí ({classFee(setting)})<textarea rows={3} className={inp} value={feeNote} onChange={(e) => setFeeNote(e.target.value)} /></label>}
-            <p className="text-xs text-muted-foreground">Bấm xác nhận sẽ tự động gửi thư mời trúng tuyển kèm link nhóm Zalo tới email học viên.</p>
-          </>}
-          <label className="block text-sm">Ghi chú nội bộ (không bắt buộc)<textarea rows={2} className={inp} value={note} onChange={(e) => setNote(e.target.value)} /></label>
-          <button disabled={busy} onClick={go} className="w-full rounded-full bg-primary py-2.5 font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Đang xử lý…" : "Xác nhận"}</button>
+          {status === "approved" && (
+            <>
+              <label className="block text-sm">
+                Link nhóm Zalo lớp học *
+                <input
+                  placeholder="https://zalo.me/g/..."
+                  className={inp}
+                  value={zalo}
+                  onChange={(e) => setZalo(e.target.value)}
+                />
+              </label>
+              {setting?.fee_type === "paid" && (
+                <label className="block text-sm">
+                  Hướng dẫn đóng học phí ({classFee(setting)})
+                  <textarea
+                    rows={3}
+                    className={inp}
+                    value={feeNote}
+                    onChange={(e) => setFeeNote(e.target.value)}
+                  />
+                </label>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Bấm xác nhận sẽ tự động gửi thư mời trúng tuyển kèm link nhóm Zalo tới email học
+                viên.
+              </p>
+            </>
+          )}
+          <label className="block text-sm">
+            Ghi chú nội bộ (không bắt buộc)
+            <textarea
+              rows={2}
+              className={inp}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </label>
+          <button
+            disabled={busy}
+            onClick={go}
+            className="w-full rounded-full bg-primary py-2.5 font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy ? "Đang xử lý…" : "Xác nhận"}
+          </button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 ## Status: PASS
 
 ### 1. Objective
+
 1. **Hỗ trợ chọn NHIỀU vị trí cho một chủ đề câu hỏi**:
    - Cho phép lưu danh sách vị trí dạng chuỗi phân tách bởi dấu phẩy trong cột `recruitment_topics.position`.
    - Cập nhật hàm `topicApplies`: Chủ đề khớp nếu không có vị trí ("Mọi vị trí") HOẶC danh sách vị trí của chủ đề có chứa vị trí ứng tuyển của ứng viên.
@@ -13,6 +14,7 @@
 ---
 
 ### 2. Verification Results
+
 - `npx tsc --noEmit`: PASS
 - `npm test`: PASS (17 test files, 103 tests)
 - `npm run build`: PASS

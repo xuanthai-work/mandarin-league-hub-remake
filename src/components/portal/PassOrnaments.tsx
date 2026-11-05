@@ -3,7 +3,15 @@ import crane from "@/assets/lac-crane.png.asset.json";
 
 /** Đông Sơn bronze-drum face — member-supplied original artwork, background removed only. */
 export function DongSonDrum({ className = "" }: { className?: string }) {
-  return <img src={drum.url} alt="" aria-hidden draggable={false} className={`pointer-events-none absolute select-none object-contain opacity-[0.42] ${className}`} />;
+  return (
+    <img
+      src={drum.url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={`pointer-events-none absolute select-none object-contain opacity-[0.42] ${className}`}
+    />
+  );
 }
 
 type Bird = { top: string; left: string; w: number; o: number };
@@ -13,8 +21,14 @@ export function LacBirds({ flock, className = "" }: { flock: Bird[]; className?:
   return (
     <div aria-hidden className={`pointer-events-none absolute inset-0 ${className}`}>
       {flock.map((b, i) => (
-        <img key={i} src={crane.url} alt="" draggable={false} className="absolute h-auto select-none"
-          style={{ top: b.top, left: b.left, width: b.w, opacity: b.o }} />
+        <img
+          key={i}
+          src={crane.url}
+          alt=""
+          draggable={false}
+          className="absolute h-auto select-none"
+          style={{ top: b.top, left: b.left, width: b.w, opacity: b.o }}
+        />
       ))}
     </div>
   );

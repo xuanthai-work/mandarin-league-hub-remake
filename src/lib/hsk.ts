@@ -4,8 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import type { HskRecord } from "@/lib/verification";
 
 export const HSK_LEVELS: Record<string, string> = {
-  HSK1: "HSK 1", HSK2: "HSK 2", HSK3: "HSK 3", HSK4: "HSK 4", HSK5: "HSK 5", HSK6: "HSK 6",
-  "HSKK-BEG": "HSKK Sơ cấp", "HSKK-INT": "HSKK Trung cấp", "HSKK-ADV": "HSKK Cao cấp",
+  HSK1: "HSK 1",
+  HSK2: "HSK 2",
+  HSK3: "HSK 3",
+  HSK4: "HSK 4",
+  HSK5: "HSK 5",
+  HSK6: "HSK 6",
+  "HSKK-BEG": "HSKK Sơ cấp",
+  "HSKK-INT": "HSKK Trung cấp",
+  "HSKK-ADV": "HSKK Cao cấp",
   "TML-4SKILL": "Đánh giá 4 kỹ năng TML",
 };
 
@@ -28,7 +35,12 @@ export function hskRule(level: string) {
 
 const num = (v: number | null) => (typeof v === "number" ? v : undefined);
 
-export async function lookupHsk(code: string, name = "", token = "", captcha = ""): Promise<HskRecord | null> {
+export async function lookupHsk(
+  code: string,
+  name = "",
+  token = "",
+  captcha = "",
+): Promise<HskRecord | null> {
   let data: Database["public"]["Functions"]["verify_hsk_v2"]["Returns"] | null;
   if (captcha) {
     const r = await verifyLookup({ data: { kind: "hsk", code, name, captcha } });
@@ -56,8 +68,14 @@ export async function lookupHsk(code: string, name = "", token = "", captcha = "
     isDemo: false,
     verifyToken: r.verify_token,
   };
-  const opt = { listeningScore: num(r.listening_score), readingScore: num(r.reading_score), writingScore: num(r.writing_score), speakingScore: num(r.speaking_score) };
-  for (const [k, v] of Object.entries(opt)) if (v !== undefined) (rec as unknown as Record<string, unknown>)[k] = v;
+  const opt = {
+    listeningScore: num(r.listening_score),
+    readingScore: num(r.reading_score),
+    writingScore: num(r.writing_score),
+    speakingScore: num(r.speaking_score),
+  };
+  for (const [k, v] of Object.entries(opt))
+    if (v !== undefined) (rec as unknown as Record<string, unknown>)[k] = v;
   if (r.candidate_name_zh) rec.candidateNameZh = r.candidate_name_zh;
   if (r.exam_session) rec.examSession = r.exam_session;
   if (r.revoked_at) rec.revokedAt = r.revoked_at;

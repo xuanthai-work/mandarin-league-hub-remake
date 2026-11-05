@@ -1,12 +1,15 @@
 # Task Archive: Thiết Kế & Triển Khai Thẻ Đứng (Vertical Member Pass ID-1)
 
 ## Status: COMPLETED (PASS AUDIT)
+
 Completed At: 2026-11-03T14:51:00+07:00
 
 ### 1. Mục tiêu
+
 Chuyển hóa chính xác bản thiết kế mẫu trong ảnh `uploaded_media_1793691637175.jpg` thành code cho **Thẻ Đứng (Vertical Member Pass)** tại [src/routes/_authenticated/member.dashboard.tsx](file:///D:/code/madarin/src/routes/_authenticated/member.dashboard.tsx).
 
 ### 2. Chi tiết triển khai
+
 - **Tỷ lệ**: Chuẩn ID-1 dọc `aspect-[54/85.6]` trong khung `max-w-[320px] sm:max-w-[340px]`.
 - **Hệ thống màu**: Đồng bộ tự động theo cấp bậc thành viên (`var(--pass-c)`: Nâu đồng, Xanh lam, Xanh lục, Đỏ rượu, Hồng, Tím, Vàng kim, Đen).
 - **Cấu trúc 8 tầng**:
@@ -25,6 +28,7 @@ Chuyển hóa chính xác bản thiết kế mẫu trong ảnh `uploaded_media_1
   9. **Chân thẻ**: Dòng `THE MANDARIN LEAGUE · VERIFIED` và nút xoay lật 3D `RotateCw`.
 
 ### 3. Verification Gates
+
 - `npx tsc --noEmit`: PASS (Code 0)
 - `npm test`: 15 passed, 77 passed (Code 0)
 - `npm run build`: PASS (Code 0)

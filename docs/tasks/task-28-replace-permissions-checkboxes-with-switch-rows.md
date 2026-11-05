@@ -7,9 +7,11 @@
 ---
 
 ## 1. Yêu cầu & Bối cảnh
+
 Trước đây, cụm "Quyền chi tiết" trong cả 2 Drawer (`MemberDrawer` và `NewMemberDrawer`) đang dùng thẻ HTML `<fieldset>` với 14 checkbox phẳng lì, vùng bấm bé và giao diện thô cứng.
 
 Người dùng yêu cầu giải pháp tối giản, trực diện:
+
 - Không chia nhóm hay tab lọc phức tạp (vì danh sách đã được thiết lập mặc định theo dropdown Vai trò hệ thống).
 - Thay thế toàn bộ 14 checkbox thô cũ bằng **Switch Rows** tinh tế, hiện đại dùng component `Switch` của Radix UI (`@/components/ui/switch`).
 - Click bất kỳ đâu trên hàng Switch Row đều bật/tắt quyền mượt mà.
@@ -17,11 +19,13 @@ Người dùng yêu cầu giải pháp tối giản, trực diện:
 ---
 
 ## 2. File thay đổi
+
 - `src/routes/_authenticated/admin.members.tsx`
 
 ---
 
 ## 3. Chi tiết triển khai
+
 1. **Component `PermissionSwitches`**:
    - Quản lý danh sách 14 quyền trong `PERMISSIONS` với bố cục 2 cột gọn gàng (`grid gap-x-4 sm:grid-cols-2`).
    - Mỗi quyền là một Switch Row tương tác cao:
@@ -31,7 +35,14 @@ Người dùng yêu cầu giải pháp tối giản, trực diện:
        onClick={() => onToggle(k)}
        className="flex cursor-pointer select-none items-center justify-between gap-2 rounded px-1 py-0.5 transition-colors hover:bg-muted/50"
      >
-       <span className={cn("truncate text-xs", on ? "font-medium text-foreground" : "text-muted-foreground")}>{l}</span>
+       <span
+         className={cn(
+           "truncate text-xs",
+           on ? "font-medium text-foreground" : "text-muted-foreground",
+         )}
+       >
+         {l}
+       </span>
        <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
          <Switch checked={on} onCheckedChange={() => onToggle(k)} className="scale-75" />
        </span>
@@ -47,6 +58,7 @@ Người dùng yêu cầu giải pháp tối giản, trực diện:
 ---
 
 ## 4. Kết quả QA Audit
+
 - [x] 100% các ô checkbox cũ được thay thế bằng Switch Rows của Radix UI.
 - [x] Click bất kỳ đâu trên dòng row đều bật/tắt quyền mượt mà.
 - [x] Giữ đúng bố cục 2 cột gọn gàng, quen thuộc, không rườm rà.

@@ -67,12 +67,7 @@ function useAutoGrow(value: string, max = 260) {
   return ref;
 }
 
-export function TaskCreateModal({
-  members,
-  meLabel,
-  onClose,
-  onCreated,
-}: TaskCreateModalProps) {
+export function TaskCreateModal({ members, meLabel, onClose, onCreated }: TaskCreateModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
@@ -122,17 +117,12 @@ export function TaskCreateModal({
   );
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const selectedMembers = useMemo(
-    () =>
-      assigneeIds
-        .map((id) => memberById.get(id))
-        .filter((m): m is TaskMember => Boolean(m)),
+    () => assigneeIds.map((id) => memberById.get(id)).filter((m): m is TaskMember => Boolean(m)),
     [assigneeIds, memberById],
   );
 
   const toggleAssignee = (id: string) => {
-    setAssigneeIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setAssigneeIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
   const isAllInPoolSelected = pool.length > 0 && pool.every((m) => assigneeIds.includes(m.id));
   const toggleSelectAllPool = () => {
@@ -291,7 +281,9 @@ export function TaskCreateModal({
                           <FileText aria-hidden className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-medium text-foreground">{doc.title}</p>
+                          <p className="truncate text-xs font-medium text-foreground">
+                            {doc.title}
+                          </p>
                           <p className="truncate text-[10px] text-muted-foreground">
                             {shortUrl(doc.url)}
                           </p>
@@ -399,10 +391,7 @@ export function TaskCreateModal({
               </span>
 
               <div className="grid gap-2 sm:grid-cols-[140px_1fr]">
-                <Select
-                  value={dept || "all"}
-                  onValueChange={(v) => setDept(v === "all" ? "" : v)}
-                >
+                <Select value={dept || "all"} onValueChange={(v) => setDept(v === "all" ? "" : v)}>
                   <SelectTrigger
                     aria-label="Lọc Ban"
                     className="h-9 rounded-xl border-input text-xs"
@@ -459,9 +448,7 @@ export function TaskCreateModal({
 
               <div className="custom-scrollbar max-h-52 overflow-y-auto rounded-xl border border-border">
                 {pool.length === 0 && (
-                  <p className="p-3 text-xs text-muted-foreground">
-                    Không có thành viên phù hợp.
-                  </p>
+                  <p className="p-3 text-xs text-muted-foreground">Không có thành viên phù hợp.</p>
                 )}
                 {pool.map((m) => {
                   const checked = assigneeIds.includes(m.id);

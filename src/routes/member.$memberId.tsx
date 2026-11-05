@@ -6,14 +6,17 @@ import { getDepartment } from "@/lib/data/departments";
 import { pageMeta } from "@/lib/seo";
 import { useTr } from "@/lib/i18n";
 
-export const Route = createFileRoute("/member/$memberId")({ staticData: { sitemap: false },
+export const Route = createFileRoute("/member/$memberId")({
+  staticData: { sitemap: false },
   loader: ({ params }) => {
     const member = getMember(params.memberId);
     if (!member) throw notFound();
     return { member };
   },
   head: ({ loaderData }) => ({
-    meta: loaderData ? pageMeta(loaderData.member.name, `${loaderData.member.role} – The Mandarin League`) : [{ title: "Không tìm thấy thành viên" }, { name: "robots", content: "noindex" }],
+    meta: loaderData
+      ? pageMeta(loaderData.member.name, `${loaderData.member.role} – The Mandarin League`)
+      : [{ title: "Không tìm thấy thành viên" }, { name: "robots", content: "noindex" }],
   }),
   notFoundComponent: MemberNotFound,
   component: PMember,
@@ -21,7 +24,19 @@ export const Route = createFileRoute("/member/$memberId")({ staticData: { sitema
 
 function MemberNotFound() {
   const tr = useTr();
-  return <div className="mx-auto max-w-3xl px-4 py-20"><EmptyState title="Không tìm thấy thành viên" desc="Hồ sơ này chưa được công bố hoặc không tồn tại." /><div className="mt-6 text-center"><Link to="/organization" className="font-semibold text-primary">{tr("← Cơ cấu tổ chức")}</Link></div></div>;
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-20">
+      <EmptyState
+        title="Không tìm thấy thành viên"
+        desc="Hồ sơ này chưa được công bố hoặc không tồn tại."
+      />
+      <div className="mt-6 text-center">
+        <Link to="/organization" className="font-semibold text-primary">
+          {tr("← Cơ cấu tổ chức")}
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function PMember() {
@@ -31,17 +46,42 @@ function PMember() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
       <div className="flex flex-col items-center gap-6 rounded-3xl border border-border bg-card p-8 text-center md:flex-row md:text-left">
-        {m.avatarUrl ? <img src={m.avatarUrl} alt={m.name} className="h-28 w-28 rounded-full object-cover" /> : <div className="flex h-28 w-28 items-center justify-center rounded-full bg-accent text-primary"><UserRound className="h-12 w-12" /></div>}
+        {m.avatarUrl ? (
+          <img src={m.avatarUrl} alt={m.name} className="h-28 w-28 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-accent text-primary">
+            <UserRound className="h-12 w-12" />
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-bold text-primary-deep">{m.name}</h1>
-          <div className="text-primary">{tr(m.role)}{dep ? ` · ${tr(dep.name)}` : ""}</div>
-          <div className="mt-2 text-sm text-muted-foreground">{tr("Mã thành viên")} {m.memberId} · {tr("Tham gia")} {m.joinedAt} · {tr(m.status)}</div>
+          <div className="text-primary">
+            {tr(m.role)}
+            {dep ? ` · ${tr(dep.name)}` : ""}
+          </div>
+          <div className="mt-2 text-sm text-muted-foreground">
+            {tr("Mã thành viên")} {m.memberId} · {tr("Tham gia")} {m.joinedAt} · {tr(m.status)}
+          </div>
         </div>
       </div>
       {m.bio && <p className="mt-8 text-muted-foreground">{m.bio}</p>}
       <div className="mt-8 grid gap-5 md:grid-cols-2">
-        {[{ t: "Hoạt động", l: m.activities }, { t: "Thành tích", l: m.achievements }].map((s) => (
-          <div key={s.t} className="rounded-2xl bg-secondary p-6"><div className="font-bold text-primary-deep">{s.t}</div>{s.l.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{s.l.map((x) => <li key={x}>{x}</li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">Đang cập nhật</p>}</div>
+        {[
+          { t: "Hoạt động", l: m.activities },
+          { t: "Thành tích", l: m.achievements },
+        ].map((s) => (
+          <div key={s.t} className="rounded-2xl bg-secondary p-6">
+            <div className="font-bold text-primary-deep">{s.t}</div>
+            {s.l.length ? (
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+                {s.l.map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">Đang cập nhật</p>
+            )}
+          </div>
         ))}
       </div>
     </div>

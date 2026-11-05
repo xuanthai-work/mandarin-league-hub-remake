@@ -26,10 +26,7 @@ const task = (over: Partial<Task> & Pick<Task, "id" | "assignee_id" | "created_a
 
 describe("groupTasks", () => {
   it("keeps one card per assignee, even for the same title created at the same moment", () => {
-    const members = [
-      member("a", "Nguyễn An", "comms"),
-      member("b", "Trần Bình", "academic"),
-    ];
+    const members = [member("a", "Nguyễn An", "comms"), member("b", "Trần Bình", "academic")];
     const cards = groupTasks(
       [
         task({

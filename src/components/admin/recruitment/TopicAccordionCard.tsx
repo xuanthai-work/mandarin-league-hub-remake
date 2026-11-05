@@ -147,7 +147,9 @@ export function TopicAccordionCard({
 
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
-                filtered ? "bg-primary/10 font-medium text-primary" : "bg-muted text-muted-foreground"
+                filtered
+                  ? "bg-primary/10 font-medium text-primary"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {filtered
@@ -164,11 +166,7 @@ export function TopicAccordionCard({
               title={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
               onClick={() => void save({ visible: !topic.visible })}
             >
-              {topic.visible ? (
-                <Eye className="h-3.5 w-3.5" />
-              ) : (
-                <EyeOff className="h-3.5 w-3.5" />
-              )}
+              {topic.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
             </button>
             <button
               type="button"

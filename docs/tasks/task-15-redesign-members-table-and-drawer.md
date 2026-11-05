@@ -1,7 +1,9 @@
 # TASK-15-REDESIGN-MEMBERS-TABLE-AND-DRAWER
 
 ## 1. Overview & Objective
+
 Nâng cấp và chuẩn hóa toàn diện giao diện Quản lý Thành viên (`src/routes/_authenticated/admin.members.tsx`):
+
 1. **Chuyển đổi Modal sang Drawer trượt từ phải (Slide-over)**:
    - Thay thế toàn bộ popup modal ở giữa màn hình bằng Drawer trượt từ cạnh phải (`slide-in-from-right`), chiều cao toàn màn hình (`100vh`), chiều rộng rộng rãi (`max-w-xl`), có phím tắt Esc và backdrop mờ.
    - Áp dụng đồng bộ cho cả Thêm mới thành viên (`NewMemberDrawer`) và Chỉnh sửa thành viên (`MemberDrawer`).
@@ -13,7 +15,7 @@ Nâng cấp và chuẩn hóa toàn diện giao diện Quản lý Thành viên (`
      - Dropdown chọn Trạng thái (`Trạng thái: [Tất cả / Đang hoạt động...]`) kèm icon `ChevronDown`.
      - Nút "Đặt lại" (`Reset`) tự động xuất hiện khi có filter đang kích hoạt để quay về mặc định với 1 click.
 3. **Bảng phân nhóm theo từng Ban (Grouped Department Tables)**:
-   - Khi chọn "Tất cả ban": Hiển thị các khối bảng riêng biệt cho từng Ban (mỗi khối là 1 Component có Header: *Tên Ban + Huy hiệu số lượng thành viên*). Tự động ẩn các ban chưa có thành viên để tránh rác màn hình.
+   - Khi chọn "Tất cả ban": Hiển thị các khối bảng riêng biệt cho từng Ban (mỗi khối là 1 Component có Header: _Tên Ban + Huy hiệu số lượng thành viên_). Tự động ẩn các ban chưa có thành viên để tránh rác màn hình.
    - Khi chọn 1 Ban cụ thể: Chỉ hiển thị khối bảng của Ban đó.
    - Loại bỏ hoàn toàn cột "Ban" và cột "Hiện trên web" khỏi Table.
    - Bảng chuẩn 7 cột rộng rãi: `Mã thành viên`, `Họ tên`, `Tài khoản & Trạng thái`, `Chức vụ`, `Ngày gia nhập`, `Điểm`, `Thao tác`.
@@ -22,11 +24,13 @@ Nâng cấp và chuẩn hóa toàn diện giao diện Quản lý Thành viên (`
 ---
 
 ## 2. Scope & Files Impacted
+
 - `src/routes/_authenticated/admin.members.tsx`
 
 ---
 
 ## 3. QA Audit & Verification Results
+
 - **Acceptance Criteria Verification**:
   - [x] Thanh Toolbar filter được bố trí trên cùng 1 hàng đồng bộ, có icon `Search` và `ChevronDown`.
   - [x] Có 2 dropdown lọc tinh gọn: **Ban** và **Trạng thái**.

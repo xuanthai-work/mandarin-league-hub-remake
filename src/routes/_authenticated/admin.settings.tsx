@@ -4,7 +4,8 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { HomeLink } from "@/components/site/HomeLink";
 import { setTheme, useTheme, type Theme } from "@/lib/theme";
 
-export const Route = createFileRoute("/_authenticated/admin/settings")({ staticData: { sitemap: false },
+export const Route = createFileRoute("/_authenticated/admin/settings")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Cài đặt | TML Admin" },
@@ -20,8 +21,18 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({ staticD
 });
 
 const THEMES: { value: Theme; label: string; desc: string; icon: typeof Sun }[] = [
-  { value: "light", label: "Chế độ sáng", desc: "Nền trắng, chữ xanh đậm — giao diện mặc định.", icon: Sun },
-  { value: "dark", label: "Chế độ tối", desc: "Nền navy đậm, chữ sáng, giữ tông xanh thương hiệu TML.", icon: Moon },
+  {
+    value: "light",
+    label: "Chế độ sáng",
+    desc: "Nền trắng, chữ xanh đậm — giao diện mặc định.",
+    icon: Sun,
+  },
+  {
+    value: "dark",
+    label: "Chế độ tối",
+    desc: "Nền navy đậm, chữ sáng, giữ tông xanh thương hiệu TML.",
+    icon: Moon,
+  },
 ];
 
 function AdminSettings() {
@@ -62,7 +73,9 @@ function AdminSettings() {
                       : "border-border bg-card hover:-translate-y-0.5 hover:border-primary/50 hover:bg-accent/40 hover:shadow-xs"
                   }`}
                 >
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${active ? "bg-primary text-primary-foreground" : "bg-muted text-primary"}`}>
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${active ? "bg-primary text-primary-foreground" : "bg-muted text-primary"}`}
+                  >
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">

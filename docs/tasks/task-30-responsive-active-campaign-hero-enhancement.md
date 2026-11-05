@@ -5,6 +5,7 @@
 ## Task ID: TASK-30-RESPONSIVE-ACTIVE-CAMPAIGN-HERO-ENHANCEMENT
 
 ### 1. Bối cảnh & Mục tiêu (Executive Campaign Spotlight Responsive Polish)
+
 Khối `ActiveCampaignHero` trong `src/routes/_authenticated/admin.recruitment.tsx` bị kéo giãn ngang trên màn hình rộng: nửa phải bị khoảng trắng chết, thanh tiến độ 100% bị loãng và thiếu hành động nhanh cho admin. Mobile vẫn giữ nguyên bố cục dọc.
 
 Các hạng mục đã triển khai:
@@ -32,6 +33,7 @@ Các hạng mục đã triển khai:
 ---
 
 ### 2. Verification Results
+
 - `pnpm exec tsc --noEmit`: PASS
 - `pnpm test`: PASS (15 files / 77 tests)
 - `pnpm run build`: PASS
