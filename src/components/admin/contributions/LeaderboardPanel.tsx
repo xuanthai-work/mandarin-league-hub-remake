@@ -18,15 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { isLeader } from "@/lib/points";
 import { deptName } from "@/lib/recruitment";
 import { cn } from "@/lib/utils";
 import { initials, tierStep, type PointMember } from "./shared";
 
 interface LeaderboardPanelProps {
   members: PointMember[];
-  roleMap?: Record<string, string[]> | undefined;
-  advisorIds?: Set<string> | undefined;
   loading: boolean;
 }
 
@@ -69,14 +66,6 @@ function PodiumCard({ member, rank }: { member: PointMember; rank: number }) {
         style.card,
       )}
     >
-      {rank === 1 && (
-        <span
-          aria-hidden
-          className="absolute -top-2.5 left-1/2 grid h-5 w-5 -translate-x-1/2 place-items-center rounded-full bg-gold text-[color:var(--primary-deep)] shadow-md sm:-top-3.5 sm:h-7 sm:w-7"
-        >
-          <Crown className="h-3 w-3 sm:h-4 sm:w-4" strokeWidth={2.2} />
-        </span>
-      )}
       <span
         className={cn(
           "mt-0.5 inline-flex h-5 min-w-5 items-center justify-center gap-0.5 rounded-full px-1 font-mono text-[9px] font-bold sm:mt-1 sm:h-6 sm:min-w-6 sm:px-1.5 sm:text-[11px]",
@@ -196,8 +185,7 @@ function MemberRow({ member, rank }: { member: PointMember; rank: number }) {
  * Leaderboard 2.0: a Top-3 podium for identity and a searchable ranking list
  * with live tier-progress so every member can see their next milestone.
  */
-export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: LeaderboardPanelProps) {
-  const [showAll, setShowAll] = useState(false);
+export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("");
   const [page, setPage] = useState(1);
@@ -210,7 +198,6 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
   const board = useMemo(() => {
     const term = q.trim().toLowerCase();
     return members
-      .filter((m) => showAll || !isLeader(m, roleMap?.[m.id], advisorIds?.has(m.id)))
       .filter((m) => !dept || m.department === dept)
       .filter(
         (m) =>
@@ -222,7 +209,7 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
         (a, b) =>
           b.contribution_points - a.contribution_points || a.full_name.localeCompare(b.full_name),
       );
-  }, [members, showAll, roleMap, advisorIds, dept, q]);
+  }, [members, dept, q]);
 
   const resetPage = () => setPage(1);
   const top = board.slice(0, 3);
@@ -239,52 +226,7 @@ export function LeaderboardPanel({ members, roleMap, advisorIds, loading }: Lead
           <Trophy aria-hidden className="h-4 w-4 text-gold" />
           Bảng vinh danh
         </h2>
-        <div
-          role="group"
-          aria-label="Phạm vi bảng vinh danh"
-          className="flex rounded-lg border border-input p-0.5 text-[11px]"
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setShowAll(false);
-              resetPage();
-            }}
-            aria-pressed={!showAll}
-            className={cn(
-              "rounded-md px-2 py-1 font-medium transition-colors",
-              !showAll
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Chỉ thành viên
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowAll(true);
-              resetPage();
-            }}
-            aria-pressed={showAll}
-            className={cn(
-              "rounded-md px-2 py-1 font-medium transition-colors",
-              showAll
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Tất cả
-          </button>
-        </div>
       </header>
-
-      {!showAll && (
-        <p className="border-b border-border/40 px-4 py-1.5 text-[10px] text-muted-foreground">
-          Không tính Ban Điều hành, Trưởng/Phó Ban, Quản trị viên và Cố vấn (điểm cá nhân vẫn được
-          giữ).
-        </p>
-      )}
 
       <div className="flex flex-col items-stretch gap-2 border-b border-border/50 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4">
         <div className="relative w-full flex-1">

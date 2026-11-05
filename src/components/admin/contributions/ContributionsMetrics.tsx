@@ -35,22 +35,20 @@ function MetricCard({ label, value, hint, icon: Icon, tone, onClick }: MetricCar
           "cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:translate-y-0",
       )}
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-gold/60 via-gold/20 to-transparent"
-      />
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          {label}
-        </p>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1 font-mono text-2xl font-bold leading-none tabular-nums text-foreground">
+            {value}
+          </p>
+        </div>
         <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-xl", tone)}>
           <Icon aria-hidden className="h-4 w-4" strokeWidth={1.75} />
         </span>
       </div>
-      <p className="mt-2 font-mono text-2xl font-bold leading-none tabular-nums text-foreground">
-        {value}
-      </p>
-      <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">{hint}</p>
+      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{hint}</p>
     </div>
   );
 }

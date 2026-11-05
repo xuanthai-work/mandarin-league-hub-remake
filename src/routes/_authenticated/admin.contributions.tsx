@@ -55,33 +55,6 @@ function PointsPage() {
     queryFn: async () => new Set(await fetchActiveAccountIds()),
   });
 
-  const roleMap = useQuery({
-    queryKey: ["points-roles"],
-    queryFn: async () => {
-      const accounts =
-        (await supabase.from("member_accounts").select("member_id, user_id")).data ?? [];
-      const roles = (await supabase.from("user_roles").select("user_id, role")).data ?? [];
-      const map: Record<string, string[]> = {};
-      accounts.forEach((account) => {
-        map[account.member_id] = roles
-          .filter((role) => role.user_id === account.user_id)
-          .map((role) => String(role.role));
-      });
-      return map;
-    },
-  });
-
-  const advisorIds = useQuery({
-    queryKey: ["points-advisors"],
-    queryFn: async () =>
-      new Set(
-        (
-          (await supabase.from("department_advisors").select("member_id").eq("is_active", true))
-            .data ?? []
-        ).map((advisor) => advisor.member_id),
-      ),
-  });
-
   const history = useQuery({
     queryKey: ["points-history"],
     queryFn: async () => {
@@ -196,9 +169,7 @@ function PointsPage() {
 
       <LeaderboardPanel
         members={activeMembers}
-        roleMap={roleMap.data}
-        advisorIds={advisorIds.data}
-        loading={members.isLoading || roleMap.isLoading || activeAccountIds.isLoading}
+        loading={members.isLoading || activeAccountIds.isLoading}
       />
 
       <TransactionLedger
