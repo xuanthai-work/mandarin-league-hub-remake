@@ -35,7 +35,15 @@ import {
   type ProgramStatus,
 } from "@/lib/programs";
 
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
+const inp =
+  "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20";
+const areaCls =
+  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20";
+const fileCls =
+  "h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-none file:mr-2 file:rounded-md file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs file:font-medium";
+const fieldClass = "space-y-1.5 text-sm";
+const labelClass = "block text-sm font-medium text-foreground";
+const triggerClass = "h-9 w-full rounded-lg border-input bg-background text-sm shadow-none";
 const EMPTY: Partial<Program> = {
   title: "",
   slug: "",
@@ -479,29 +487,26 @@ function ProgramForm({
           </button>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm sm:col-span-2">
-            Tên chương trình *
+          <div className={`${fieldClass} sm:col-span-2`}>
+            <label className={labelClass}>Tên chương trình *</label>
             <input required className={inp} value={f.title} onChange={s("title")} />
-          </label>
-          <label className="text-sm">
-            Đường dẫn (slug)
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Đường dẫn (slug)</label>
             <input
               placeholder="tự tạo từ tên"
               className={inp}
               value={f.slug}
               onChange={s("slug")}
             />
-          </label>
-          <div className="text-sm">
-            <span className="block">Loại chương trình</span>
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Loại chương trình</label>
             <Select
               value={f.course_type ?? "FREE_COMMUNITY"}
               onValueChange={(v) => setF({ ...f, course_type: v as CourseType })}
             >
-              <SelectTrigger
-                aria-label="Loại chương trình"
-                className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-              >
+              <SelectTrigger aria-label="Loại chương trình" className={triggerClass}>
                 <SelectValue>
                   {TYPE_LABEL[f.course_type ?? "FREE_COMMUNITY"]?.label ?? "—"}
                 </SelectValue>
@@ -516,8 +521,8 @@ function ProgramForm({
             </Select>
           </div>
           {f.course_type !== "FREE_COMMUNITY" && (
-            <label className="text-sm">
-              Học phí (VNĐ, 0 = liên hệ)
+            <div className={fieldClass}>
+              <label className={labelClass}>Học phí (VNĐ, 0 = liên hệ)</label>
               <input
                 type="number"
                 min={0}
@@ -526,18 +531,15 @@ function ProgramForm({
                 value={f.price}
                 onChange={(e) => setF({ ...f, price: Number(e.target.value) })}
               />
-            </label>
+            </div>
           )}
-          <div className="text-sm">
-            <span className="block">Trạng thái</span>
+          <div className={fieldClass}>
+            <label className={labelClass}>Trạng thái</label>
             <Select
               value={f.status ?? "upcoming"}
               onValueChange={(v) => setF({ ...f, status: v as ProgramStatus })}
             >
-              <SelectTrigger
-                aria-label="Trạng thái"
-                className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-              >
+              <SelectTrigger aria-label="Trạng thái" className={triggerClass}>
                 <SelectValue>{STATUS_LABEL[f.status ?? "upcoming"] ?? f.status}</SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -549,39 +551,39 @@ function ProgramForm({
               </SelectContent>
             </Select>
           </div>
-          <label className="text-sm">
-            Trình độ
+          <div className={fieldClass}>
+            <label className={labelClass}>Trình độ</label>
             <input
               placeholder="VD: HSK 1, Mọi trình độ"
               className={inp}
               value={f.level}
               onChange={s("level")}
             />
-          </label>
-          <label className="text-sm">
-            Hình thức
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Hình thức</label>
             <input className={inp} value={f.format} onChange={s("format")} />
-          </label>
-          <label className="text-sm">
-            Thời lượng
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Thời lượng</label>
             <input
               placeholder="VD: 8 buổi"
               className={inp}
               value={f.duration}
               onChange={s("duration")}
             />
-          </label>
-          <label className="text-sm">
-            Lịch học
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Lịch học</label>
             <input
               placeholder="VD: T3 & T5, 20:00"
               className={inp}
               value={f.schedule}
               onChange={s("schedule")}
             />
-          </label>
-          <label className="text-sm">
-            Sĩ số tối đa
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Sĩ số tối đa</label>
             <input
               type="number"
               min={1}
@@ -589,85 +591,95 @@ function ProgramForm({
               value={f.capacity}
               onChange={(e) => setF({ ...f, capacity: Number(e.target.value) })}
             />
-          </label>
+          </div>
           <div className="sm:col-span-2">
             <TeacherPicker teachers={teachers} picks={picks} onChange={setPicks} />
           </div>
-          <label className="text-sm sm:col-span-2">
-            Mô tả ngắn
+          <div className={`${fieldClass} sm:col-span-2`}>
+            <label className={labelClass}>Mô tả ngắn</label>
             <input
               maxLength={300}
               className={inp}
               value={f.short_description}
               onChange={s("short_description")}
             />
-          </label>
-          <label className="text-sm sm:col-span-2">
-            Mô tả chi tiết
-            <textarea rows={6} className={inp} value={f.description} onChange={s("description")} />
-          </label>
-          <label className="text-sm sm:col-span-2">
-            Ảnh đại diện (JPG/PNG/WebP ≤ 5 MB){f.thumbnail_path && !file && " — đã có ảnh"}
+          </div>
+          <div className={`${fieldClass} sm:col-span-2`}>
+            <label className={labelClass}>Mô tả chi tiết</label>
+            <textarea
+              rows={6}
+              className={areaCls}
+              value={f.description}
+              onChange={s("description")}
+            />
+          </div>
+          <div className={`${fieldClass} sm:col-span-2`}>
+            <label className={labelClass}>
+              Ảnh đại diện
+              {f.thumbnail_path && !file && " — đã có ảnh"}
+            </label>
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              className={inp}
+              className={fileCls}
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
-          </label>
-          <label className="text-sm">
-            Link Facebook
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Link Facebook</label>
             <input
               placeholder="https://facebook.com/..."
               className={inp}
               value={f.facebook_url}
               onChange={s("facebook_url")}
             />
-          </label>
-          <label className="text-sm">
-            Link website
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass}>Link website</label>
             <input
               placeholder="https://..."
               className={inp}
               value={f.website_url}
               onChange={s("website_url")}
             />
-          </label>
-          <label className="text-sm sm:col-span-2">
-            Link đăng ký ngoài{" "}
-            <span className="text-xs text-muted-foreground">
-              (để trống = dùng form xét duyệt của TML)
-            </span>
+          </div>
+          <div className={`${fieldClass} sm:col-span-2`}>
+            <label className={labelClass}>
+              Link đăng ký ngoài{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (để trống = dùng form xét duyệt của TML)
+              </span>
+            </label>
             <input
               placeholder="https://forms.gle/..."
               className={inp}
               value={f.registration_url}
               onChange={s("registration_url")}
             />
-          </label>
-          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+          </div>
+          <label className={`${fieldClass} flex items-center gap-2 sm:col-span-2`}>
             <input
               type="checkbox"
               checked={!!f.is_published}
               onChange={(e) => setF({ ...f, is_published: e.target.checked })}
             />
-            Hiển thị trên website
+            <span className={labelClass}>Hiển thị trên website</span>
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className={`${fieldClass} flex items-center gap-2`}>
             <input
               type="checkbox"
               checked={f.show_in_courses ?? true}
               onChange={(e) => setF({ ...f, show_in_courses: e.target.checked })}
             />
-            Hiện trong Khóa học
+            <span className={labelClass}>Hiện trong Khóa học</span>
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className={`${fieldClass} flex items-center gap-2`}>
             <input
               type="checkbox"
               checked={!!f.show_in_activities}
               onChange={(e) => setF({ ...f, show_in_activities: e.target.checked })}
             />
-            Hiện trong Hoạt động
+            <span className={labelClass}>Hiện trong Hoạt động</span>
           </label>
         </div>
         <button

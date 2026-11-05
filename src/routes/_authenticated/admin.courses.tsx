@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Copy, MessageCircle, Phone, Search, X } from "lucide-react";
+import { Copy, MessageCircle, Phone, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramsAdmin } from "@/components/courses/ProgramsAdmin";
@@ -19,12 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminAccess } from "./admin";
-import {
-  ENROLL_STATUS,
-  formatFee,
-  useCourseSettings,
-  type CourseSetting,
-} from "@/lib/course-settings";
+import { ENROLL_STATUS, useCourseSettings } from "@/lib/course-settings";
 
 export const Route = createFileRoute("/_authenticated/admin/courses")({
   staticData: { sitemap: false },
@@ -65,6 +60,7 @@ function CoursesAdmin() {
   const [cid, setCid] = useState("");
   const [sel, setSel] = useState<Enrollment | null>(null);
   const [tab, setTab] = useState<"hsk" | "programs" | "enroll" | "trash">("hsk");
+  const [createHskOpen, setCreateHskOpen] = useState(false);
   const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const [kid, setKid] = useState("");
   const { data: classes } = useQuery({
@@ -97,21 +93,6 @@ function CoursesAdmin() {
       (!q ||
         `${r.code} ${r.full_name} ${r.email} ${r.phone}`.toLowerCase().includes(q.toLowerCase())),
   );
-  const count = (l: number, s: string) =>
-    (rows ?? []).filter((r) => !r.course_id && !r.hsk_class_id && r.level === l && r.status === s)
-      .length;
-
-  const saveSetting = async (s: CourseSetting, patch: Partial<CourseSetting>) => {
-    const { error } = await supabase
-      .from("course_settings")
-      .update({ ...patch, updated_at: new Date().toISOString() })
-      .eq("level", s.level);
-    if (error) toast.error("Không lưu được (cần quyền Admin/Ban Chuyên môn)");
-    else {
-      toast.success("Đã lưu");
-      qc.invalidateQueries({ queryKey: ["course-settings"] });
-    }
-  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
@@ -119,61 +100,61 @@ function CoursesAdmin() {
         title="Khóa học & Đơn đăng ký"
         description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên."
       />
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ["hsk", "Khóa học HSK"],
-            ["programs", "Chương trình học"],
-            ["enroll", "Đơn đăng ký"],
-            ["trash", "Thùng rác"],
-          ] as const
-        ).map(([k, l]) => (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["hsk", "Khóa học HSK"],
+              ["programs", "Chương trình học"],
+              ["enroll", "Đơn đăng ký"],
+              ["trash", "Thùng rác"],
+            ] as const
+          ).map(([k, l]) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+                tab === k
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground hover:bg-accent"
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+
+        {tab === "hsk" && (
           <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
+            type="button"
+            onClick={() => setCreateHskOpen(true)}
+            className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
-            {l}
+            <Plus className="h-4 w-4" />
+            Tạo lớp HSK
           </button>
-        ))}
+        )}
       </div>
 
       {tab === "hsk" && (
-        <>
-          <HskClassesAdmin
-            pendingCounts={(rows ?? []).reduce(
-              (m, r) =>
-                r.hsk_class_id && r.status === "pending"
-                  ? m.set(r.hsk_class_id, (m.get(r.hsk_class_id) ?? 0) + 1)
-                  : m,
-              new Map<string, number>(),
-            )}
-            onFilter={(id) => {
-              setKid(id);
-              setCid("");
-              setStF("");
-              setLv(0);
-              setTab("enroll");
-            }}
-          />
-          <h3 className="pt-4 font-bold">
-            Đăng ký chung theo cấp độ{" "}
-            <span className="text-sm font-normal text-muted-foreground">
-              (khi chưa có lớp cụ thể)
-            </span>
-          </h3>
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {(settings ?? []).map((s) => (
-              <SettingCard
-                key={s.level}
-                s={s}
-                pending={count(s.level, "pending")}
-                approved={count(s.level, "approved")}
-                onSave={(p) => saveSetting(s, p)}
-              />
-            ))}
-          </section>
-        </>
+        <HskClassesAdmin
+          createOpen={createHskOpen}
+          onClearCreate={() => setCreateHskOpen(false)}
+          pendingCounts={(rows ?? []).reduce(
+            (m, r) =>
+              r.hsk_class_id && r.status === "pending"
+                ? m.set(r.hsk_class_id, (m.get(r.hsk_class_id) ?? 0) + 1)
+                : m,
+            new Map<string, number>(),
+          )}
+          onFilter={(id) => {
+            setKid(id);
+            setCid("");
+            setStF("");
+            setLv(0);
+            setTab("enroll");
+          }}
+        />
       )}
       {tab === "programs" && (
         <ProgramsAdmin
@@ -399,165 +380,6 @@ function CoursesAdmin() {
           }}
         />
       )}
-    </div>
-  );
-}
-
-function SettingCard({
-  s,
-  pending,
-  approved,
-  onSave,
-}: {
-  s: CourseSetting;
-  pending: number;
-  approved: number;
-  onSave: (p: Partial<CourseSetting>) => void;
-}) {
-  const [fee, setFee] = useState({
-    fee_type: s.fee_type,
-    fee_amount: s.fee_amount,
-    capacity: s.capacity,
-  });
-  const { data: teachers } = useQuery({
-    queryKey: ["admin-teacher-setting-options"],
-    queryFn: async () =>
-      ((
-        await supabase
-          .from("teachers")
-          .select("id, full_name, teaching_levels")
-          .neq("status", "hidden")
-          .order("sort_order")
-      ).data ?? []) as { id: string; full_name: string; teaching_levels: number[] }[],
-  });
-  return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between">
-        <span className="rounded-lg bg-brand-gradient px-3 py-1 text-sm font-bold text-primary-foreground">
-          HSK {s.level}
-        </span>
-        <button
-          onClick={() => onSave({ registration_open: !s.registration_open })}
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${s.registration_open ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}
-        >
-          {s.registration_open ? "● Đang mở đăng ký" : "○ Đã đóng đăng ký"}
-        </button>
-      </div>
-      <div className="mt-2 text-xs text-muted-foreground">
-        {pending} chờ duyệt · {approved}/{s.capacity} trúng tuyển · {formatFee(s)}
-      </div>
-      <div className="mt-3 text-xs text-muted-foreground">
-        <span className="block">Giảng viên phụ trách chính (hiện trên trang khóa)</span>
-        <Select
-          value={s.lead_teacher_id ?? "auto"}
-          onValueChange={(v) => onSave({ lead_teacher_id: v === "auto" ? null : v })}
-        >
-          <SelectTrigger
-            aria-label="Giảng viên phụ trách chính"
-            className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm font-normal text-foreground shadow-none"
-          >
-            <SelectValue>
-              {(teachers ?? []).find((t) => t.id === s.lead_teacher_id)?.full_name ??
-                "Tự động (nổi bật / xếp đầu)"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="auto" className="text-sm">
-              Tự động (nổi bật / xếp đầu)
-            </SelectItem>
-            {(teachers ?? []).map((t) => (
-              <SelectItem key={t.id} value={t.id} className="text-sm">
-                {t.full_name}
-                {(t.teaching_levels ?? []).includes(s.level) ? "" : " (chưa gán cấp này)"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {(
-        [
-          ["co_teacher_ids", "Giảng viên đồng hành"],
-          ["assistant_ids", "Trợ giảng"],
-        ] as const
-      ).map(([key, label]) => {
-        const ids: string[] = Array.isArray(s[key]) ? (s[key] as string[]) : [];
-        return (
-          <div key={key} className="mt-3 text-xs text-muted-foreground">
-            {label} <span className="opacity-70">(tùy chọn)</span>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {(teachers ?? [])
-                .filter((t) => t.id !== s.lead_teacher_id)
-                .map((t) => {
-                  const on = ids.includes(t.id);
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() =>
-                        onSave({ [key]: on ? ids.filter((x) => x !== t.id) : [...ids, t.id] })
-                      }
-                      className={`rounded-full border px-2.5 py-1 ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
-                    >
-                      {t.full_name}
-                    </button>
-                  );
-                })}
-            </div>
-          </div>
-        );
-      })}
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Select
-          value={fee.fee_type}
-          onValueChange={(v) => setFee({ ...fee, fee_type: v as "free" | "paid" })}
-        >
-          <SelectTrigger
-            aria-label="Loại học phí"
-            className="h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-          >
-            <SelectValue>{fee.fee_type === "free" ? "Miễn phí" : "Có phí"}</SelectValue>
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="free" className="text-sm">
-              Miễn phí
-            </SelectItem>
-            <SelectItem value="paid" className="text-sm">
-              Có phí
-            </SelectItem>
-          </SelectContent>
-        </Select>
-        <input
-          type="number"
-          min={1}
-          className={inp}
-          title="Sĩ số tối đa"
-          value={fee.capacity}
-          onChange={(e) => setFee({ ...fee, capacity: Number(e.target.value) })}
-        />
-        {fee.fee_type === "paid" && (
-          <input
-            type="number"
-            min={0}
-            step={10000}
-            placeholder="Học phí (VNĐ)"
-            className={`${inp} col-span-2`}
-            value={fee.fee_amount}
-            onChange={(e) => setFee({ ...fee, fee_amount: Number(e.target.value) })}
-          />
-        )}
-      </div>
-      <button
-        onClick={() =>
-          onSave({
-            ...fee,
-            fee_amount: fee.fee_type === "free" ? 0 : Math.max(0, fee.fee_amount),
-            capacity: Math.max(1, fee.capacity),
-          })
-        }
-        className="mt-3 w-full rounded-full border border-primary py-1.5 text-sm font-semibold text-primary hover:bg-accent"
-      >
-        Lưu học phí & sĩ số
-      </button>
     </div>
   );
 }

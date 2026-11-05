@@ -316,6 +316,7 @@
  * Scoped to the shell so the toggle only repaints management screens.
  */
 .dark .admin-shell {
+  color-scheme: dark;
   --background: oklch(0.18 0.03 258);
   --foreground: oklch(0.96 0.01 250);
   --card: oklch(0.23 0.035 258);
@@ -335,6 +336,20 @@
   --border: oklch(0.33 0.03 258);
   --input: oklch(0.33 0.03 258);
   --ring: oklch(0.72 0.14 235);
+}
+
+/*
+ * Admin: hide the native number-input spinners so numeric fields keep the same
+ * clean pill/box look as text inputs (no per-unit up/down arrows).
+ */
+.admin-shell input[type="number"]::-webkit-outer-spin-button,
+.admin-shell input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.admin-shell input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Member ID card (international university style) */
@@ -465,6 +480,7 @@
 
 /* Dark theme: keep TML blue/gold identity instead of the neutral default */
 .dark {
+  color-scheme: dark;
   --primary: oklch(0.72 0.14 235);
   --primary-foreground: oklch(0.15 0.04 255);
   --primary-deep: oklch(0.86 0.06 235);
