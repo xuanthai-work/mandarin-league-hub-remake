@@ -821,15 +821,6 @@ function MemberDashboard() {
                                 >
                                   {m.member_code}
                                 </button>
-                                <span className="text-[8px] opacity-40 md:text-[14px]">•</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setSheet("points_benefits")}
-                                  className="text-[8.5px] font-semibold text-primary md:text-[15px]"
-                                  title="Cấp bậc, điểm & quyền lợi"
-                                >
-                                  {m.contribution_points.toLocaleString("vi-VN")} điểm
-                                </button>
                               </div>
                               <div className="mt-1 flex flex-col md:mt-3">
                                 <p className="mt-1 text-[7px] uppercase tracking-wider opacity-60 md:text-[12px]">
