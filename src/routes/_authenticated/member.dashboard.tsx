@@ -37,7 +37,6 @@ import {
   tierOf,
 } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
-import { LacBirds, FLOCK_H } from "@/components/portal/PassOrnaments";
 import { mainHomeUrl } from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({
@@ -776,7 +775,6 @@ function MemberDashboard() {
                         />
                       </div>
                     )}
-                    <LacBirds flock={FLOCK_H} className="md:scale-[1.8]" />
                     {layout === "h" ? (
                       <>
                         {/* header */}

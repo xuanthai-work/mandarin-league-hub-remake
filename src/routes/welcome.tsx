@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type React from "react";
-import drum from "@/assets/dongson-drum-v2.png.asset.json";
-import crane from "@/assets/lac-crane.png.asset.json";
 import { DEPARTMENTS } from "@/lib/data/departments";
+
+// Local `/public` artwork: the old `*.asset.json` URLs live under
+// `/__l5e/assets-v1/...` and 404 on the production domain (broken "?" icons).
+const DRUM_SRC = "/dongson-vector.svg";
+const CRANE_SRC = "/lac-bird-gold.png";
 
 type Search = {
   name?: string | undefined;
@@ -119,14 +122,14 @@ function WelcomePage() {
             <div className="wc-door wc-door-r">
               <Studs />
             </div>
-            <img src={drum.url} alt="" className="wc-knob" />
+            <img src={DRUM_SRC} alt="" className="wc-knob" />
             <span className="wc-wave" />
             <span className="wc-wave w2" />
             {phase === "opening" &&
               BIRDS.map((b, i) => (
                 <img
                   key={i}
-                  src={crane.url}
+                  src={CRANE_SRC}
                   alt=""
                   className="wc-bird"
                   style={
