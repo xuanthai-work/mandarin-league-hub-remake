@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { formatTopicPositions, isDefaultPosition, parseTopicPositions } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -48,6 +49,7 @@ export function TopicAccordionCard({
   confirm: Confirm;
 }) {
   const [draftPositions, setDraftPositions] = useState<string[] | null>(null);
+  const [checking, setChecking] = useState(false);
   const save = (
     patch: Partial<Pick<StudioTopic, "title" | "description" | "position" | "visible">>,
     ok?: string,
@@ -81,6 +83,38 @@ export function TopicAccordionCard({
     if (!ok) return;
     setDraftPositions((prev) => (prev ? prev.filter((p) => p !== position) : prev));
     await onDeletePosition(position);
+  };
+
+  /** Answered topics are only hidden, so existing applications keep their question text. */
+  const remove = async () => {
+    setChecking(true);
+    const { data: answered, error } = await supabase.rpc("recruitment_answer_count", {
+      _topic: topic.id,
+    });
+    setChecking(false);
+    if (error) {
+      toast.error("Chưa kiểm tra được câu trả lời của ứng viên: " + error.message);
+      return;
+    }
+    if ((answered ?? 0) > 0) {
+      const hide = await confirm({
+        title: "Không thể xóa chủ đề này",
+        description: topic.visible
+          ? `${answered} ứng viên đã trả lời câu hỏi trong chủ đề này. Xóa sẽ làm hồ sơ của họ mất nội dung câu hỏi. Hãy ẩn chủ đề để ứng viên mới không thấy nữa.`
+          : `${answered} ứng viên đã trả lời câu hỏi trong chủ đề này nên không thể xóa. Chủ đề đang được ẩn, ứng viên mới đã không thấy.`,
+        confirmLabel: topic.visible ? "Ẩn chủ đề" : "Đã hiểu",
+      });
+      if (hide && topic.visible) void save({ visible: false }, "Đã ẩn chủ đề.");
+      return;
+    }
+    const ok = await confirm({
+      title: "Xóa chủ đề?",
+      description: "Toàn bộ câu hỏi trong chủ đề này cũng sẽ bị xóa. Thao tác không thể hoàn tác.",
+      confirmLabel: "Xóa chủ đề",
+      destructive: true,
+    });
+    if (!ok) return;
+    void run(supabase.from("recruitment_topics").delete().eq("id", topic.id), "Đã xóa chủ đề.");
   };
 
   return (
@@ -218,19 +252,8 @@ export function TopicAccordionCard({
               type="button"
               className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
               aria-label="Xóa chủ đề"
-              onClick={async () => {
-                if (
-                  !(await confirm({
-                    title: "Xóa chủ đề?",
-                    description:
-                      "Toàn bộ câu hỏi trong chủ đề này cũng sẽ bị xóa. Thao tác không thể hoàn tác.",
-                    confirmLabel: "Xóa chủ đề",
-                    destructive: true,
-                  }))
-                )
-                  return;
-                void run(supabase.from("recruitment_topics").delete().eq("id", topic.id));
-              }}
+              disabled={checking}
+              onClick={() => void remove()}
             >
               <Trash2 className="h-4 w-4" />
             </button>

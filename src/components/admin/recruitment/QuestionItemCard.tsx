@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ClipboardEvent } from "react";
 import { Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { QUESTION_KINDS, canonicalKind } from "@/lib/recruitment";
 import { parsePastedOptions } from "@/lib/recruitment-choice";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,7 @@ export function QuestionItemCard({
   confirm: Confirm;
 }) {
   const [draft, setDraft] = useState("");
+  const [checking, setChecking] = useState(false);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const kind = canonicalKind(question.kind);
   const choice = isChoiceKind(question.kind);
@@ -86,6 +88,42 @@ export function QuestionItemCard({
     e.preventDefault();
     setDraft("");
     addOptionsList(parsePastedOptions(pastedText, question.options));
+  };
+
+  /** Answered questions are only hidden, so existing applications keep their question text. */
+  const remove = async () => {
+    setChecking(true);
+    const { data: answered, error } = await supabase.rpc("recruitment_answer_count", {
+      _question: question.id,
+    });
+    setChecking(false);
+    if (error) {
+      toast.error("Chưa kiểm tra được câu trả lời của ứng viên: " + error.message);
+      return;
+    }
+    if ((answered ?? 0) > 0) {
+      const hide = await confirm({
+        title: "Không thể xóa câu hỏi này",
+        description: question.visible
+          ? `${answered} ứng viên đã trả lời câu hỏi này. Xóa sẽ làm hồ sơ của họ mất nội dung câu hỏi. Hãy ẩn câu hỏi để ứng viên mới không thấy nữa.`
+          : `${answered} ứng viên đã trả lời câu hỏi này nên không thể xóa. Câu hỏi đang được ẩn, ứng viên mới đã không thấy.`,
+        confirmLabel: question.visible ? "Ẩn câu hỏi" : "Đã hiểu",
+      });
+      if (hide && question.visible) void save({ visible: false }, "Đã ẩn câu hỏi.");
+      return;
+    }
+    const ok = await confirm({
+      title: "Xóa câu hỏi?",
+      description:
+        "Chưa có ứng viên nào trả lời câu hỏi này. Câu hỏi sẽ bị xóa và không thể khôi phục.",
+      confirmLabel: "Xóa câu hỏi",
+      destructive: true,
+    });
+    if (!ok) return;
+    void run(
+      supabase.from("recruitment_questions").delete().eq("id", question.id),
+      "Đã xóa câu hỏi.",
+    );
   };
 
   return (
@@ -166,18 +204,8 @@ export function QuestionItemCard({
               type="button"
               className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
               aria-label="Xóa câu hỏi"
-              onClick={async () => {
-                if (
-                  !(await confirm({
-                    title: "Xóa câu hỏi?",
-                    description: "Câu hỏi này sẽ bị xóa khỏi chủ đề và không thể khôi phục.",
-                    confirmLabel: "Xóa câu hỏi",
-                    destructive: true,
-                  }))
-                )
-                  return;
-                void run(supabase.from("recruitment_questions").delete().eq("id", question.id));
-              }}
+              disabled={checking}
+              onClick={() => void remove()}
             >
               <Trash2 className="h-4 w-4" />
             </button>

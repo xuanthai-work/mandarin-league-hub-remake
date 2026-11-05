@@ -161,6 +161,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-140-PHOTO-SIGNED-URL-CACHE`                                      | Dùng lại signed URL ảnh hoạt động còn hạn, ảnh admin/trang chủ hết chớp tải lại                        | 2026-11-06     | **PASS** | [task-140-photo-signed-url-cache.md](tasks/task-140-photo-signed-url-cache.md)                                                                           |
 | `TASK-OC-139-CSV-FORMULA-INJECTION`                                    | Chặn công thức Excel khi xuất CSV, gom 4 nơi về src/lib/csv.ts kèm unit test                           | 2026-11-06     | **PASS** | [task-oc-139-csv-formula-injection.md](tasks/task-oc-139-csv-formula-injection.md)                                                                       |
 | `TASK-OC-140-ACCURATE-RECRUITMENT-COUNTS`                              | Đếm hồ sơ bằng truy vấn đếm, tải đủ ứng viên quá 1000 dòng, trang lỗi có nút Thử lại                   | 2026-11-06     | **PASS** | [task-oc-140-accurate-recruitment-counts.md](tasks/task-oc-140-accurate-recruitment-counts.md)                                                           |
+| `TASK-OC-141-PROTECT-ANSWERED-QUESTIONS`                               | Chặn xóa câu hỏi/chủ đề đã có người trả lời, gợi ý Ẩn; mở lại tệp của câu hỏi đã xóa                   | 2026-11-06     | **PASS** | [task-oc-141-protect-answered-questions.md](tasks/task-oc-141-protect-answered-questions.md)                                                             |
 
 ---
 

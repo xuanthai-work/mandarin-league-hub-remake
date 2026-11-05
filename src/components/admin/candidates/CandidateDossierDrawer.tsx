@@ -64,6 +64,10 @@ const fieldInp =
   "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20";
 const label = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
+/** Upload paths written by the public application form (`pending/<id>.<ext>`), same check as the server. */
+const isUploadPath = (v: unknown): v is string =>
+  typeof v === "string" && /^pending\/[\w-]+\.\w+$/.test(v);
+
 export function CandidateDossierDrawer({ app, questions, onClose }: CandidateDossierDrawerProps) {
   const [tab, setTab] = useState("profile");
   const [copied, setCopied] = useState(false);
@@ -328,7 +332,8 @@ function ProfileTab({ app, questions }: { app: CandidateApp; questions: Candidat
                 <p className="whitespace-pre-line text-[11px] font-medium text-muted-foreground">
                   {q?.prompt ?? "Câu hỏi đã xóa"}
                 </p>
-                {q?.kind === "file" && typeof value === "string" ? (
+                {(q?.kind === "file" && typeof value === "string") ||
+                (!q && isUploadPath(value)) ? (
                   <button
                     type="button"
                     onClick={() => openStorageFile(value)}

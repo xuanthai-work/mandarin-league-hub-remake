@@ -2058,6 +2058,10 @@ export type Database = {
         }[];
       };
       record_login: { Args: never; Returns: undefined };
+      recruitment_answer_count: {
+        Args: { _question?: string; _topic?: string };
+        Returns: number;
+      };
       reorder_activity_photos: {
         Args: { photo_ids: string[] };
         Returns: undefined;
