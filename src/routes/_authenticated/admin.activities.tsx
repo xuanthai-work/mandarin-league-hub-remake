@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   CalendarClock,
   CalendarDays,
@@ -60,7 +60,6 @@ export const Route = createFileRoute("/_authenticated/admin/activities")({
   component: ActivitiesAdmin,
 });
 
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const CATS = Object.keys(CATEGORY_LABEL).filter((k) => k !== "education") as ActivityCategory[];
 type Form = Omit<ActivityRow, "id" | "created_at" | "deleted_at" | "banner"> & { id?: string };
 const EMPTY: Form = {
@@ -148,6 +147,13 @@ const ACT_COLS = [
   { label: "Hiển thị", className: "w-[120px]" },
   { label: "Thao tác", className: "w-[150px] text-right" },
 ] as const;
+
+const SECTION_TITLE = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+const FIELD =
+  "h-9 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-primary/20";
+const LABEL = "mb-1 block font-medium text-foreground";
+const SELECT_TRIGGER =
+  "h-9 w-full rounded-xl border-input bg-background text-xs font-normal shadow-xs";
 
 /** Single status label per activity: the group already conveys the time lifecycle. */
 function StatusPill({ status }: { status: ManualStatus }) {
@@ -301,20 +307,22 @@ function ActivityGroup({
   const canEdit = (a: ActivityRow) => canPublish || a.manual_status === "draft";
   return (
     <section>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="mb-2 flex cursor-pointer items-center gap-2 px-1"
-      >
-        <ChevronRight
-          className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
-        />
-        <h3 className="text-sm font-bold tracking-tight text-foreground">{label}</h3>
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-          {rows.length}
-        </span>
-      </button>
+      <h3 className="mb-2 px-1">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className="flex cursor-pointer items-center gap-2 text-sm font-bold tracking-tight text-foreground"
+        >
+          <ChevronRight
+            className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+          />
+          {label}
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+            {rows.length}
+          </span>
+        </button>
+      </h3>
       {open && (
         <>
           <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-xs md:block">
@@ -411,6 +419,543 @@ function ActivityGroup({
   );
 }
 
+type ActivityDrawerProps = {
+  value: Form;
+  bannerUrl: string;
+  extMode: boolean;
+  busy: boolean;
+  err: string;
+  canPublish: boolean;
+  regCount: number;
+  onChange: (patch: Partial<Form>) => void;
+  onExtMode: (ext: boolean) => void;
+  onUpload: (file: File) => void;
+  onSave: (e: React.FormEvent) => void;
+  onClose: () => void;
+  onDuplicate?: () => void;
+  onTrash?: () => void;
+  onOpenRegs?: () => void;
+};
+
+const REG_MODES = [
+  [
+    "tml",
+    "Dùng Form có sẵn của TML",
+    "Người tham gia điền form ngay trên website, đơn về mục Đơn đăng ký.",
+  ],
+  ["ext", "Link đăng ký ngoài", "Chuyển tới Google Form… (có thể để trống, bổ sung sau)."],
+] as const;
+
+function ActivityDrawer({
+  value,
+  bannerUrl,
+  extMode,
+  busy,
+  err,
+  canPublish,
+  regCount,
+  onChange,
+  onExtMode,
+  onUpload,
+  onSave,
+  onClose,
+  onDuplicate,
+  onTrash,
+  onOpenRegs,
+}: ActivityDrawerProps) {
+  const [confirmTrash, setConfirmTrash] = useState(false);
+  const isEditing = !!value.id;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="fixed inset-0 bg-black/20 backdrop-blur-xs"
+        onClick={onClose}
+      />
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEditing ? "Sửa hoạt động" : "Tạo hoạt động mới"}
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="relative z-10 flex h-full w-full max-w-[620px] flex-col border-l border-border bg-card shadow-2xl"
+      >
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-6">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
+              <CalendarDays className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="truncate text-base font-bold text-foreground">
+                {isEditing ? "Sửa hoạt động" : "Tạo hoạt động mới"}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <StatusPill status={value.manual_status} />
+                {isEditing && value.manual_status === "published" && (
+                  <Link
+                    to="/activities/$activityId"
+                    params={{ activityId: value.slug }}
+                    target="_blank"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Xem trang công khai
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {onDuplicate && (
+              <button
+                type="button"
+                onClick={onDuplicate}
+                title="Sao chép thành hoạt động mới"
+                aria-label="Sao chép thành hoạt động mới"
+                className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Copy className="h-4 w-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Đóng"
+              title="Đóng (Esc)"
+              className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <form
+          id="activity-form"
+          onSubmit={onSave}
+          className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto p-4 text-xs sm:p-6"
+        >
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Thông tin chung</h3>
+            <div>
+              <label htmlFor="act-title" className={LABEL}>
+                Tên hoạt động *
+              </label>
+              <input
+                id="act-title"
+                required
+                minLength={3}
+                maxLength={200}
+                className={FIELD}
+                value={value.title}
+                onChange={(e) =>
+                  onChange({
+                    title: e.target.value,
+                    ...(value.id ? {} : { slug: slugify(e.target.value) }),
+                  })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="act-slug" className={LABEL}>
+                  Slug (đường dẫn)
+                </label>
+                <input
+                  id="act-slug"
+                  className={FIELD}
+                  value={value.slug}
+                  onChange={(e) => onChange({ slug: e.target.value })}
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Đường dẫn: /activities/{value.slug || "…"}
+                </p>
+              </div>
+              <div>
+                <span className={LABEL}>Loại hoạt động</span>
+                <Select
+                  value={value.category}
+                  onValueChange={(v) => onChange({ category: v as ActivityCategory })}
+                >
+                  <SelectTrigger aria-label="Loại hoạt động" className={SELECT_TRIGGER}>
+                    <SelectValue>{CATEGORY_LABEL[value.category]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="z-[95] rounded-xl">
+                    {CATS.map((k) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {CATEGORY_LABEL[k]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Ảnh banner</h3>
+            <label
+              className="group relative block aspect-video w-full max-w-[320px] cursor-pointer overflow-hidden rounded-xl border border-dashed border-input bg-muted/30 transition-colors hover:bg-secondary/40"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file) onUpload(file);
+              }}
+            >
+              {bannerUrl ? (
+                <>
+                  <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
+                  <span className="absolute inset-x-0 bottom-0 bg-black/50 py-1.5 text-center text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    Bấm hoặc kéo thả để đổi ảnh
+                  </span>
+                </>
+              ) : (
+                <span className="flex h-full flex-col items-center justify-center gap-1.5 px-4 text-center text-muted-foreground">
+                  <Upload className="h-5 w-5" />
+                  <span className="font-medium text-foreground">
+                    {value.banner_path ? "Đã có ảnh, bấm để đổi" : "Kéo thả hoặc bấm để tải ảnh"}
+                  </span>
+                  <span className="text-[11px]">JPG/PNG/WebP ≤ 5MB, nên dùng tỉ lệ 16:9</span>
+                </span>
+              )}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onUpload(file);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {value.banner_path && (
+              <button
+                type="button"
+                onClick={() => onChange({ banner_path: "" })}
+                className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-destructive hover:underline"
+              >
+                <X className="h-3.5 w-3.5" />
+                Gỡ ảnh
+              </button>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Mô tả</h3>
+            <div>
+              <label htmlFor="act-short" className={LABEL}>
+                Mô tả ngắn
+              </label>
+              <input
+                id="act-short"
+                maxLength={300}
+                className={FIELD}
+                value={value.short_description}
+                onChange={(e) => onChange({ short_description: e.target.value })}
+              />
+              <p className="mt-1 text-right text-[11px] text-muted-foreground">
+                {value.short_description.length}/300
+              </p>
+            </div>
+            <div>
+              <label htmlFor="act-desc" className={LABEL}>
+                Mô tả chi tiết
+              </label>
+              <textarea
+                id="act-desc"
+                rows={6}
+                maxLength={10000}
+                className="w-full rounded-xl border border-input bg-background p-3 text-xs text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                value={value.description}
+                onChange={(e) => onChange({ description: e.target.value })}
+              />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Thời gian & địa điểm</h3>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="act-start" className={LABEL}>
+                  Bắt đầu
+                </label>
+                <DateTimePicker
+                  id="act-start"
+                  value={isoToLocal(value.start_time)}
+                  onChange={(v) => onChange({ start_time: localToIso(v) })}
+                  placeholder="Chọn ngày giờ bắt đầu"
+                  clearable
+                />
+              </div>
+              <div>
+                <label htmlFor="act-end" className={LABEL}>
+                  Kết thúc
+                </label>
+                <DateTimePicker
+                  id="act-end"
+                  value={isoToLocal(value.end_time)}
+                  onChange={(v) => onChange({ end_time: localToIso(v) })}
+                  {...(value.start_time ? { min: isoToLocal(value.start_time) } : {})}
+                  placeholder="Chọn ngày giờ kết thúc"
+                  clearable
+                />
+              </div>
+              <div>
+                <span className={LABEL}>Hình thức</span>
+                <Select
+                  value={value.location_type}
+                  onValueChange={(v) => onChange({ location_type: v as LocationType })}
+                >
+                  <SelectTrigger aria-label="Hình thức" className={SELECT_TRIGGER}>
+                    <SelectValue>{LOCATION_LABEL[value.location_type]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="z-[95] rounded-xl">
+                    {Object.entries(LOCATION_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label htmlFor="act-location" className={LABEL}>
+                  Địa điểm / nền tảng
+                </label>
+                <input
+                  id="act-location"
+                  maxLength={300}
+                  className={FIELD}
+                  placeholder="vd: Google Meet hoặc địa chỉ"
+                  value={value.location_detail}
+                  onChange={(e) => onChange({ location_detail: e.target.value })}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Đăng ký</h3>
+            {onOpenRegs && (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+                <span className="flex items-center gap-2 text-xs text-foreground">
+                  <Ticket className="h-4 w-4 text-primary" />
+                  Đã có <strong className="font-semibold">{regCount}</strong> đơn đăng ký
+                </span>
+                <button
+                  type="button"
+                  onClick={onOpenRegs}
+                  className="shrink-0 cursor-pointer text-xs font-semibold text-primary hover:underline"
+                >
+                  Xem đơn →
+                </button>
+              </div>
+            )}
+            <div className="grid gap-2 sm:grid-cols-2">
+              {REG_MODES.map(([k, l, d]) => {
+                const on = k === "ext" ? extMode : !extMode;
+                return (
+                  <button
+                    type="button"
+                    key={k}
+                    onClick={() => onExtMode(k === "ext")}
+                    className={`cursor-pointer rounded-xl border p-3 text-left transition-colors ${on ? "border-primary bg-primary/5" : "border-border hover:bg-accent/40"}`}
+                  >
+                    <span className="text-xs font-semibold text-foreground">{l}</span>
+                    <span className="mt-0.5 block text-[11px] text-muted-foreground">{d}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {extMode && (
+              <div>
+                <label htmlFor="act-reg-url" className={LABEL}>
+                  Link đăng ký ngoài (không bắt buộc)
+                </label>
+                <input
+                  id="act-reg-url"
+                  className={FIELD}
+                  placeholder="forms.gle/…"
+                  value={value.registration_url}
+                  onChange={(e) => onChange({ registration_url: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="act-deadline" className={LABEL}>
+                  Hạn đăng ký (không bắt buộc)
+                </label>
+                <DateTimePicker
+                  id="act-deadline"
+                  value={isoToLocal(value.registration_deadline)}
+                  onChange={(v) => onChange({ registration_deadline: localToIso(v) })}
+                  placeholder="Không đặt hạn"
+                  clearable
+                  clearLabel="Bỏ hạn đăng ký"
+                />
+              </div>
+              <div>
+                <label htmlFor="act-max" className={LABEL}>
+                  Số người tối đa
+                </label>
+                <input
+                  id="act-max"
+                  type="number"
+                  min={0}
+                  className={FIELD}
+                  value={value.max_participants}
+                  onChange={(e) =>
+                    onChange({ max_participants: Math.max(0, Number(e.target.value)) })
+                  }
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">0 = không giới hạn</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Liên kết</h3>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="act-fb" className={LABEL}>
+                  Link Facebook
+                </label>
+                <input
+                  id="act-fb"
+                  className={FIELD}
+                  value={value.facebook_url}
+                  onChange={(e) => onChange({ facebook_url: e.target.value })}
+                />
+              </div>
+              <div>
+                <label htmlFor="act-web" className={LABEL}>
+                  Link Website
+                </label>
+                <input
+                  id="act-web"
+                  className={FIELD}
+                  value={value.website_url}
+                  onChange={(e) => onChange({ website_url: e.target.value })}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className={SECTION_TITLE}>Xuất bản</h3>
+            {canPublish ? (
+              <>
+                <div>
+                  <span className={LABEL}>Trạng thái hiển thị</span>
+                  <Select
+                    value={value.manual_status}
+                    onValueChange={(v) => onChange({ manual_status: v as ManualStatus })}
+                  >
+                    <SelectTrigger aria-label="Trạng thái hiển thị" className={SELECT_TRIGGER}>
+                      <SelectValue>{MANUAL_LABEL[value.manual_status]}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="z-[95] rounded-xl">
+                      {Object.entries(MANUAL_LABEL).map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="text-xs">
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Khi Đã đăng, trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời
+                  gian.
+                </p>
+              </>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.
+              </p>
+            )}
+          </section>
+
+          {onTrash && (
+            <section className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+              <div className="flex items-center gap-2 text-destructive">
+                <Trash2 className="h-4 w-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Chuyển vào Thùng rác
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Hoạt động sẽ bị ẩn khỏi website. Toàn bộ đơn đăng ký vẫn được giữ và có thể khôi
+                phục trong tab Thùng rác.
+              </p>
+              {confirmTrash ? (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={onTrash}
+                    className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-destructive px-4 text-xs font-semibold text-white transition-colors hover:bg-destructive/90"
+                  >
+                    Xác nhận chuyển vào Thùng rác
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmTrash(false)}
+                    className="h-9 cursor-pointer rounded-xl border border-border px-4 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                  >
+                    Thôi
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmTrash(true)}
+                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-destructive/40 px-4 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Chuyển vào Thùng rác
+                </button>
+              )}
+            </section>
+          )}
+        </form>
+
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/70 bg-card px-4 py-4 sm:px-6">
+          <div className="min-w-0 flex-1">
+            {err && (
+              <p className="truncate text-xs text-destructive" title={err}>
+                {err}
+              </p>
+            )}
+          </div>
+          <button
+            type="submit"
+            form="activity-form"
+            disabled={busy}
+            className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          >
+            {busy ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Tạo hoạt động"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 const TABS = [
   ["list", "Hoạt động"],
   ["regs", "Đơn đăng ký"],
@@ -421,6 +966,7 @@ const TABS = [
 function ActivitiesAdmin() {
   const [tab, setTab] = useState<"list" | "regs" | "audit" | "trash">("list");
   const [regsPreset, setRegsPreset] = useState("");
+  const [regsActivity, setRegsActivity] = useState("");
   const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const canPublish = useCanPublish();
   const acts = useAllActivities();
@@ -428,6 +974,7 @@ function ActivitiesAdmin() {
   const pendingRegs = (regs.data ?? []).filter((r) => r.status === "PENDING").length;
   const openTab = (k: typeof tab) => {
     setRegsPreset("");
+    setRegsActivity("");
     setTab(k);
   };
   return (
@@ -479,6 +1026,12 @@ function ActivitiesAdmin() {
             ? {
                 onOpenPendingRegs: () => {
                   setRegsPreset("PENDING");
+                  setRegsActivity("");
+                  setTab("regs");
+                },
+                onOpenActivityRegs: (id: string) => {
+                  setRegsPreset("");
+                  setRegsActivity(id);
                   setTab("regs");
                 },
               }
@@ -486,7 +1039,7 @@ function ActivitiesAdmin() {
           pendingRegs={pendingRegs}
         />
       )}
-      {tab === "regs" && <RegsTab initialStatus={regsPreset} />}
+      {tab === "regs" && <RegsTab initialStatus={regsPreset} initialActivity={regsActivity} />}
       {tab === "audit" && <AuditTab />}
       {tab === "trash" && (
         <TrashList
@@ -530,9 +1083,11 @@ function useAllRegs(enabled = true) {
 function ListTab({
   pendingRegs,
   onOpenPendingRegs,
+  onOpenActivityRegs,
 }: {
   pendingRegs: number;
   onOpenPendingRegs?: () => void;
+  onOpenActivityRegs?: (id: string) => void;
 }) {
   const qc = useQueryClient();
   const acts = useAllActivities();
@@ -547,8 +1102,10 @@ function ListTab({
     },
   });
   const [f, setFRaw] = useState<Form | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<{ path: string; url: string } | null>(null);
   const [extMode, setExtMode] = useState(false);
   const setF = (v: Form | null) => {
+    if (!v || v.id !== f?.id) setBannerPreview(null);
     if (v && v.id !== f?.id) setExtMode(!!v.registration_url);
     if (v && !f) setExtMode(!!v.registration_url);
     setFRaw(v);
@@ -622,6 +1179,7 @@ function ListTab({
       .upload(path, file, { contentType: file.type });
     setBusy(false);
     if (error) return setErr(error.message);
+    setBannerPreview({ path, url: URL.createObjectURL(file) });
     setF({ ...f, banner_path: path });
   };
   const patch = async (a: ActivityRow, p: Partial<Omit<ActivityRow, "banner">>) => {
@@ -675,6 +1233,13 @@ function ListTab({
   const openRegs = all.filter((a) => a.manual_status === "published" && registrationOpen(a)).length;
   const drafts = all.filter((a) => a.manual_status === "draft").length;
 
+  const bannerUrl = !f?.banner_path
+    ? ""
+    : bannerPreview?.path === f.banner_path
+      ? bannerPreview.url
+      : (all.find((x) => x.banner_path === f.banner_path)?.banner ?? "");
+  const editRow = f?.id ? all.find((x) => x.id === f.id) : undefined;
+
   const header = (
     <AdminPageHeader
       title="Hoạt động"
@@ -693,294 +1258,6 @@ function ListTab({
       }
     />
   );
-
-  if (f)
-    return (
-      <>
-        {header}
-        <form
-          onSubmit={save}
-          className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
-        >
-          <h2 className="font-semibold sm:col-span-2">
-            {f.id ? "Sửa hoạt động" : "Tạo hoạt động mới"}
-          </h2>
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Tên hoạt động *
-            <input
-              required
-              minLength={3}
-              maxLength={200}
-              className={`${inp} mt-1`}
-              value={f.title}
-              onChange={(e) =>
-                setF({ ...f, title: e.target.value, slug: f.id ? f.slug : slugify(e.target.value) })
-              }
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Slug (đường dẫn)
-            <input
-              className={`${inp} mt-1`}
-              value={f.slug}
-              onChange={(e) => setF({ ...f, slug: e.target.value })}
-            />
-          </label>
-          <div className="text-xs text-muted-foreground">
-            Loại hoạt động
-            <Select
-              value={f.category}
-              onValueChange={(v) => setF({ ...f, category: v as ActivityCategory })}
-            >
-              <SelectTrigger
-                aria-label="Loại hoạt động"
-                className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-              >
-                <SelectValue>{CATEGORY_LABEL[f.category]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {CATS.map((k) => (
-                  <SelectItem key={k} value={k} className="text-sm">
-                    {CATEGORY_LABEL[k]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <p className="text-xs text-muted-foreground">Ảnh banner (JPG/PNG/WebP ≤ 5MB)</p>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
-              <Upload className="h-4 w-4" />
-              {f.banner_path ? "Đổi ảnh" : "Tải ảnh lên"}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
-              />
-            </label>
-            {f.banner_path && (
-              <span className="ml-2 text-xs text-success">
-                Đã có ảnh ·{" "}
-                <button
-                  type="button"
-                  className="text-destructive underline"
-                  onClick={() => setF({ ...f, banner_path: "" })}
-                >
-                  Gỡ
-                </button>
-              </span>
-            )}
-          </div>
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Mô tả ngắn
-            <input
-              maxLength={300}
-              className={`${inp} mt-1`}
-              value={f.short_description}
-              onChange={(e) => setF({ ...f, short_description: e.target.value })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Mô tả chi tiết
-            <textarea
-              rows={6}
-              maxLength={10000}
-              className={`${inp} mt-1`}
-              value={f.description}
-              onChange={(e) => setF({ ...f, description: e.target.value })}
-            />
-          </label>
-          <div className="text-xs text-muted-foreground">
-            Bắt đầu
-            <DateTimePicker
-              className="mt-1"
-              value={isoToLocal(f.start_time)}
-              onChange={(v) => setF({ ...f, start_time: localToIso(v) })}
-              placeholder="Chọn ngày giờ bắt đầu"
-              clearable
-            />
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Kết thúc
-            <DateTimePicker
-              className="mt-1"
-              value={isoToLocal(f.end_time)}
-              onChange={(v) => setF({ ...f, end_time: localToIso(v) })}
-              {...(f.start_time ? { min: isoToLocal(f.start_time) } : {})}
-              placeholder="Chọn ngày giờ kết thúc"
-              clearable
-            />
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Hình thức
-            <Select
-              value={f.location_type}
-              onValueChange={(v) => setF({ ...f, location_type: v as LocationType })}
-            >
-              <SelectTrigger
-                aria-label="Hình thức"
-                className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-              >
-                <SelectValue>{LOCATION_LABEL[f.location_type]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {Object.entries(LOCATION_LABEL).map(([k, v]) => (
-                  <SelectItem key={k} value={k} className="text-sm">
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <label className="text-xs text-muted-foreground">
-            Địa điểm / nền tảng
-            <input
-              maxLength={300}
-              className={`${inp} mt-1`}
-              placeholder="vd: Google Meet hoặc địa chỉ"
-              value={f.location_detail}
-              onChange={(e) => setF({ ...f, location_detail: e.target.value })}
-            />
-          </label>
-          <div className="space-y-2 sm:col-span-2">
-            <p className="text-xs text-muted-foreground">Hình thức đăng ký</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {(
-                [
-                  [
-                    "tml",
-                    "Dùng Form có sẵn của TML",
-                    "Người tham gia điền form ngay trên website, đơn về mục Đơn đăng ký.",
-                  ],
-                  [
-                    "ext",
-                    "Link đăng ký ngoài",
-                    "Chuyển tới Google Form… (có thể để trống, bổ sung sau).",
-                  ],
-                ] as const
-              ).map(([k, l, d]) => {
-                const on = k === "ext" ? extMode : !extMode;
-                return (
-                  <button
-                    type="button"
-                    key={k}
-                    onClick={() => {
-                      setExtMode(k === "ext");
-                      if (k === "tml") setF({ ...f, registration_url: "" });
-                    }}
-                    className={`rounded-lg border p-3 text-left text-sm ${on ? "border-primary bg-primary/5" : "border-border"}`}
-                  >
-                    <span className="font-semibold">{l}</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">{d}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          {extMode && (
-            <label className="text-xs text-muted-foreground sm:col-span-2">
-              Link đăng ký ngoài (không bắt buộc)
-              <input
-                className={`${inp} mt-1`}
-                placeholder="forms.gle/…"
-                value={f.registration_url}
-                onChange={(e) => setF({ ...f, registration_url: e.target.value })}
-              />
-            </label>
-          )}
-          <div className="text-xs text-muted-foreground">
-            Hạn đăng ký (không bắt buộc)
-            <DateTimePicker
-              className="mt-1"
-              value={isoToLocal(f.registration_deadline)}
-              onChange={(v) => setF({ ...f, registration_deadline: localToIso(v) })}
-              placeholder="Không đặt hạn"
-              clearable
-              clearLabel="Bỏ hạn đăng ký"
-            />
-          </div>
-          <label className="text-xs text-muted-foreground">
-            Số người tối đa (0 = không giới hạn)
-            <input
-              type="number"
-              min={0}
-              className={`${inp} mt-1`}
-              value={f.max_participants}
-              onChange={(e) =>
-                setF({ ...f, max_participants: Math.max(0, Number(e.target.value)) })
-              }
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Link Facebook
-            <input
-              className={`${inp} mt-1`}
-              value={f.facebook_url}
-              onChange={(e) => setF({ ...f, facebook_url: e.target.value })}
-            />
-          </label>
-          <label className="text-xs text-muted-foreground">
-            Link Website
-            <input
-              className={`${inp} mt-1`}
-              value={f.website_url}
-              onChange={(e) => setF({ ...f, website_url: e.target.value })}
-            />
-          </label>
-          {canPublish ? (
-            <div className="text-xs text-muted-foreground">
-              Trạng thái hiển thị
-              <Select
-                value={f.manual_status}
-                onValueChange={(v) => setF({ ...f, manual_status: v as ManualStatus })}
-              >
-                <SelectTrigger
-                  aria-label="Trạng thái hiển thị"
-                  className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-                >
-                  <SelectValue>{MANUAL_LABEL[f.manual_status]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {Object.entries(MANUAL_LABEL).map(([k, v]) => (
-                    <SelectItem key={k} value={k} className="text-sm">
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.
-            </p>
-          )}
-          <p className="self-end text-xs text-muted-foreground">
-            Khi "Đã đăng", trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời
-            gian.
-          </p>
-          {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
-          <div className="flex gap-2 sm:col-span-2">
-            <button
-              disabled={busy}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-            >
-              {busy ? "Đang lưu…" : "Lưu"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setF(null);
-                setErr("");
-              }}
-              className="rounded-lg border border-border px-4 py-2 text-sm"
-            >
-              Hủy
-            </button>
-          </div>
-        </form>
-      </>
-    );
 
   return (
     <div className="space-y-3">
@@ -1204,6 +1481,45 @@ function ListTab({
           );
         })}
       </div>
+      <AnimatePresence>
+        {f && (
+          <ActivityDrawer
+            key={f.id ?? "new"}
+            value={f}
+            bannerUrl={bannerUrl}
+            extMode={extMode}
+            busy={busy}
+            err={err}
+            canPublish={canPublish}
+            regCount={f.id ? (counts.data?.get(f.id) ?? 0) : 0}
+            onChange={(p) => setF({ ...f, ...p })}
+            onExtMode={(ext) => {
+              setExtMode(ext);
+              if (!ext) setF({ ...f, registration_url: "" });
+            }}
+            onUpload={upload}
+            onSave={save}
+            onClose={() => {
+              setF(null);
+              setErr("");
+            }}
+            {...(editRow ? { onDuplicate: () => duplicate(editRow) } : {})}
+            {...(editRow && (canPublish || editRow.manual_status === "draft")
+              ? {
+                  onTrash: () => {
+                    setF(null);
+                    void patch(editRow, {
+                      deleted_at: new Date().toISOString(),
+                    } as Partial<Omit<ActivityRow, "banner">>);
+                  },
+                }
+              : {})}
+            {...(editRow && onOpenActivityRegs && (counts.data?.get(editRow.id) ?? 0) > 0
+              ? { onOpenRegs: () => onOpenActivityRegs(editRow.id) }
+              : {})}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1256,11 +1572,17 @@ function RegStatusPicker({
   );
 }
 
-function RegsTab({ initialStatus = "" }: { initialStatus?: string }) {
+function RegsTab({
+  initialStatus = "",
+  initialActivity = "",
+}: {
+  initialStatus?: string;
+  initialActivity?: string;
+}) {
   const qc = useQueryClient();
   const acts = useAllActivities();
   const regs = useAllRegs();
-  const [act, setAct] = useState("");
+  const [act, setAct] = useState(initialActivity);
   const [st, setSt] = useState(initialStatus);
   const [q, setQ] = useState("");
   const [err, setErr] = useState("");
