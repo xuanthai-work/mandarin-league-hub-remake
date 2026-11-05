@@ -512,19 +512,22 @@ function NewsEditor({ id }: { id: string }) {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-8 sm:px-6 sm:pt-4">
       {dialog}
-      <AdminPageHeader actions={renderHeaderActions()} />
+      <AdminPageHeader
+        actions={renderHeaderActions()}
+        crumbs={[isNew ? "Viết bài mới" : row?.title?.trim() || "Sửa bài viết"]}
+      />
 
       {/* Top bar: Back link, status badge, and mode toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
         <div className="flex items-center gap-2.5">
           <Link
             to="/admin/news"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-colors hover:underline"
+            aria-label="Quay lại danh sách tin tức"
+            title="Quay lại danh sách"
+            className="grid h-8 w-8 place-items-center rounded-lg border border-border/60 bg-card text-muted-foreground shadow-2xs transition-colors hover:bg-accent hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Tin tức
           </Link>
-          <span className="text-muted-foreground/40">/</span>
           <span
             className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
               TONE[currentStatus] ?? TONE.draft

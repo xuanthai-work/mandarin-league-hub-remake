@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   LogOut,
   Menu,
@@ -23,6 +23,69 @@ import {
 import { allowedSections } from "@/lib/admin-permissions";
 import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
 import { useAdminHeader } from "@/components/admin/admin-header-context";
+
+/** Renders the admin top header breadcrumb, including any extra crumbs from child pages. */
+function HeaderBreadcrumb({ current, title }: { current: string; title: string }) {
+  const crumbs = useAdminHeader()?.crumbs ?? [];
+  const hasCrumbs = crumbs.length > 0;
+
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="flex min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-2.5 py-1.5 shadow-2xs backdrop-blur-sm sm:gap-2.5 sm:px-3 sm:py-2"
+    >
+      <Link
+        to="/admin"
+        aria-label="Về trang tổng quan"
+        title="Trang tổng quan"
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-border/60 bg-muted/40 text-muted-foreground shadow-2xs transition-colors hover:border-border hover:bg-background hover:text-foreground"
+      >
+        <Home className="h-3.5 w-3.5" />
+      </Link>
+      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+
+      {hasCrumbs ? (
+        <>
+          <Link
+            to="/admin/$section"
+            params={{ section: current }}
+            className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline sm:text-sm"
+          >
+            {title}
+          </Link>
+          {crumbs.map((crumb, idx) => {
+            const isLast = idx === crumbs.length - 1;
+            return (
+              <Fragment key={idx}>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+                {isLast ? (
+                  <span
+                    aria-current="page"
+                    title={crumb}
+                    className="max-w-[40vw] truncate text-xs font-semibold tracking-tight text-foreground sm:max-w-xs sm:text-sm"
+                  >
+                    {crumb}
+                  </span>
+                ) : (
+                  <span
+                    title={crumb}
+                    className="max-w-[30vw] truncate text-xs font-medium text-muted-foreground sm:max-w-xs sm:text-sm"
+                  >
+                    {crumb}
+                  </span>
+                )}
+              </Fragment>
+            );
+          })}
+        </>
+      ) : (
+        <span className="truncate text-xs font-semibold tracking-tight text-foreground sm:text-sm">
+          {title}
+        </span>
+      )}
+    </nav>
+  );
+}
 
 /** Renders the current page's header actions as capsules that mirror the breadcrumb capsule. */
 function HeaderActions() {
@@ -412,21 +475,8 @@ function AdminLayout() {
                       <Menu className="h-5 w-5" />
                     </button>
 
-                    {/* Breadcrumb capsule: [ home > current section ] */}
-                    <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-2.5 py-1.5 shadow-2xs backdrop-blur-sm sm:gap-2.5 sm:px-3 sm:py-2">
-                      <Link
-                        to="/admin"
-                        aria-label="Về trang tổng quan"
-                        title="Trang tổng quan"
-                        className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-border/60 bg-muted/40 text-muted-foreground shadow-2xs transition-colors hover:border-border hover:bg-background hover:text-foreground"
-                      >
-                        <Home className="h-3.5 w-3.5" />
-                      </Link>
-                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
-                      <span className="truncate text-xs font-semibold tracking-tight text-foreground sm:text-sm">
-                        {title}
-                      </span>
-                    </div>
+                    {/* Breadcrumb capsule: [ home > current section (> nested crumbs) ] */}
+                    <HeaderBreadcrumb current={current} title={title} />
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">

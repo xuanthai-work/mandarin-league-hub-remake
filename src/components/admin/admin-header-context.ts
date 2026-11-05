@@ -3,6 +3,9 @@ import { createContext, useContext, type ReactNode } from "react";
 export interface AdminHeaderContextValue {
   headerActions: ReactNode;
   setHeaderActions: (actions: ReactNode) => void;
+  /** Extra breadcrumb levels after the current section, e.g. ["Viết bài mới"]. */
+  crumbs: string[];
+  setCrumbs: (crumbs: string[]) => void;
 }
 
 export const AdminHeaderContext = createContext<AdminHeaderContextValue | null>(null);
