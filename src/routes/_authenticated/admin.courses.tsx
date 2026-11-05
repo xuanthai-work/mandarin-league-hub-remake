@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { Copy, MessageCircle, Phone, Plus, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { Copy, MessageCircle, Phone, Plus, RotateCw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramsAdmin } from "@/components/courses/ProgramsAdmin";
 import { HskClassesAdmin } from "@/components/courses/HskClassesAdmin";
 import { classFee, type HskClass } from "@/lib/hsk-classes";
 import { reviewEnrollment } from "@/lib/courses.functions";
+import { matchesSearch } from "@/lib/search";
 import { TrashList } from "@/components/admin/Trash";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
@@ -73,16 +75,23 @@ function CoursesAdmin() {
           .is("deleted_at", null)
       ).data ?? []) as Pick<HskClass, "id" | "name" | "level" | "fee_type" | "fee_amount">[],
   });
-  const { data: rows, isLoading } = useQuery({
+  const {
+    data: rows,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ["admin-enrollments"],
-    queryFn: async () =>
-      ((
-        await supabase
-          .from("course_enrollments")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(1000)
-      ).data ?? []) as Enrollment[],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_enrollments")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as Enrollment[];
+    },
   });
   const list = (rows ?? []).filter(
     (r) =>
@@ -90,18 +99,38 @@ function CoursesAdmin() {
       (!kid || r.hsk_class_id === kid) &&
       (!lv || r.level === lv) &&
       (!stF || r.status === stF) &&
-      (!q ||
-        `${r.code} ${r.full_name} ${r.email} ${r.phone}`.toLowerCase().includes(q.toLowerCase())),
+      matchesSearch(`${r.code} ${r.full_name} ${r.email} ${r.phone}`, q),
   );
+  const pendingTotal = (rows ?? []).filter((r) => r.status === "pending").length;
+  const filtered = !!(q || cid || kid || lv || stF);
+  const clearFilters = () => {
+    setQ("");
+    setCid("");
+    setKid("");
+    setLv(0);
+    setStF("");
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Khóa học & Đơn đăng ký"
         description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên."
+        actions={
+          tab === "hsk" ? (
+            <button
+              type="button"
+              onClick={() => setCreateHskOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              Tạo lớp HSK
+            </button>
+          ) : null
+        }
       />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-2">
+      <div className="custom-scrollbar max-w-full overflow-x-auto">
+        <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
           {(
             [
               ["hsk", "Khóa học HSK"],
@@ -109,31 +138,37 @@ function CoursesAdmin() {
               ["enroll", "Đơn đăng ký"],
               ["trash", "Thùng rác"],
             ] as const
-          ).map(([k, l]) => (
-            <button
-              key={k}
-              onClick={() => setTab(k)}
-              className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
-                tab === k
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card text-foreground hover:bg-accent"
-              }`}
-            >
-              {l}
-            </button>
-          ))}
+          ).map(([k, l]) => {
+            const active = tab === k;
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setTab(k)}
+                aria-pressed={active}
+                className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-4 ${
+                  active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="courses-tab-pill"
+                    className="absolute inset-0 rounded-lg bg-primary shadow-xs"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center">
+                  {l}
+                  {k === "enroll" && pendingTotal > 0 && (
+                    <span className="relative ml-1.5 rounded-full bg-warning-soft px-1.5 text-[10px] font-bold text-warning-foreground">
+                      {pendingTotal}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
-
-        {tab === "hsk" && (
-          <button
-            type="button"
-            onClick={() => setCreateHskOpen(true)}
-            className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Tạo lớp HSK
-          </button>
-        )}
       </div>
 
       {tab === "hsk" && (
@@ -221,8 +256,9 @@ function CoursesAdmin() {
             </div>
             {cid && (
               <button
+                type="button"
                 onClick={() => setCid("")}
-                className="rounded-full bg-accent px-3 text-xs font-semibold text-primary"
+                className="h-9 rounded-full bg-accent px-3 text-xs font-semibold text-primary"
               >
                 Đang lọc theo chương trình ✕
               </button>
@@ -287,6 +323,9 @@ function CoursesAdmin() {
                 ))}
               </SelectContent>
             </Select>
+            <span className="ml-auto font-mono text-xs text-muted-foreground">
+              {list.length} đơn
+            </span>
           </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
@@ -308,10 +347,40 @@ function CoursesAdmin() {
                     </td>
                   </tr>
                 )}
-                {!isLoading && list.length === 0 && (
+                {!isLoading && isError && !rows && (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                      Không tải được danh sách đơn đăng ký.
+                      <button
+                        type="button"
+                        onClick={() => void refetch()}
+                        disabled={isFetching}
+                        className="ml-2 inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs font-medium hover:bg-accent"
+                      >
+                        <RotateCw className="h-3 w-3" />
+                        Thử lại
+                      </button>
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !isError && (rows ?? []).length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-muted-foreground">
                       Chưa có đơn đăng ký.
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !isError && (rows ?? []).length > 0 && list.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                      Không có đơn nào khớp bộ lọc.
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="ml-2 inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs font-medium hover:bg-accent"
+                      >
+                        Xóa bộ lọc
+                      </button>
                     </td>
                   </tr>
                 )}
@@ -319,6 +388,12 @@ function CoursesAdmin() {
                   <tr
                     key={r.id}
                     onClick={() => setSel(r)}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter" && e.key !== " ") return;
+                      e.preventDefault();
+                      setSel(r);
+                    }}
                     className="cursor-pointer border-t border-border hover:bg-muted/50"
                   >
                     <td className="p-2 font-mono text-xs">{r.code}</td>
@@ -351,40 +426,43 @@ function CoursesAdmin() {
           </div>
         </section>
       )}
-      {sel && (
-        <ReviewDialog
-          r={sel}
-          setting={
-            sel.hsk_class_id
-              ? (() => {
-                  const c = classes?.find((x) => x.id === sel.hsk_class_id);
-                  return c
-                    ? { fee_type: c.fee_type, fee_amount: c.fee_amount, label: c.name }
-                    : undefined;
-                })()
-              : (() => {
-                  const st = settings?.find((x) => x.level === sel.level);
-                  return st
-                    ? {
-                        fee_type: st.fee_type,
-                        fee_amount: st.fee_amount,
-                        label: `HSK ${sel.level}`,
-                      }
-                    : undefined;
-                })()
-          }
-          onClose={() => setSel(null)}
-          onDone={() => {
-            setSel(null);
-            qc.invalidateQueries({ queryKey: ["admin-enrollments"] });
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {sel && (
+          <ReviewDrawer
+            key={sel.id}
+            r={sel}
+            setting={
+              sel.hsk_class_id
+                ? (() => {
+                    const c = classes?.find((x) => x.id === sel.hsk_class_id);
+                    return c
+                      ? { fee_type: c.fee_type, fee_amount: c.fee_amount, label: c.name }
+                      : undefined;
+                  })()
+                : (() => {
+                    const st = settings?.find((x) => x.level === sel.level);
+                    return st
+                      ? {
+                          fee_type: st.fee_type,
+                          fee_amount: st.fee_amount,
+                          label: `HSK ${sel.level}`,
+                        }
+                      : undefined;
+                  })()
+            }
+            onClose={() => setSel(null)}
+            onDone={() => {
+              setSel(null);
+              qc.invalidateQueries({ queryKey: ["admin-enrollments"] });
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function ReviewDialog({
+function ReviewDrawer({
   r,
   setting,
   onClose,
@@ -401,6 +479,16 @@ function ReviewDialog({
   const [zalo, setZalo] = useState("");
   const [feeNote, setFeeNote] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || busy) return;
+      onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [busy, onClose]);
+
   const go = async () => {
     setBusy(true);
     try {
@@ -423,135 +511,196 @@ function ReviewDialog({
     }
     setBusy(false);
   };
+
+  const info: [string, string][] = [
+    ["Email", r.email || "—"],
+    ["SĐT/Zalo", r.phone || "—"],
+    ["Trình độ", r.current_level || "—"],
+    ["Ngày đăng ký", new Date(r.created_at).toLocaleString("vi-VN")],
+  ];
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6"
-        onClick={(e) => e.stopPropagation()}
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Duyệt đơn ${r.full_name}`}
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 32, stiffness: 320 }}
+        className="relative z-10 flex h-full w-full max-w-[520px] flex-col border-l border-border bg-card shadow-2xl"
       >
-        <div className="flex justify-between">
-          <div>
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
+          <div className="min-w-0">
             <div className="font-mono text-xs text-muted-foreground">{r.code}</div>
-            <h2 className="text-xl font-bold">{r.full_name}</h2>
-            <div className="text-sm">{setting?.label ?? `HSK ${r.level}`}</div>
-          </div>
-          <button onClick={onClose} aria-label="Đóng">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <dl className="mt-4 space-y-1 text-sm">
-          <div>
-            <b>Email:</b> {r.email}
-          </div>
-          <div>
-            <b>SĐT/Zalo:</b> {r.phone}
-          </div>
-          <div>
-            <b>Trình độ:</b> {r.current_level || "—"}
-          </div>
-          <div>
-            <b>Mục tiêu:</b> {r.goal || "—"}
-          </div>
-          <div className="whitespace-pre-line">
-            <b>Lời nhắn:</b> {r.message || "—"}
-          </div>
-        </dl>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <a
-            href={zaloOf(r.phone)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            Mở Zalo
-          </a>
-          <a
-            href={`tel:${r.phone}`}
-            className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"
-          >
-            <Phone className="h-3.5 w-3.5" />
-            Gọi điện
-          </a>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(r.phone);
-              toast.success("Đã sao chép SĐT");
-            }}
-            className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-primary"
-          >
-            <Copy className="h-3.5 w-3.5" />
-            Sao chép SĐT
-          </button>
-        </div>
-        <div className="mt-5 space-y-3 border-t border-border pt-4">
-          <div className="block text-sm">
-            <span className="block">Kết quả</span>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger
-                aria-label="Kết quả duyệt đơn"
-                className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+            <h2 className="truncate text-base font-bold text-foreground">{r.full_name}</h2>
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              <span className="text-xs text-muted-foreground">
+                {setting?.label ?? `HSK ${r.level}`}
+              </span>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${ENROLL_STATUS[r.status]?.tone}`}
               >
-                <SelectValue>{ENROLL_STATUS[status]?.label ?? status}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {Object.entries(ENROLL_STATUS).map(([k, v]) => (
-                  <SelectItem key={k} value={k} className="text-sm">
-                    {v.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                {ENROLL_STATUS[r.status]?.label ?? r.status}
+              </span>
+            </div>
           </div>
-          {status === "approved" && (
-            <>
-              <label className="block text-sm">
-                Link nhóm Zalo lớp học *
-                <input
-                  placeholder="https://zalo.me/g/..."
-                  className={inp}
-                  value={zalo}
-                  onChange={(e) => setZalo(e.target.value)}
-                />
-              </label>
-              {setting?.fee_type === "paid" && (
-                <label className="block text-sm">
-                  Hướng dẫn đóng học phí ({classFee(setting)})
-                  <textarea
-                    rows={3}
-                    className={inp}
-                    value={feeNote}
-                    onChange={(e) => setFeeNote(e.target.value)}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            title="Đóng (Esc)"
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Thông tin đăng ký
+            </h3>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border border-border/70 bg-background/50 p-3">
+              {info.map(([k, v]) => (
+                <div key={k} className="min-w-0">
+                  <dt className="text-[11px] text-muted-foreground">{k}</dt>
+                  <dd className="break-words text-sm text-foreground">{v}</dd>
+                </div>
+              ))}
+              <div className="col-span-2 min-w-0">
+                <dt className="text-[11px] text-muted-foreground">Mục tiêu</dt>
+                <dd className="whitespace-pre-line break-words text-sm text-foreground">
+                  {r.goal || "—"}
+                </dd>
+              </div>
+              <div className="col-span-2 min-w-0">
+                <dt className="text-[11px] text-muted-foreground">Lời nhắn</dt>
+                <dd className="whitespace-pre-line break-words text-sm text-foreground">
+                  {r.message || "—"}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Liên hệ
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={zaloOf(r.phone)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Mở Zalo
+              </a>
+              <a
+                href={`tel:${r.phone}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted"
+              >
+                <Phone className="h-3.5 w-3.5" />
+                Gọi điện
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(r.phone);
+                  toast.success("Đã sao chép SĐT");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Sao chép SĐT
+              </button>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Xét duyệt
+            </h3>
+            <div>
+              <span className="block text-xs text-muted-foreground">Kết quả</span>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger
+                  aria-label="Kết quả duyệt đơn"
+                  className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+                >
+                  <SelectValue>{ENROLL_STATUS[status]?.label ?? status}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {Object.entries(ENROLL_STATUS).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-sm">
+                      {v.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {status === "approved" && (
+              <>
+                <label className="block text-xs text-muted-foreground">
+                  Link nhóm Zalo lớp học *
+                  <input
+                    placeholder="https://zalo.me/g/..."
+                    className={`${inp} mt-1`}
+                    value={zalo}
+                    onChange={(e) => setZalo(e.target.value)}
                   />
                 </label>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Bấm xác nhận sẽ tự động gửi thư mời trúng tuyển kèm link nhóm Zalo tới email học
-                viên.
-              </p>
-            </>
-          )}
-          <label className="block text-sm">
-            Ghi chú nội bộ (không bắt buộc)
-            <textarea
-              rows={2}
-              className={inp}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          </label>
+                {setting?.fee_type === "paid" && (
+                  <label className="block text-xs text-muted-foreground">
+                    Hướng dẫn đóng học phí ({classFee(setting)})
+                    <textarea
+                      rows={3}
+                      className={`${inp} mt-1`}
+                      value={feeNote}
+                      onChange={(e) => setFeeNote(e.target.value)}
+                    />
+                  </label>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Bấm xác nhận sẽ tự động gửi thư mời trúng tuyển kèm link nhóm Zalo tới email học
+                  viên.
+                </p>
+              </>
+            )}
+            <label className="block text-xs text-muted-foreground">
+              Ghi chú nội bộ (không bắt buộc)
+              <textarea
+                rows={2}
+                className={`${inp} mt-1`}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            </label>
+          </section>
+        </div>
+
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
           <button
-            disabled={busy}
+            type="button"
             onClick={go}
-            className="w-full rounded-full bg-primary py-2.5 font-semibold text-primary-foreground disabled:opacity-60"
+            disabled={busy}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {busy ? "Đang xử lý…" : "Xác nhận"}
+            {busy ? "Đang xử lý…" : status === "approved" ? "Duyệt và gửi thư mời" : "Lưu kết quả"}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
