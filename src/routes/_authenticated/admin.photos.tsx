@@ -100,6 +100,19 @@ function AdminPhotos() {
     };
   }, []);
 
+  // Prevent browser from opening files dropped outside dropzone
+  useEffect(() => {
+    const block = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
+    };
+    window.addEventListener("dragover", block);
+    window.addEventListener("drop", block);
+    return () => {
+      window.removeEventListener("dragover", block);
+      window.removeEventListener("drop", block);
+    };
+  }, []);
+
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     setBusy(true);
     try {
@@ -198,6 +211,24 @@ function AdminPhotos() {
 
   const activePhoto = list.find((p) => p.id === openId) ?? null;
 
+  const dropHandlers = {
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(true);
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+        setDragOver(false);
+      }
+    },
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const files = Array.from(e.dataTransfer.files ?? []);
+      handleFiles(files);
+    },
+  };
+
   if (isAdmin.isLoading) return <p className="p-10 text-center">Đang kiểm tra quyền…</p>;
   if (!isAdmin.data)
     return (
@@ -253,54 +284,36 @@ function AdminPhotos() {
 
       {/* Thanh tóm tắt + bộ lọc */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-foreground">
-            <span className="font-semibold">{total}</span> ảnh ·{" "}
-            <span className="font-semibold">{visibleCount}</span> đang hiện ·{" "}
-            <span className="font-semibold">{hiddenCount}</span> đang ẩn
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            3 ảnh đang hiện đầu tiên xuất hiện ngay khi khách mở trang chủ.
-          </p>
-        </div>
+        <p className="hidden text-xs text-muted-foreground sm:block">
+          3 ảnh đang hiện đầu tiên xuất hiện ngay khi khách mở trang chủ.
+        </p>
 
-        <div className="inline-flex rounded-xl bg-muted p-1 text-xs font-medium">
-          <button
-            type="button"
-            aria-pressed={filter === "all"}
-            onClick={() => setFilter("all")}
-            className={`rounded-lg px-3 py-1 transition-colors ${
-              filter === "all"
-                ? "bg-card font-semibold text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Tất cả
-          </button>
-          <button
-            type="button"
-            aria-pressed={filter === "visible"}
-            onClick={() => setFilter("visible")}
-            className={`rounded-lg px-3 py-1 transition-colors ${
-              filter === "visible"
-                ? "bg-card font-semibold text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Đang hiện
-          </button>
-          <button
-            type="button"
-            aria-pressed={filter === "hidden"}
-            onClick={() => setFilter("hidden")}
-            className={`rounded-lg px-3 py-1 transition-colors ${
-              filter === "hidden"
-                ? "bg-card font-semibold text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Đang ẩn
-          </button>
+        <div className="inline-flex w-full rounded-xl bg-muted p-1 text-xs font-medium sm:w-auto">
+          {(
+            [
+              { key: "all", label: "Tất cả", count: total },
+              { key: "visible", label: "Đang hiện", count: visibleCount },
+              { key: "hidden", label: "Đang ẩn", count: hiddenCount },
+            ] as const
+          ).map(({ key, label, count }) => {
+            const isActive = filter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setFilter(key)}
+                className={`inline-flex h-8 flex-1 items-center justify-center rounded-lg px-3 py-1 transition-colors sm:flex-none ${
+                  isActive
+                    ? "bg-card font-semibold text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>{label}</span>
+                <span className="ml-1 tabular-nums opacity-60">{count}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -318,36 +331,29 @@ function AdminPhotos() {
 
       {/* Danh sách rỗng hoàn toàn */}
       {!photos.isLoading && list.length === 0 && pending.length === 0 && (
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            const files = Array.from(e.dataTransfer.files ?? []);
-            handleFiles(files);
-          }}
+        <button
+          type="button"
+          disabled={busy}
           onClick={() => fileInputRef.current?.click()}
-          className={`flex min-h-72 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+          {...dropHandlers}
+          className={`flex min-h-72 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 ${
             dragOver
               ? "border-primary bg-primary/5"
               : "border-border hover:border-primary/60 hover:bg-primary/5"
           }`}
         >
           <ImagePlus className="mb-2 h-10 w-10 text-muted-foreground" />
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-sm font-semibold text-foreground sm:hidden">Chạm để thêm ảnh</p>
+          <p className="hidden text-sm font-semibold text-foreground sm:block">
             Kéo thả ảnh vào đây hoặc bấm để chọn ảnh
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 hidden text-xs text-muted-foreground sm:block">
             Có thể chọn nhiều ảnh cùng lúc. Định dạng PNG, JPG, WebP...
           </p>
           <p className="mt-2 text-xs font-medium text-primary">
             Ảnh sẽ hiển thị ở mục Khoảnh khắc cùng TML trên trang chủ.
           </p>
-        </div>
+        </button>
       )}
 
       {/* Lọc không có kết quả */}
@@ -436,26 +442,19 @@ function AdminPhotos() {
               type="button"
               disabled={busy}
               onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-                const files = Array.from(e.dataTransfer.files ?? []);
-                handleFiles(files);
-              }}
-              className={`flex aspect-[4/3] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
+              {...dropHandlers}
+              className={`flex aspect-[4/3] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 ${
                 dragOver
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/60 hover:bg-primary/5"
               }`}
             >
-              <ImagePlus className="mb-1.5 h-7 w-7 text-muted-foreground" />
-              <span className="text-xs font-semibold text-foreground">Kéo thả ảnh vào đây</span>
-              <span className="mt-0.5 text-[11px] text-muted-foreground">
+              <ImagePlus className="mb-1.5 h-6 w-6 text-muted-foreground sm:h-7 sm:w-7" />
+              <span className="text-xs font-semibold text-foreground sm:hidden">Thêm ảnh</span>
+              <span className="hidden text-xs font-semibold text-foreground sm:inline">
+                Kéo thả ảnh vào đây
+              </span>
+              <span className="mt-0.5 hidden text-[11px] text-muted-foreground sm:inline">
                 hoặc bấm để chọn, có thể chọn nhiều ảnh
               </span>
             </button>
@@ -546,21 +545,24 @@ function PhotoCard({
         </button>
 
         {/* Chip góc trên-trái: #n và Hiện đầu */}
-        <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-wrap items-center gap-1.5">
+        <div className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex flex-wrap items-center gap-1.5 sm:left-2 sm:top-2">
           <span className="rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
             #{index + 1}
           </span>
           {isFeaturedHome && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary px-1.5 py-0.5 text-[11px] font-semibold text-primary-foreground shadow-xs">
+            <span
+              title="Hiện đầu tiên trên trang chủ"
+              className="inline-flex items-center gap-1 rounded-md bg-primary px-1.5 py-0.5 text-[11px] font-semibold text-primary-foreground shadow-xs max-sm:gap-0"
+            >
               <Home className="h-3 w-3" />
-              Hiện đầu
+              <span className="max-sm:sr-only">Hiện đầu</span>
             </span>
           )}
         </div>
 
         {/* Chip góc dưới-trái: Đang ẩn */}
         {!photo.visible && (
-          <div className="pointer-events-none absolute bottom-2 left-2 z-10">
+          <div className="pointer-events-none absolute bottom-1.5 left-1.5 z-10 sm:bottom-2 sm:left-2">
             <span className="inline-flex items-center gap-1 rounded-md bg-foreground/80 px-1.5 py-0.5 text-[11px] font-medium text-background backdrop-blur-sm">
               <EyeOff className="h-3 w-3" />
               Đang ẩn
@@ -578,20 +580,24 @@ function PhotoCard({
             e.stopPropagation();
             onToggle(photo);
           }}
-          className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full border border-border/60 bg-card/90 text-foreground shadow-xs backdrop-blur-sm transition-opacity hover:bg-card focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+          className="absolute right-1.5 top-1.5 z-10 grid h-7 w-7 place-items-center rounded-full border border-border/60 bg-card/90 text-foreground shadow-xs backdrop-blur-sm transition-opacity hover:bg-card focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
         >
-          {photo.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {photo.visible ? (
+            <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          ) : (
+            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          )}
         </button>
       </div>
 
       {/* Chú thích dưới ảnh */}
-      <p className="mt-2 line-clamp-1 text-sm font-medium text-foreground">
-        {photo.caption ? (
-          photo.caption
-        ) : (
-          <span className="font-normal italic text-muted-foreground">Chưa có chú thích</span>
-        )}
-      </p>
+      {photo.caption ? (
+        <p className="mt-2 line-clamp-1 text-sm font-medium text-foreground">{photo.caption}</p>
+      ) : (
+        <p className="mt-2 hidden line-clamp-1 text-sm italic text-muted-foreground sm:block">
+          Chưa có chú thích
+        </p>
+      )}
     </div>
   );
 }
