@@ -3,6 +3,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  DndContext,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   ArrowDown,
   ArrowUp,
   ChevronsDown,
@@ -88,6 +98,12 @@ function AdminPhotos() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingUpload[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const suppressClickRef = useRef(false);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+  );
 
   // Keep a ref to pending uploads to cleanup object URLs on unmount
   const pendingRef = useRef(pending);
@@ -132,14 +148,16 @@ function AdminPhotos() {
   };
 
   const list = useMemo(() => photos.data ?? [], [photos.data]);
+  const canReorder = filter === "all" && !busy && pending.length === 0;
 
   const moveTo = (id: string, target: number) => {
-    if (busy) return;
+    if (busy || pending.length > 0) return;
     const ids = list.map((p) => p.id);
     const from = ids.indexOf(id);
     if (from < 0 || target === from || target < 0 || target >= ids.length) return;
-    ids.splice(target, 0, ids.splice(from, 1)[0]!);
-    run(() => reorderPhotos(ids), "Đã cập nhật thứ tự.");
+    const next = arrayMove(list, from, target);
+    qc.setQueryData<ActivityPhoto[]>(["activity-photos", "all"], next);
+    run(() => reorderPhotos(next.map((p) => p.id)), "Đã cập nhật thứ tự.");
   };
 
   const handleFiles = async (files: File[]) => {
@@ -285,7 +303,9 @@ function AdminPhotos() {
       {/* Thanh tóm tắt + bộ lọc */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="hidden text-xs text-muted-foreground sm:block">
-          3 ảnh đang hiện đầu tiên xuất hiện ngay khi khách mở trang chủ.
+          {filter === "all"
+            ? "Kéo thả để đổi thứ tự. 3 ảnh đang hiện đầu tiên xuất hiện ngay khi khách mở trang chủ."
+            : "Chọn Tất cả để kéo thả đổi thứ tự."}
         </p>
 
         <div className="inline-flex w-full rounded-xl bg-muted p-1 text-xs font-medium sm:w-auto">
@@ -368,98 +388,124 @@ function AdminPhotos() {
 
       {/* Lưới thẻ ảnh */}
       {!photos.isLoading && (filteredList.length > 0 || pending.length > 0) && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
-          {filteredList.map((p) => {
-            const originalIndex = list.findIndex((item) => item.id === p.id);
-            const isFeaturedHome = firstThreeVisibleIds.has(p.id);
-            const isSelected = p.id === openId;
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragCancel={() => {
+            suppressClickRef.current = true;
+            setTimeout(() => {
+              suppressClickRef.current = false;
+            }, 0);
+          }}
+          onDragEnd={({ active, over }) => {
+            suppressClickRef.current = true;
+            setTimeout(() => {
+              suppressClickRef.current = false;
+            }, 0);
+            if (!over || active.id === over.id) return;
+            const target = list.findIndex((p) => p.id === over.id);
+            moveTo(String(active.id), target);
+          }}
+        >
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+            <SortableContext items={filteredList.map((p) => p.id)} strategy={rectSortingStrategy}>
+              {filteredList.map((p) => {
+                const originalIndex = list.findIndex((item) => item.id === p.id);
+                const isFeaturedHome = firstThreeVisibleIds.has(p.id);
+                const isSelected = p.id === openId;
 
-            return (
-              <PhotoCard
-                key={p.id}
-                photo={p}
-                index={originalIndex}
-                isFeaturedHome={isFeaturedHome}
-                isSelected={isSelected}
-                busy={busy}
-                onOpen={(id) => setOpenId(id)}
-                onToggle={(item) =>
-                  run(
-                    () => updatePhoto(item.id, { visible: !item.visible }),
-                    item.visible ? "Đã ẩn ảnh." : "Đã hiện ảnh.",
-                  )
-                }
-              />
-            );
-          })}
+                return (
+                  <PhotoCard
+                    key={p.id}
+                    photo={p}
+                    index={originalIndex}
+                    isFeaturedHome={isFeaturedHome}
+                    isSelected={isSelected}
+                    busy={busy}
+                    sortable={canReorder}
+                    onOpen={(id) => {
+                      if (suppressClickRef.current) return;
+                      setOpenId(id);
+                    }}
+                    onToggle={(item) =>
+                      run(
+                        () => updatePhoto(item.id, { visible: !item.visible }),
+                        item.visible ? "Đã ẩn ảnh." : "Đã hiện ảnh.",
+                      )
+                    }
+                  />
+                );
+              })}
+            </SortableContext>
 
-          {/* Các thẻ đang tải lên (pending) */}
-          {pending.map((item) => (
-            <div key={item.key} className="flex flex-col">
-              <div
-                className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted shadow-2xs ${
-                  item.error ? "border-destructive bg-destructive/5" : "border-border/70"
+            {/* Các thẻ đang tải lên (pending) */}
+            {pending.map((item) => (
+              <div key={item.key} className="flex flex-col">
+                <div
+                  className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted shadow-2xs ${
+                    item.error ? "border-destructive bg-destructive/5" : "border-border/70"
+                  }`}
+                >
+                  <img
+                    src={item.preview}
+                    alt={item.name}
+                    className="h-full w-full object-cover opacity-60"
+                  />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+                    {item.error ? (
+                      <div className="flex flex-col items-center justify-center rounded-lg bg-card/90 p-2 shadow-xs backdrop-blur-sm">
+                        <p className="line-clamp-2 text-[11px] font-medium text-destructive">
+                          {item.error}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => dismissPending(item.key)}
+                          className="mt-1 text-xs font-semibold text-destructive underline hover:text-destructive/80"
+                        >
+                          Bỏ
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center rounded-lg bg-card/85 px-2.5 py-1.5 shadow-xs backdrop-blur-sm">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        <span className="mt-1 max-w-[120px] truncate text-[11px] font-medium text-foreground">
+                          {item.name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="mt-2 line-clamp-1 truncate text-sm text-muted-foreground">
+                  {item.name}
+                </p>
+              </div>
+            ))}
+
+            {/* Ô kéo thả tải ảnh cuối lưới (chỉ hiện khi filter === "all") */}
+            {filter === "all" && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => fileInputRef.current?.click()}
+                {...dropHandlers}
+                className={`flex aspect-[4/3] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 ${
+                  dragOver
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/60 hover:bg-primary/5"
                 }`}
               >
-                <img
-                  src={item.preview}
-                  alt={item.name}
-                  className="h-full w-full object-cover opacity-60"
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
-                  {item.error ? (
-                    <div className="flex flex-col items-center justify-center rounded-lg bg-card/90 p-2 shadow-xs backdrop-blur-sm">
-                      <p className="line-clamp-2 text-[11px] font-medium text-destructive">
-                        {item.error}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => dismissPending(item.key)}
-                        className="mt-1 text-xs font-semibold text-destructive underline hover:text-destructive/80"
-                      >
-                        Bỏ
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center rounded-lg bg-card/85 px-2.5 py-1.5 shadow-xs backdrop-blur-sm">
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      <span className="mt-1 max-w-[120px] truncate text-[11px] font-medium text-foreground">
-                        {item.name}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <p className="mt-2 line-clamp-1 truncate text-sm text-muted-foreground">
-                {item.name}
-              </p>
-            </div>
-          ))}
-
-          {/* Ô kéo thả tải ảnh cuối lưới (chỉ hiện khi filter === "all") */}
-          {filter === "all" && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => fileInputRef.current?.click()}
-              {...dropHandlers}
-              className={`flex aspect-[4/3] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 ${
-                dragOver
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/60 hover:bg-primary/5"
-              }`}
-            >
-              <ImagePlus className="mb-1.5 h-6 w-6 text-muted-foreground sm:h-7 sm:w-7" />
-              <span className="text-xs font-semibold text-foreground sm:hidden">Thêm ảnh</span>
-              <span className="hidden text-xs font-semibold text-foreground sm:inline">
-                Kéo thả ảnh vào đây
-              </span>
-              <span className="mt-0.5 hidden text-[11px] text-muted-foreground sm:inline">
-                hoặc bấm để chọn, có thể chọn nhiều ảnh
-              </span>
-            </button>
-          )}
-        </div>
+                <ImagePlus className="mb-1.5 h-6 w-6 text-muted-foreground sm:h-7 sm:w-7" />
+                <span className="text-xs font-semibold text-foreground sm:hidden">Thêm ảnh</span>
+                <span className="hidden text-xs font-semibold text-foreground sm:inline">
+                  Kéo thả ảnh vào đây
+                </span>
+                <span className="mt-0.5 hidden text-[11px] text-muted-foreground sm:inline">
+                  hoặc bấm để chọn, có thể chọn nhiều ảnh
+                </span>
+              </button>
+            )}
+          </div>
+        </DndContext>
       )}
 
       {/* Drawer chi tiết ảnh */}
@@ -471,6 +517,7 @@ function AdminPhotos() {
             index={list.findIndex((p) => p.id === activePhoto.id)}
             total={list.length}
             busy={busy}
+            reorderLocked={busy || pending.length > 0}
             onClose={() => setOpenId(null)}
             onUpdateCaption={async (id, cap) => {
               await run(() => updatePhoto(id, { caption: cap }), "Đã lưu chú thích.");
@@ -504,6 +551,7 @@ function PhotoCard({
   isFeaturedHome,
   isSelected,
   busy,
+  sortable,
   onOpen,
   onToggle,
 }: {
@@ -512,14 +560,34 @@ function PhotoCard({
   isFeaturedHome: boolean;
   isSelected: boolean;
   busy: boolean;
+  sortable: boolean;
   onOpen: (id: string) => void;
   onToggle: (photo: ActivityPhoto) => void;
 }) {
+  const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
+    id: photo.id,
+    disabled: !sortable,
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="group relative flex flex-col">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      className={`group relative flex flex-col select-none [-webkit-touch-callout:none] ${
+        isDragging ? "z-20 opacity-90 cursor-grabbing" : ""
+      }`}
+    >
       <div
         className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border/70 bg-muted shadow-2xs transition-all hover:border-primary/40 ${
           isSelected ? "ring-2 ring-primary" : ""
+        } ${isDragging ? "ring-2 ring-primary shadow-xl" : ""} ${
+          sortable && !isDragging ? "sm:cursor-grab" : ""
         }`}
       >
         {/* Nút chính phủ toàn bộ ảnh để mở drawer */}
@@ -527,15 +595,22 @@ function PhotoCard({
           type="button"
           onClick={() => onOpen(photo.id)}
           aria-label={`Mở ảnh #${index + 1}`}
-          className="absolute inset-0 z-0 h-full w-full cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className={`absolute inset-0 z-0 h-full w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            isDragging
+              ? "cursor-grabbing"
+              : sortable
+                ? "cursor-pointer sm:cursor-grab"
+                : "cursor-pointer"
+          }`}
         >
           {photo.url ? (
             <img
               src={photo.url}
               alt={photo.alt_text || photo.caption}
-              className={`h-full w-full object-cover transition-transform duration-200 group-hover:scale-105 ${
-                photo.visible ? "" : "grayscale opacity-50"
-              }`}
+              draggable={false}
+              className={`h-full w-full object-cover transition-transform duration-200 ${
+                isDragging ? "" : "group-hover:scale-105"
+              } ${photo.visible ? "" : "grayscale opacity-50"}`}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground/40">
@@ -576,11 +651,15 @@ function PhotoCard({
           disabled={busy}
           aria-label={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
           title={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             onToggle(photo);
           }}
-          className="absolute right-1.5 top-1.5 z-10 grid h-7 w-7 place-items-center rounded-full border border-border/60 bg-card/90 text-foreground shadow-xs backdrop-blur-sm transition-opacity hover:bg-card focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+          className={`absolute right-1.5 top-1.5 z-10 grid h-7 w-7 place-items-center rounded-full border border-border/60 bg-card/90 text-foreground shadow-xs backdrop-blur-sm transition-opacity hover:bg-card focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
+            isDragging ? "invisible pointer-events-none" : ""
+          }`}
         >
           {photo.visible ? (
             <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -607,6 +686,7 @@ function PhotoDrawer({
   index,
   total,
   busy,
+  reorderLocked,
   onClose,
   onUpdateCaption,
   onToggleVisible,
@@ -618,6 +698,7 @@ function PhotoDrawer({
   index: number;
   total: number;
   busy: boolean;
+  reorderLocked: boolean;
   onClose: () => void;
   onUpdateCaption: (id: string, caption: string) => Promise<void>;
   onToggleVisible: (photo: ActivityPhoto, nextVisible: boolean) => Promise<void>;
@@ -802,7 +883,7 @@ function PhotoDrawer({
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                disabled={busy || index === 0}
+                disabled={reorderLocked || index === 0}
                 onClick={() => onMoveTo(photo.id, 0)}
                 className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -811,7 +892,7 @@ function PhotoDrawer({
               </button>
               <button
                 type="button"
-                disabled={busy || index === 0}
+                disabled={reorderLocked || index === 0}
                 onClick={() => onMoveTo(photo.id, index - 1)}
                 className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -820,7 +901,7 @@ function PhotoDrawer({
               </button>
               <button
                 type="button"
-                disabled={busy || index === total - 1}
+                disabled={reorderLocked || index === total - 1}
                 onClick={() => onMoveTo(photo.id, index + 1)}
                 className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -829,7 +910,7 @@ function PhotoDrawer({
               </button>
               <button
                 type="button"
-                disabled={busy || index === total - 1}
+                disabled={reorderLocked || index === total - 1}
                 onClick={() => onMoveTo(photo.id, total - 1)}
                 className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
