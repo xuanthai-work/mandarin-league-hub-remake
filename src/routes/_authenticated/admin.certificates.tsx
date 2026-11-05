@@ -24,6 +24,7 @@ import { CERT_TYPES, normalizeCode } from "@/lib/certificates";
 import { matchesSearch } from "@/lib/search";
 import { extractCertificate } from "@/lib/certificate-extract.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { MemberCombobox } from "@/components/admin/MemberCombobox";
 import {
   Select,
   SelectContent,
@@ -711,7 +712,7 @@ function CertificateDrawer({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !e.defaultPrevented) onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -830,39 +831,21 @@ function CertificateDrawer({
             <h3 className={SECTION_TITLE}>Người nhận chứng nhận</h3>
             <div className="space-y-2.5">
               <div>
-                <label className="mb-1 block font-medium text-foreground">
+                <label htmlFor="cert-member" className="mb-1 block font-medium text-foreground">
                   Chọn thành viên nội bộ (tùy chọn)
                 </label>
-                <Select
-                  value={value.member_id ?? "none"}
-                  onValueChange={(v) => {
-                    const m = members.find((x) => x.id === v);
+                <MemberCombobox
+                  id="cert-member"
+                  members={members}
+                  value={value.member_id}
+                  onChange={(memberId) => {
+                    const m = members.find((x) => x.id === memberId);
                     onChange({
                       member_id: m?.id ?? null,
                       holder_name: m ? m.full_name : value.holder_name,
                     });
                   }}
-                >
-                  <SelectTrigger
-                    aria-label="Chọn thành viên"
-                    className="h-9 w-full rounded-xl border-input bg-background text-xs font-normal shadow-xs"
-                  >
-                    <SelectValue>
-                      {members.find((m) => m.id === value.member_id)?.full_name ??
-                        "— Người nhận bên ngoài —"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="none" className="text-xs">
-                      — Người nhận bên ngoài —
-                    </SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id} className="text-xs">
-                        {m.full_name} · {m.member_code}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
               <div>
