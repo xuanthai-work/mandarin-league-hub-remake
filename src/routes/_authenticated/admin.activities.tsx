@@ -1,9 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Copy, Eye, EyeOff, Pencil, Phone, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { motion } from "motion/react";
+import {
+  CalendarClock,
+  Copy,
+  Eye,
+  EyeOff,
+  FilePen,
+  Inbox,
+  Pencil,
+  Phone,
+  Plus,
+  Search,
+  Ticket,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/programs";
+import { matchesSearch } from "@/lib/search";
 import {
   ACTIVITY_BUCKET,
   CATEGORY_LABEL,
@@ -13,6 +30,7 @@ import {
   REG_STATUS,
   fmtDateTime,
   liveStatus,
+  registrationOpen,
   withBanners,
   type ActivityCategory,
   type ActivityRow,
@@ -74,40 +92,82 @@ function useCanPublish() {
   return !!a && canReviewNews(a.roles, a.department);
 }
 
+const TABS = [
+  ["list", "Hoạt động"],
+  ["regs", "Đơn đăng ký"],
+  ["audit", "Nhật ký thay đổi"],
+  ["trash", "Thùng rác"],
+] as const;
+
 function ActivitiesAdmin() {
   const [tab, setTab] = useState<"list" | "regs" | "audit" | "trash">("list");
+  const [regsPreset, setRegsPreset] = useState("");
   const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
   const canPublish = useCanPublish();
+  const acts = useAllActivities();
+  const regs = useAllRegs(canPublish);
+  const pendingRegs = (regs.data ?? []).filter((r) => r.status === "PENDING").length;
+  const openTab = (k: typeof tab) => {
+    setRegsPreset("");
+    setTab(k);
+  };
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
-      <AdminPageHeader
-        title="Hoạt động"
-        description={
-          'Quản lý workshop, cuộc thi, trại, sự kiện. Chương trình học bật "Hiện ở Hoạt động" tự xuất hiện trên trang công khai.'
-        }
-      />
-      <div className="flex gap-2">
-        {(
-          [
-            ["list", "Danh sách hoạt động"],
-            ["regs", "Đơn đăng ký"],
-            ["audit", "Nhật ký thay đổi"],
-            ["trash", "Thùng rác"],
-          ] as const
-        )
-          .filter(([k]) => canPublish || k === "list")
-          .map(([k, l]) => (
-            <button
-              key={k}
-              onClick={() => setTab(k)}
-              className={`rounded-full border px-4 py-1.5 text-sm ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
-            >
-              {l}
-            </button>
-          ))}
+      <div className="custom-scrollbar max-w-full overflow-x-auto">
+        <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
+          {TABS.filter(([k]) => canPublish || k === "list").map(([k, label]) => {
+            const active = tab === k;
+            const badge = k === "list" ? (acts.data?.length ?? 0) : k === "regs" ? pendingRegs : 0;
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => openTab(k)}
+                aria-pressed={active}
+                className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-4 ${
+                  active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="activities-tab-pill"
+                    className="absolute inset-0 rounded-lg bg-primary shadow-xs"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  {label}
+                  {badge > 0 && (
+                    <span
+                      className={`rounded-full px-1.5 text-[10px] font-semibold leading-relaxed ${
+                        active
+                          ? "bg-white/20 text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {badge}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-      {tab === "list" && <ListTab />}
-      {tab === "regs" && <RegsTab />}
+      {tab === "list" && (
+        <ListTab
+          {...(canPublish
+            ? {
+                onOpenPendingRegs: () => {
+                  setRegsPreset("PENDING");
+                  setTab("regs");
+                },
+              }
+            : {})}
+          pendingRegs={pendingRegs}
+        />
+      )}
+      {tab === "regs" && <RegsTab initialStatus={regsPreset} />}
       {tab === "audit" && <AuditTab />}
       {tab === "trash" && (
         <TrashList
@@ -134,7 +194,27 @@ function useAllActivities() {
   });
 }
 
-function ListTab() {
+function useAllRegs(enabled = true) {
+  return useQuery({
+    queryKey: ["admin-activity-regs"],
+    enabled,
+    queryFn: async () =>
+      ((
+        await supabase
+          .from("activity_registrations")
+          .select("*")
+          .order("created_at", { ascending: false })
+      ).data ?? []) as Reg[],
+  });
+}
+
+function ListTab({
+  pendingRegs,
+  onOpenPendingRegs,
+}: {
+  pendingRegs: number;
+  onOpenPendingRegs?: () => void;
+}) {
   const qc = useQueryClient();
   const acts = useAllActivities();
   const canPublish = useCanPublish();
@@ -156,6 +236,8 @@ function ListTab() {
   };
   const [q, setQ] = useState("");
   const [st, setSt] = useState("");
+  const [cat, setCat] = useState("");
+  const [time, setTime] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const refresh = () => {
@@ -248,251 +330,173 @@ function ListTab() {
     patch(a, { deleted_at: new Date().toISOString() } as Partial<Omit<ActivityRow, "banner">>);
   };
 
-  const term = q.trim().toLowerCase();
-  const rows = (acts.data ?? []).filter(
-    (a) => (!st || a.manual_status === st) && (!term || a.title.toLowerCase().includes(term)),
+  const all = acts.data ?? [];
+  const rows = all.filter(
+    (a) =>
+      (!st || a.manual_status === st) &&
+      (!cat || a.category === cat) &&
+      (!time || liveStatus(a) === time) &&
+      matchesSearch(`${a.title} ${a.slug}`, q),
+  );
+  const filtered = !!(q || st || cat || time);
+  const clearFilters = () => {
+    setQ("");
+    setSt("");
+    setCat("");
+    setTime("");
+  };
+  const upcoming = all.filter((a) => liveStatus(a) === "upcoming").length;
+  const openRegs = all.filter((a) => a.manual_status === "published" && registrationOpen(a)).length;
+  const drafts = all.filter((a) => a.manual_status === "draft").length;
+
+  const header = (
+    <AdminPageHeader
+      title="Hoạt động"
+      actions={
+        f ? null : (
+          <button
+            type="button"
+            onClick={() => setF({ ...EMPTY })}
+            aria-label="Tạo hoạt động"
+            title="Tạo hoạt động"
+          >
+            <Plus className="h-4 w-4" />
+            Tạo hoạt động
+          </button>
+        )
+      }
+    />
   );
 
   if (f)
     return (
-      <form
-        onSubmit={save}
-        className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
-      >
-        <h2 className="font-semibold sm:col-span-2">
-          {f.id ? "Sửa hoạt động" : "Tạo hoạt động mới"}
-        </h2>
-        <label className="text-xs text-muted-foreground sm:col-span-2">
-          Tên hoạt động *
-          <input
-            required
-            minLength={3}
-            maxLength={200}
-            className={`${inp} mt-1`}
-            value={f.title}
-            onChange={(e) =>
-              setF({ ...f, title: e.target.value, slug: f.id ? f.slug : slugify(e.target.value) })
-            }
-          />
-        </label>
-        <label className="text-xs text-muted-foreground">
-          Slug (đường dẫn)
-          <input
-            className={`${inp} mt-1`}
-            value={f.slug}
-            onChange={(e) => setF({ ...f, slug: e.target.value })}
-          />
-        </label>
-        <div className="text-xs text-muted-foreground">
-          Loại hoạt động
-          <Select
-            value={f.category}
-            onValueChange={(v) => setF({ ...f, category: v as ActivityCategory })}
-          >
-            <SelectTrigger
-              aria-label="Loại hoạt động"
-              className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-            >
-              <SelectValue>{CATEGORY_LABEL[f.category]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              {CATS.map((k) => (
-                <SelectItem key={k} value={k} className="text-sm">
-                  {CATEGORY_LABEL[k]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2 sm:col-span-2">
-          <p className="text-xs text-muted-foreground">Ảnh banner (JPG/PNG/WebP ≤ 5MB)</p>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
-            <Upload className="h-4 w-4" />
-            {f.banner_path ? "Đổi ảnh" : "Tải ảnh lên"}
+      <>
+        {header}
+        <form
+          onSubmit={save}
+          className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
+        >
+          <h2 className="font-semibold sm:col-span-2">
+            {f.id ? "Sửa hoạt động" : "Tạo hoạt động mới"}
+          </h2>
+          <label className="text-xs text-muted-foreground sm:col-span-2">
+            Tên hoạt động *
             <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
+              required
+              minLength={3}
+              maxLength={200}
+              className={`${inp} mt-1`}
+              value={f.title}
+              onChange={(e) =>
+                setF({ ...f, title: e.target.value, slug: f.id ? f.slug : slugify(e.target.value) })
+              }
             />
           </label>
-          {f.banner_path && (
-            <span className="ml-2 text-xs text-success">
-              Đã có ảnh ·{" "}
-              <button
-                type="button"
-                className="text-destructive underline"
-                onClick={() => setF({ ...f, banner_path: "" })}
-              >
-                Gỡ
-              </button>
-            </span>
-          )}
-        </div>
-        <label className="text-xs text-muted-foreground sm:col-span-2">
-          Mô tả ngắn
-          <input
-            maxLength={300}
-            className={`${inp} mt-1`}
-            value={f.short_description}
-            onChange={(e) => setF({ ...f, short_description: e.target.value })}
-          />
-        </label>
-        <label className="text-xs text-muted-foreground sm:col-span-2">
-          Mô tả chi tiết
-          <textarea
-            rows={6}
-            maxLength={10000}
-            className={`${inp} mt-1`}
-            value={f.description}
-            onChange={(e) => setF({ ...f, description: e.target.value })}
-          />
-        </label>
-        <label className="text-xs text-muted-foreground">
-          Bắt đầu
-          <input
-            type="datetime-local"
-            className={`${inp} mt-1`}
-            value={toLocal(f.start_time)}
-            onChange={(e) => setF({ ...f, start_time: fromLocal(e.target.value) })}
-          />
-        </label>
-        <label className="text-xs text-muted-foreground">
-          Kết thúc
-          <input
-            type="datetime-local"
-            className={`${inp} mt-1`}
-            value={toLocal(f.end_time)}
-            onChange={(e) => setF({ ...f, end_time: fromLocal(e.target.value) })}
-          />
-        </label>
-        <div className="text-xs text-muted-foreground">
-          Hình thức
-          <Select
-            value={f.location_type}
-            onValueChange={(v) => setF({ ...f, location_type: v as LocationType })}
-          >
-            <SelectTrigger
-              aria-label="Hình thức"
-              className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-            >
-              <SelectValue>{LOCATION_LABEL[f.location_type]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              {Object.entries(LOCATION_LABEL).map(([k, v]) => (
-                <SelectItem key={k} value={k} className="text-sm">
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <label className="text-xs text-muted-foreground">
-          Địa điểm / nền tảng
-          <input
-            maxLength={300}
-            className={`${inp} mt-1`}
-            placeholder="vd: Google Meet hoặc địa chỉ"
-            value={f.location_detail}
-            onChange={(e) => setF({ ...f, location_detail: e.target.value })}
-          />
-        </label>
-        <div className="space-y-2 sm:col-span-2">
-          <p className="text-xs text-muted-foreground">Hình thức đăng ký</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {(
-              [
-                [
-                  "tml",
-                  "Dùng Form có sẵn của TML",
-                  "Người tham gia điền form ngay trên website, đơn về mục Đơn đăng ký.",
-                ],
-                [
-                  "ext",
-                  "Link đăng ký ngoài",
-                  "Chuyển tới Google Form… (có thể để trống, bổ sung sau).",
-                ],
-              ] as const
-            ).map(([k, l, d]) => {
-              const on = k === "ext" ? extMode : !extMode;
-              return (
-                <button
-                  type="button"
-                  key={k}
-                  onClick={() => {
-                    setExtMode(k === "ext");
-                    if (k === "tml") setF({ ...f, registration_url: "" });
-                  }}
-                  className={`rounded-lg border p-3 text-left text-sm ${on ? "border-primary bg-primary/5" : "border-border"}`}
-                >
-                  <span className="font-semibold">{l}</span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">{d}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        {extMode && (
-          <label className="text-xs text-muted-foreground sm:col-span-2">
-            Link đăng ký ngoài (không bắt buộc)
+          <label className="text-xs text-muted-foreground">
+            Slug (đường dẫn)
             <input
               className={`${inp} mt-1`}
-              placeholder="forms.gle/…"
-              value={f.registration_url}
-              onChange={(e) => setF({ ...f, registration_url: e.target.value })}
+              value={f.slug}
+              onChange={(e) => setF({ ...f, slug: e.target.value })}
             />
           </label>
-        )}
-        <label className="text-xs text-muted-foreground">
-          Hạn đăng ký (không bắt buộc)
-          <input
-            type="datetime-local"
-            className={`${inp} mt-1`}
-            value={toLocal(f.registration_deadline)}
-            onChange={(e) => setF({ ...f, registration_deadline: fromLocal(e.target.value) })}
-          />
-        </label>
-        <label className="text-xs text-muted-foreground">
-          Số người tối đa (0 = không giới hạn)
-          <input
-            type="number"
-            min={0}
-            className={`${inp} mt-1`}
-            value={f.max_participants}
-            onChange={(e) => setF({ ...f, max_participants: Math.max(0, Number(e.target.value)) })}
-          />
-        </label>
-        <label className="text-xs text-muted-foreground">
-          Link Facebook
-          <input
-            className={`${inp} mt-1`}
-            value={f.facebook_url}
-            onChange={(e) => setF({ ...f, facebook_url: e.target.value })}
-          />
-        </label>
-        <label className="text-xs text-muted-foreground">
-          Link Website
-          <input
-            className={`${inp} mt-1`}
-            value={f.website_url}
-            onChange={(e) => setF({ ...f, website_url: e.target.value })}
-          />
-        </label>
-        {canPublish ? (
           <div className="text-xs text-muted-foreground">
-            Trạng thái hiển thị
+            Loại hoạt động
             <Select
-              value={f.manual_status}
-              onValueChange={(v) => setF({ ...f, manual_status: v as ManualStatus })}
+              value={f.category}
+              onValueChange={(v) => setF({ ...f, category: v as ActivityCategory })}
             >
               <SelectTrigger
-                aria-label="Trạng thái hiển thị"
+                aria-label="Loại hoạt động"
                 className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
               >
-                <SelectValue>{MANUAL_LABEL[f.manual_status]}</SelectValue>
+                <SelectValue>{CATEGORY_LABEL[f.category]}</SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                {Object.entries(MANUAL_LABEL).map(([k, v]) => (
+                {CATS.map((k) => (
+                  <SelectItem key={k} value={k} className="text-sm">
+                    {CATEGORY_LABEL[k]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <p className="text-xs text-muted-foreground">Ảnh banner (JPG/PNG/WebP ≤ 5MB)</p>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+              <Upload className="h-4 w-4" />
+              {f.banner_path ? "Đổi ảnh" : "Tải ảnh lên"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
+              />
+            </label>
+            {f.banner_path && (
+              <span className="ml-2 text-xs text-success">
+                Đã có ảnh ·{" "}
+                <button
+                  type="button"
+                  className="text-destructive underline"
+                  onClick={() => setF({ ...f, banner_path: "" })}
+                >
+                  Gỡ
+                </button>
+              </span>
+            )}
+          </div>
+          <label className="text-xs text-muted-foreground sm:col-span-2">
+            Mô tả ngắn
+            <input
+              maxLength={300}
+              className={`${inp} mt-1`}
+              value={f.short_description}
+              onChange={(e) => setF({ ...f, short_description: e.target.value })}
+            />
+          </label>
+          <label className="text-xs text-muted-foreground sm:col-span-2">
+            Mô tả chi tiết
+            <textarea
+              rows={6}
+              maxLength={10000}
+              className={`${inp} mt-1`}
+              value={f.description}
+              onChange={(e) => setF({ ...f, description: e.target.value })}
+            />
+          </label>
+          <label className="text-xs text-muted-foreground">
+            Bắt đầu
+            <input
+              type="datetime-local"
+              className={`${inp} mt-1`}
+              value={toLocal(f.start_time)}
+              onChange={(e) => setF({ ...f, start_time: fromLocal(e.target.value) })}
+            />
+          </label>
+          <label className="text-xs text-muted-foreground">
+            Kết thúc
+            <input
+              type="datetime-local"
+              className={`${inp} mt-1`}
+              value={toLocal(f.end_time)}
+              onChange={(e) => setF({ ...f, end_time: fromLocal(e.target.value) })}
+            />
+          </label>
+          <div className="text-xs text-muted-foreground">
+            Hình thức
+            <Select
+              value={f.location_type}
+              onValueChange={(v) => setF({ ...f, location_type: v as LocationType })}
+            >
+              <SelectTrigger
+                aria-label="Hình thức"
+                className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+              >
+                <SelectValue>{LOCATION_LABEL[f.location_type]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {Object.entries(LOCATION_LABEL).map(([k, v]) => (
                   <SelectItem key={k} value={k} className="text-sm">
                     {v}
                   </SelectItem>
@@ -500,48 +504,238 @@ function ListTab() {
               </SelectContent>
             </Select>
           </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.
+          <label className="text-xs text-muted-foreground">
+            Địa điểm / nền tảng
+            <input
+              maxLength={300}
+              className={`${inp} mt-1`}
+              placeholder="vd: Google Meet hoặc địa chỉ"
+              value={f.location_detail}
+              onChange={(e) => setF({ ...f, location_detail: e.target.value })}
+            />
+          </label>
+          <div className="space-y-2 sm:col-span-2">
+            <p className="text-xs text-muted-foreground">Hình thức đăng ký</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  [
+                    "tml",
+                    "Dùng Form có sẵn của TML",
+                    "Người tham gia điền form ngay trên website, đơn về mục Đơn đăng ký.",
+                  ],
+                  [
+                    "ext",
+                    "Link đăng ký ngoài",
+                    "Chuyển tới Google Form… (có thể để trống, bổ sung sau).",
+                  ],
+                ] as const
+              ).map(([k, l, d]) => {
+                const on = k === "ext" ? extMode : !extMode;
+                return (
+                  <button
+                    type="button"
+                    key={k}
+                    onClick={() => {
+                      setExtMode(k === "ext");
+                      if (k === "tml") setF({ ...f, registration_url: "" });
+                    }}
+                    className={`rounded-lg border p-3 text-left text-sm ${on ? "border-primary bg-primary/5" : "border-border"}`}
+                  >
+                    <span className="font-semibold">{l}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">{d}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {extMode && (
+            <label className="text-xs text-muted-foreground sm:col-span-2">
+              Link đăng ký ngoài (không bắt buộc)
+              <input
+                className={`${inp} mt-1`}
+                placeholder="forms.gle/…"
+                value={f.registration_url}
+                onChange={(e) => setF({ ...f, registration_url: e.target.value })}
+              />
+            </label>
+          )}
+          <label className="text-xs text-muted-foreground">
+            Hạn đăng ký (không bắt buộc)
+            <input
+              type="datetime-local"
+              className={`${inp} mt-1`}
+              value={toLocal(f.registration_deadline)}
+              onChange={(e) => setF({ ...f, registration_deadline: fromLocal(e.target.value) })}
+            />
+          </label>
+          <label className="text-xs text-muted-foreground">
+            Số người tối đa (0 = không giới hạn)
+            <input
+              type="number"
+              min={0}
+              className={`${inp} mt-1`}
+              value={f.max_participants}
+              onChange={(e) =>
+                setF({ ...f, max_participants: Math.max(0, Number(e.target.value)) })
+              }
+            />
+          </label>
+          <label className="text-xs text-muted-foreground">
+            Link Facebook
+            <input
+              className={`${inp} mt-1`}
+              value={f.facebook_url}
+              onChange={(e) => setF({ ...f, facebook_url: e.target.value })}
+            />
+          </label>
+          <label className="text-xs text-muted-foreground">
+            Link Website
+            <input
+              className={`${inp} mt-1`}
+              value={f.website_url}
+              onChange={(e) => setF({ ...f, website_url: e.target.value })}
+            />
+          </label>
+          {canPublish ? (
+            <div className="text-xs text-muted-foreground">
+              Trạng thái hiển thị
+              <Select
+                value={f.manual_status}
+                onValueChange={(v) => setF({ ...f, manual_status: v as ManualStatus })}
+              >
+                <SelectTrigger
+                  aria-label="Trạng thái hiển thị"
+                  className="mt-1 h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+                >
+                  <SelectValue>{MANUAL_LABEL[f.manual_status]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {Object.entries(MANUAL_LABEL).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-sm">
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.
+            </p>
+          )}
+          <p className="self-end text-xs text-muted-foreground">
+            Khi "Đã đăng", trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời
+            gian.
           </p>
-        )}
-        <p className="self-end text-xs text-muted-foreground">
-          Khi "Đã đăng", trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời gian.
-        </p>
-        {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
-        <div className="flex gap-2 sm:col-span-2">
-          <button
-            disabled={busy}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-          >
-            {busy ? "Đang lưu…" : "Lưu"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setF(null);
-              setErr("");
-            }}
-            className="rounded-lg border border-border px-4 py-2 text-sm"
-          >
-            Hủy
-          </button>
-        </div>
-      </form>
+          {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
+          <div className="flex gap-2 sm:col-span-2">
+            <button
+              disabled={busy}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {busy ? "Đang lưu…" : "Lưu"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setF(null);
+                setErr("");
+              }}
+              className="rounded-lg border border-border px-4 py-2 text-sm"
+            >
+              Hủy
+            </button>
+          </div>
+        </form>
+      </>
     );
 
   return (
     <div className="space-y-3">
       {dialog}
-      <div className="flex flex-wrap items-center gap-2.5">
+      {header}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <button
-          onClick={() => setF({ ...EMPTY })}
-          className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          type="button"
+          onClick={() => setTime(time === "upcoming" ? "" : "upcoming")}
+          aria-pressed={time === "upcoming"}
+          className={`cursor-pointer rounded-2xl border bg-card p-4 text-left shadow-2xs transition-colors hover:border-primary/40 ${
+            time === "upcoming" ? "border-primary ring-2 ring-primary/15" : "border-border/70"
+          }`}
         >
-          <Plus className="h-4 w-4" />
-          Tạo hoạt động
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-medium">Sắp diễn ra</span>
+            <CalendarClock className="h-4 w-4 text-primary" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{upcoming}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Chưa tới giờ bắt đầu</p>
         </button>
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
+
+        <div className="rounded-2xl border border-border/70 bg-card p-4 text-left shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-medium">Đang mở đăng ký</span>
+            <Ticket className="h-4 w-4 text-emerald-500" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{openRegs}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Đã đăng, còn hạn đăng ký</p>
+        </div>
+
+        {onOpenPendingRegs ? (
+          <button
+            type="button"
+            onClick={() => onOpenPendingRegs()}
+            className="cursor-pointer rounded-2xl border border-border/70 bg-card p-4 text-left shadow-2xs transition-colors hover:border-primary/40"
+          >
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-medium">Đơn chờ duyệt</span>
+              <Inbox className="h-4 w-4 text-amber-500" />
+            </div>
+            <p
+              className={`mt-2 text-2xl font-bold tracking-tight ${
+                pendingRegs > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+              }`}
+            >
+              {pendingRegs}
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Bấm để duyệt</p>
+          </button>
+        ) : (
+          <div className="rounded-2xl border border-border/70 bg-card p-4 text-left shadow-2xs">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-medium">Đơn chờ duyệt</span>
+              <Inbox className="h-4 w-4 text-amber-500" />
+            </div>
+            <p
+              className={`mt-2 text-2xl font-bold tracking-tight ${
+                pendingRegs > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+              }`}
+            >
+              {pendingRegs}
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Cần người có quyền duyệt</p>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setSt(st === "draft" ? "" : "draft")}
+          aria-pressed={st === "draft"}
+          className={`cursor-pointer rounded-2xl border bg-card p-4 text-left shadow-2xs transition-colors hover:border-primary/40 ${
+            st === "draft" ? "border-primary ring-2 ring-primary/15" : "border-border/70"
+          }`}
+        >
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-medium">Bản nháp</span>
+            <FilePen className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{drafts}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Chưa đăng lên website</p>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center">
+        <div className="relative col-span-2 sm:min-w-[240px] sm:max-w-xs sm:flex-1">
           <Search
             aria-hidden
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -549,7 +743,7 @@ function ListTab() {
           <input
             type="text"
             className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm theo tên…"
+            placeholder="Tìm tên hoặc slug…"
             aria-label="Tìm kiếm hoạt động"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -565,18 +759,36 @@ function ListTab() {
             </button>
           )}
         </div>
+        <Select value={cat || "all"} onValueChange={(v) => setCat(v === "all" ? "" : v)}>
+          <SelectTrigger
+            aria-label="Lọc theo loại"
+            className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[170px]"
+          >
+            <SelectValue>{cat ? CATEGORY_LABEL[cat as ActivityCategory] : "Mọi loại"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Mọi loại
+            </SelectItem>
+            {CATS.map((k) => (
+              <SelectItem key={k} value={k} className="text-xs">
+                {CATEGORY_LABEL[k]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={st || "all"} onValueChange={(v) => setSt(v === "all" ? "" : v)}>
           <SelectTrigger
-            aria-label="Lọc theo trạng thái"
-            className="h-9 w-[170px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+            aria-label="Lọc theo hiển thị"
+            className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[170px]"
           >
             <SelectValue>
-              {st ? ((MANUAL_LABEL as Record<string, string>)[st] ?? st) : "Mọi trạng thái"}
+              {st ? ((MANUAL_LABEL as Record<string, string>)[st] ?? st) : "Mọi hiển thị"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             <SelectItem value="all" className="text-xs">
-              Mọi trạng thái
+              Mọi hiển thị
             </SelectItem>
             {Object.entries(MANUAL_LABEL).map(([k, v]) => (
               <SelectItem key={k} value={k} className="text-xs">
@@ -585,14 +797,62 @@ function ListTab() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={time || "all"} onValueChange={(v) => setTime(v === "all" ? "" : v)}>
+          <SelectTrigger
+            aria-label="Lọc theo thời gian"
+            className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs sm:w-[170px]"
+          >
+            <SelectValue>
+              {time
+                ? (LIVE_LABEL[time as keyof typeof LIVE_LABEL]?.label ?? time)
+                : "Mọi thời gian"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Mọi thời gian
+            </SelectItem>
+            {Object.entries(LIVE_LABEL).map(([k, v]) => (
+              <SelectItem key={k} value={k} className="text-xs">
+                {v.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center justify-end gap-3 sm:ml-auto">
+          {filtered && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="cursor-pointer text-xs font-medium text-primary hover:underline"
+            >
+              Xóa lọc
+            </button>
+          )}
+          <span className="text-xs text-muted-foreground">{rows.length} hoạt động</span>
+        </div>
       </div>
       {err && <p className="text-sm text-destructive">{err}</p>}
       {acts.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
-      {!acts.isLoading && rows.length === 0 && (
-        <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
-          Chưa có hoạt động.
-        </p>
-      )}
+      {!acts.isLoading &&
+        rows.length === 0 &&
+        (all.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            Chưa có hoạt động nào. Bấm <strong className="text-foreground">Tạo hoạt động</strong>{" "}
+            trên thanh tiêu đề để thêm workshop, cuộc thi hay sự kiện đầu tiên.
+          </p>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            <p>Không có hoạt động khớp bộ lọc.</p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-2 cursor-pointer text-xs font-medium text-primary hover:underline"
+            >
+              Xóa lọc
+            </button>
+          </div>
+        ))}
       {rows.map((a) => {
         const live = LIVE_LABEL[liveStatus(a)];
         return (
@@ -719,21 +979,12 @@ function RegStatusPicker({
   );
 }
 
-function RegsTab() {
+function RegsTab({ initialStatus = "" }: { initialStatus?: string }) {
   const qc = useQueryClient();
   const acts = useAllActivities();
-  const regs = useQuery({
-    queryKey: ["admin-activity-regs"],
-    queryFn: async () =>
-      ((
-        await supabase
-          .from("activity_registrations")
-          .select("*")
-          .order("created_at", { ascending: false })
-      ).data ?? []) as Reg[],
-  });
+  const regs = useAllRegs();
   const [act, setAct] = useState("");
-  const [st, setSt] = useState("");
+  const [st, setSt] = useState(initialStatus);
   const [q, setQ] = useState("");
   const [err, setErr] = useState("");
   const title = (id: string) => acts.data?.find((a) => a.id === id)?.title ?? "—";
