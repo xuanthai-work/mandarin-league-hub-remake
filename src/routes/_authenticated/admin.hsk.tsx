@@ -253,7 +253,25 @@ function HskAdminPage() {
   };
   const changePrefix = async (p: string) => {
     setPrefix(p);
-    if (edit && !edit.id) setEdit({ ...edit, candidate_code: await genCode(p) });
+    if (edit && !edit.id) {
+      const isHskk = p === "TMLHSKK";
+      const nextLevel = isHskk
+        ? edit.level.startsWith("HSKK")
+          ? edit.level
+          : "HSKK-BEG"
+        : edit.level.startsWith("HSKK")
+          ? "HSK3"
+          : edit.level;
+
+      setEdit({
+        ...edit,
+        candidate_code: await genCode(p),
+        level: nextLevel,
+        ...(isHskk
+          ? { listening_score: null, reading_score: null, writing_score: null }
+          : { speaking_score: null }),
+      });
+    }
   };
 
   const openEdit = (r: Row) => {
@@ -977,6 +995,26 @@ function HskResultDrawer({
   const passed = total >= rule.pass;
   const isRevoked = record?.status === "REVOKED";
 
+  const availableLevels = Object.entries(HSK_LEVELS).filter(([k]) =>
+    prefix === "TMLHSKK" ? k.startsWith("HSKK") : !k.startsWith("HSKK"),
+  );
+
+  const handleLevelChange = (newLevel: string) => {
+    const isHskk = newLevel.startsWith("HSKK");
+    const targetPrefix = isHskk ? "TMLHSKK" : "TMLHSK";
+
+    if (!value.id && prefix !== targetPrefix) {
+      onPrefixChange(targetPrefix);
+    }
+
+    onChange({
+      level: newLevel,
+      ...(isHskk
+        ? { listening_score: null, reading_score: null, writing_score: null }
+        : { speaking_score: null }),
+    });
+  };
+
   const runRevoke = async () => {
     setBusy(true);
     await onRevoke(revokeReason);
@@ -1108,8 +1146,8 @@ function HskResultDrawer({
             <h3 className={SECTION_TITLE}>Cấp độ HSK & Lớp học liên kết</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="text-xs text-muted-foreground">
-                <span>Cấp độ HSK</span>
-                <Select value={value.level} onValueChange={(v) => onChange({ level: v })}>
+                <span>{prefix === "TMLHSKK" ? "Cấp độ HSKK" : "Cấp độ HSK"}</span>
+                <Select value={value.level} onValueChange={handleLevelChange}>
                   <SelectTrigger
                     aria-label="Cấp độ"
                     className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
@@ -1117,7 +1155,7 @@ function HskResultDrawer({
                     <SelectValue>{HSK_LEVELS[value.level] ?? value.level}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {Object.entries(HSK_LEVELS).map(([k, v]) => (
+                    {availableLevels.map(([k, v]) => (
                       <SelectItem key={k} value={k} className="text-xs">
                         {v}
                       </SelectItem>
@@ -1183,7 +1221,11 @@ function HskResultDrawer({
 
           <section className="space-y-3">
             <h3 className={SECTION_TITLE}>Điểm số kỹ năng</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div
+              className={`grid gap-3 ${
+                skills.length === 1 ? "max-w-xs sm:grid-cols-1" : "sm:grid-cols-2"
+              }`}
+            >
               {skills.map((s) => (
                 <label key={s} className="text-xs text-muted-foreground">
                   {SKILL_LABEL[s]} (0–100)
@@ -1214,7 +1256,9 @@ function HskResultDrawer({
                   {total}
                   <span className="text-sm font-normal text-muted-foreground">/{rule.max}</span>
                 </p>
-                <p className="text-[11px] text-muted-foreground">Ngưỡng đạt {rule.pass}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Ngưỡng đạt {rule.pass}/{rule.max}
+                </p>
               </div>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
