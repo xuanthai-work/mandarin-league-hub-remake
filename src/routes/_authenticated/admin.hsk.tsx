@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { HSK_LEVELS, HSK_PREFIXES, hskRule, hskSkills } from "@/lib/hsk";
 import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -1192,11 +1193,16 @@ function HskResultDrawer({
                     max={100}
                     className={`${inp} mt-1`}
                     value={value[scoreKey(s)] ?? ""}
-                    onChange={(e) =>
-                      onChange({
-                        [scoreKey(s)]: e.target.value === "" ? null : Number(e.target.value),
-                      })
-                    }
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        onChange({ [scoreKey(s)]: null });
+                        return;
+                      }
+                      const parsed = parseInt(raw, 10);
+                      if (Number.isNaN(parsed)) return;
+                      onChange({ [scoreKey(s)]: Math.max(0, Math.min(100, parsed)) });
+                    }}
                   />
                 </label>
               ))}
@@ -1246,33 +1252,38 @@ function HskResultDrawer({
                   placeholder="VD: Cuối khóa 11/2026"
                 />
               </label>
-              <label className="text-xs text-muted-foreground">
-                Ngày đánh giá / thi
-                <input
-                  type="date"
-                  className={`${inp} mt-1`}
-                  value={value.exam_date}
-                  onChange={(e) => onChange({ exam_date: e.target.value })}
-                />
-              </label>
-              <label className="text-xs text-muted-foreground">
-                Học từ ngày
-                <input
-                  type="date"
-                  className={`${inp} mt-1`}
-                  value={value.study_start ?? ""}
-                  onChange={(e) => onChange({ study_start: e.target.value || null })}
-                />
-              </label>
-              <label className="text-xs text-muted-foreground">
-                Đến ngày
-                <input
-                  type="date"
-                  className={`${inp} mt-1`}
-                  value={value.study_end ?? ""}
-                  onChange={(e) => onChange({ study_end: e.target.value || null })}
-                />
-              </label>
+              <div className="text-xs text-muted-foreground">
+                <span>
+                  Ngày đánh giá / thi <span className="text-destructive">*</span>
+                </span>
+                <div className="mt-1">
+                  <DatePicker
+                    value={value.exam_date}
+                    onChange={(dateISO) => onChange({ exam_date: dateISO })}
+                    placeholder="Chọn ngày thi"
+                  />
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <span>Học từ ngày</span>
+                <div className="mt-1">
+                  <DatePicker
+                    value={value.study_start ?? ""}
+                    onChange={(dateISO) => onChange({ study_start: dateISO || null })}
+                    placeholder="Chọn ngày bắt đầu"
+                  />
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <span>Đến ngày</span>
+                <div className="mt-1">
+                  <DatePicker
+                    value={value.study_end ?? ""}
+                    onChange={(dateISO) => onChange({ study_end: dateISO || null })}
+                    placeholder="Chọn ngày kết thúc"
+                  />
+                </div>
+              </div>
               <label className="text-xs text-muted-foreground">
                 Đơn vị ghi nhận / tổ chức
                 <input
