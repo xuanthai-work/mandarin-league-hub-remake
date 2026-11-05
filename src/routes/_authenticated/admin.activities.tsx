@@ -1,15 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "motion/react";
 import {
   CalendarClock,
+  CalendarDays,
+  ChevronRight,
   Copy,
+  ExternalLink,
   Eye,
   EyeOff,
   FilePen,
   Inbox,
-  Pencil,
   Phone,
   Plus,
   Search,
@@ -24,7 +26,6 @@ import { matchesSearch } from "@/lib/search";
 import {
   ACTIVITY_BUCKET,
   CATEGORY_LABEL,
-  LIVE_LABEL,
   LOCATION_LABEL,
   MANUAL_LABEL,
   REG_STATUS,
@@ -90,6 +91,329 @@ const fromLocal = (v: string) => (v ? new Date(v).toISOString() : null);
 function useCanPublish() {
   const a = useAdminAccess().data;
   return !!a && canReviewNews(a.roles, a.department);
+}
+
+type Group = "ongoing" | "upcoming" | "unscheduled" | "ended" | "cancelled";
+
+const GROUPS: { key: Group; label: string; defaultOpen: boolean }[] = [
+  { key: "ongoing", label: "Đang diễn ra", defaultOpen: true },
+  { key: "upcoming", label: "Sắp diễn ra", defaultOpen: true },
+  { key: "unscheduled", label: "Chưa có lịch", defaultOpen: true },
+  { key: "ended", label: "Đã kết thúc", defaultOpen: false },
+  { key: "cancelled", label: "Đã hủy", defaultOpen: false },
+];
+
+/** Lifecycle bucket for the admin list; activities without a start time get their own group. */
+function groupOf(a: ActivityRow, now = Date.now()): Group {
+  const s = liveStatus(a, now);
+  if (s === "cancelled") return "cancelled";
+  if (!a.start_time) return "unscheduled";
+  return s;
+}
+
+const ts = (iso: string | null) => (iso ? Date.parse(iso) : 0);
+
+/** Soonest first while upcoming/ongoing, most recent first once in the past. */
+const GROUP_SORT: Record<Group, (a: ActivityRow, b: ActivityRow) => number> = {
+  ongoing: (a, b) => ts(a.end_time ?? a.start_time) - ts(b.end_time ?? b.start_time),
+  upcoming: (a, b) => ts(a.start_time) - ts(b.start_time),
+  unscheduled: (a, b) => ts(b.created_at) - ts(a.created_at),
+  ended: (a, b) => ts(b.start_time) - ts(a.start_time),
+  cancelled: (a, b) => ts(b.start_time) - ts(a.start_time),
+};
+
+const DAY = 86_400_000;
+const dayStart = (t: number) => {
+  const d = new Date(t);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+};
+
+/** Second line of the time column. */
+function timeHint(a: ActivityRow, g: Group, now = Date.now()): string {
+  if (g === "unscheduled") return "Chưa chốt ngày";
+  if (g === "ongoing") return a.end_time ? `Đến ${fmtDateTime(a.end_time)}` : "Đang diễn ra";
+  if (g === "upcoming") {
+    const days = Math.round((dayStart(ts(a.start_time)) - dayStart(now)) / DAY);
+    return days <= 0 ? "Hôm nay" : days === 1 ? "Ngày mai" : `Còn ${days} ngày`;
+  }
+  return a.end_time ? `Kết thúc ${fmtDateTime(a.end_time)}` : "";
+}
+
+const MANUAL_TONE: Record<ManualStatus, string> = {
+  draft: "bg-muted text-muted-foreground",
+  published: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  hidden: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  cancelled: "bg-destructive/10 text-destructive",
+};
+
+const ACT_COLS = [
+  { label: "Hoạt động", className: "" },
+  { label: "Thời gian", className: "w-[190px]" },
+  { label: "Đăng ký", className: "w-[160px]" },
+  { label: "Hiển thị", className: "w-[120px]" },
+  { label: "Thao tác", className: "w-[150px] text-right" },
+] as const;
+
+/** Single status label per activity: the group already conveys the time lifecycle. */
+function StatusPill({ status }: { status: ManualStatus }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${MANUAL_TONE[status]}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+      {MANUAL_LABEL[status]}
+    </span>
+  );
+}
+
+function Thumb({ src, className = "" }: { src?: string | undefined; className?: string }) {
+  return src ? (
+    <img
+      src={src}
+      alt=""
+      loading="lazy"
+      className={`shrink-0 rounded-lg bg-muted object-cover ${className}`}
+    />
+  ) : (
+    <div
+      className={`grid shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground ${className}`}
+    >
+      <CalendarDays className="h-4 w-4" />
+    </div>
+  );
+}
+
+function RegCell({ a, count }: { a: ActivityRow; count: number }) {
+  if (a.registration_url)
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+        <ExternalLink className="h-3 w-3" />
+        Form bên ngoài
+      </span>
+    );
+  const max = a.max_participants;
+  const full = max > 0 && count >= max;
+  const pct = max > 0 ? Math.min(100, Math.round((count / max) * 100)) : 0;
+  return (
+    <div className="min-w-0">
+      <p className="text-xs font-medium tabular-nums text-foreground">
+        {count}
+        {max > 0 && <span className="text-muted-foreground">/{max}</span>}
+        {full && <span className="ml-1.5 text-[10px] font-semibold text-amber-600">Đã đủ</span>}
+      </p>
+      {max > 0 && (
+        <div className="mt-1 h-1 w-full max-w-[110px] overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full rounded-full ${full ? "bg-amber-500" : "bg-primary"}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+      <p className="mt-1 truncate text-[11px] text-muted-foreground">
+        {!registrationOpen(a)
+          ? "Đã đóng đăng ký"
+          : a.registration_deadline
+            ? `Hạn ${fmtDateTime(a.registration_deadline)}`
+            : "Không đặt hạn"}
+      </p>
+    </div>
+  );
+}
+
+type RowActionProps = {
+  a: ActivityRow;
+  canPublish: boolean;
+  onDuplicate: (a: ActivityRow) => void;
+  onTogglePublish: (a: ActivityRow) => void;
+  onRemove: (a: ActivityRow) => void;
+};
+
+const ICON_BTN =
+  "inline-flex cursor-pointer items-center justify-center rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+
+function RowActions({ a, canPublish, onDuplicate, onTogglePublish, onRemove }: RowActionProps) {
+  const published = a.manual_status === "published";
+  return (
+    <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+      {published && (
+        <Link
+          to="/activities/$activityId"
+          params={{ activityId: a.slug }}
+          target="_blank"
+          title="Xem trang công khai"
+          aria-label="Xem trang công khai"
+          className={ICON_BTN}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      )}
+      <button
+        type="button"
+        title="Sao chép"
+        aria-label="Sao chép"
+        onClick={() => onDuplicate(a)}
+        className={ICON_BTN}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </button>
+      {canPublish && (
+        <button
+          type="button"
+          title={published ? "Tạm ẩn" : "Duyệt & Đăng"}
+          aria-label={published ? "Tạm ẩn" : "Duyệt & Đăng"}
+          onClick={() => onTogglePublish(a)}
+          className={ICON_BTN}
+        >
+          {published ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+        </button>
+      )}
+      {(canPublish || a.manual_status === "draft") && (
+        <button
+          type="button"
+          title="Chuyển vào Thùng rác"
+          aria-label="Chuyển vào Thùng rác"
+          onClick={() => onRemove(a)}
+          className={`${ICON_BTN} text-destructive hover:bg-destructive/10 hover:text-destructive`}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ActivityGroup({
+  group,
+  label,
+  rows,
+  open,
+  onToggle,
+  counts,
+  now,
+  canPublish,
+  onEdit,
+  ...actions
+}: {
+  group: Group;
+  label: string;
+  rows: ActivityRow[];
+  open: boolean;
+  onToggle: () => void;
+  counts: Map<string, number> | undefined;
+  now: number;
+  onEdit: (a: ActivityRow) => void;
+} & Omit<RowActionProps, "a">) {
+  const canEdit = (a: ActivityRow) => canPublish || a.manual_status === "draft";
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="mb-2 flex cursor-pointer items-center gap-2 px-1"
+      >
+        <ChevronRight
+          className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+        />
+        <h3 className="text-sm font-bold tracking-tight text-foreground">{label}</h3>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+          {rows.length}
+        </span>
+      </button>
+      {open && (
+        <>
+          <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-xs md:block">
+            <div className="custom-scrollbar overflow-x-auto">
+              <table className="w-full min-w-[860px] table-fixed text-sm">
+                <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
+                  <tr>
+                    {ACT_COLS.map((col) => (
+                      <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
+                        {col.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((a) => (
+                    <tr
+                      key={a.id}
+                      onClick={canEdit(a) ? () => onEdit(a) : undefined}
+                      className={`border-t border-border/60 transition-colors ${canEdit(a) ? "cursor-pointer hover:bg-accent/50" : ""}`}
+                    >
+                      <td className="p-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <Thumb src={a.banner} className="h-[45px] w-20" />
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-foreground" title={a.title}>
+                              {a.title}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {CATEGORY_LABEL[a.category]} · {LOCATION_LABEL[a.location_type]}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <p
+                          className={`text-xs font-medium ${a.start_time ? "text-foreground" : "text-muted-foreground"}`}
+                        >
+                          {a.start_time ? fmtDateTime(a.start_time) : "Chưa có lịch"}
+                        </p>
+                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                          {timeHint(a, group, now)}
+                        </p>
+                      </td>
+                      <td className="p-3">
+                        <RegCell a={a} count={counts?.get(a.id) ?? 0} />
+                      </td>
+                      <td className="p-3">
+                        <StatusPill status={a.manual_status} />
+                      </td>
+                      <td className="p-3">
+                        <RowActions a={a} canPublish={canPublish} {...actions} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="space-y-2 md:hidden">
+            {rows.map((a) => (
+              <article
+                key={a.id}
+                onClick={canEdit(a) ? () => onEdit(a) : undefined}
+                className={`flex gap-3 rounded-xl border border-border bg-card p-3 shadow-2xs ${canEdit(a) ? "cursor-pointer active:bg-accent/50" : ""}`}
+              >
+                <Thumb src={a.banner} className="aspect-video w-24 self-start" />
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-sm font-semibold text-foreground">{a.title}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {a.start_time ? fmtDateTime(a.start_time) : "Chưa có lịch"}
+                    {timeHint(a, group, now) && a.start_time ? ` · ${timeHint(a, group, now)}` : ""}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <StatusPill status={a.manual_status} />
+                    {!a.registration_url && (
+                      <span className="text-[11px] tabular-nums text-muted-foreground">
+                        {counts?.get(a.id) ?? 0}
+                        {a.max_participants > 0 ? `/${a.max_participants}` : ""} đăng ký
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <RowActions a={a} canPublish={canPublish} {...actions} />
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
 }
 
 const TABS = [
@@ -240,6 +564,9 @@ function ListTab({
   const [time, setTime] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<Group, boolean>>(
+    () => Object.fromEntries(GROUPS.map((g) => [g.key, g.defaultOpen])) as Record<Group, boolean>,
+  );
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-activities"] });
     qc.invalidateQueries({ queryKey: ["public-activities"] });
@@ -330,12 +657,16 @@ function ListTab({
     patch(a, { deleted_at: new Date().toISOString() } as Partial<Omit<ActivityRow, "banner">>);
   };
 
+  const togglePublish = (a: ActivityRow) =>
+    patch(a, { manual_status: a.manual_status === "published" ? "hidden" : "published" });
+
+  const now = Date.now();
   const all = acts.data ?? [];
   const rows = all.filter(
     (a) =>
       (!st || a.manual_status === st) &&
       (!cat || a.category === cat) &&
-      (!time || liveStatus(a) === time) &&
+      (!time || groupOf(a, now) === time) &&
       matchesSearch(`${a.title} ${a.slug}`, q),
   );
   const filtered = !!(q || st || cat || time);
@@ -345,7 +676,7 @@ function ListTab({
     setCat("");
     setTime("");
   };
-  const upcoming = all.filter((a) => liveStatus(a) === "upcoming").length;
+  const upcoming = all.filter((a) => groupOf(a, now) === "upcoming").length;
   const openRegs = all.filter((a) => a.manual_status === "published" && registrationOpen(a)).length;
   const drafts = all.filter((a) => a.manual_status === "draft").length;
 
@@ -655,7 +986,13 @@ function ListTab({
     <div className="space-y-3">
       {dialog}
       {header}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div
+        className={
+          onOpenPendingRegs
+            ? "grid grid-cols-2 gap-3 lg:grid-cols-4"
+            : "grid grid-cols-2 gap-3 lg:grid-cols-3"
+        }
+      >
         <button
           type="button"
           onClick={() => setTime(time === "upcoming" ? "" : "upcoming")}
@@ -681,7 +1018,7 @@ function ListTab({
           <p className="mt-0.5 text-[11px] text-muted-foreground">Đã đăng, còn hạn đăng ký</p>
         </div>
 
-        {onOpenPendingRegs ? (
+        {onOpenPendingRegs && (
           <button
             type="button"
             onClick={() => onOpenPendingRegs()}
@@ -700,21 +1037,6 @@ function ListTab({
             </p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">Bấm để duyệt</p>
           </button>
-        ) : (
-          <div className="rounded-2xl border border-border/70 bg-card p-4 text-left shadow-2xs">
-            <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-medium">Đơn chờ duyệt</span>
-              <Inbox className="h-4 w-4 text-amber-500" />
-            </div>
-            <p
-              className={`mt-2 text-2xl font-bold tracking-tight ${
-                pendingRegs > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"
-              }`}
-            >
-              {pendingRegs}
-            </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">Cần người có quyền duyệt</p>
-          </div>
         )}
 
         <button
@@ -804,7 +1126,7 @@ function ListTab({
           >
             <SelectValue>
               {time
-                ? (LIVE_LABEL[time as keyof typeof LIVE_LABEL]?.label ?? time)
+                ? (GROUPS.find((g) => g.key === time)?.label ?? "Mọi thời gian")
                 : "Mọi thời gian"}
             </SelectValue>
           </SelectTrigger>
@@ -812,9 +1134,9 @@ function ListTab({
             <SelectItem value="all" className="text-xs">
               Mọi thời gian
             </SelectItem>
-            {Object.entries(LIVE_LABEL).map(([k, v]) => (
-              <SelectItem key={k} value={k} className="text-xs">
-                {v.label}
+            {GROUPS.map((g) => (
+              <SelectItem key={g.key} value={g.key} className="text-xs">
+                {g.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -833,7 +1155,13 @@ function ListTab({
         </div>
       </div>
       {err && <p className="text-sm text-destructive">{err}</p>}
-      {acts.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
+      {acts.isLoading && (
+        <div className="space-y-2" aria-busy="true" aria-label="Đang tải hoạt động">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-[69px] animate-pulse rounded-xl bg-muted/60" />
+          ))}
+        </div>
+      )}
       {!acts.isLoading &&
         rows.length === 0 &&
         (all.length === 0 ? (
@@ -853,80 +1181,29 @@ function ListTab({
             </button>
           </div>
         ))}
-      {rows.map((a) => {
-        const live = LIVE_LABEL[liveStatus(a)];
-        return (
-          <article
-            key={a.id}
-            className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card p-3"
-          >
-            {a.banner ? (
-              <img src={a.banner} alt="" className="h-16 w-28 rounded-lg object-cover" />
-            ) : (
-              <div className="h-16 w-28 rounded-lg bg-accent" />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">{a.title}</p>
-              <p className="text-xs text-muted-foreground">
-                {CATEGORY_LABEL[a.category]} · {fmtDateTime(a.start_time)} ·{" "}
-                {LOCATION_LABEL[a.location_type]} · {counts.data?.get(a.id) ?? 0} đăng ký
-              </p>
-              <div className="mt-1 flex gap-1.5 text-xs">
-                <span className="rounded-full bg-secondary px-2 py-0.5">
-                  {MANUAL_LABEL[a.manual_status]}
-                </span>
-                {a.manual_status === "published" && (
-                  <span className={`rounded-full px-2 py-0.5 ${live.tone}`}>{live.label}</span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {(canPublish || a.manual_status === "draft") && (
-                <button
-                  title="Sửa"
-                  onClick={() => setF({ ...a })}
-                  className="rounded-lg border border-border p-2"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-              )}
-              <button
-                title="Sao chép"
-                onClick={() => duplicate(a)}
-                className="rounded-lg border border-border p-2"
-              >
-                <Copy className="h-4 w-4" />
-              </button>
-              {canPublish && (
-                <button
-                  title={a.manual_status === "published" ? "Tạm ẩn" : "Duyệt & Đăng"}
-                  onClick={() =>
-                    patch(a, {
-                      manual_status: a.manual_status === "published" ? "hidden" : "published",
-                    })
-                  }
-                  className="rounded-lg border border-border p-2"
-                >
-                  {a.manual_status === "published" ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              )}
-              {(canPublish || a.manual_status === "draft") && (
-                <button
-                  title="Xóa"
-                  onClick={() => remove(a)}
-                  className="rounded-lg border border-border p-2 text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </article>
-        );
-      })}
+      <div className="space-y-6">
+        {GROUPS.map((g) => {
+          const list = rows.filter((a) => groupOf(a, now) === g.key).sort(GROUP_SORT[g.key]);
+          if (!list.length) return null;
+          return (
+            <ActivityGroup
+              key={g.key}
+              group={g.key}
+              label={g.label}
+              rows={list}
+              open={filtered || openGroups[g.key]}
+              onToggle={() => setOpenGroups((o) => ({ ...o, [g.key]: !o[g.key] }))}
+              counts={counts.data}
+              now={now}
+              canPublish={canPublish}
+              onEdit={(a) => setF({ ...a })}
+              onDuplicate={duplicate}
+              onTogglePublish={togglePublish}
+              onRemove={remove}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
