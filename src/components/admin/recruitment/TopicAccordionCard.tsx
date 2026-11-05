@@ -1,20 +1,18 @@
-import { useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronDown, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { formatTopicPositions, isDefaultPosition, parseTopicPositions } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { QuestionItemCard } from "./QuestionItemCard";
 import { type Confirm, type Run, type StudioQuestion, type StudioTopic } from "./types";
 
 const iconBtn =
   "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30";
-
-/** Pill style for the topic's multi-select position editor. */
-const positionPill = (active: boolean) =>
-  `rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors ${
-    active
-      ? "border-primary bg-primary text-primary-foreground"
-      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-  }`;
 
 /** A topic card: collapsible header with inline rename/toggle/reorder and its question list. */
 export function TopicAccordionCard({
@@ -49,32 +47,29 @@ export function TopicAccordionCard({
   run: Run;
   confirm: Confirm;
 }) {
-  const [editingPositions, setEditingPositions] = useState(false);
-  const [positionDraft, setPositionDraft] = useState<string[]>([]);
+  const [draftPositions, setDraftPositions] = useState<string[] | null>(null);
   const save = (
     patch: Partial<Pick<StudioTopic, "title" | "description" | "position" | "visible">>,
     ok?: string,
   ) => run(supabase.from("recruitment_topics").update(patch).eq("id", topic.id), ok);
   const filtered = questions.length !== totalQuestionsCount;
-  const positions = parseTopicPositions(topic.position);
-  // Keep the topic's own positions and anything just typed selectable before saving.
-  const positionOptions = Array.from(
-    new Set([...availablePositions, ...positions, ...positionDraft]),
-  );
+  // Optimistic list while the save round-trips, so rapid clicks never build on stale data.
+  const positions = draftPositions ?? parseTopicPositions(topic.position);
+  // Keep the topic's own positions and any custom position already used in the department.
+  const positionOptions = Array.from(new Set([...availablePositions, ...positions]));
 
-  const openPositions = () => {
-    setPositionDraft(positions);
-    setEditingPositions(true);
+  useEffect(() => setDraftPositions(null), [topic.position]);
+
+  /** Applies a position list immediately; reverts the optimistic list if the save fails. */
+  const applyPositions = (next: string[]) => {
+    setDraftPositions(next);
+    void save({ position: formatTopicPositions(next) }, "Đã cập nhật vị trí.").then((ok) => {
+      if (!ok) setDraftPositions(null);
+    });
   };
 
-  const toggleDraft = (position: string) =>
-    setPositionDraft((prev) =>
-      prev.includes(position) ? prev.filter((p) => p !== position) : [...prev, position],
-    );
-
-  /** Drops a custom position from the draft, or from the whole department after confirming. */
+  /** Drops a custom position from every topic of the department after confirming. */
   const deletePosition = async (position: string) => {
-    setPositionDraft((prev) => prev.filter((p) => p !== position));
     if (!availablePositions.includes(position)) return;
     const ok = await confirm({
       title: `Xóa vị trí "${position}"?`,
@@ -84,12 +79,8 @@ export function TopicAccordionCard({
       destructive: true,
     });
     if (!ok) return;
+    setDraftPositions((prev) => (prev ? prev.filter((p) => p !== position) : prev));
     await onDeletePosition(position);
-  };
-
-  const savePositions = () => {
-    setEditingPositions(false);
-    void save({ position: formatTopicPositions(positionDraft) }, "Đã cập nhật vị trí.");
   };
 
   return (
@@ -124,26 +115,63 @@ export function TopicAccordionCard({
 
         <div className="flex items-center justify-between gap-1.5 pl-10 md:justify-end md:pl-0">
           <div className="flex min-w-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => (editingPositions ? setEditingPositions(false) : openPositions())}
-              aria-label="Chỉnh sửa vị trí áp dụng"
-              aria-expanded={editingPositions}
-              title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
-              className={`flex min-w-0 max-w-[160px] items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors sm:max-w-[240px] ${
-                editingPositions
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-transparent bg-secondary text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
-              }`}
-            >
-              <span className="min-w-0 truncate">
-                {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
-              </span>
-              <ChevronDown
-                aria-hidden
-                className={`h-3 w-3 shrink-0 transition-transform ${editingPositions ? "rotate-180" : ""}`}
-              />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Chỉnh sửa vị trí áp dụng"
+                  title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+                  className="flex min-w-0 max-w-[160px] items-center gap-1 rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground data-[state=open]:bg-primary/10 data-[state=open]:text-primary sm:max-w-[240px]"
+                >
+                  <span className="min-w-0 truncate">
+                    {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+                  </span>
+                  <ChevronDown aria-hidden className="h-3 w-3 shrink-0 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[220px]">
+                <DropdownMenuCheckboxItem
+                  checked={positions.length === 0}
+                  onCheckedChange={() => applyPositions([])}
+                  onSelect={(e) => e.preventDefault()}
+                  className="text-xs"
+                >
+                  Mọi vị trí
+                </DropdownMenuCheckboxItem>
+                {positionOptions.map((p) => (
+                  <DropdownMenuCheckboxItem
+                    key={p}
+                    checked={positions.includes(p)}
+                    onCheckedChange={(checked) => {
+                      const next = checked
+                        ? [...positions, p]
+                        : positions.filter((item) => item !== p);
+                      applyPositions(next);
+                    }}
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-xs"
+                  >
+                    <span className="min-w-0 flex-1 truncate">{p}</span>
+                    {!isDefaultPosition(topic.department, p) && (
+                      <button
+                        type="button"
+                        aria-label={`Xóa vị trí ${p}`}
+                        title={`Xóa vị trí ${p}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void deletePosition(p);
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => e.stopPropagation()}
+                        className="shrink-0 rounded p-0.5 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
@@ -209,84 +237,6 @@ export function TopicAccordionCard({
           </div>
         </div>
       </div>
-
-      {editingPositions && (
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-2">
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              aria-pressed={positionDraft.length === 0}
-              onClick={() => setPositionDraft([])}
-              className={positionPill(positionDraft.length === 0)}
-            >
-              Mọi vị trí
-            </button>
-            {positionOptions.map((p) => {
-              const active = positionDraft.includes(p);
-              if (isDefaultPosition(topic.department, p)) {
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => toggleDraft(p)}
-                    className={positionPill(active)}
-                  >
-                    {p}
-                  </button>
-                );
-              }
-              return (
-                <span
-                  key={p}
-                  className={`inline-flex items-center rounded-full border text-[11px] font-medium transition-colors ${
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => toggleDraft(p)}
-                    className="py-1 pl-2.5 pr-1"
-                  >
-                    {p}
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Xóa vị trí ${p}`}
-                    title={`Xóa vị trí ${p}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void deletePosition(p);
-                    }}
-                    className="py-1 pl-0.5 pr-2 opacity-70 transition-opacity hover:opacity-100"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={savePositions}
-              className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Lưu vị trí
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditingPositions(false)}
-              className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent"
-            >
-              Hủy
-            </button>
-          </div>
-        </div>
-      )}
 
       {expanded && (
         <div className="mt-3 space-y-2.5">
