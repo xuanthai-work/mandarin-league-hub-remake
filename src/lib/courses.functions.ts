@@ -75,6 +75,10 @@ export const submitEnrollment = createServerFn({ method: "POST" })
           error: "Chương trình này hiện không nhận đăng ký trên website.",
         };
       courseName = c.title;
+      // course_enrollments.level is CHECK (level BETWEEN 1 AND 6) and NOT NULL.
+      // Programs are not tied to one HSK level, so the public form sends 0; store a
+      // valid default instead of failing the insert.
+      if (!d.level || d.level < 1 || d.level > 6) d.level = 1;
     } else {
       if (d.level < 1) return { ok: false as const, error: "Khóa học không hợp lệ." };
       const { data: setting } = await db
