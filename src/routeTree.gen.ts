@@ -67,6 +67,7 @@ import { Route as VerifyCertificateIndexRouteImport } from './routes/verify.cert
 import { Route as VerifyCertificateCodeRouteImport } from './routes/verify.certificate.$code'
 import { Route as VerifyHskIndexRouteImport } from './routes/verify.hsk.index'
 import { Route as VerifyHskCodeRouteImport } from './routes/verify.hsk.$code'
+import { Route as AuthenticatedAdminNewsIdRouteImport } from './routes/_authenticated/admin.news_.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -375,6 +376,12 @@ const VerifyHskCodeRoute = VerifyHskCodeRouteImport.update({
   path: '/verify/hsk/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminNewsIdRoute =
+  AuthenticatedAdminNewsIdRouteImport.update({
+    id: '/news_/$id',
+    path: '/news/$id',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -434,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
+  '/admin/news/$id': typeof AuthenticatedAdminNewsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -490,6 +498,7 @@ export interface FileRoutesByTo {
   '/courses/hsk': typeof CoursesHskIndexRoute
   '/verify/certificate': typeof VerifyCertificateIndexRoute
   '/verify/hsk': typeof VerifyHskIndexRoute
+  '/admin/news/$id': typeof AuthenticatedAdminNewsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -551,6 +560,7 @@ export interface FileRoutesById {
   '/courses/hsk/': typeof CoursesHskIndexRoute
   '/verify/certificate/': typeof VerifyCertificateIndexRoute
   '/verify/hsk/': typeof VerifyHskIndexRoute
+  '/_authenticated/admin/news_/$id': typeof AuthenticatedAdminNewsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -612,6 +622,7 @@ export interface FileRouteTypes {
     | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
+    | '/admin/news/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -668,6 +679,7 @@ export interface FileRouteTypes {
     | '/courses/hsk'
     | '/verify/certificate'
     | '/verify/hsk'
+    | '/admin/news/$id'
   id:
     | '__root__'
     | '/'
@@ -728,6 +740,7 @@ export interface FileRouteTypes {
     | '/courses/hsk/'
     | '/verify/certificate/'
     | '/verify/hsk/'
+    | '/_authenticated/admin/news_/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1172,6 +1185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyHskCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/news_/$id': {
+      id: '/_authenticated/admin/news_/$id'
+      path: '/news/$id'
+      fullPath: '/admin/news/$id'
+      preLoaderRoute: typeof AuthenticatedAdminNewsIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
@@ -1195,6 +1215,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminTasksRoute: typeof AuthenticatedAdminTasksRoute
   AuthenticatedAdminTeachersRoute: typeof AuthenticatedAdminTeachersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminNewsIdRoute: typeof AuthenticatedAdminNewsIdRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -1217,6 +1238,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminTasksRoute: AuthenticatedAdminTasksRoute,
   AuthenticatedAdminTeachersRoute: AuthenticatedAdminTeachersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminNewsIdRoute: AuthenticatedAdminNewsIdRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
