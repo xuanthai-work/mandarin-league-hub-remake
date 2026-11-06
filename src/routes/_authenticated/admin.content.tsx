@@ -362,8 +362,9 @@ function ContentAdmin() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Ô để trống sẽ dùng chữ mặc định. Lưu nháp chỉ người quản trị xem được khi xem trước;
-                Xuất bản mới hiện cho khách.
+                Ô để trống sẽ dùng chữ mặc định. Chữ tùy chỉnh chỉ hiện khi khách xem tiếng Việt;
+                tiếng Trung và tiếng Anh dùng bản dịch có sẵn. Lưu nháp chỉ người quản trị xem được
+                khi xem trước; Xuất bản mới hiện cho khách.
               </p>
             </div>
 

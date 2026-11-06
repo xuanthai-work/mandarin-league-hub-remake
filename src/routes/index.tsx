@@ -134,14 +134,26 @@ function Home() {
           </div>
           <div className="mt-12 grid gap-4 sm:grid-cols-3">
             {[
-              { icon: BookOpen, n: "HSK 1–6", l: "Lộ trình học bài bản" },
-              { icon: Users, n: "8 Ban", l: "Chuyên môn hoạt động" },
-              { icon: CalendarDays, n: "Hàng tháng", l: "Workshop & sự kiện" },
-            ].map((s) => (
-              <div key={s.l} className="rounded-2xl border border-border bg-card p-6">
+              {
+                icon: BookOpen,
+                n: h.stat1_value || tr("HSK 1–6"),
+                l: h.stat1_label || tr("Lộ trình học bài bản"),
+              },
+              {
+                icon: Users,
+                n: h.stat2_value || tr("8 Ban"),
+                l: h.stat2_label || tr("Chuyên môn hoạt động"),
+              },
+              {
+                icon: CalendarDays,
+                n: h.stat3_value || tr("Hàng tháng"),
+                l: h.stat3_label || tr("Workshop & sự kiện"),
+              },
+            ].map((s, i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card p-6">
                 <s.icon className="h-6 w-6 text-primary" />
-                <div className="mt-4 text-2xl font-bold text-primary-deep">{tr(s.n)}</div>
-                <div className="text-sm text-muted-foreground">{tr(s.l)}</div>
+                <div className="mt-4 text-2xl font-bold text-primary-deep">{s.n}</div>
+                <div className="text-sm text-muted-foreground">{s.l}</div>
               </div>
             ))}
           </div>

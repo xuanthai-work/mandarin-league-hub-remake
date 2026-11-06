@@ -172,6 +172,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-146-ADMIN-SYSTEM-STATUS`                                      | Cài đặt: khối Hệ thống cho Admin, trạng thái biến môi trường và độ trễ DB                              | 2026-11-06     | **PASS** | [task-oc-146-admin-system-status.md](tasks/task-oc-146-admin-system-status.md)                                                                           |
 | `TASK-GE-140-CONTENT-PUBLISH-DIFF-AND-HISTORY`                         | Trang & Nội dung: liệt kê thay đổi khi Xuất bản, lịch sử chi tiết, nạp bản cũ                          | 2026-11-06     | **PASS** | [task-ge-140-content-publish-diff-and-history.md](tasks/task-ge-140-content-publish-diff-and-history.md)                                                 |
 | `TASK-OC-147-SETTINGS-ALIGN-HEADER`                                    | Cài đặt: khung max-w-7xl, mục lục và khối thẳng mép với header                                         | 2026-11-06     | **PASS** | [task-oc-147-settings-align-header.md](tasks/task-oc-147-settings-align-header.md)                                                                       |
+| `TASK-GE-141-CONTENT-VI-ONLY-AND-STATS`                                | Chữ tùy chỉnh chỉ cho tiếng Việt (zh/en dùng bản dịch), sửa được 3 ô số liệu                           | 2026-11-06     | **PASS** | [task-ge-141-content-vi-only-and-stats.md](tasks/task-ge-141-content-vi-only-and-stats.md)                                                               |
 
 ---
 
