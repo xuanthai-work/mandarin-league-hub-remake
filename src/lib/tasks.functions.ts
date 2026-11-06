@@ -18,8 +18,8 @@ const updateTaskSchema = z.object({
 });
 
 /**
- * Edit a task in place: only admins and the head/deputy of the task's own department may change it,
- * and completed tasks stay immutable so the points ledger and evidence remain auditable.
+ * Edit a task in place: only someone with `tasks.edit` for the task's own department may change
+ * it, and completed tasks stay immutable so the points ledger and evidence remain auditable.
  */
 export const updateTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -29,21 +29,21 @@ export const updateTask = createServerFn({ method: "POST" })
 
     const { data: task, error } = await supabaseAdmin
       .from("tasks")
-      .select("id, department, status, assignee_id")
+      .select("id, department, status, assignee_id, points")
       .eq("id", data.taskId)
       .single();
     if (error || !task) throw new Error("Nhiệm vụ không tồn tại.");
 
-    const [{ data: isAdmin }, { data: headDepartment }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-      context.supabase.rpc("my_head_department"),
-    ]);
-
-    if (!isAdmin && headDepartment !== task.department) {
-      throw new Error("Bạn không có quyền chỉnh sửa nhiệm vụ này.");
-    }
+    const { data: canEdit } = await context.supabase.rpc("has_perm", {
+      _action: "tasks.edit",
+      _dept: task.department,
+    });
+    if (!canEdit) throw new Error("Bạn không có quyền chỉnh sửa nhiệm vụ này.");
     if (task.status === "done") {
       throw new Error("Không thể chỉnh sửa nhiệm vụ đã hoàn thành.");
+    }
+    if (data.points !== task.points && ![5, 10, 20].includes(data.points)) {
+      throw new Error("Điểm thưởng chỉ nhận 5, 10 hoặc 20.");
     }
 
     /** A Linear-style task always has exactly one assignee; a re-assignment follows that member's department. */
@@ -73,6 +73,13 @@ export const updateTask = createServerFn({ method: "POST" })
         .maybeSingle();
       if (memberError || !member || member.status !== "active") {
         throw new Error("Thành viên được chọn không hợp lệ hoặc đã ngừng hoạt động.");
+      }
+      if (member.department !== task.department) {
+        const { data: canAssign } = await context.supabase.rpc("has_perm", {
+          _action: "tasks.create",
+          _dept: member.department,
+        });
+        if (!canAssign) throw new Error("Bạn không có quyền giao việc cho Ban của thành viên này.");
       }
       patch.assignee_id = member.id;
       patch.department = member.department;

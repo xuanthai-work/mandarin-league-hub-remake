@@ -199,6 +199,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-155-PERMISSIONS-MEMBERS-DEPARTMENTS`                          | Phân quyền: Thành viên + Ban chuyển sang has_perm, chặn sửa trái thứ bậc (mig 0051)                    | 2026-11-06     | **PASS** | [task-oc-155-permissions-members-departments.md](tasks/task-oc-155-permissions-members-departments.md)                                                   |
 | `TASK-GE-158-PROGRAMS-USE-ADMIN-KIT`                                   | Khóa học (1/3): Chương trình dùng bộ component admin                                                   | 2026-11-06     | **PASS** | [task-ge-158-programs-use-admin-kit.md](tasks/task-ge-158-programs-use-admin-kit.md)                                                                     |
 | `TASK-GE-159-HSK-CLASSES-USE-ADMIN-KIT`                                | Khóa học (2/3): Lớp HSK dùng bộ component admin                                                        | 2026-11-06     | **PASS** | [task-ge-159-hsk-classes-use-admin-kit.md](tasks/task-ge-159-hsk-classes-use-admin-kit.md)                                                               |
+| `TASK-OC-156-PERMISSIONS-TASKS-POINTS`                                 | Phân quyền: Nhiệm vụ + Điểm sang has_perm, mức điểm cố định 5/10/20 (mig 0052)                         | 2026-11-06     | **PASS** | [task-oc-156-permissions-tasks-points.md](tasks/task-oc-156-permissions-tasks-points.md)                                                                 |
 
 ---
 
