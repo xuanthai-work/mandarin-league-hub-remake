@@ -20,8 +20,7 @@ export const LEADER_TONE = { key: "black", label: "Lãnh đạo / Cố vấn" } 
 export const tierOf = (points: number) =>
   TIERS.find((t) => points >= t.min) ?? TIERS[TIERS.length - 1]!;
 
-const LEADER_ROLES = ["admin", "department_head", "deputy_head"];
-/** Leaders (Executive Board, heads, deputies, admins, professional advisors) keep their points but are left off the leaderboard. */
+/** Leaders (Executive Board, heads/deputies by position, admins, advisors) keep their points but are left off the leaderboard. */
 export const isLeader = (
   m: { department: string; position: string | null },
   roles: string[] = [],
@@ -30,7 +29,7 @@ export const isLeader = (
   isAdvisor ||
   m.department === "executive" ||
   /trưởng|phó|quản trị|cố vấn|co-founder|founder/i.test(m.position ?? "") ||
-  roles.some((r) => LEADER_ROLES.includes(r));
+  roles.includes("admin");
 
 export const TASK_STATUS: Record<string, { label: string; className: string }> = {
   assigned: { label: "Chờ tiếp nhận", className: "bg-secondary text-foreground" },

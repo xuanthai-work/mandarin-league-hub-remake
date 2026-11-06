@@ -12,6 +12,7 @@ export type MyAccount = {
     member_code: string;
     avatar_path: string | null;
     department: string | null;
+    position?: string | null;
     is_public?: boolean;
   } | null;
 };

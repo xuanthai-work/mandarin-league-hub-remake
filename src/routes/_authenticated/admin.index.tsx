@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ROLE_LABELS } from "@/lib/admin-nav";
+import { accessLabel } from "@/lib/admin-nav";
 import { periodStatusLabel, deptName } from "@/lib/recruitment";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminAccess } from "./admin";
@@ -402,7 +402,7 @@ function Overview() {
   const greeting = hour < 12 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
   const fullName = (access.data?.name ?? "").trim();
   const name = fullName || (access.data?.email ?? "").split("@")[0] || "bạn";
-  const role = access.data?.roles[0];
+  const roleLabel = access.data ? accessLabel(access.data.perms.isAdmin, access.data.position) : "";
   const department = access.data?.department;
   const dateLabel = new Intl.DateTimeFormat("vi-VN", {
     weekday: "long",
@@ -552,12 +552,12 @@ function Overview() {
           </h1>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground sm:text-sm">
             <span>{dateLabel}</span>
-            {role && (
+            {roleLabel && (
               <>
                 <span aria-hidden className="text-border">
                   ·
                 </span>
-                <span className="font-medium text-foreground/80">{ROLE_LABELS[role]}</span>
+                <span className="font-medium text-foreground/80">{roleLabel}</span>
               </>
             )}
             {department && (

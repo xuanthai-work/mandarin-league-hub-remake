@@ -15,8 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ADMIN_SECTIONS,
   OVERVIEW_ICON,
-  ROLE_LABELS,
   ROLE_PRIORITY,
+  accessLabel,
   navGroupsFor,
   type AdminNavGroup,
 } from "@/lib/admin-nav";
@@ -398,8 +398,7 @@ function AdminLayout() {
   if (access.isLoading)
     return <p className="p-16 text-center text-muted-foreground">Đang kiểm tra quyền truy cập…</p>;
 
-  const roles = access.data?.roles ?? [];
-  const roleLabel = roles[0] ? ROLE_LABELS[roles[0]] : "Thành viên";
+  const roleLabel = accessLabel(!!access.data?.perms.isAdmin, access.data?.position);
   const groups = navGroupsFor(allowed);
   const current = pathname.replace(/^\/admin\/?/, "").split("/")[0] ?? "";
   const blockedHere = !!current && allowed !== "all" && !allowed.includes(current);

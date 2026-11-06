@@ -459,7 +459,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
         .update({
           status: "left",
           left_on: today,
-          status_note: "Tài khoản nội bộ đã bị xóa bởi Quản trị viên.",
+          status_note: "Tài khoản nội bộ đã bị xóa.",
           is_public: false,
         })
         .eq("id", acct.member_id);

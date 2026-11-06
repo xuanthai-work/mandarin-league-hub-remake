@@ -6,10 +6,7 @@ export const getSystemStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const started = Date.now();
-    const { data: isAdmin, error } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { data: isAdmin, error } = await context.supabase.rpc("is_admin");
     const dbLatencyMs = Date.now() - started;
     if (error) throw new Error("Không kết nối được cơ sở dữ liệu.");
     if (!isAdmin) throw new Error("Chỉ Quản trị viên được xem trạng thái hệ thống.");

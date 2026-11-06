@@ -13,6 +13,10 @@ describe("leaderboard exclusion", () => {
   it("keeps ordinary members", () => {
     expect(isLeader({ department: "hr", position: "Thành viên" }, ["member"])).toBe(false);
   });
+  it("uses the real position, not the legacy head roles", () => {
+    expect(isLeader({ department: "hr", position: "Thành viên" }, ["department_head"])).toBe(false);
+    expect(isLeader({ department: "hr", position: "Thành viên" }, ["admin"])).toBe(true);
+  });
 });
 
 import { isLeader as isLeader2 } from "./points";

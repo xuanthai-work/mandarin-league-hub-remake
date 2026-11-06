@@ -19,5 +19,6 @@ export async function routeAfterLogin(): Promise<
   if (me.account && me.account.account_status !== "active") return "blocked";
   if (!me.account && !isAdmin) return "none";
   if (me.account?.must_change_password) return "/change-password";
+  if (isAdmin) return "/admin";
   return landsOnAdmin(allowedSections(perms)) ? "/admin" : "/member/dashboard";
 }

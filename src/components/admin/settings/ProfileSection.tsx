@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { ROLE_LABELS, ROLE_PRIORITY } from "@/lib/admin-nav";
+import { accessLabel } from "@/lib/admin-nav";
 import { getDepartment } from "@/lib/data/departments";
 import { SettingsRow, SettingsSection, type MyAccount } from "./shared";
 
@@ -26,7 +26,7 @@ export function ProfileSection({ me }: { me: MyAccount }) {
         ?.signedUrl ?? null,
   });
 
-  const highestRole = ROLE_PRIORITY.find((r) => me.roles.includes(r));
+  const roleLabel = accessLabel(me.roles.includes("admin"), member?.position);
   const department = member?.department ? getDepartment(member.department) : undefined;
   const trimmed = name.trim();
   const unchanged = !member || trimmed === member.full_name;
@@ -123,9 +123,9 @@ export function ProfileSection({ me }: { me: MyAccount }) {
                 <Copy className="h-3 w-3" />
               </button>
             )}
-            {highestRole && (
+            {roleLabel && (
               <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                {ROLE_LABELS[highestRole]}
+                {roleLabel}
               </span>
             )}
             {department && (
