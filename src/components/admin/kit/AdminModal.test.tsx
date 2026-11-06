@@ -195,4 +195,43 @@ describe("AdminModal", () => {
 
     document.body.removeChild(trigger);
   });
+
+  it("preserves child autoFocus on mount and restores focus on unmount", () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Trigger";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const { unmount } = render(
+      <AdminModal title="AF" onClose={() => {}}>
+        <input autoFocus aria-label="Tiêu đề" />
+      </AdminModal>,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Tiêu đề" });
+    expect(document.activeElement).toBe(input);
+
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+
+    document.body.removeChild(trigger);
+  });
+
+  it("locks body scroll on mount and restores previous overflow on unmount", () => {
+    document.body.style.overflow = "auto";
+
+    const { unmount } = render(
+      <AdminModal title="Scroll Lock" onClose={() => {}}>
+        Nội dung
+      </AdminModal>,
+    );
+
+    expect(document.body.style.overflow).toBe("hidden");
+
+    unmount();
+    expect(document.body.style.overflow).toBe("auto");
+
+    document.body.style.overflow = "";
+  });
 });

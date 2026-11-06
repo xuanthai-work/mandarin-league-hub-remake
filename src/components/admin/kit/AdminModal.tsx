@@ -1,4 +1,4 @@
-import { useId, type FormEvent, type ReactNode } from "react";
+import { useEffect, useId, type FormEvent, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export type AdminModalProps = {
  * Lưu ý:
  * - Trang gọi bọc `<AnimatePresence>` giống `AdminDrawer` để giữ hiệu ứng mờ/thu phóng khi đóng.
  * - Modal hiển thị ở `z-[70]`, nằm đè an toàn lên `AdminDrawer` (`z-[60]`). Esc đóng modal trước rồi mới đến drawer.
+ * - Khóa cuộn body khi mở, trả lại giá trị cũ khi đóng.
  *
  * @example
  * <AnimatePresence>
@@ -74,6 +75,15 @@ export function AdminModal({
   const titleId = useId();
   const descId = useId();
   const panelRef = useAdminDialog(onClose, dismissible);
+
+  // Khóa cuộn trang phía sau khi modal mở (drawer không khóa).
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
 
   const content = (
     <>

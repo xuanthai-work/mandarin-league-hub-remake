@@ -29,10 +29,7 @@ const ADMIN_KIT_FILES = [
   "src/components/admin/contributions/TransactionLedger.tsx",
   "src/components/admin/contributions/AdjustmentModal.tsx",
   "src/routes/_authenticated/admin.tasks.tsx",
-  "src/components/admin/tasks/TaskFilterToolbar.tsx",
-  "src/components/admin/tasks/TaskReviewDialog.tsx",
-  "src/components/admin/tasks/TaskKanbanBoard.tsx",
-  "src/components/admin/tasks/TaskKanbanCard.tsx",
+  "src/components/admin/tasks/**/*.tsx",
 ];
 
 export default tseslint.config(

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 /** Các dialog admin đang mở, theo thứ tự mở. Chỉ phần tử cuối nhận Esc. */
 const openDialogs: symbol[] = [];
@@ -6,7 +6,7 @@ const openDialogs: symbol[] = [];
 /**
  * Hành vi chung của AdminDrawer / AdminModal:
  * - Esc đóng dialog mở sau cùng (bỏ qua nếu lớp Radix bên trong đã xử lý, tức e.defaultPrevented).
- * - Mở: focus vào panel. Đóng: trả focus về phần tử đã mở dialog.
+ * - Mở: focus vào panel (trừ khi ô con đã autoFocus). Đóng: trả focus về phần tử đã mở dialog.
  * `dismissible=false` (ví dụ đang lưu) thì Esc không đóng.
  */
 export function useAdminDialog(
@@ -38,13 +38,19 @@ export function useAdminDialog(
     };
   }, []);
 
+  // Ghi lại phần tử đang focus ngay lúc render, trước khi ô con có autoFocus giành focus.
+  const [previouslyFocused] = useState<HTMLElement | null>(() =>
+    typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null),
+  );
+
   useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    panelRef.current?.focus();
+    const panel = panelRef.current;
+    // Ô con đã tự focus (autoFocus) thì giữ nguyên, ngược lại focus vào panel.
+    if (panel && !panel.contains(document.activeElement)) panel.focus();
     return () => {
       if (previouslyFocused && document.body.contains(previouslyFocused)) previouslyFocused.focus();
     };
-  }, []);
+  }, [previouslyFocused]);
 
   return panelRef;
 }
