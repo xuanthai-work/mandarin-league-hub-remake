@@ -166,6 +166,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-143-CONFIRM-AND-FEEDBACK-CLEANUP`                             | Hộp xác nhận chung ở Thành viên/Quyền lợi, che mật khẩu, xác nhận + toast khi duyệt nhiệm vụ           | 2026-11-06     | **PASS** | [task-oc-143-confirm-and-feedback-cleanup.md](tasks/task-oc-143-confirm-and-feedback-cleanup.md)                                                         |
 | `TASK-OC-144-COURSE-ENROLLMENTS-TAB`                                   | Khóa học: tab trượt, tìm đơn không dấu, trạng thái lỗi/trống, drawer duyệt đơn                         | 2026-11-06     | **PASS** | [task-oc-144-course-enrollments-tab.md](tasks/task-oc-144-course-enrollments-tab.md)                                                                     |
 | `TASK-GE-137-POST-REVIEW-COURSES-DEPARTMENTS-FIXES`                    | Sửa sau review: chữ nút Xóa Khóa học, tìm Ban không dấu, bỏ lặp mô tả hero                             | 2026-11-06     | **PASS** | [task-ge-137-post-review-courses-departments-fixes.md](tasks/task-ge-137-post-review-courses-departments-fixes.md)                                       |
+| `TASK-GE-138-LINT-ADMIN-PERMISSIONS-TEST-FORMAT`                       | Định dạng lại test quyền admin, lint về 0 lỗi                                                          | 2026-11-06     | **PASS** | [task-ge-138-lint-admin-permissions-test-format.md](tasks/task-ge-138-lint-admin-permissions-test-format.md)                                             |
 
 ---
 

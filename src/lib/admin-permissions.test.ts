@@ -83,7 +83,13 @@ describe("partners access matrix", () => {
       view: true,
       write: false,
     },
-    { user: "podcast member", roles: ["member"], department: "postcard", view: false, write: false },
+    {
+      user: "podcast member",
+      roles: ["member"],
+      department: "postcard",
+      view: false,
+      write: false,
+    },
     { user: "unauthorized user", roles: ["member"], department: null, view: false, write: false },
     { user: "signed-in with no roles", roles: [], department: null, view: false, write: false },
   ];
