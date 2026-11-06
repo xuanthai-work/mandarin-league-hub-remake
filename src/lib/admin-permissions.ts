@@ -22,8 +22,14 @@ export function allowedSections(
 export const PERSONAL_SECTIONS = ["settings"] as const;
 
 export function withPersonalSections(allowed: string[] | "all"): string[] | "all" {
-  if (allowed === "all" || allowed.length === 0) return allowed;
+  if (allowed === "all") return allowed;
   return [...allowed, ...PERSONAL_SECTIONS.filter((s) => !allowed.includes(s))];
+}
+
+/** true khi người dùng chỉ có các mục cá nhân (Cài đặt), không có module quản trị nào. */
+export function onlyPersonalSections(allowed: string[] | "all"): boolean {
+  if (allowed === "all") return false;
+  return allowed.every((s) => (PERSONAL_SECTIONS as readonly string[]).includes(s));
 }
 
 export const canReviewNews = (roles: AdminRole[], department: string | null) =>

@@ -5,6 +5,7 @@ import {
   canManagePartners,
   canReviewNews,
   canViewPartners,
+  onlyPersonalSections,
   withPersonalSections,
 } from "./admin-permissions";
 
@@ -140,13 +141,25 @@ describe("partners access matrix", () => {
 });
 
 describe("withPersonalSections", () => {
-  it("keeps full access and empty access untouched", () => {
+  it("keeps full access untouched and gives an empty list the personal settings", () => {
     expect(withPersonalSections("all")).toBe("all");
-    expect(withPersonalSections([])).toEqual([]);
+    expect(withPersonalSections([])).toEqual(["settings"]);
   });
 
   it("adds settings once, keeping module sections intact", () => {
     expect(withPersonalSections(["partners"])).toEqual(["partners", "settings"]);
     expect(withPersonalSections(["partners", "settings"])).toEqual(["partners", "settings"]);
+  });
+});
+
+describe("onlyPersonalSections", () => {
+  it("is true when the user has only personal sections or an empty list", () => {
+    expect(onlyPersonalSections(["settings"])).toBe(true);
+    expect(onlyPersonalSections([])).toBe(true);
+  });
+
+  it("is false when the user has module sections or full access", () => {
+    expect(onlyPersonalSections(["partners", "settings"])).toBe(false);
+    expect(onlyPersonalSections("all")).toBe(false);
   });
 });

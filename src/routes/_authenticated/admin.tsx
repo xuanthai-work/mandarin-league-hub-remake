@@ -20,7 +20,11 @@ import {
   navGroupsFor,
   type AdminNavGroup,
 } from "@/lib/admin-nav";
-import { allowedSections, withPersonalSections } from "@/lib/admin-permissions";
+import {
+  allowedSections,
+  onlyPersonalSections,
+  withPersonalSections,
+} from "@/lib/admin-permissions";
 import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
 import { useAdminHeader } from "@/components/admin/admin-header-context";
 
@@ -133,7 +137,8 @@ export function useAdminAccess() {
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
       const department = blocked ? null : (me.member?.department ?? null);
       const permissions = blocked ? [] : (me.account?.permissions ?? []);
-      const allowed = withPersonalSections(allowedSections(roles, department, permissions));
+      const base = allowedSections(roles, department, permissions);
+      const allowed = me.account && !blocked ? withPersonalSections(base) : base;
       return {
         email: me.email ?? "",
         name: blocked ? "" : (me.member?.full_name ?? ""),
@@ -363,7 +368,9 @@ function AdminLayout() {
     if (!d) return;
     if (d.mustChange) navigate({ to: "/change-password", replace: true });
     else if (d.hasAccount && !hasAny) navigate({ to: "/member/dashboard", replace: true });
-  }, [access.data, hasAny, navigate]);
+    else if (onlyPersonalSections(d.allowed) && pathname === "/admin")
+      navigate({ to: "/admin/settings", replace: true });
+  }, [access.data, hasAny, navigate, pathname]);
 
   // Close the drawer on navigation; Escape closes it; body scroll stays locked while open.
   useEffect(() => {
