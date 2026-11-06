@@ -1,3 +1,4 @@
+import type { StatusTone } from "@/components/admin/kit/StatusPill";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { APP_STATUS, type Choice } from "@/lib/recruitment";
@@ -44,23 +45,34 @@ export function statusLabel(status: string | null | undefined) {
   return APP_STATUS[status] ?? status;
 }
 
+/** Tone of each application status, shared by the table pill and the dossier drawer. */
+export const APP_STATUS_TONE: Record<string, StatusTone> = {
+  submitted: "warning",
+  needs_info: "warning",
+  reviewing: "info",
+  interview: "gold",
+  approved: "success",
+  rejected: "danger",
+  withdrawn: "neutral",
+};
+
 export const STATUS_TONE: Record<string, string> = {
-  submitted: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  reviewing: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  needs_info: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
-  interview: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-  approved: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  rejected: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  submitted: "bg-warning-soft text-warning-foreground",
+  needs_info: "bg-warning-soft text-warning-foreground",
+  reviewing: "bg-primary/10 text-primary",
+  interview: "bg-gold-soft text-warning-foreground",
+  approved: "bg-success/15 text-success",
+  rejected: "bg-destructive/10 text-destructive",
   withdrawn: "bg-muted text-muted-foreground",
 };
 
 export const STATUS_DOT: Record<string, string> = {
-  submitted: "bg-blue-500",
-  reviewing: "bg-amber-500",
-  needs_info: "bg-pink-500",
-  interview: "bg-purple-500",
-  approved: "bg-emerald-500",
-  rejected: "bg-rose-500",
+  submitted: "bg-warning-foreground",
+  needs_info: "bg-warning-foreground",
+  reviewing: "bg-primary",
+  interview: "bg-gold",
+  approved: "bg-success",
+  rejected: "bg-destructive",
   withdrawn: "bg-muted-foreground/50",
 };
 

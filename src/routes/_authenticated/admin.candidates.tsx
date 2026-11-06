@@ -10,6 +10,8 @@ import { CandidateFilterToolbar } from "@/components/admin/candidates/CandidateF
 import { CandidateMetricsStrip } from "@/components/admin/candidates/CandidateMetricsStrip";
 import { CandidateTableView } from "@/components/admin/candidates/CandidateTableView";
 import { FreeTextAnalyzeModal } from "@/components/admin/candidates/FreeTextAnalyzeModal";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { Button } from "@/components/ui/button";
 import {
   EMPTY_FILTERS,
   choicesOf,
@@ -135,18 +137,22 @@ function Candidates() {
   if (isError && !data) {
     return (
       <section className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <p className="text-sm font-medium text-foreground">Không tải được danh sách ứng viên</p>
-          <p className="mt-1 text-xs text-muted-foreground">Kiểm tra kết nối mạng rồi thử lại.</p>
-          <button
-            type="button"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
-          >
-            {isFetching ? "Đang thử lại…" : "Thử lại"}
-          </button>
-        </div>
+        <EmptyState
+          tone="error"
+          title="Không tải được danh sách ứng viên"
+          description="Kiểm tra kết nối mạng rồi thử lại."
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="admin"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? "Đang thử lại…" : "Thử lại"}
+            </Button>
+          }
+        />
       </section>
     );
   }
@@ -168,26 +174,27 @@ function Candidates() {
       <AdminPageHeader
         actions={
           <>
-            <button
+            <Button
               type="button"
+              size="admin"
+              variant="outline"
               onClick={() => setFreeOpen(true)}
               aria-label="Phân tích nội dung dán vào"
               title="Phân tích nội dung dán vào"
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-sm font-medium transition-colors hover:bg-accent sm:px-4"
             >
-              <Sparkles className="h-4 w-4 text-gold" />
+              <Sparkles aria-hidden className="text-gold" />
               <span className="hidden sm:inline">Phân tích nội dung dán vào</span>
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="admin"
               onClick={exportCsv}
               aria-label="Xuất Excel (CSV)"
               title="Xuất Excel (CSV)"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:px-4"
             >
-              <Download className="h-4 w-4" />
+              <Download aria-hidden />
               <span className="hidden sm:inline">Xuất Excel (CSV)</span>
-            </button>
+            </Button>
           </>
         }
       />

@@ -1,5 +1,4 @@
-import { Search, X } from "lucide-react";
-
+import { SearchInput } from "@/components/admin/kit/SearchInput";
 import {
   Select,
   SelectContent,
@@ -38,30 +37,12 @@ export function CandidateFilterToolbar({
 
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-        <Search
-          aria-hidden
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-        />
-        <input
-          type="text"
-          value={filters.q}
-          onChange={(e) => patch({ q: e.target.value })}
-          placeholder="Tìm họ tên, email, điện thoại, mã hồ sơ…"
-          aria-label="Tìm kiếm ứng viên"
-          className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-        {filters.q && (
-          <button
-            type="button"
-            onClick={() => patch({ q: "" })}
-            aria-label="Xóa nội dung tìm kiếm"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
+      <SearchInput
+        value={filters.q}
+        onChange={(q) => patch({ q })}
+        placeholder="Tìm họ tên, email, điện thoại, mã hồ sơ…"
+        label="Tìm kiếm ứng viên"
+      />
 
       <Select
         value={filters.period || "all"}

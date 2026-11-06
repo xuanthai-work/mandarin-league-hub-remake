@@ -213,6 +213,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-164-TASKS-BOARD-USE-ADMIN-KIT`                                | Nhiệm vụ (1/2): bảng Kanban dùng bộ component admin                                                    | 2026-11-07     | **PASS** | [task-ge-164-tasks-board-use-admin-kit.md](tasks/task-ge-164-tasks-board-use-admin-kit.md)                                                               |
 | `TASK-OC-163-PERMISSIONS-CLEANUP`                                      | Phân quyền: dọn hàm cũ, nhãn theo chức vụ, cập nhật AGENTS (mig 0057)                                  | 2026-11-07     | **PASS** | [task-oc-163-permissions-cleanup.md](tasks/task-oc-163-permissions-cleanup.md)                                                                           |
 | `TASK-GE-165-TASKS-MODALS-USE-ADMIN-KIT`                               | Nhiệm vụ (2/2): 2 modal Giao / Chi tiết dùng bộ component admin                                        | 2026-11-07     | **PASS** | [task-ge-165-tasks-modals-use-admin-kit.md](tasks/task-ge-165-tasks-modals-use-admin-kit.md)                                                             |
+| `TASK-GE-166-CANDIDATES-LIST-USE-ADMIN-KIT`                            | Ứng viên (1/2): danh sách hồ sơ dùng bộ component admin                                                | 2026-11-07     | **PASS** | [task-ge-166-candidates-list-use-admin-kit.md](tasks/task-ge-166-candidates-list-use-admin-kit.md)                                                       |
 
 ---
 

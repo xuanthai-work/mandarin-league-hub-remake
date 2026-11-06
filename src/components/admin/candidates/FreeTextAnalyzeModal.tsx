@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Sparkles } from "lucide-react";
 
+import { AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -61,29 +63,29 @@ export function FreeTextAnalyzeModal({ open, onClose }: FreeTextAnalyzeModalProp
           </DialogDescription>
         </DialogHeader>
 
-        <textarea
+        <AdminTextarea
           rows={10}
           maxLength={20000}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Dán nội dung đơn ứng tuyển…"
           aria-label="Nội dung đơn ứng tuyển"
-          className="max-h-[45vh] w-full resize-y rounded-xl border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="max-h-[45vh] resize-y leading-relaxed"
         />
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[11px] text-muted-foreground">
             {text.length.toLocaleString("vi-VN")} / 20.000 ký tự · tối thiểu 20 ký tự
           </span>
-          <button
+          <Button
             type="button"
+            size="admin"
             onClick={run}
             disabled={busy || text.trim().length < 20}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {busy ? <Loader2 aria-hidden className="animate-spin" /> : <Sparkles aria-hidden />}
             {busy ? "Đang phân tích…" : "Phân tích"}
-          </button>
+          </Button>
         </div>
 
         {err && (

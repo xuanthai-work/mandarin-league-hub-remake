@@ -30,6 +30,11 @@ const ADMIN_KIT_FILES = [
   "src/components/admin/contributions/AdjustmentModal.tsx",
   "src/routes/_authenticated/admin.tasks.tsx",
   "src/components/admin/tasks/**/*.tsx",
+  "src/routes/_authenticated/admin.candidates.tsx",
+  "src/components/admin/candidates/CandidateMetricsStrip.tsx",
+  "src/components/admin/candidates/CandidateFilterToolbar.tsx",
+  "src/components/admin/candidates/CandidateTableView.tsx",
+  "src/components/admin/candidates/FreeTextAnalyzeModal.tsx",
 ];
 
 export default tseslint.config(
