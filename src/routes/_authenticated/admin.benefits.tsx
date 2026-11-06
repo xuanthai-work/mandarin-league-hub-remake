@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import {
   BadgeCheck,
   Check,
@@ -12,12 +12,9 @@ import {
   Layers,
   Plus,
   RefreshCw,
-  Search,
-  Trash2,
   Upload,
   UserPlus,
   Users,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +28,17 @@ import {
 import { ACCOUNT_DEPTS } from "@/lib/accounts";
 import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
+import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminModal } from "@/components/admin/kit/AdminModal";
+import { DangerZone } from "@/components/admin/kit/DangerZone";
+import { FormField } from "@/components/admin/kit/FormField";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -83,8 +91,6 @@ const EMPTY: B = {
   sort_order: 0,
 };
 
-const FIELD =
-  "w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20";
 const SECRET_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
 const randomPassword = () =>
   Array.from(
@@ -188,25 +194,21 @@ function BenefitsAdmin() {
       label: "Tổng quyền lợi",
       value: items.length,
       icon: Layers,
-      tone: "bg-primary/10 text-primary",
     },
     {
       label: "Đang kích hoạt",
       value: enabledCount,
       icon: BadgeCheck,
-      tone: "bg-success/15 text-success",
     },
     {
       label: "Lượt cấp riêng",
       value: activeGrants,
       icon: UserPlus,
-      tone: "bg-gold/15 text-primary-deep",
     },
     {
       label: "Cấp toàn thể",
       value: grantAllCount,
       icon: Users,
-      tone: "bg-primary/10 text-primary-deep",
     },
   ];
 
@@ -216,48 +218,26 @@ function BenefitsAdmin() {
         title="Quyền lợi thành viên"
         description="Tài khoản Premium dùng chung — sửa mật khẩu một lần, áp dụng cho mọi thành viên được cấp."
         actions={
-          <button
-            onClick={() => setF({ ...EMPTY })}
-            className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-          >
-            <Plus className="h-4 w-4" />
-            Tạo quyền lợi
-          </button>
+          <Button type="button" size="admin" onClick={() => setF({ ...EMPTY })}>
+            <Plus /> Tạo quyền lợi
+          </Button>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {metrics.map((m) => {
-          const Icon = m.icon;
-          return (
-            <div
-              key={m.label}
-              className="rounded-2xl border border-border/70 bg-card p-4 shadow-xs"
-            >
-              <span className={`grid h-8 w-8 place-items-center rounded-xl ${m.tone}`}>
-                <Icon className="h-4 w-4" />
-              </span>
-              <p className="mt-2.5 text-2xl font-bold tracking-tight text-primary-deep">
-                {m.value}
-              </p>
-              <p className="text-xs text-muted-foreground">{m.label}</p>
-            </div>
-          );
-        })}
+        {metrics.map((m) => (
+          <StatFilterCard key={m.label} label={m.label} icon={m.icon} value={m.value} />
+        ))}
       </div>
 
       {list.isLoading ? (
-        <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          Đang tải quyền lợi…
-        </p>
+        <EmptyState title="Đang tải quyền lợi…" />
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-          <Layers className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm font-medium">Chưa có quyền lợi nào</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Tạo quyền lợi đầu tiên để bắt đầu cấp tài khoản Premium cho thành viên.
-          </p>
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="Chưa có quyền lợi nào"
+          description="Tạo quyền lợi đầu tiên để bắt đầu cấp tài khoản Premium cho thành viên."
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4.5 md:grid-cols-2 lg:grid-cols-3">
           {items.map((b) => (
@@ -295,15 +275,17 @@ function BenefitsAdmin() {
         )}
       </AnimatePresence>
 
-      {grantFor && (
-        <GrantDialog
-          benefit={grantFor}
-          onClose={() => {
-            setGrantFor(null);
-            refresh();
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {grantFor && (
+          <GrantDialog
+            benefit={grantFor}
+            onClose={() => {
+              setGrantFor(null);
+              refresh();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -350,8 +332,18 @@ function BenefitCard({
 
   return (
     <article
+      role="button"
+      tabIndex={0}
+      aria-label={`Sửa quyền lợi ${b.name}`}
       onClick={onEdit}
-      className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onEdit();
+        }
+      }}
+      className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
     >
       <div>
         <div className="flex items-start gap-3">
@@ -392,28 +384,28 @@ function BenefitCard({
                   {b.secret ? (revealed ? b.secret : "••••••••") : "Chưa thiết lập"}
                 </span>
                 {b.secret && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="admin-icon"
+                    className="h-6 w-6 shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       setRevealed((v) => !v);
                     }}
                     aria-label={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     title={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
-                    {revealed ? (
-                      <EyeOff className="h-3.5 w-3.5" />
-                    ) : (
-                      <Eye className="h-3.5 w-3.5" />
-                    )}
-                  </button>
+                    {revealed ? <EyeOff /> : <Eye />}
+                  </Button>
                 )}
               </div>
             </div>
 
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="admin-icon"
               disabled={!b.login && !b.secret}
               onClick={(e) => {
                 e.stopPropagation();
@@ -425,14 +417,9 @@ function BenefitCard({
                   ? "Sao chép tài khoản & mật khẩu"
                   : "Chưa thiết lập tài khoản & mật khẩu"
               }
-              className={`shrink-0 rounded-lg p-2 transition-colors ${
-                b.login || b.secret
-                  ? "cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
-                  : "cursor-not-allowed text-muted-foreground/30"
-              }`}
             >
-              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-            </button>
+              {copied ? <Check className="text-success" /> : <Copy />}
+            </Button>
           </div>
 
           {(b.access_url || b.usage_note) && (
@@ -464,51 +451,51 @@ function BenefitCard({
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {b.grant_all ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+            <StatusPill tone="info" dot={false}>
               Tất cả thành viên
-            </span>
+            </StatusPill>
           ) : b.min_points != null ? (
-            <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-medium text-primary-deep">
+            <StatusPill tone="gold" dot={false}>
               Từ {b.min_points} điểm
-            </span>
+            </StatusPill>
           ) : (
-            <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[11px] font-medium text-purple-600 dark:text-purple-300">
+            <StatusPill tone="neutral" dot={false}>
               Chỉ cấp riêng
-            </span>
+            </StatusPill>
           )}
           {b.ends_on ? (
-            <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${expiringSoon ? "bg-warning-soft text-warning-foreground" : "bg-secondary text-muted-foreground"}`}
-            >
+            <StatusPill tone={expiringSoon ? "warning" : "neutral"} dot={false}>
               {left !== null && left < 0
                 ? `Hết hạn ${fmtDate(b.ends_on)}`
                 : `${expiringSoon ? `Còn ${left} ngày` : "Hết hạn"} · ${fmtDate(b.ends_on)}`}
-            </span>
+            </StatusPill>
           ) : (
-            <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <StatusPill tone="neutral" dot={false}>
               Vô thời hạn
-            </span>
+            </StatusPill>
           )}
         </div>
       </div>
 
       <div className="mt-4 border-t border-border/60 pt-3">
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="admin"
+          className="w-full"
           onClick={(e) => {
             e.stopPropagation();
             onGrant();
           }}
-          className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
         >
-          <UserPlus className="h-3.5 w-3.5" />
+          <UserPlus />
           Cấp quyền{" "}
           {activeGrants > 0 && (
             <span className="rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
               {activeGrants}
             </span>
           )}
-        </button>
+        </Button>
       </div>
     </article>
   );
@@ -538,324 +525,257 @@ function BenefitDrawer({
   onClose: () => void;
 }) {
   const [showSecret, setShowSecret] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={value.id ? `Sửa quyền lợi ${value.name}` : "Tạo quyền lợi"}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
-          <div className="flex min-w-0 items-center gap-3">
+    <AdminDrawer
+      title={value.id ? "Sửa quyền lợi" : "Tạo quyền lợi"}
+      leading={<BenefitIcon iconKey={value.icon_key} logoUrl={logoUrl} />}
+      subtitle={
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate">{value.name || "Quyền lợi mới"}</span>
+          <StatusPill tone={value.is_enabled ? "success" : "neutral"}>
+            {value.is_enabled ? "Đang bật" : "Đang ẩn"}
+          </StatusPill>
+        </span>
+      }
+      onClose={onClose}
+      footer={
+        <Button type="button" size="admin-lg" className="w-full sm:w-auto" onClick={onSave}>
+          {value.id ? "Lưu thay đổi" : "Tạo quyền lợi"}
+        </Button>
+      }
+    >
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Định danh ứng dụng
+        </h3>
+        <FormField label="Tên ứng dụng">
+          {(field) => (
+            <AdminInput
+              {...field}
+              placeholder="vd: Hanzii Premium"
+              value={value.name}
+              onChange={(e) => onChange({ name: e.target.value })}
+            />
+          )}
+        </FormField>
+        <FormField label="Mô tả quyền lợi">
+          {(field) => (
+            <AdminTextarea
+              {...field}
+              rows={2}
+              placeholder="Mô tả ngắn hiển thị trên thẻ quyền lợi"
+              value={value.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+            />
+          )}
+        </FormField>
+        <FormField label="Hướng dẫn sử dụng tài khoản">
+          {(field) => (
+            <AdminTextarea
+              {...field}
+              rows={2}
+              placeholder="vd: dùng Profile 2, không đổi mật khẩu"
+              value={value.usage_note}
+              onChange={(e) => onChange({ usage_note: e.target.value })}
+            />
+          )}
+        </FormField>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Logo & nhận diện
+        </h3>
+        <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+          <div className="flex items-center gap-3">
             <BenefitIcon iconKey={value.icon_key} logoUrl={logoUrl} />
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-bold text-foreground">
-                {value.id ? "Sửa quyền lợi" : "Tạo quyền lợi"}
-              </h2>
-              <div className="flex items-center gap-1.5 pt-0.5">
-                <span className="truncate text-xs text-muted-foreground">
-                  {value.name || "Quyền lợi mới"}
-                </span>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${value.is_enabled ? "bg-success/15 text-success" : "bg-secondary text-muted-foreground"}`}
-                >
-                  {value.is_enabled ? "Đang bật" : "Đang ẩn"}
-                </span>
-              </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground">Logo ứng dụng</p>
+              <p className="text-[11px] text-muted-foreground">
+                PNG, JPG, WebP hoặc SVG · tối đa 2MB
+              </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            title="Đóng"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary">
+              <Upload className="h-3.5 w-3.5" />
+              {uploading ? "Đang tải…" : value.logo_path ? "Đổi logo" : "Tải logo lên"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) onUpload(file);
+                }}
+              />
+            </label>
+            {value.logo_path && (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-xs text-destructive"
+                onClick={onClearLogo}
+              >
+                Gỡ logo
+              </Button>
+            )}
+          </div>
         </div>
+        <div>
+          <p className="mb-1 text-xs text-muted-foreground">
+            Biểu tượng dự phòng (dùng khi chưa có logo)
+          </p>
+          <div role="group" aria-label="Biểu tượng dự phòng" className="flex flex-wrap gap-2">
+            {Object.entries(BENEFIT_ICONS).map(([k, v]) => (
+              <Button
+                key={k}
+                type="button"
+                variant="ghost"
+                title={v.label}
+                aria-label={v.label}
+                aria-pressed={value.icon_key === k}
+                onClick={() => onChange({ icon_key: k })}
+                className={`h-auto rounded-xl p-0.5 [&_svg]:size-auto ${value.icon_key === k ? "ring-2 ring-gold" : "hover:ring-1 hover:ring-border"}`}
+              >
+                <BenefitIcon iconKey={k} size="sm" />
+              </Button>
+            ))}
+          </div>
+        </div>
+      </section>
 
-        <div className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Định danh ứng dụng
-            </h3>
-            <label className="block text-xs text-muted-foreground">
-              Tên ứng dụng
-              <input
-                className={`${FIELD} mt-1`}
-                placeholder="vd: Hanzii Premium"
-                value={value.name}
-                onChange={(e) => onChange({ name: e.target.value })}
-              />
-            </label>
-            <label className="block text-xs text-muted-foreground">
-              Mô tả quyền lợi
-              <textarea
-                className={`${FIELD} mt-1`}
-                rows={2}
-                placeholder="Mô tả ngắn hiển thị trên thẻ quyền lợi"
-                value={value.description}
-                onChange={(e) => onChange({ description: e.target.value })}
-              />
-            </label>
-            <label className="block text-xs text-muted-foreground">
-              Hướng dẫn sử dụng tài khoản
-              <textarea
-                className={`${FIELD} mt-1`}
-                rows={2}
-                placeholder="vd: dùng Profile 2, không đổi mật khẩu"
-                value={value.usage_note}
-                onChange={(e) => onChange({ usage_note: e.target.value })}
-              />
-            </label>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Logo & nhận diện
-            </h3>
-            <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
-              <div className="flex items-center gap-3">
-                <BenefitIcon iconKey={value.icon_key} logoUrl={logoUrl} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-foreground">Logo ứng dụng</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    PNG, JPG, WebP hoặc SVG · tối đa 2MB
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <label className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary">
-                  <Upload className="h-3.5 w-3.5" />
-                  {uploading ? "Đang tải…" : value.logo_path ? "Đổi logo" : "Tải logo lên"}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    className="hidden"
-                    disabled={uploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      e.target.value = "";
-                      if (file) onUpload(file);
-                    }}
-                  />
-                </label>
-                {value.logo_path && (
-                  <button
-                    type="button"
-                    onClick={onClearLogo}
-                    className="text-xs font-medium text-destructive hover:underline"
-                  >
-                    Gỡ logo
-                  </button>
-                )}
-              </div>
-            </div>
-            <div>
-              <p className="mb-1 text-xs text-muted-foreground">
-                Biểu tượng dự phòng (dùng khi chưa có logo)
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(BENEFIT_ICONS).map(([k, v]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    title={v.label}
-                    aria-label={v.label}
-                    aria-pressed={value.icon_key === k}
-                    onClick={() => onChange({ icon_key: k })}
-                    className={`rounded-xl p-0.5 transition ${value.icon_key === k ? "ring-2 ring-gold" : "hover:ring-1 hover:ring-border"}`}
-                  >
-                    <BenefitIcon iconKey={k} size="sm" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Tài khoản & bảo mật
-            </h3>
-            <label className="block text-xs text-muted-foreground">
-              Tài khoản / Email dùng chung
-              <input
-                className={`${FIELD} mt-1`}
-                placeholder="vd: tml.premium@hanzii.net"
-                value={value.login}
-                onChange={(e) => onChange({ login: e.target.value })}
-              />
-            </label>
-            <div>
-              <span className="block text-xs text-muted-foreground">Mật khẩu / Mã</span>
-              <div className="relative mt-1">
-                <input
-                  className={`${FIELD} pr-20`}
-                  type={showSecret ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Mật khẩu dùng chung"
-                  value={value.secret}
-                  onChange={(e) => onChange({ secret: e.target.value })}
-                />
-                <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setShowSecret((v) => !v)}
-                    aria-label={showSecret ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    title={showSecret ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  >
-                    {showSecret ? (
-                      <EyeOff className="h-3.5 w-3.5" />
-                    ) : (
-                      <Eye className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChange({ secret: randomPassword() });
-                      setShowSecret(true);
-                    }}
-                    aria-label="Tạo mật khẩu ngẫu nhiên"
-                    title="Tạo mật khẩu ngẫu nhiên"
-                    className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <label className="block text-xs text-muted-foreground">
-              Đường dẫn đăng nhập
-              <input
-                className={`${FIELD} mt-1`}
-                placeholder="https://..."
-                value={value.access_url}
-                onChange={(e) => onChange({ access_url: e.target.value })}
-              />
-            </label>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Cơ chế cấp phát tự động
-            </h3>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
-              <span className="text-sm">Cấp cho tất cả thành viên</span>
-              <Switch
-                checked={value.grant_all}
-                onCheckedChange={(v) => onChange({ grant_all: v })}
-                aria-label="Cấp cho tất cả thành viên"
-              />
-            </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-xs text-muted-foreground">
-                Điểm cống hiến tối thiểu
-                <input
-                  className={`${FIELD} mt-1`}
-                  type="number"
-                  min={0}
-                  placeholder="Để trống = không tự động"
-                  value={value.min_points ?? ""}
-                  onChange={(e) =>
-                    onChange({ min_points: e.target.value === "" ? null : Number(e.target.value) })
-                  }
-                />
-              </label>
-              <label className="block text-xs text-muted-foreground">
-                Hạn dùng chung
-                <input
-                  className={`${FIELD} mt-1`}
-                  type="date"
-                  value={value.ends_on ?? ""}
-                  onChange={(e) => onChange({ ends_on: e.target.value || null })}
-                />
-              </label>
-            </div>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
-              <span className="text-sm">Hiển thị trong cổng thành viên</span>
-              <Switch
-                checked={value.is_enabled}
-                onCheckedChange={(v) => onChange({ is_enabled: v })}
-                aria-label="Hiển thị trong cổng thành viên"
-              />
-            </label>
-          </section>
-
-          {value.id && onDelete && (
-            <section className="space-y-2 pt-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
-                Vùng nguy hiểm
-              </h3>
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3.5">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-foreground">Xóa quyền lợi này</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {confirmDelete
-                      ? "Bấm lần nữa để xác nhận xóa. Các lượt cấp liên quan cũng bị xóa."
-                      : "Xóa vĩnh viễn quyền lợi và thu hồi các quyền truy cập đã cấp."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!confirmDelete) {
-                      setConfirmDelete(true);
-                      return;
-                    }
-                    setConfirmDelete(false);
-                    onDelete();
-                  }}
-                  className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-2xs transition-colors ${
-                    confirmDelete
-                      ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      : "border-destructive/30 bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                  }`}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span>{confirmDelete ? "Xác nhận xóa" : "Xóa"}</span>
-                </button>
-              </div>
-            </section>
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Tài khoản & bảo mật
+        </h3>
+        <FormField label="Tài khoản / Email dùng chung">
+          {(field) => (
+            <AdminInput
+              {...field}
+              placeholder="vd: tml.premium@hanzii.net"
+              value={value.login}
+              onChange={(e) => onChange({ login: e.target.value })}
+            />
           )}
-        </div>
+        </FormField>
+        <FormField label="Mật khẩu / Mã">
+          {(field) => (
+            <div className="relative">
+              <AdminInput
+                {...field}
+                className="pr-20"
+                type={showSecret ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Mật khẩu dùng chung"
+                value={value.secret}
+                onChange={(e) => onChange({ secret: e.target.value })}
+              />
+              <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="admin-icon"
+                  className="h-7 w-7"
+                  onClick={() => setShowSecret((v) => !v)}
+                  aria-label={showSecret ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  title={showSecret ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showSecret ? <EyeOff /> : <Eye />}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="admin-icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    onChange({ secret: randomPassword() });
+                    setShowSecret(true);
+                  }}
+                  aria-label="Tạo mật khẩu ngẫu nhiên"
+                  title="Tạo mật khẩu ngẫu nhiên"
+                >
+                  <RefreshCw />
+                </Button>
+              </div>
+            </div>
+          )}
+        </FormField>
+        <FormField label="Đường dẫn đăng nhập">
+          {(field) => (
+            <AdminInput
+              {...field}
+              placeholder="https://..."
+              value={value.access_url}
+              onChange={(e) => onChange({ access_url: e.target.value })}
+            />
+          )}
+        </FormField>
+      </section>
 
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          <button
-            type="button"
-            onClick={onSave}
-            className="w-full cursor-pointer rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-xs transition hover:bg-primary/90 sm:w-auto"
-          >
-            {value.id ? "Lưu thay đổi" : "Tạo quyền lợi"}
-          </button>
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Cơ chế cấp phát tự động
+        </h3>
+        <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+          <span className="text-sm">Cấp cho tất cả thành viên</span>
+          <Switch
+            checked={value.grant_all}
+            onCheckedChange={(v) => onChange({ grant_all: v })}
+            aria-label="Cấp cho tất cả thành viên"
+          />
+        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label="Điểm cống hiến tối thiểu">
+            {(field) => (
+              <AdminInput
+                {...field}
+                type="number"
+                min={0}
+                placeholder="Để trống = không tự động"
+                value={value.min_points ?? ""}
+                onChange={(e) =>
+                  onChange({ min_points: e.target.value === "" ? null : Number(e.target.value) })
+                }
+              />
+            )}
+          </FormField>
+          <FormField label="Hạn dùng chung">
+            {(field) => (
+              <DatePicker
+                id={field.id}
+                value={value.ends_on ?? ""}
+                onChange={(v) => onChange({ ends_on: v || null })}
+                clearable
+                placeholder="Không giới hạn"
+                clearLabel="Bỏ hạn (vô thời hạn)"
+              />
+            )}
+          </FormField>
         </div>
-      </motion.div>
-    </div>
+        <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+          <span className="text-sm">Hiển thị trong cổng thành viên</span>
+          <Switch
+            checked={value.is_enabled}
+            onCheckedChange={(v) => onChange({ is_enabled: v })}
+            aria-label="Hiển thị trong cổng thành viên"
+          />
+        </label>
+      </section>
+
+      {value.id && onDelete && (
+        <DangerZone
+          title="Xóa quyền lợi này"
+          description="Xóa vĩnh viễn quyền lợi và thu hồi các quyền truy cập đã cấp."
+          confirmDescription="Bấm “Xác nhận xóa” để hoàn tất. Các lượt cấp liên quan cũng bị xóa."
+          actionLabel="Xóa"
+          onConfirm={onDelete}
+        />
+      )}
+    </AdminDrawer>
   );
 }
 
@@ -897,9 +817,9 @@ function GrantMemberRow({
       </div>
       <div className="flex items-center gap-2">
         {active && grant && (
-          <input
+          <AdminInput
             type="date"
-            className="h-9 rounded-xl border border-input bg-background px-2 text-xs shadow-xs"
+            className="h-9 w-auto px-2 text-xs"
             value={grant.ends_on ?? ""}
             onChange={(e) => onEndsOn(grant, e.target.value || null)}
             title="Hạn riêng"
@@ -908,7 +828,7 @@ function GrantMemberRow({
         )}
         <span
           className={`w-16 text-right text-[11px] font-medium ${
-            active ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+            active ? "text-success" : "text-muted-foreground"
           }`}
         >
           {active ? "Đang bật" : "Chưa cấp"}
@@ -940,14 +860,6 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
       return { members: (m.data ?? []) as GrantMember[], grants: (g.data ?? []) as Grant[] };
     },
   });
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   const today = new Date().toISOString().slice(0, 10);
   const grants = data.data?.grants ?? [];
@@ -1014,148 +926,100 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
   const unapproved = filtered.filter((m) => !hasAccess(m));
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/50 p-4 backdrop-blur-sm"
-      onClick={onClose}
+    <AdminModal
+      size="lg"
+      title={`Cấp “${benefit.name}”`}
+      onClose={onClose}
+      bodyClassName="space-y-5"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Cấp ${benefit.name}`}
-        className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl border border-border bg-card p-5 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <BenefitIcon iconKey={benefit.icon_key} size="sm" />
-            <h2 className="truncate font-semibold">Cấp “{benefit.name}”</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            title="Đóng"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+      <div className="flex flex-wrap items-center gap-2.5">
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tên hoặc mã thành viên"
+          label="Tìm kiếm thành viên"
+        />
+        <Select value={dept || "all"} onValueChange={(v) => setDept(v === "all" ? "" : v)}>
+          <SelectTrigger
+            aria-label="Lọc theo Ban"
+            className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2.5">
-          <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-            <Search
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              type="text"
-              className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="Tìm tên hoặc mã thành viên"
-              aria-label="Tìm kiếm thành viên"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            {q && (
-              <button
-                type="button"
-                onClick={() => setQ("")}
-                aria-label="Xóa nội dung tìm kiếm"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-          <Select value={dept || "all"} onValueChange={(v) => setDept(v === "all" ? "" : v)}>
-            <SelectTrigger
-              aria-label="Lọc theo Ban"
-              className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
-            >
-              <SelectValue>
-                <span className="flex items-center gap-2">
-                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>
-                    {dept ? (ACCOUNT_DEPTS.find((d) => d.id === dept)?.name ?? dept) : "Mọi Ban"}
-                  </span>
+            <SelectValue>
+              <span className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>
+                  {dept ? (ACCOUNT_DEPTS.find((d) => d.id === dept)?.name ?? dept) : "Mọi Ban"}
                 </span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="all" className="text-xs">
-                Mọi Ban
+              </span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Mọi Ban
+            </SelectItem>
+            {ACCOUNT_DEPTS.map((d) => (
+              <SelectItem key={d.id} value={d.id} className="text-xs">
+                {d.name}
               </SelectItem>
-              {ACCOUNT_DEPTS.map((d) => (
-                <SelectItem key={d.id} value={d.id} className="text-xs">
-                  {d.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="ml-auto self-center whitespace-nowrap text-xs text-muted-foreground">
-            {filtered.length} thành viên
-          </span>
-        </div>
-
-        <div className="custom-scrollbar mt-3 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
-          <section className="space-y-2">
-            <div className="flex items-center gap-2 px-1">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <h3 className="text-sm font-bold text-foreground">Đã cấp quyền lợi</h3>
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                {granted.length} thành viên
-              </span>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-              <ul className="divide-y divide-border/60">
-                {granted.map((m) => (
-                  <GrantMemberRow
-                    key={m.id}
-                    member={m}
-                    active
-                    grant={overrideOf(m.id)}
-                    onToggle={(v) => void toggleAccess(m, v)}
-                    onEndsOn={(g, ends) => void setEndsOn(m, g, ends)}
-                  />
-                ))}
-                {granted.length === 0 && (
-                  <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    Chưa có thành viên nào được cấp quyền lợi này.
-                  </li>
-                )}
-              </ul>
-            </div>
-          </section>
-
-          <section className="space-y-2">
-            <div className="flex items-center gap-2 px-1">
-              <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
-              <h3 className="text-sm font-bold text-foreground">Chưa cấp quyền lợi</h3>
-              <span className="rounded-full bg-secondary px-2 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
-                {unapproved.length} thành viên
-              </span>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-              <ul className="divide-y divide-border/60">
-                {unapproved.map((m) => (
-                  <GrantMemberRow
-                    key={m.id}
-                    member={m}
-                    active={false}
-                    grant={overrideOf(m.id)}
-                    onToggle={(v) => void toggleAccess(m, v)}
-                    onEndsOn={(g, ends) => void setEndsOn(m, g, ends)}
-                  />
-                ))}
-                {unapproved.length === 0 && (
-                  <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    Tất cả thành viên trong danh sách đều đã được cấp quyền.
-                  </li>
-                )}
-              </ul>
-            </div>
-          </section>
-        </div>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="ml-auto self-center whitespace-nowrap text-xs text-muted-foreground">
+          {filtered.length} thành viên
+        </span>
       </div>
-    </div>
+
+      <section className="space-y-2">
+        <div className="flex items-center gap-2 px-1">
+          <h3 className="text-sm font-bold text-foreground">Đã cấp quyền lợi</h3>
+          <StatusPill tone="success">{granted.length} thành viên</StatusPill>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          <ul className="divide-y divide-border/60">
+            {granted.map((m) => (
+              <GrantMemberRow
+                key={m.id}
+                member={m}
+                active
+                grant={overrideOf(m.id)}
+                onToggle={(v) => void toggleAccess(m, v)}
+                onEndsOn={(g, ends) => void setEndsOn(m, g, ends)}
+              />
+            ))}
+            {granted.length === 0 && (
+              <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                Chưa có thành viên nào được cấp quyền lợi này.
+              </li>
+            )}
+          </ul>
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <div className="flex items-center gap-2 px-1">
+          <h3 className="text-sm font-bold text-foreground">Chưa cấp quyền lợi</h3>
+          <StatusPill tone="neutral">{unapproved.length} thành viên</StatusPill>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          <ul className="divide-y divide-border/60">
+            {unapproved.map((m) => (
+              <GrantMemberRow
+                key={m.id}
+                member={m}
+                active={false}
+                grant={overrideOf(m.id)}
+                onToggle={(v) => void toggleAccess(m, v)}
+                onEndsOn={(g, ends) => void setEndsOn(m, g, ends)}
+              />
+            ))}
+            {unapproved.length === 0 && (
+              <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                Tất cả thành viên trong danh sách đều đã được cấp quyền.
+              </li>
+            )}
+          </ul>
+        </div>
+      </section>
+    </AdminModal>
   );
 }
