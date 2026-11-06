@@ -39,11 +39,11 @@ export const extractCertificate = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
+    const { data: allowed, error: permError } = await context.supabase.rpc("has_perm", {
+      _action: "certificates.ai",
     });
-    if (!isAdmin) throw new Error("Chỉ Quản trị viên được dùng AI đọc chứng nhận.");
+    if (permError) throw new Error(permError.message);
+    if (allowed !== true) throw new Error("Bạn không có quyền dùng AI đọc chứng nhận.");
     const { runResponsesText } = await import("./ai/responses.server");
     const instructions = `Bạn đọc ảnh/PDF giấy chứng nhận (có thể tiếng Việt, tiếng Trung giản/phồn thể, tiếng Anh hoặc song ngữ).
 Chỉ trích xuất thông tin THẬT SỰ in trên tài liệu; trường nào không thấy để chuỗi rỗng, tuyệt đối không bịa.

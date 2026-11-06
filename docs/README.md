@@ -205,6 +205,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-161-CERTIFICATES-USE-ADMIN-KIT`                               | Trang Chứng nhận dùng bộ component admin                                                               | 2026-11-06     | **PASS** | [task-ge-161-certificates-use-admin-kit.md](tasks/task-ge-161-certificates-use-admin-kit.md)                                                             |
 | `TASK-OC-158-PERMISSIONS-RECRUITMENT-BENEFITS`                         | Phân quyền: Tuyển dụng + Quyền lợi sang has_perm, khóa cột hồ sơ ứng viên (mig 0054)                   | 2026-11-06     | **PASS** | [task-oc-158-permissions-recruitment-benefits.md](tasks/task-oc-158-permissions-recruitment-benefits.md)                                                 |
 | `TASK-GE-162-BENEFITS-USE-ADMIN-KIT`                                   | Trang Quyền lợi dùng bộ component admin                                                                | 2026-11-07     | **PASS** | [task-ge-162-benefits-use-admin-kit.md](tasks/task-ge-162-benefits-use-admin-kit.md)                                                                     |
+| `TASK-OC-159-PERMISSIONS-COURSES-ACADEMIC`                             | Phân quyền: Khóa học + Học thuật sang has_perm, khóa cột đơn đăng ký (mig 0055)                        | 2026-11-07     | **PASS** | [task-oc-159-permissions-courses-academic.md](tasks/task-oc-159-permissions-courses-academic.md)                                                         |
 
 ---
 
