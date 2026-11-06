@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Camera, Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -122,7 +121,7 @@ export function AvatarCropDialog({ src, saving = false, onCancel, onConfirm }: P
 
   const view = dims(zoom);
 
-  return createPortal(
+  return (
     <div
       role="dialog"
       aria-modal="true"
@@ -268,7 +267,6 @@ export function AvatarCropDialog({ src, saving = false, onCancel, onConfirm }: P
           </Button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }

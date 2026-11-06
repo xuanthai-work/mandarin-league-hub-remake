@@ -1,4 +1,3 @@
-import { createPortal } from "react-dom";
 import { Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,7 +15,7 @@ type Props = {
  * one-off gold styling, so the frame and actions match the rest of the site.
  */
 export function AvatarLightbox({ src, name, initial, onChange, onClose }: Props) {
-  return createPortal(
+  return (
     <div
       role="dialog"
       aria-modal="true"
@@ -75,7 +74,6 @@ export function AvatarLightbox({ src, name, initial, onChange, onClose }: Props)
           Đóng
         </Button>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
