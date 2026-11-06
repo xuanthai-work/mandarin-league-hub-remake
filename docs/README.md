@@ -176,6 +176,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-148-MEMBERS-DEPT-LINK-AND-CSV`                                | Thành viên: lọc Ban qua ?dept=, Xuất CSV theo bộ lọc (Admin)                                           | 2026-11-06     | **PASS** | [task-oc-148-members-dept-link-and-csv.md](tasks/task-oc-148-members-dept-link-and-csv.md)                                                               |
 | `TASK-GE-142-SETTINGS-FOR-EVERY-MEMBER`                                | Mở Hệ thống > Cài đặt cho mọi thành viên có tài khoản đang hoạt động                                   | 2026-11-06     | **PASS** | [task-ge-142-settings-for-every-member.md](tasks/task-ge-142-settings-for-every-member.md)                                                               |
 | `TASK-OC-149-DEPARTMENTS-STRUCTURE-PAGE`                               | Màn Ban thành Cơ cấu Ban: 8 thẻ, drawer kênh làm việc và cố vấn                                        | 2026-11-06     | **PASS** | [task-oc-149-departments-structure-page.md](tasks/task-oc-149-departments-structure-page.md)                                                             |
+| `TASK-GE-143-MEMBER-PORTAL-CARD-ONLY`                                  | Cổng thành viên chỉ còn thẻ, mặt sau thành mã bảo an (QR, mã vạch)                                     | 2026-11-06     | **PASS** | [task-ge-143-member-portal-card-only.md](tasks/task-ge-143-member-portal-card-only.md)                                                                   |
 
 ---
 
