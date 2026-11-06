@@ -180,4 +180,23 @@ describe("AdminDrawer", () => {
 
     document.body.removeChild(trigger);
   });
+
+  it("prevents closing via close button, overlay click, or Escape when dismissible={false}", () => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <AdminDrawer title="Non-dismissible Drawer" dismissible={false} onClose={onClose}>
+        Body
+      </AdminDrawer>,
+    );
+
+    const closeBtn = screen.getByRole("button", { name: "Đóng" });
+    expect(closeBtn).toBeDisabled();
+
+    const overlay = container.querySelector('[data-slot="drawer-overlay"]')!;
+    fireEvent.click(overlay);
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });

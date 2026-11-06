@@ -195,6 +195,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-155-NEWS-EDITOR-USE-ADMIN-KIT`                                | Trang soạn bài Tin tức dùng bộ component admin + SegmentedControl                                      | 2026-11-06     | **PASS** | [task-ge-155-news-editor-use-admin-kit.md](tasks/task-ge-155-news-editor-use-admin-kit.md)                                                               |
 | `TASK-GE-156-TEACHERS-USE-ADMIN-KIT`                                   | Trang Giảng viên dùng bộ component admin                                                               | 2026-11-06     | **PASS** | [task-ge-156-teachers-use-admin-kit.md](tasks/task-ge-156-teachers-use-admin-kit.md)                                                                     |
 | `TASK-OC-154-PERMISSION-FOUNDATION`                                    | Nền tảng phân quyền: ma trận Ban × Chức vụ, quyền riêng, has_perm (mig 0050)                           | 2026-11-06     | **PASS** | [task-oc-154-permission-foundation.md](tasks/task-oc-154-permission-foundation.md)                                                                       |
+| `TASK-GE-157-PHOTOS-USE-ADMIN-KIT`                                     | Trang Ảnh dùng bộ component admin + AdminDrawer dismissible                                            | 2026-11-06     | **PASS** | [task-ge-157-photos-use-admin-kit.md](tasks/task-ge-157-photos-use-admin-kit.md)                                                                         |
 
 ---
 

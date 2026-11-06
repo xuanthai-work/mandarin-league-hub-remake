@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import {
   DndContext,
   MouseSensor,
@@ -26,15 +26,21 @@ import {
   Loader2,
   LogOut,
   RefreshCw,
-  Trash2,
   Upload,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminInput } from "@/components/admin/kit/AdminInput";
+import { DangerZone } from "@/components/admin/kit/DangerZone";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { FormField } from "@/components/admin/kit/FormField";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
 import {
   deletePhoto,
   listAllPhotos,
@@ -252,10 +258,10 @@ function AdminPhotos() {
     return (
       <div className="mx-auto max-w-md p-10 text-center">
         <p>Tài khoản này không có quyền quản trị.</p>
-        <button onClick={signOut} className="mt-4 text-primary underline">
+        <Button variant="link" onClick={signOut} className="mt-4">
           <LogOut className="mr-1 inline h-4 w-4" />
           Đăng xuất
-        </button>
+        </Button>
       </div>
     );
 
@@ -274,15 +280,16 @@ function AdminPhotos() {
       <AdminPageHeader
         title="Hình ảnh"
         actions={
-          <button
+          <Button
             type="button"
+            size="admin"
             onClick={() => fileInputRef.current?.click()}
             aria-label="Tải ảnh lên"
             title="Tải ảnh lên"
           >
             <Upload className="h-4 w-4" />
             Tải ảnh lên
-          </button>
+          </Button>
         }
       />
 
@@ -308,33 +315,16 @@ function AdminPhotos() {
             : "Chọn Tất cả để kéo thả đổi thứ tự."}
         </p>
 
-        <div className="inline-flex w-full rounded-xl bg-muted p-1 text-xs font-medium sm:w-auto">
-          {(
-            [
-              { key: "all", label: "Tất cả", count: total },
-              { key: "visible", label: "Đang hiện", count: visibleCount },
-              { key: "hidden", label: "Đang ẩn", count: hiddenCount },
-            ] as const
-          ).map(({ key, label, count }) => {
-            const isActive = filter === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => setFilter(key)}
-                className={`inline-flex h-8 flex-1 items-center justify-center rounded-lg px-3 py-1 transition-colors sm:flex-none ${
-                  isActive
-                    ? "bg-card font-semibold text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span>{label}</span>
-                <span className="ml-1 tabular-nums opacity-60">{count}</span>
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          label="Lọc ảnh theo trạng thái"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: "all", label: `Tất cả (${total})` },
+            { value: "visible", label: `Đang hiện (${visibleCount})` },
+            { value: "hidden", label: `Đang ẩn (${hiddenCount})` },
+          ]}
+        />
       </div>
 
       {/* Trạng thái đang tải */}
@@ -351,6 +341,7 @@ function AdminPhotos() {
 
       {/* Danh sách rỗng hoàn toàn */}
       {!photos.isLoading && list.length === 0 && pending.length === 0 && (
+        // eslint-disable-next-line no-restricted-syntax -- vùng kéo thả phủ cả khối, Button của kit không hợp
         <button
           type="button"
           disabled={busy}
@@ -381,9 +372,11 @@ function AdminPhotos() {
         list.length > 0 &&
         filteredList.length === 0 &&
         pending.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-            {filter === "visible" ? "Không có ảnh nào đang hiện." : "Không có ảnh nào đang ẩn."}
-          </div>
+          <EmptyState
+            title={
+              filter === "visible" ? "Không có ảnh nào đang hiện." : "Không có ảnh nào đang ẩn."
+            }
+          />
         )}
 
       {/* Lưới thẻ ảnh */}
@@ -457,13 +450,14 @@ function AdminPhotos() {
                         <p className="line-clamp-2 text-[11px] font-medium text-destructive">
                           {item.error}
                         </p>
-                        <button
+                        <Button
                           type="button"
+                          variant="link"
+                          className="mt-1 h-auto p-0 text-xs text-destructive hover:text-destructive/80"
                           onClick={() => dismissPending(item.key)}
-                          className="mt-1 text-xs font-semibold text-destructive underline hover:text-destructive/80"
                         >
                           Bỏ
-                        </button>
+                        </Button>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center rounded-lg bg-card/85 px-2.5 py-1.5 shadow-xs backdrop-blur-sm">
@@ -483,6 +477,7 @@ function AdminPhotos() {
 
             {/* Ô kéo thả tải ảnh cuối lưới (chỉ hiện khi filter === "all") */}
             {filter === "all" && (
+              // eslint-disable-next-line no-restricted-syntax -- vùng kéo thả phủ cả khối, Button của kit không hợp
               <button
                 type="button"
                 disabled={busy}
@@ -591,6 +586,7 @@ function PhotoCard({
         }`}
       >
         {/* Nút chính phủ toàn bộ ảnh để mở drawer */}
+        {/* eslint-disable-next-line no-restricted-syntax -- nút phủ toàn ảnh để mở drawer, Button của kit không hợp */}
         <button
           type="button"
           onClick={() => onOpen(photo.id)}
@@ -646,8 +642,10 @@ function PhotoCard({
         )}
 
         {/* Nút ẩn/hiện nhanh góc trên-phải (anh em sibling với nút mở drawer) */}
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="admin-icon"
           disabled={busy}
           aria-label={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
           title={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
@@ -657,7 +655,7 @@ function PhotoCard({
             e.stopPropagation();
             onToggle(photo);
           }}
-          className={`absolute right-1.5 top-1.5 z-10 grid h-7 w-7 place-items-center rounded-full border border-border/60 bg-card/90 text-foreground shadow-xs backdrop-blur-sm transition-opacity hover:bg-card focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
+          className={`absolute right-1.5 top-1.5 z-10 h-7 w-7 rounded-full bg-card/90 backdrop-blur-sm transition-opacity sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
             isDragging ? "invisible pointer-events-none" : ""
           }`}
         >
@@ -666,7 +664,7 @@ function PhotoCard({
           ) : (
             <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           )}
-        </button>
+        </Button>
       </div>
 
       {/* Chú thích dưới ảnh */}
@@ -707,262 +705,193 @@ function PhotoDrawer({
   onDelete: (photo: ActivityPhoto) => Promise<void>;
 }) {
   const [caption, setCaption] = useState(photo.caption);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const replaceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setCaption(photo.caption);
-    setConfirmDelete(false);
-  }, [photo.id, photo.caption]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented && !busy) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, busy]);
+  }, [photo.caption]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/20 backdrop-blur-xs"
-        onClick={() => !busy && onClose()}
-      />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Ảnh #${index + 1}`}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="relative z-10 flex h-full w-full max-w-[560px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        {/* Header */}
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-6">
-          <div className="flex min-w-0 items-start gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
-              <ImageIcon className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-foreground">Ảnh #{index + 1}</h2>
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span
-                  className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                    photo.visible
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {photo.visible ? "Đang hiện" : "Đang ẩn"}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Vị trí {index + 1} / {total}
-                </span>
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onClose}
-            aria-label="Đóng"
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
-          >
-            <X className="h-5 w-5" />
-          </button>
+    <AdminDrawer
+      title={`Ảnh #${index + 1}`}
+      leading={
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
+          <ImageIcon className="h-5 w-5" />
+        </span>
+      }
+      subtitle={
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill tone={photo.visible ? "success" : "neutral"}>
+            {photo.visible ? "Đang hiện" : "Đang ẩn"}
+          </StatusPill>
+          <span className="text-xs text-muted-foreground">
+            Vị trí {index + 1} / {total}
+          </span>
         </div>
-
-        {/* Nội dung cuộn */}
-        <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
-          {/* 1. Ảnh lớn */}
-          <div className="space-y-2.5">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border/70 bg-muted">
-              {photo.url ? (
-                <img
-                  src={photo.url}
-                  alt={photo.alt_text || photo.caption}
-                  className={`h-full w-full object-cover ${
-                    photo.visible ? "" : "grayscale opacity-60"
-                  }`}
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-                  <ImageOff className="h-10 w-10" />
-                </div>
-              )}
-            </div>
-
-            <div>
-              <input
-                ref={replaceInputRef}
-                type="file"
-                accept="image/*"
-                hidden
-                disabled={busy}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  e.target.value = "";
-                  if (file) {
-                    if (!file.type.startsWith("image/")) {
-                      toast.error("Vui lòng chọn tệp hình ảnh.");
-                      return;
-                    }
-                    onReplace(photo, file);
-                  }
-                }}
-              />
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => replaceInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-50"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Thay ảnh
-              </button>
-            </div>
-          </div>
-
-          {/* 2. Chú thích */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Chú thích</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                maxLength={200}
-                disabled={busy}
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && caption.trim() !== (photo.caption ?? "").trim()) {
-                    e.preventDefault();
-                    onUpdateCaption(photo.id, caption.trim());
-                  }
-                }}
-                placeholder="Nhập chú thích cho ảnh…"
-                className="h-9 flex-1 rounded-xl border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
-              />
-              <button
-                type="button"
-                disabled={busy || caption.trim() === (photo.caption ?? "").trim()}
-                onClick={() => onUpdateCaption(photo.id, caption.trim())}
-                className="rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Lưu
-              </button>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Hiện dưới ảnh trên trang chủ và dùng làm mô tả cho trình đọc màn hình.
-            </p>
-          </div>
-
-          {/* 3. Hiển thị */}
-          <div className="flex items-center justify-between rounded-xl border border-border/70 bg-card p-3">
-            <div>
-              <p className="text-xs font-semibold text-foreground">Hiện trên trang chủ</p>
-              <p className="text-[11px] text-muted-foreground">
-                Tắt để tạm ẩn ảnh khỏi trang chủ mà không cần xóa.
-              </p>
-            </div>
-            <Switch
-              disabled={busy}
-              checked={photo.visible}
-              onCheckedChange={(checked) => onToggleVisible(photo, checked)}
+      }
+      onClose={onClose}
+      dismissible={!busy}
+    >
+      {/* 1. Ảnh lớn */}
+      <div className="space-y-2.5">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border/70 bg-muted">
+          {photo.url ? (
+            <img
+              src={photo.url}
+              alt={photo.alt_text || photo.caption}
+              className={`h-full w-full object-cover ${
+                photo.visible ? "" : "grayscale opacity-60"
+              }`}
             />
-          </div>
-
-          {/* 4. Vị trí */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Vị trí trong danh sách</label>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                disabled={reorderLocked || index === 0}
-                onClick={() => onMoveTo(photo.id, 0)}
-                className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronsUp className="h-3.5 w-3.5" />
-                Lên đầu
-              </button>
-              <button
-                type="button"
-                disabled={reorderLocked || index === 0}
-                onClick={() => onMoveTo(photo.id, index - 1)}
-                className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ArrowUp className="h-3.5 w-3.5" />
-                Lên
-              </button>
-              <button
-                type="button"
-                disabled={reorderLocked || index === total - 1}
-                onClick={() => onMoveTo(photo.id, index + 1)}
-                className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ArrowDown className="h-3.5 w-3.5" />
-                Xuống
-              </button>
-              <button
-                type="button"
-                disabled={reorderLocked || index === total - 1}
-                onClick={() => onMoveTo(photo.id, total - 1)}
-                className="inline-flex items-center gap-1 rounded-xl border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronsDown className="h-3.5 w-3.5" />
-                Xuống cuối
-              </button>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+              <ImageOff className="h-10 w-10" />
             </div>
-          </div>
-
-          {/* 5. Danger zone xóa ảnh */}
-          <section className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-            <div className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-4 w-4" />
-              <span className="text-xs font-semibold uppercase tracking-wide">Xóa ảnh</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Ảnh sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không khôi phục được. Muốn tạm gỡ khỏi
-              trang chủ, hãy tắt Hiện trên trang chủ.
-            </p>
-            {confirmDelete ? (
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onDelete(photo)}
-                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-destructive px-4 text-xs font-semibold text-white transition-colors hover:bg-destructive/90 disabled:opacity-50"
-                >
-                  Xác nhận xóa vĩnh viễn
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setConfirmDelete(false)}
-                  className="h-9 cursor-pointer rounded-xl border border-border px-4 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
-                >
-                  Thôi
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setConfirmDelete(true)}
-                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-destructive/40 px-4 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Xóa ảnh
-              </button>
-            )}
-          </section>
+          )}
         </div>
-      </motion.div>
-    </div>
+
+        <div>
+          <input
+            ref={replaceInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            disabled={busy}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) {
+                if (!file.type.startsWith("image/")) {
+                  toast.error("Vui lòng chọn tệp hình ảnh.");
+                  return;
+                }
+                onReplace(photo, file);
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-sm"
+            disabled={busy}
+            onClick={() => replaceInputRef.current?.click()}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Thay ảnh
+          </Button>
+        </div>
+      </div>
+
+      {/* 2. Chú thích */}
+      <FormField
+        label="Chú thích"
+        hint="Hiện dưới ảnh trên trang chủ và dùng làm mô tả cho trình đọc màn hình."
+      >
+        {(field) => (
+          <div className="flex gap-2">
+            <AdminInput
+              {...field}
+              maxLength={200}
+              disabled={busy}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && caption.trim() !== (photo.caption ?? "").trim()) {
+                  e.preventDefault();
+                  onUpdateCaption(photo.id, caption.trim());
+                }
+              }}
+              placeholder="Nhập chú thích cho ảnh…"
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              size="admin"
+              disabled={busy || caption.trim() === (photo.caption ?? "").trim()}
+              onClick={() => onUpdateCaption(photo.id, caption.trim())}
+            >
+              Lưu
+            </Button>
+          </div>
+        )}
+      </FormField>
+
+      {/* 3. Hiển thị */}
+      <div className="flex items-center justify-between rounded-xl border border-border/70 bg-card p-3">
+        <div>
+          <p className="text-xs font-semibold text-foreground">Hiện trên trang chủ</p>
+          <p className="text-[11px] text-muted-foreground">
+            Tắt để tạm ẩn ảnh khỏi trang chủ mà không cần xóa.
+          </p>
+        </div>
+        <Switch
+          aria-label="Hiện trên trang chủ"
+          disabled={busy}
+          checked={photo.visible}
+          onCheckedChange={(checked) => onToggleVisible(photo, checked)}
+        />
+      </div>
+
+      {/* 4. Vị trí */}
+      <div className="space-y-1.5">
+        <p className="text-xs font-semibold text-foreground">Vị trí trong danh sách</p>
+        <div
+          role="group"
+          aria-label="Vị trí trong danh sách"
+          className="flex flex-wrap items-center gap-2"
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-sm"
+            disabled={reorderLocked || index === 0}
+            onClick={() => onMoveTo(photo.id, 0)}
+          >
+            <ChevronsUp className="h-3.5 w-3.5" />
+            Lên đầu
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-sm"
+            disabled={reorderLocked || index === 0}
+            onClick={() => onMoveTo(photo.id, index - 1)}
+          >
+            <ArrowUp className="h-3.5 w-3.5" />
+            Lên
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-sm"
+            disabled={reorderLocked || index === total - 1}
+            onClick={() => onMoveTo(photo.id, index + 1)}
+          >
+            <ArrowDown className="h-3.5 w-3.5" />
+            Xuống
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-sm"
+            disabled={reorderLocked || index === total - 1}
+            onClick={() => onMoveTo(photo.id, total - 1)}
+          >
+            <ChevronsDown className="h-3.5 w-3.5" />
+            Xuống cuối
+          </Button>
+        </div>
+      </div>
+
+      {/* 5. Danger zone xóa ảnh */}
+      <DangerZone
+        title="Xóa ảnh"
+        description="Ảnh sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không khôi phục được. Muốn tạm gỡ khỏi trang chủ, hãy tắt Hiện trên trang chủ."
+        confirmLabel="Xác nhận xóa vĩnh viễn"
+        actionLabel="Xóa ảnh"
+        onConfirm={() => void onDelete(photo)}
+        disabled={busy}
+      />
+    </AdminDrawer>
   );
 }

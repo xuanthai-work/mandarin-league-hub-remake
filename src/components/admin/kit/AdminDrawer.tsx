@@ -20,6 +20,8 @@ type AdminDrawerProps = {
   /** sm = 480px, md = 560px (mặc định), lg = 640px. */
   width?: "sm" | "md" | "lg";
   onClose: () => void;
+  /** false khi đang xử lý: lớp phủ, nút X và Esc đều không đóng được. Mặc định true. */
+  dismissible?: boolean;
   /** Thanh dưới cùng, thường là nút lưu <Button size="admin-lg">. */
   footer?: ReactNode;
   /** Có thì phần thân + footer được bọc trong <form onSubmit>, để nút type="submit" ở footer hoạt động. */
@@ -54,13 +56,14 @@ export function AdminDrawer({
   leading,
   width = "md",
   onClose,
+  dismissible = true,
   footer,
   onSubmit,
   bodyClassName = "space-y-6",
   children,
 }: AdminDrawerProps) {
   const titleId = useId();
-  const panelRef = useAdminDialog(onClose);
+  const panelRef = useAdminDialog(onClose, dismissible);
 
   const content = (
     <>
@@ -87,7 +90,7 @@ export function AdminDrawer({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
         className="fixed inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={dismissible ? onClose : undefined}
       />
       <motion.div
         ref={panelRef}
@@ -119,6 +122,7 @@ export function AdminDrawer({
             variant="ghost"
             size="admin-icon"
             onClick={onClose}
+            disabled={!dismissible}
             aria-label="Đóng"
             title="Đóng (Esc)"
             className="shrink-0 text-muted-foreground"
