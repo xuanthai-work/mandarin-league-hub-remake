@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 /**
  * Admin styles:
  * - admin: nút thanh công cụ, nút phụ; admin-lg: nút lưu chính ở chân drawer/modal.
+ * - admin-sm: nút nhỏ trên từng dòng của danh sách hoặc bảng.
  * - admin-icon: nút chỉ có icon (bắt buộc aria-label); destructive-outline: nút xóa viền đỏ.
  */
 const buttonVariants = cva(
@@ -31,6 +32,7 @@ const buttonVariants = cva(
         icon: "h-9 w-9",
         "icon-sm": "h-8 w-8",
         admin: "h-9 rounded-xl px-4 text-xs font-semibold",
+        "admin-sm": "h-8 rounded-lg px-3 text-xs font-semibold",
         "admin-lg": "h-10 rounded-xl px-5 text-sm font-semibold",
         "admin-icon": "h-8 w-8 rounded-lg",
       },

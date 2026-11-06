@@ -191,6 +191,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-151-ADMIN-KIT-FORM-FIELD`                                     | Bộ component admin A5a: FormField, AdminInput, chuyển useConfirm                                       | 2026-11-06     | **PASS** | [task-ge-151-admin-kit-form-field.md](tasks/task-ge-151-admin-kit-form-field.md)                                                                         |
 | `TASK-GE-152-ADMIN-KIT-MODAL`                                          | Bộ component admin A5b: AdminModal + ngăn xếp Esc dùng chung                                           | 2026-11-06     | **PASS** | [task-ge-152-admin-kit-modal.md](tasks/task-ge-152-admin-kit-modal.md)                                                                                   |
 | `TASK-GE-153-ADMIN-KIT-LINT-RATCHET`                                   | Bộ component admin A6: luật ESLint siết dần + form Đối tác                                             | 2026-11-06     | **PASS** | [task-ge-153-admin-kit-lint-ratchet.md](tasks/task-ge-153-admin-kit-lint-ratchet.md)                                                                     |
+| `TASK-GE-154-NEWS-USE-ADMIN-KIT`                                       | Trang Tin tức dùng bộ component admin + StatFilterCard, nút admin-sm                                   | 2026-11-06     | **PASS** | [task-ge-154-news-use-admin-kit.md](tasks/task-ge-154-news-use-admin-kit.md)                                                                             |
 
 ---
 

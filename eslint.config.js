@@ -10,6 +10,7 @@ import tseslint from "typescript-eslint";
 const ADMIN_KIT_FILES = [
   "src/routes/_authenticated/admin.partners.tsx",
   "src/components/admin/partners/**/*.tsx",
+  "src/routes/_authenticated/admin.news.tsx",
 ];
 
 export default tseslint.config(

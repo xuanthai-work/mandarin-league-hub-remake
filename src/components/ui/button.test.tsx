@@ -23,6 +23,16 @@ describe("Button variants and sizes", () => {
     expect(cls).not.toContain("text-sm");
   });
 
+  it("applies size='admin-sm' with h-8, rounded-lg, text-xs and without rounded-md", () => {
+    render(<Button size="admin-sm">Edit</Button>);
+    const btn = screen.getByRole("button", { name: "Edit" });
+    const cls = btn.className.split(/\s+/);
+    expect(cls).toContain("h-8");
+    expect(cls).toContain("rounded-lg");
+    expect(cls).toContain("text-xs");
+    expect(cls).not.toContain("rounded-md");
+  });
+
   it("applies size='admin-icon' with h-8, w-8, rounded-lg and without rounded-md", () => {
     render(<Button size="admin-icon" aria-label="Close" />);
     const btn = screen.getByRole("button", { name: "Close" });

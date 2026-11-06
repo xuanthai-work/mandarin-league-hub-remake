@@ -12,9 +12,7 @@ import {
   PencilLine,
   Pin,
   Plus,
-  Search,
   Trash2,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,8 +27,14 @@ import {
 import { canReviewNews } from "@/lib/admin-permissions";
 import { matchesSearch } from "@/lib/search";
 import { useAdminAccess } from "./admin";
-import { TrashList, useConfirm } from "@/components/admin/Trash";
+import { TrashList } from "@/components/admin/Trash";
+import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { StatusPill, type StatusTone } from "@/components/admin/kit/StatusPill";
+import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
 import {
   Select,
   SelectContent,
@@ -54,12 +58,12 @@ export const Route = createFileRoute("/_authenticated/admin/news")({
   component: NewsAdmin,
 });
 
-const TONE: Record<NewsStatus, string> = {
-  draft: "bg-secondary text-secondary-foreground",
-  pending_review: "bg-gold/20 text-primary-deep",
-  needs_revision: "bg-destructive/15 text-destructive",
-  published: "bg-primary/15 text-primary",
-  archived: "bg-muted text-muted-foreground",
+const STATUS_TONE: Record<NewsStatus, StatusTone> = {
+  draft: "neutral",
+  pending_review: "gold",
+  needs_revision: "danger",
+  published: "info",
+  archived: "neutral",
 };
 
 function NewsAdmin() {
@@ -191,80 +195,42 @@ function NewsAdmin() {
             : "Soạn bài, lưu nháp và gửi duyệt. Trưởng/Phó Ban sẽ duyệt trước khi bài được đăng."
         }
         actions={
-          <button
-            type="button"
+          <Button
+            size="admin"
             onClick={() => navigate({ to: "/admin/news/$id", params: { id: "new" } })}
-            className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
           >
-            <Plus className="h-4 w-4" /> Viết bài mới
-          </button>
+            <Plus /> Viết bài mới
+          </Button>
         }
       />
 
       {/* Thẻ số liệu */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {statCards.map((c) => {
-          const Icon = c.icon;
-          const isSelected = !trash && status === c.key;
-          return (
-            <button
-              key={c.key}
-              type="button"
-              aria-pressed={isSelected}
-              onClick={() => {
-                setTrash(false);
-                setStatus((prev) => (prev === c.key ? "" : c.key));
-              }}
-              className={`rounded-2xl border p-4 text-left shadow-2xs transition-all hover:border-primary/40 focus:outline-none ${
-                isSelected
-                  ? "border-primary bg-card ring-2 ring-primary/15"
-                  : c.highlightGold
-                    ? "border-gold/60 bg-card"
-                    : "border-border/70 bg-card"
-              }`}
-            >
-              <div className="flex items-center justify-between text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
-                  {c.highlightGold && (
-                    <span className="inline-block h-2 w-2 rounded-full bg-gold" />
-                  )}
-                </div>
-                <Icon className="h-4 w-4" />
-              </div>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{c.count}</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{c.sub}</p>
-            </button>
-          );
-        })}
+        {statCards.map((c) => (
+          <StatFilterCard
+            key={c.key}
+            label={c.label}
+            value={c.count}
+            hint={c.sub}
+            icon={c.icon}
+            active={!trash && status === c.key}
+            attention={Boolean(c.highlightGold)}
+            onToggle={() => {
+              setTrash(false);
+              setStatus((prev) => (prev === c.key ? "" : c.key));
+            }}
+          />
+        ))}
       </div>
 
       {/* Thanh lọc */}
       <div className="flex flex-wrap items-center gap-2.5">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pr-8 pl-9 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm tiêu đề, tóm tắt, tác giả…"
-            aria-label="Tìm kiếm bài viết"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tiêu đề, tóm tắt, tác giả…"
+          label="Tìm kiếm bài viết"
+        />
 
         <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
           <SelectTrigger
@@ -315,18 +281,17 @@ function NewsAdmin() {
         </Select>
 
         {(reviewer || isAdmin) && (
-          <button
+          <Button
             type="button"
+            size="admin"
+            variant={trash ? "destructive" : "outline"}
+            aria-pressed={trash}
+            className="ml-auto"
             onClick={() => setTrash((prev) => !prev)}
-            className={`ml-auto inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
-              trash
-                ? "border-destructive bg-destructive text-destructive-foreground"
-                : "border-border/70 bg-card text-foreground hover:bg-muted"
-            }`}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 />
             <span>Thùng rác</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -358,40 +323,38 @@ function NewsAdmin() {
           )}
 
           {!list.isLoading && allRows.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border/80 p-10 text-center">
-              <p className="text-sm font-medium text-foreground">Chưa có bài viết nào</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Bắt đầu bằng cách tạo bài viết mới đầu tiên cho câu lạc bộ.
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/admin/news/$id", params: { id: "new" } })}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                Viết bài đầu tiên
-              </button>
-            </div>
+            <EmptyState
+              title="Chưa có bài viết nào"
+              description="Bắt đầu bằng cách tạo bài viết mới đầu tiên cho câu lạc bộ."
+              action={
+                <Button
+                  size="admin"
+                  onClick={() => navigate({ to: "/admin/news/$id", params: { id: "new" } })}
+                >
+                  <Plus /> Viết bài đầu tiên
+                </Button>
+              }
+            />
           )}
 
           {!list.isLoading && allRows.length > 0 && filteredRows.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border/80 p-10 text-center">
-              <p className="text-sm font-medium text-foreground">Không tìm thấy bài viết phù hợp</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Thử thay đổi từ khóa tìm kiếm hoặc bỏ bớt các bộ lọc đang chọn.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setStatus("");
-                  setCategory("");
-                  setQ("");
-                }}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted"
-              >
-                Xóa bộ lọc
-              </button>
-            </div>
+            <EmptyState
+              title="Không tìm thấy bài viết phù hợp"
+              description="Thử thay đổi từ khóa tìm kiếm hoặc bỏ bớt các bộ lọc đang chọn."
+              action={
+                <Button
+                  variant="outline"
+                  size="admin"
+                  onClick={() => {
+                    setStatus("");
+                    setCategory("");
+                    setQ("");
+                  }}
+                >
+                  Xóa bộ lọc
+                </Button>
+              }
+            />
           )}
 
           {!list.isLoading &&
@@ -426,13 +389,9 @@ function NewsAdmin() {
                 {/* Nội dung */}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                        TONE[a.status] ?? TONE.draft
-                      }`}
-                    >
+                    <StatusPill tone={STATUS_TONE[a.status] ?? "neutral"}>
                       {NEWS_STATUS_LABEL[a.status] ?? a.status}
-                    </span>
+                    </StatusPill>
                     <span className="text-xs font-medium text-primary">{a.category}</span>
                     {a.is_featured && (
                       <span title="Đang ghim nổi bật" className="inline-flex items-center">
@@ -464,44 +423,36 @@ function NewsAdmin() {
                 >
                   {/* Nút chính */}
                   {reviewer && a.status === "pending_review" ? (
-                    <button
-                      type="button"
+                    <Button
+                      size="admin-sm"
                       onClick={() => navigate({ to: "/admin/news/$id", params: { id: a.id } })}
-                      className="h-8 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:opacity-90"
                     >
                       Duyệt
-                    </button>
+                    </Button>
                   ) : a.status === "published" ? (
-                    <a
-                      href={`/news/${a.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-3 text-xs font-semibold text-foreground hover:bg-muted"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      <span>Xem trên web</span>
-                    </a>
+                    <Button asChild variant="outline" size="admin-sm">
+                      <a href={`/news/${a.slug}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink />
+                        <span>Xem trên web</span>
+                      </a>
+                    </Button>
                   ) : editable(a) ? (
-                    <button
-                      type="button"
+                    <Button
+                      variant="outline"
+                      size="admin-sm"
                       onClick={() => navigate({ to: "/admin/news/$id", params: { id: a.id } })}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-3 text-xs font-semibold text-foreground hover:bg-muted"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil />
                       <span>Sửa</span>
-                    </button>
+                    </Button>
                   ) : null}
 
                   {/* Menu ⋯ */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label="Thao tác khác"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-1 focus:ring-ring"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
+                      <Button variant="outline" size="admin-icon" aria-label="Thao tác khác">
+                        <MoreHorizontal />
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 rounded-xl">
                       <DropdownMenuItem
