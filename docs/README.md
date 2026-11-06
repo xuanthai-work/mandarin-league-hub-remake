@@ -209,6 +209,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-160-PERMISSIONS-COMMS`                                        | Phân quyền: Truyền thông sang has_perm, khóa xuất bản nội dung (mig 0056)                              | 2026-11-07     | **PASS** | [task-oc-160-permissions-comms.md](tasks/task-oc-160-permissions-comms.md)                                                                               |
 | `TASK-OC-161-ADMIN-MENU-ON-PERMISSIONS`                                | Phân quyền: menu admin và nút trong trang đọc my_permissions                                           | 2026-11-07     | **PASS** | [task-oc-161-admin-menu-on-permissions.md](tasks/task-oc-161-admin-menu-on-permissions.md)                                                               |
 | `TASK-GE-163-CONTRIBUTIONS-USE-ADMIN-KIT`                              | Trang Đóng góp + modal Thưởng/Trừ điểm dùng bộ component admin                                         | 2026-11-07     | **PASS** | [task-ge-163-contributions-use-admin-kit.md](tasks/task-ge-163-contributions-use-admin-kit.md)                                                           |
+| `TASK-OC-162-CONTRIBUTIONS-ON-PERMISSIONS`                             | Phân quyền: trang Điểm đóng góp theo points.adjust / points.attendance                                 | 2026-11-07     | **PASS** | [task-oc-162-contributions-on-permissions.md](tasks/task-oc-162-contributions-on-permissions.md)                                                         |
 
 ---
 

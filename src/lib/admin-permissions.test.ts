@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { MyPermissions } from "./permission-catalog";
 import {
+  canAdjustMember,
   allowedSections,
+  hasAllScope,
   landsOnAdmin,
   onlyPersonalSections,
   withPersonalSections,
@@ -102,5 +104,86 @@ describe("onlyPersonalSections", () => {
   it("is false when the user has module sections or full access", () => {
     expect(onlyPersonalSections(["partners", "settings"])).toBe(false);
     expect(onlyPersonalSections("all")).toBe(false);
+  });
+});
+
+describe("hasAllScope", () => {
+  it("is true for admins and for scope all", () => {
+    expect(hasAllScope(perms({}, true), "points.attendance")).toBe(true);
+    expect(hasAllScope(perms({ "points.attendance": "all" }), "points.attendance")).toBe(true);
+  });
+
+  it("is false for own scope and for a missing permission", () => {
+    expect(hasAllScope(perms({ "points.attendance": "own" }), "points.attendance")).toBe(false);
+    expect(hasAllScope(perms({}), "points.attendance")).toBe(false);
+  });
+});
+
+describe("canAdjustMember", () => {
+  const me = (position: string | null, department: string | null = "hr") => ({
+    department,
+    position,
+  });
+
+  it("lets an admin adjust anyone", () => {
+    const admin = perms({}, true);
+    expect(canAdjustMember(admin, me(null), { department: "comms", position: "Co-founder" })).toBe(
+      true,
+    );
+  });
+
+  it("lets a department head adjust lower positions in the same department only", () => {
+    const head = perms({ "points.adjust": "own" });
+    expect(
+      canAdjustMember(head, me("Trưởng Ban"), { department: "hr", position: "Thành viên" }),
+    ).toBe(true);
+    expect(canAdjustMember(head, me("Trưởng Ban"), { department: "hr", position: "Phó Ban" })).toBe(
+      true,
+    );
+    expect(
+      canAdjustMember(head, me("Trưởng Ban"), { department: "hr", position: "Trưởng Ban" }),
+    ).toBe(false);
+    expect(
+      canAdjustMember(head, me("Trưởng Ban"), { department: "comms", position: "Thành viên" }),
+    ).toBe(false);
+  });
+
+  it("treats a null target position as Thành viên", () => {
+    const head = perms({ "points.adjust": "own" });
+    expect(canAdjustMember(head, me("Trưởng Ban"), { department: "hr", position: null })).toBe(
+      true,
+    );
+  });
+
+  it("keeps a deputy head below the head of the same department", () => {
+    const deputy = perms({ "points.adjust": "own" });
+    expect(
+      canAdjustMember(deputy, me("Phó Ban"), { department: "hr", position: "Thành viên" }),
+    ).toBe(true);
+    expect(
+      canAdjustMember(deputy, me("Phó Ban"), { department: "hr", position: "Trưởng Ban" }),
+    ).toBe(false);
+  });
+
+  it("lets an all-scope co-founder adjust a lower head but not another co-founder", () => {
+    const cofounder = perms({ "points.adjust": "all" });
+    expect(
+      canAdjustMember(cofounder, me("Co-founder", "executive"), {
+        department: "comms",
+        position: "Trưởng Ban",
+      }),
+    ).toBe(true);
+    expect(
+      canAdjustMember(cofounder, me("Co-founder", "executive"), {
+        department: "executive",
+        position: "Co-founder",
+      }),
+    ).toBe(false);
+  });
+
+  it("refuses without points.adjust", () => {
+    expect(
+      canAdjustMember(perms({}), me("Trưởng Ban"), { department: "hr", position: "Thành viên" }),
+    ).toBe(false);
   });
 });

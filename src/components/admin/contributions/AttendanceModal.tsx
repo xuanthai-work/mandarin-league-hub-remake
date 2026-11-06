@@ -28,7 +28,7 @@ type MeetingKind = "dept" | "club";
 
 interface AttendanceModalProps {
   members: PointMember[];
-  isAdmin: boolean;
+  allDepts: boolean;
   ownDept: string | null;
   onClose: () => void;
   onDone: () => void;
@@ -68,7 +68,7 @@ const selectClass = "h-9 w-full rounded-xl border-input bg-background text-xs sh
  */
 export function AttendanceModal({
   members,
-  isAdmin,
+  allDepts,
   ownDept,
   onClose,
   onDone,
@@ -96,7 +96,7 @@ export function AttendanceModal({
   const autoReason = useMemo(() => {
     const scope =
       meeting === "club"
-        ? isAdmin
+        ? allDepts
           ? "Họp toàn thể CLB"
           : dept
             ? `Họp toàn thể CLB - Ban ${deptName(dept)}`
@@ -105,7 +105,7 @@ export function AttendanceModal({
           ? `Họp Ban ${deptName(dept)}`
           : "Họp Ban";
     return `Điểm danh ${scope} - ${dmyFromISO(date)}`;
-  }, [meeting, dept, date, isAdmin]);
+  }, [meeting, dept, date, allDepts]);
 
   useEffect(() => {
     if (!reasonTouched) setReason(autoReason);
@@ -124,12 +124,12 @@ export function AttendanceModal({
     };
   }, [busy, onClose]);
 
-  /** Admin + all-club can reach every department; everyone else stays inside their own. */
+  /** Users with organisation-wide attendance rights reach every department; everyone else stays inside their own. */
   const scopeMembers = useMemo(() => {
     const source =
-      meeting === "club" && isAdmin ? members : members.filter((m) => m.department === dept);
+      meeting === "club" && allDepts ? members : members.filter((m) => m.department === dept);
     return [...source].sort((a, b) => a.full_name.localeCompare(b.full_name));
-  }, [members, meeting, isAdmin, dept]);
+  }, [members, meeting, allDepts, dept]);
 
   const pool = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -339,7 +339,7 @@ export function AttendanceModal({
 
             <div className="space-y-1.5">
               <span className={labelClass}>Ban điểm danh</span>
-              {isAdmin && meeting === "dept" ? (
+              {allDepts && meeting === "dept" ? (
                 <Select
                   value={dept || "none"}
                   onValueChange={(value) => {
@@ -360,20 +360,20 @@ export function AttendanceModal({
                 </Select>
               ) : (
                 <div className="rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs font-medium text-foreground">
-                  {meeting === "club" && isAdmin
+                  {meeting === "club" && allDepts
                     ? "Toàn bộ thành viên đang hoạt động"
                     : dept
                       ? deptName(dept)
                       : "Chưa xác định Ban"}
                 </div>
               )}
-              {!isAdmin && (
+              {!allDepts && (
                 <p className="text-[10px] leading-relaxed text-muted-foreground">
                   Bạn chỉ có thể ghi nhận điểm danh cho{" "}
                   {ownDept ? `Ban ${deptName(ownDept)}` : "Ban của mình"}.
                 </p>
               )}
-              {!isAdmin && meeting === "club" && (
+              {!allDepts && meeting === "club" && (
                 <p className="rounded-lg bg-warning-soft px-2.5 py-1.5 text-[10px] leading-relaxed text-warning-foreground">
                   Họp toàn thể: danh sách chỉ gồm thành viên Ban của bạn. Quản trị viên ghi nhận cho
                   các Ban còn lại.

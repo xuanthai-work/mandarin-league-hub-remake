@@ -135,7 +135,7 @@ export function useAdminAccess() {
           account_status: string;
           must_change_password: boolean;
         } | null;
-        member: { department: string; full_name: string } | null;
+        member: { department: string; full_name: string; position: string | null } | null;
       };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
@@ -148,6 +148,7 @@ export function useAdminAccess() {
         name: blocked ? "" : (me.member?.full_name ?? ""),
         roles,
         department,
+        position: blocked ? null : (me.member?.position ?? null),
         allowed,
         perms,
         hasAccount: !!me.account,

@@ -22,6 +22,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
+import { canAdjustMember, hasAllScope } from "@/lib/admin-permissions";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({
@@ -37,8 +39,18 @@ const LEDGER_LIMIT = 500;
 function PointsPage() {
   const qc = useQueryClient();
   const access = useAdminAccess();
-  const isAdmin = access.data?.roles.includes("admin") ?? false;
-  const ownDept = access.data?.department ?? null;
+  const perms = access.data?.perms ?? NO_PERMISSIONS;
+  const me = useMemo(
+    () => ({
+      department: access.data?.department ?? null,
+      position: access.data?.position ?? null,
+    }),
+    [access.data?.department, access.data?.position],
+  );
+  const canAttend = can(perms, "points.attendance");
+  const attendAllDepts = hasAllScope(perms, "points.attendance");
+  const canAdjust = can(perms, "points.adjust");
+  const ownDept = me.department;
 
   const members = useQuery({
     queryKey: ["points-members"],
@@ -124,21 +136,29 @@ function PointsPage() {
     return memberList.filter((m) => m.status === "active" && ids.has(m.id));
   }, [memberList, activeAccountIds.data]);
 
+  /** Bonus/penalty targets: same scope as points.adjust and strictly lower position. */
+  const adjustableMembers = useMemo(
+    () => activeMembers.filter((m) => canAdjustMember(perms, me, m)),
+    [activeMembers, perms, me],
+  );
+
   const headerActions = useMemo(
     () => (
       <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          size="admin"
-          variant="outline"
-          onClick={() => setAttendanceOpen(true)}
-          aria-label="Điểm danh cuộc họp"
-          title="Điểm danh cuộc họp"
-        >
-          <ClipboardCheck aria-hidden />
-          <span className="hidden sm:inline">Điểm danh cuộc họp</span>
-        </Button>
-        {isAdmin && (
+        {canAttend && (
+          <Button
+            type="button"
+            size="admin"
+            variant="outline"
+            onClick={() => setAttendanceOpen(true)}
+            aria-label="Điểm danh cuộc họp"
+            title="Điểm danh cuộc họp"
+          >
+            <ClipboardCheck aria-hidden />
+            <span className="hidden sm:inline">Điểm danh cuộc họp</span>
+          </Button>
+        )}
+        {canAdjust && (
           <Button
             type="button"
             size="admin"
@@ -152,7 +172,7 @@ function PointsPage() {
         )}
       </div>
     ),
-    [isAdmin],
+    [canAttend, canAdjust],
   );
 
   return (
@@ -183,10 +203,10 @@ function PointsPage() {
         appliedFilter={appliedFilter}
       />
 
-      {attendanceOpen && (
+      {attendanceOpen && canAttend && (
         <AttendanceModal
           members={activeMembers}
-          isAdmin={isAdmin}
+          allDepts={attendAllDepts}
           ownDept={ownDept}
           onClose={() => setAttendanceOpen(false)}
           onDone={refresh}
@@ -194,9 +214,9 @@ function PointsPage() {
       )}
 
       <AnimatePresence>
-        {adjustOpen && isAdmin && (
+        {adjustOpen && canAdjust && (
           <AdjustmentModal
-            members={activeMembers}
+            members={adjustableMembers}
             onClose={() => setAdjustOpen(false)}
             onDone={refresh}
           />

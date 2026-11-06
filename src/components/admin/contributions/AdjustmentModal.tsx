@@ -38,7 +38,7 @@ const AMOUNT_OPTIONS = [
 
 const AMOUNT_VALUES: number[] = AMOUNT_OPTIONS.map((option) => option.value);
 
-/** Proof files: private admin-only bucket, at most 5 files of 10MB each. */
+/** Proof files: private bucket readable by points.view holders, at most 5 files of 10MB each. */
 const EVIDENCE_BUCKET = "point-evidence";
 const EVIDENCE_MAX_FILES = 5;
 const EVIDENCE_MAX_BYTES = 10 * 1024 * 1024;
@@ -50,9 +50,9 @@ const fmtSize = (bytes: number) =>
     : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
 /**
- * Admin-only bonus/penalty adjustment. The DB enforces admin rights, a unified
- * 1–100 range and the bonus/penalty sign rule; the UI offers the three point
- * levels 5/10/20 and requires a 10-character audit reason.
+ * Bonus/penalty adjustment for members the caller outranks (points.adjust). The DB re-checks
+ * the permission, rank, the fixed ±5/10/20 levels and the sign rule; the UI requires a
+ * 10-character audit reason.
  */
 export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalProps) {
   const [mode, setMode] = useState<AdjustMode>("bonus");

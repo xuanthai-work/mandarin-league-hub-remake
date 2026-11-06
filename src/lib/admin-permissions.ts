@@ -1,4 +1,9 @@
-import { can, type MyPermissions, type PermissionCode } from "./permission-catalog";
+import {
+  can,
+  outranksPosition,
+  type MyPermissions,
+  type PermissionCode,
+} from "./permission-catalog";
 
 /** Each admin section opens when the user holds at least one of these actions (any scope). */
 export const SECTION_ACTIONS: Record<string, readonly PermissionCode[]> = {
@@ -40,6 +45,25 @@ export function withPersonalSections(allowed: string[] | "all"): string[] | "all
 export function onlyPersonalSections(allowed: string[] | "all"): boolean {
   if (allowed === "all") return false;
   return allowed.every((s) => (PERSONAL_SECTIONS as readonly string[]).includes(s));
+}
+
+/** true when the user holds `code` organisation-wide (admin flag or scope "all"). */
+export function hasAllScope(p: MyPermissions, code: PermissionCode): boolean {
+  return p.isAdmin || p.actions[code] === "all";
+}
+
+/**
+ * Client mirror of adjust_points' bonus/penalty rule: points.adjust for the target's department
+ * and a strictly higher position. The database re-checks (including admin-flag targets).
+ */
+export function canAdjustMember(
+  p: MyPermissions,
+  me: { department: string | null; position: string | null },
+  target: { department: string; position: string | null },
+): boolean {
+  if (p.isAdmin) return true;
+  if (!can(p, "points.adjust", target.department, me.department)) return false;
+  return outranksPosition(me.position ?? "Thành viên", target.position ?? "Thành viên");
 }
 
 /** Lands on /admin only when the user has real work there, not just the member list or settings. */
