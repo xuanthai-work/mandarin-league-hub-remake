@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_SECTIONS, ROLE_LABELS } from "@/lib/admin-nav";
+import { ROLE_LABELS } from "@/lib/admin-nav";
 import { periodStatusLabel, deptName } from "@/lib/recruitment";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminAccess } from "./admin";
@@ -268,7 +268,15 @@ const ACTION_LOOK: Record<ActionKind, { icon: LucideIcon; tone: string; label: s
   task: { icon: ClipboardCheck, tone: "bg-success/12 text-success", label: "Nhiệm vụ" },
 };
 
-function StatCard({
+const XL_COLS = [
+  "",
+  "xl:grid-cols-1",
+  "xl:grid-cols-2",
+  "xl:grid-cols-3",
+  "xl:grid-cols-4",
+] as const;
+
+function StatCell({
   section,
   icon: Icon,
   label,
@@ -278,6 +286,7 @@ function StatCard({
   badgeClass,
   hint,
   loading,
+  className = "",
 }: {
   section: string;
   icon: LucideIcon;
@@ -288,42 +297,37 @@ function StatCard({
   badgeClass: string;
   hint: string | null;
   loading: boolean;
+  className?: string;
 }) {
   return (
     <Link
       to="/admin/$section"
       params={{ section }}
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-xs transition duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0"
+      className={`group flex min-w-0 flex-col gap-2 bg-card px-4 py-3.5 transition-colors hover:bg-accent/40 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 ${className}`}
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-gold/70 via-gold/25 to-transparent"
-      />
-      <div className="flex items-start justify-between gap-3">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" strokeWidth={1.75} />
-        </span>
+      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        <Icon aria-hidden className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={1.75} />
+        <span className="truncate">{label}</span>
         <ArrowUpRight
           aria-hidden
-          className="h-4 w-4 text-muted-foreground/30 transition group-hover:text-primary"
+          className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/0 transition-colors group-hover:text-primary group-focus-visible:text-primary"
         />
       </div>
-      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
-      </p>
-      <div className="mt-1 flex items-baseline gap-1.5">
+      <div className="flex min-w-0 items-baseline gap-1.5">
         {loading ? (
-          <Skeleton className="h-8 w-14" />
+          <Skeleton className="h-6 w-10" />
         ) : (
-          <span className="font-mono text-3xl font-semibold tabular-nums leading-none tracking-tight">
+          <span className="font-mono text-2xl font-semibold leading-none tracking-tight tabular-nums text-foreground">
             {value ?? "—"}
           </span>
         )}
-        <span className="text-xs text-muted-foreground">{unit}</span>
+        <span className="truncate text-xs text-muted-foreground">{unit}</span>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+      <div className="flex min-w-0 items-center gap-2 text-xs">
         {badge && (
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeClass}`}
+          >
             {badge}
           </span>
         )}
@@ -331,6 +335,7 @@ function StatCard({
         {!badge && !hint && !loading && (
           <span className="text-muted-foreground">Chưa có dữ liệu</span>
         )}
+        {loading && !badge && !hint && <Skeleton className="h-4 w-20" />}
       </div>
     </Link>
   );
@@ -403,23 +408,145 @@ function Overview() {
   }).format(now);
 
   const quickActions = QUICK_ACTIONS.filter((a) => can(a.section));
-  const shortcuts = ADMIN_SECTIONS.filter(
-    (s) => can(s.slug) && !QUICK_ACTIONS.some((q) => q.section === s.slug),
-  ).slice(0, 6);
 
   const upcoming = data?.activities?.upcoming ?? [];
   const nextEvent = upcoming[0] ?? null;
   const actions = data?.actions ?? [];
 
+  const counts = [
+    {
+      kind: "candidate" as const,
+      n: data?.recruitment?.pending ?? 0,
+      label: "hồ sơ chờ duyệt",
+      section: "candidates",
+    },
+    {
+      kind: "enrollment" as const,
+      n: data?.courses?.pending ?? 0,
+      label: "đăng ký chờ duyệt",
+      section: "courses",
+    },
+    {
+      kind: "task" as const,
+      n: data?.tasks?.awaitingReview ?? 0,
+      label: "báo cáo chờ duyệt",
+      section: "tasks",
+    },
+  ].filter((c) => c.n > 0);
+
+  const cells: ReactNode[] = [];
+  if (can("members"))
+    cells.push(
+      <StatCell
+        key="members"
+        section="members"
+        icon={Users}
+        label="Thành viên"
+        loading={loading}
+        value={data?.members?.active ?? null}
+        unit="đang hoạt động"
+        badge={data?.members ? `${data.members.onLeave} tạm nghỉ` : null}
+        badgeClass="bg-warning-soft text-warning-foreground"
+        hint={
+          data?.members
+            ? `${data.members.total} hồ sơ đã lập`
+            : loading
+              ? null
+              : "Không tải được số liệu"
+        }
+      />,
+    );
+  if (can("candidates") || can("recruitment"))
+    cells.push(
+      <StatCell
+        key="recruitment"
+        section="candidates"
+        icon={UserPlus}
+        label="Tuyển dụng"
+        loading={loading}
+        value={data?.recruitment?.appsInLatest ?? null}
+        unit="hồ sơ trong đợt"
+        badge={
+          data?.recruitment
+            ? data.recruitment.open
+              ? "Đợt đang mở"
+              : (data.recruitment.latestStatus ?? "Chưa có đợt")
+            : null
+        }
+        badgeClass={
+          data?.recruitment?.open
+            ? "bg-success/15 text-success"
+            : "bg-secondary text-secondary-foreground"
+        }
+        hint={
+          data?.recruitment
+            ? data.recruitment.pending > 0
+              ? `${data.recruitment.pending} hồ sơ chờ duyệt`
+              : data.recruitment.latestName
+            : loading
+              ? null
+              : "Không tải được số liệu"
+        }
+      />,
+    );
+  if (can("courses"))
+    cells.push(
+      <StatCell
+        key="courses"
+        section="courses"
+        icon={BookOpen}
+        label="Học vụ & Đào tạo"
+        loading={loading}
+        value={data?.courses?.running ?? null}
+        unit="khóa đang chạy"
+        badge={
+          data?.courses
+            ? data.courses.pending > 0
+              ? `${data.courses.pending} chờ duyệt`
+              : "Đã duyệt hết"
+            : null
+        }
+        badgeClass={
+          data?.courses?.pending
+            ? "bg-warning-soft text-warning-foreground"
+            : "bg-success/15 text-success"
+        }
+        hint={data?.courses ? "Đăng ký học viên" : loading ? null : "Không tải được số liệu"}
+      />,
+    );
+  if (can("activities"))
+    cells.push(
+      <StatCell
+        key="activities"
+        section="activities"
+        icon={CalendarPlus}
+        label="Hoạt động & Sự kiện"
+        loading={loading}
+        value={data?.activities?.thisMonth ?? null}
+        unit="sự kiện tháng này"
+        badge={nextEvent ? fmtDay(nextEvent.start) : null}
+        badgeClass="bg-primary/10 text-primary"
+        hint={
+          data?.activities
+            ? nextEvent
+              ? "Sự kiện gần nhất"
+              : "Chưa có lịch sắp tới"
+            : loading
+              ? null
+              : "Không tải được số liệu"
+        }
+      />,
+    );
+
   return (
     <div className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       {/* Greeting + quick actions */}
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-500 motion-reduce:animate-none">
-          <h1 className="text-2xl font-bold tracking-tight text-primary-deep sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-primary-deep sm:text-2xl">
             {greeting}, {name}
           </h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground sm:text-sm">
             <span>{dateLabel}</span>
             {role && (
               <>
@@ -457,119 +584,46 @@ function Overview() {
       </header>
       <div
         aria-hidden
-        className="mt-5 h-px bg-gradient-to-r from-border via-border/60 to-transparent"
+        className="mt-4 h-px bg-gradient-to-r from-border via-border/60 to-transparent"
       />
 
       {/* Live metrics */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {can("members") && (
-          <StatCard
-            section="members"
-            icon={Users}
-            label="Thành viên"
-            loading={loading}
-            value={data?.members?.active ?? null}
-            unit="đang hoạt động"
-            badge={data?.members ? `${data.members.onLeave} tạm nghỉ` : null}
-            badgeClass="bg-warning-soft text-warning-foreground"
-            hint={
-              data?.members
-                ? `${data.members.total} hồ sơ đã lập`
-                : loading
-                  ? null
-                  : "Không tải được số liệu"
-            }
+      {cells.length > 0 ? (
+        <section
+          aria-label="Số liệu tổng hợp"
+          className="relative mt-5 overflow-hidden rounded-2xl border border-border/70 bg-border/60 shadow-xs"
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-gold/70 via-gold/25 to-transparent"
           />
-        )}
-        {(can("candidates") || can("recruitment")) && (
-          <StatCard
-            section="candidates"
-            icon={UserPlus}
-            label="Tuyển dụng"
-            loading={loading}
-            value={data?.recruitment?.appsInLatest ?? null}
-            unit="hồ sơ trong đợt"
-            badge={
-              data?.recruitment
-                ? data.recruitment.open
-                  ? "Đợt đang mở"
-                  : (data.recruitment.latestStatus ?? "Chưa có đợt")
-                : null
-            }
-            badgeClass={
-              data?.recruitment?.open
-                ? "bg-success/15 text-success"
-                : "bg-secondary text-secondary-foreground"
-            }
-            hint={
-              data?.recruitment
-                ? data.recruitment.pending > 0
-                  ? `${data.recruitment.pending} hồ sơ chờ duyệt`
-                  : data.recruitment.latestName
-                : loading
-                  ? null
-                  : "Không tải được số liệu"
-            }
-          />
-        )}
-        {can("courses") && (
-          <StatCard
-            section="courses"
-            icon={BookOpen}
-            label="Học vụ & Đào tạo"
-            loading={loading}
-            value={data?.courses?.running ?? null}
-            unit="khóa đang chạy"
-            badge={
-              data?.courses
-                ? data.courses.pending > 0
-                  ? `${data.courses.pending} chờ duyệt`
-                  : "Đã duyệt hết"
-                : null
-            }
-            badgeClass={
-              data?.courses?.pending
-                ? "bg-warning-soft text-warning-foreground"
-                : "bg-success/15 text-success"
-            }
-            hint={data?.courses ? "Đăng ký học viên" : loading ? null : "Không tải được số liệu"}
-          />
-        )}
-        {can("activities") && (
-          <StatCard
-            section="activities"
-            icon={CalendarPlus}
-            label="Hoạt động & Sự kiện"
-            loading={loading}
-            value={data?.activities?.thisMonth ?? null}
-            unit="sự kiện tháng này"
-            badge={nextEvent ? fmtDay(nextEvent.start) : null}
-            badgeClass="bg-primary/10 text-primary"
-            hint={
-              data?.activities
-                ? nextEvent
-                  ? "Sự kiện gần nhất"
-                  : "Chưa có lịch sắp tới"
-                : loading
-                  ? null
-                  : "Không tải được số liệu"
-            }
-          />
-        )}
-        {!can("members") &&
-          !can("courses") &&
-          !can("activities") &&
-          !can("candidates") &&
-          !can("recruitment") && (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-sm text-muted-foreground sm:col-span-2 xl:col-span-4">
-              Tài khoản của bạn chưa được cấp quyền xem số liệu tổng hợp. Dùng thanh điều hướng để
-              mở các chuyên mục được giao.
-            </div>
-          )}
-      </div>
+          <div
+            className={`grid gap-px ${cells.length > 1 ? "grid-cols-2" : "grid-cols-1"} ${XL_COLS[cells.length]}`}
+          >
+            {cells.map((c, i) =>
+              cells.length % 2 === 1 && i === cells.length - 1 && cells.length > 1 ? (
+                <div key={i} className="col-span-2 grid xl:col-span-1">
+                  {c}
+                </div>
+              ) : (
+                c
+              ),
+            )}
+          </div>
+        </section>
+      ) : (
+        <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-sm text-muted-foreground">
+          Tài khoản của bạn chưa được cấp quyền xem số liệu tổng hợp. Dùng thanh điều hướng để mở
+          các chuyên mục được giao.
+        </div>
+      )}
 
       {/* Action centre + right rail */}
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+      <div
+        className={`mt-5 grid gap-5 items-start ${
+          can("activities") ? "xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]" : ""
+        }`}
+      >
         <Panel
           title="Cần xử lý"
           meta={
@@ -595,13 +649,38 @@ function Overview() {
               ))}
             </div>
           ) : actions.length > 0 ? (
-            <div className="space-y-0.5 p-2">
-              {actions.map((item) => (
-                <ActionRow key={item.key} item={item} />
-              ))}
+            <div>
+              {counts.length > 0 && (
+                <div className="flex flex-wrap gap-2 border-b border-border/60 px-4 py-3">
+                  {counts.map((c) => {
+                    const look = ACTION_LOOK[c.kind];
+                    return (
+                      <Link
+                        key={c.kind}
+                        to="/admin/$section"
+                        params={{ section: c.section }}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${look.tone}`}
+                      >
+                        <look.icon aria-hidden className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        <span className="tabular-nums">{c.n}</span> {c.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="space-y-0.5 p-2">
+                {actions.map((item) => (
+                  <ActionRow key={item.key} item={item} />
+                ))}
+              </div>
+              {data.totalActions > actions.length && (
+                <p className="px-5 pb-3 text-xs text-muted-foreground">
+                  Đang hiện {actions.length} mục mới nhất / {data.totalActions}
+                </p>
+              )}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-1.5 px-6 py-12 text-center">
+            <div className="flex flex-col items-center gap-1.5 px-6 py-8 text-center">
               <span className="grid h-11 w-11 place-items-center rounded-full bg-success/12 text-success">
                 <CheckCheck className="h-5 w-5" />
               </span>
@@ -615,83 +694,60 @@ function Overview() {
           )}
         </Panel>
 
-        <div className="grid gap-5 content-start">
-          {can("activities") && (
-            <Panel
-              title="Sự kiện sắp tới"
-              meta={
-                <Link
-                  to="/admin/$section"
-                  params={{ section: "activities" }}
-                  className="text-xs font-semibold text-primary hover:underline"
-                >
-                  Quản lý
-                </Link>
-              }
-            >
-              {loading ? (
-                <div className="space-y-3 p-5">
-                  {[0, 1, 2].map((i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
-              ) : upcoming.length > 0 ? (
-                <ul className="divide-y divide-border/60">
-                  {upcoming.map((e) => (
-                    <li key={e.id}>
-                      <Link
-                        to="/admin/$section"
-                        params={{ section: "activities" }}
-                        className="flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-accent/40"
-                      >
-                        <span className="flex w-11 shrink-0 flex-col items-center rounded-lg border border-border/70 bg-muted/40 py-1">
-                          <span className="font-mono text-base font-semibold leading-none tabular-nums">
-                            {new Date(e.start).getDate()}
-                          </span>
-                          <span className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                            thg {new Date(e.start).getMonth() + 1}
-                          </span>
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{e.title}</p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {fmtClock(e.start)}
-                            {e.place ? ` · ${e.place}` : ""}
-                          </p>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="px-5 py-8 text-center text-xs text-muted-foreground">
-                  Chưa có hoạt động nào được lên lịch.
-                </p>
-              )}
-            </Panel>
-          )}
-
-          {shortcuts.length > 0 && (
-            <Panel
-              title="Lối tắt nghiệp vụ"
-              meta={<span className="text-xs text-muted-foreground">Theo quyền của bạn</span>}
-            >
-              <div className="flex flex-wrap gap-2 p-4">
-                {shortcuts.map((s) => (
-                  <Link
-                    key={s.slug}
-                    to="/admin/$section"
-                    params={{ section: s.slug }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                  >
-                    <s.icon aria-hidden className="h-3.5 w-3.5" strokeWidth={1.75} />
-                    {s.label}
-                  </Link>
+        {can("activities") && (
+          <Panel
+            title="Sự kiện sắp tới"
+            meta={
+              <Link
+                to="/admin/$section"
+                params={{ section: "activities" }}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Quản lý
+              </Link>
+            }
+          >
+            {loading ? (
+              <div className="space-y-3 p-5">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
                 ))}
               </div>
-            </Panel>
-          )}
-        </div>
+            ) : upcoming.length > 0 ? (
+              <ul className="divide-y divide-border/60">
+                {upcoming.map((e) => (
+                  <li key={e.id}>
+                    <Link
+                      to="/admin/$section"
+                      params={{ section: "activities" }}
+                      className="flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-accent/40"
+                    >
+                      <span className="flex w-11 shrink-0 flex-col items-center rounded-lg border border-border/70 bg-muted/40 py-1">
+                        <span className="font-mono text-base font-semibold leading-none tabular-nums">
+                          {new Date(e.start).getDate()}
+                        </span>
+                        <span className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                          thg {new Date(e.start).getMonth() + 1}
+                        </span>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{e.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {fmtClock(e.start)}
+                          {e.place ? ` · ${e.place}` : ""}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-5 py-8 text-center text-xs text-muted-foreground">
+                Chưa có hoạt động nào được lên lịch.
+              </p>
+            )}
+          </Panel>
+        )}
       </div>
     </div>
   );
