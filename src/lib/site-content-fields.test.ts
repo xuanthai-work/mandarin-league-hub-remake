@@ -7,6 +7,8 @@ import {
   fieldError,
   toHomeForm,
   toSiteForm,
+  describeChanges,
+  auditBaseline,
 } from "./site-content-fields";
 
 describe("fieldError", () => {
@@ -156,5 +158,168 @@ describe("toHomeForm and toSiteForm", () => {
 
   it("returns empty diff for identical raw empty site forms", () => {
     expect(changedKeys(toSiteForm({ email: "" }), toSiteForm({ email: "" }))).toEqual([]);
+  });
+});
+
+describe("describeChanges", () => {
+  it("detects text modifications", () => {
+    const changes = describeChanges("home", { hero_title: "Cũ" }, { hero_title: "Mới" });
+    expect(changes).toEqual([
+      {
+        id: "hero_title",
+        block: "Banner đầu trang",
+        label: "Tiêu đề lớn",
+        before: "Cũ",
+        after: "Mới",
+        beforeDefault: false,
+        afterDefault: false,
+      },
+    ]);
+  });
+
+  it("handles clearing to default fallback with beforeDefault/afterDefault flags", () => {
+    const changes = describeChanges("home", { hero_badge: "Học tiếng Trung" }, { hero_badge: "" });
+    expect(changes).toEqual([
+      {
+        id: "hero_badge",
+        block: "Banner đầu trang",
+        label: "Dòng nhỏ phía trên",
+        before: "Học tiếng Trung",
+        after: "Online Chinese Learning Community",
+        beforeDefault: false,
+        afterDefault: true,
+      },
+    ]);
+  });
+
+  it("shows 'Để trống (ẩn)' for fields with empty fallback like threads", () => {
+    const changes = describeChanges(
+      "site",
+      { threads: "https://threads.net/@tml" },
+      { threads: "" },
+    );
+    expect(changes).toEqual([
+      {
+        id: "threads",
+        block: "Liên hệ & Mạng xã hội",
+        label: "Threads",
+        before: "https://threads.net/@tml",
+        after: "Để trống (ẩn)",
+        beforeDefault: false,
+        afterDefault: true,
+      },
+    ]);
+  });
+
+  it("handles toggle switches (Hiện -> Ẩn)", () => {
+    const changes = describeChanges(
+      "home",
+      { show: { activities: true } },
+      { show: { activities: false } },
+    );
+    expect(changes).toEqual([
+      {
+        id: "show.activities",
+        block: "Hoạt động tiêu biểu",
+        label: "Hiển thị trên trang chủ",
+        before: "Hiện",
+        after: "Ẩn",
+        beforeDefault: false,
+        afterDefault: false,
+      },
+    ]);
+  });
+
+  it("orders changes by visual block and field order", () => {
+    const changes = describeChanges(
+      "home",
+      { cta_title: "Cũ", hero_title: "Cũ" },
+      { cta_title: "Mới", hero_title: "Mới" },
+    );
+    expect(changes.map((c) => c.id)).toEqual(["hero_title", "cta_title"]);
+  });
+
+  it("ignores unknown keys not in block definitions", () => {
+    const changes = describeChanges("home", { unknown_key: "abc" }, { unknown_key: "xyz" });
+    expect(changes).toEqual([]);
+  });
+
+  it("returns empty array when both revisions are identical", () => {
+    const changes = describeChanges("home", { hero_title: "Same" }, { hero_title: "Same" });
+    expect(changes).toEqual([]);
+  });
+});
+
+describe("auditBaseline", () => {
+  it("uses old_data for action 'publish'", () => {
+    const rows = [
+      {
+        content_key: "home",
+        action: "publish",
+        old_data: { hero_title: "Live" },
+        new_data: { hero_title: "Draft to publish" },
+      },
+    ];
+    expect(auditBaseline(rows, 0)).toEqual({
+      before: { hero_title: "Live" },
+      title: "Thay đổi trên website",
+    });
+  });
+
+  it("uses new_data of older row with the same content_key for 'save_draft', skipping other keys", () => {
+    const rows = [
+      {
+        content_key: "home",
+        action: "save_draft",
+        old_data: {},
+        new_data: { hero_title: "Draft 2" },
+      },
+      {
+        content_key: "site",
+        action: "save_draft",
+        old_data: {},
+        new_data: { email: "a@b.com" },
+      },
+      {
+        content_key: "home",
+        action: "save_draft",
+        old_data: {},
+        new_data: { hero_title: "Draft 1" },
+      },
+    ];
+    expect(auditBaseline(rows, 0)).toEqual({
+      before: { hero_title: "Draft 1" },
+      title: "Thay đổi trong bản nháp",
+    });
+  });
+
+  it("returns empty object for action 'create' without older row", () => {
+    const rows = [
+      {
+        content_key: "home",
+        action: "create",
+        old_data: null,
+        new_data: { hero_title: "Initial" },
+      },
+    ];
+    expect(auditBaseline(rows, 0)).toEqual({
+      before: {},
+      title: "Nội dung ban đầu",
+    });
+  });
+
+  it("uses old_data for save_draft when there is no older row with the same key", () => {
+    const rows = [
+      {
+        content_key: "home",
+        action: "save_draft",
+        old_data: { hero_title: "Initial live" },
+        new_data: { hero_title: "Draft" },
+      },
+    ];
+    expect(auditBaseline(rows, 0)).toEqual({
+      before: { hero_title: "Initial live" },
+      title: "So với bản đang hiển thị lúc đó",
+    });
   });
 });

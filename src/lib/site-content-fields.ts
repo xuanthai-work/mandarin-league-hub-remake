@@ -319,3 +319,87 @@ export function changedKeys(a: Record<string, unknown>, b: Record<string, unknow
 
   return diff;
 }
+
+/** Một thay đổi để hiển thị. Ô trống được hiển thị bằng chữ mặc định (cờ *Default = true). */
+export type FieldChange = {
+  id: string; // "hero_title" hoặc "show.about"
+  block: string; // tên khối, ví dụ "Banner đầu trang"
+  label: string; // tên ô, hoặc "Hiển thị trên trang chủ" với công tắc
+  before: string;
+  after: string;
+  beforeDefault: boolean;
+  afterDefault: boolean;
+};
+
+const EMPTY_HIDDEN = "Để trống (ẩn)";
+
+/** So hai bản (draft/published/old_data/new_data thô), trả danh sách thay đổi theo thứ tự khối/ô trên màn. */
+export function describeChanges(
+  key: "home" | "site",
+  beforeRaw: unknown,
+  afterRaw: unknown,
+): FieldChange[] {
+  const a = (key === "home" ? toHomeForm(beforeRaw) : toSiteForm(beforeRaw)) as unknown as Record<
+    string,
+    unknown
+  >;
+  const b = (key === "home" ? toHomeForm(afterRaw) : toSiteForm(afterRaw)) as unknown as Record<
+    string,
+    unknown
+  >;
+  const changed = new Set(changedKeys(a, b));
+  const blocks = (key === "home" ? HOME_BLOCKS : SITE_BLOCKS) as ContentBlock<string>[];
+  const out: FieldChange[] = [];
+  for (const blk of blocks) {
+    if (blk.toggle && changed.has(`show.${blk.toggle}`)) {
+      const sa = (a["show"] as Record<string, boolean> | undefined)?.[blk.toggle];
+      const sb = (b["show"] as Record<string, boolean> | undefined)?.[blk.toggle];
+      out.push({
+        id: `show.${blk.toggle}`,
+        block: blk.label,
+        label: "Hiển thị trên trang chủ",
+        before: sa ? "Hiện" : "Ẩn",
+        after: sb ? "Hiện" : "Ẩn",
+        beforeDefault: false,
+        afterDefault: false,
+      });
+    }
+    for (const f of blk.fields) {
+      if (!changed.has(f.key)) continue;
+      const va = String(a[f.key] ?? "").trim();
+      const vb = String(b[f.key] ?? "").trim();
+      out.push({
+        id: f.key,
+        block: blk.label,
+        label: f.label,
+        before: va || f.fallback || EMPTY_HIDDEN,
+        after: vb || f.fallback || EMPTY_HIDDEN,
+        beforeDefault: !va,
+        afterDefault: !vb,
+      });
+    }
+  }
+  return out;
+}
+
+export type AuditRowLite = {
+  content_key: string;
+  action: string; // "create" | "save_draft" | "publish"
+  old_data: unknown;
+  new_data: unknown;
+};
+
+/** rows sắp xếp MỚI → CŨ (như query). Trả về bản để so với rows[i].new_data và tiêu đề mô tả. */
+export function auditBaseline(rows: AuditRowLite[], i: number): { before: unknown; title: string } {
+  const row = rows[i];
+  if (!row) return { before: {}, title: "" };
+  if (row.action === "publish")
+    return { before: row.old_data ?? {}, title: "Thay đổi trên website" };
+  for (let j = i + 1; j < rows.length; j++) {
+    const prev = rows[j];
+    if (prev && prev.content_key === row.content_key)
+      return { before: prev.new_data ?? {}, title: "Thay đổi trong bản nháp" };
+  }
+  if (row.action === "create") return { before: {}, title: "Nội dung ban đầu" };
+  return { before: row.old_data ?? {}, title: "So với bản đang hiển thị lúc đó" };
+}

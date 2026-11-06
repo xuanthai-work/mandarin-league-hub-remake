@@ -15,6 +15,7 @@ import {
   HOME_BLOCKS,
   SITE_BLOCKS,
   changedKeys,
+  describeChanges,
   fieldError,
   toHomeForm,
   toSiteForm,
@@ -27,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ContentOutline } from "@/components/admin/content/ContentOutline";
 import { ContentFieldInput } from "@/components/admin/content/ContentFieldInput";
+import { PublishDialog } from "@/components/admin/content/PublishDialog";
+import { ContentHistory } from "@/components/admin/content/ContentHistory";
 
 export const Route = createFileRoute("/_authenticated/admin/content")({
   staticData: { sitemap: false },
@@ -58,6 +61,7 @@ function ContentAdmin() {
   const [homeForm, setHomeForm] = useState<HomeContent>(() => toHomeForm({}));
   const [siteForm, setSiteForm] = useState<SiteSettings>(() => toSiteForm({}));
   const [busy, setBusy] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
 
   const homeSaved = useMemo(() => toHomeForm(homeRow.data?.draft), [homeRow.data?.draft]);
   const siteSaved = useMemo(() => toSiteForm(siteRow.data?.draft), [siteRow.data?.draft]);
@@ -162,20 +166,11 @@ function ContentAdmin() {
     enableBeforeUnload: () => unsavedTotal > 0,
   });
 
-  const save = async (targetKey: "home" | "site", publish: boolean): Promise<boolean> => {
+  const persist = async (targetKey: "home" | "site", publish: boolean): Promise<boolean> => {
     const errs = targetKey === "home" ? homeErrors : siteErrors;
     if (Object.keys(errs).length > 0) {
       toast.error("Vui lòng sửa các ô bị lỗi trước khi lưu");
       return false;
-    }
-
-    if (publish) {
-      const ok = await confirm({
-        title: "Xuất bản nội dung?",
-        description: "Nội dung mới sẽ hiện ngay cho mọi khách truy cập website.",
-        confirmLabel: "Xuất bản",
-      });
-      if (!ok) return false;
     }
 
     setBusy(true);
@@ -230,7 +225,7 @@ function ContentAdmin() {
     }
 
     if (currentUnsaved > 0) {
-      const success = await save(tab as "home" | "site", false);
+      const success = await persist(tab as "home" | "site", false);
       if (!success) {
         w?.close();
         return;
@@ -242,6 +237,23 @@ function ContentAdmin() {
     } else {
       window.open("/?preview=1", "_blank");
     }
+  };
+
+  const handleRestore = async (key: "home" | "site", data: unknown) => {
+    const unsaved = key === "home" ? unsavedHome : unsavedSite;
+    if (unsaved > 0) {
+      const ok = await confirm({
+        title: "Thay thế thay đổi chưa lưu?",
+        description: `Mục này đang có ${unsaved} thay đổi chưa lưu. Nạp bản cũ sẽ ghi đè chúng.`,
+        confirmLabel: "Nạp bản cũ",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    if (key === "home") setHomeForm(toHomeForm(data));
+    else setSiteForm(toSiteForm(data));
+    setTab(key);
+    toast.success("Đã nạp bản cũ vào trình sửa. Kiểm tra rồi bấm Lưu nháp hoặc Xuất bản.");
   };
 
   const currentRow = tab === "home" ? homeRow : siteRow;
@@ -256,9 +268,27 @@ function ContentAdmin() {
   const canPublish = !busy && Object.keys(currentErrors).length === 0 && !hasNothingToPublish;
   const canSaveDraft = !busy && currentUnsaved > 0 && Object.keys(currentErrors).length === 0;
 
+  const publishChanges = useMemo(() => {
+    if (tab === "log") return [];
+    const currentPublished = currentRow.data?.published;
+    const currentForm = tab === "home" ? homeForm : siteForm;
+    return describeChanges(tab, currentPublished, currentForm);
+  }, [tab, currentRow.data?.published, homeForm, siteForm]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       {dialog}
+
+      <PublishDialog
+        open={publishOpen}
+        changes={publishChanges}
+        busy={busy}
+        onCancel={() => setPublishOpen(false)}
+        onConfirm={async () => {
+          const ok = await persist(tab as "home" | "site", true);
+          if (ok) setPublishOpen(false);
+        }}
+      />
 
       <div className="space-y-4">
         {/* Tabs with horizontal scrollbar on small screens */}
@@ -351,7 +381,7 @@ function ContentAdmin() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => save(tab as "home" | "site", false)}
+                onClick={() => persist(tab as "home" | "site", false)}
                 disabled={!canSaveDraft}
               >
                 <Save className="h-4 w-4" /> Lưu nháp
@@ -359,7 +389,7 @@ function ContentAdmin() {
               <Button
                 type="button"
                 size="sm"
-                onClick={() => save(tab as "home" | "site", true)}
+                onClick={() => setPublishOpen(true)}
                 disabled={!canPublish}
               >
                 <Send className="h-4 w-4" /> Xuất bản
@@ -411,7 +441,7 @@ function ContentAdmin() {
           />
         ))}
 
-      {tab === "log" && <AuditLog />}
+      {tab === "log" && <ContentHistory onRestore={handleRestore} />}
     </div>
   );
 }
@@ -525,57 +555,6 @@ function BlockEditor<K extends string>({
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function AuditLog() {
-  const q = useQuery({
-    queryKey: ["content-audit"],
-    queryFn: async () =>
-      (
-        await supabase
-          .from("content_audit_logs")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(100)
-      ).data ?? [],
-  });
-  const L: Record<string, string> = {
-    create: "Tạo mới",
-    save_draft: "Lưu nháp",
-    publish: "Xuất bản",
-  };
-  const K: Record<string, string> = { home: "Trang chủ", site: "Liên hệ & Chân trang" };
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase text-muted-foreground">
-          <tr>
-            <th className="p-3">Thời gian</th>
-            <th className="p-3">Mục</th>
-            <th className="p-3">Thao tác</th>
-            <th className="p-3">Người thực hiện</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(q.data ?? []).length === 0 && (
-            <tr>
-              <td colSpan={4} className="p-6 text-center text-muted-foreground">
-                Chưa có thay đổi.
-              </td>
-            </tr>
-          )}
-          {(q.data ?? []).map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <td className="p-3 text-xs">{new Date(r.created_at).toLocaleString("vi-VN")}</td>
-              <td className="p-3">{K[r.content_key] ?? r.content_key}</td>
-              <td className="p-3">{L[r.action] ?? r.action}</td>
-              <td className="p-3">{r.actor_name || "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
