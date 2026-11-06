@@ -26,7 +26,7 @@ export function EnrollmentDialog({
   onClose: () => void;
   courseId?: string;
   classId?: string;
-  title?: string;
+  title: string;
 }) {
   const tr = useTr();
   const submit = useServerFn(submitEnrollment);
@@ -71,7 +71,7 @@ export function EnrollmentDialog({
               {tr("Đăng ký khóa học")}
             </div>
             <h2 className="mt-1 text-xl font-bold text-primary-deep">
-              {title ?? `HSK ${level}`} · {tr(fee)}
+              {title} · {tr(fee)}
             </h2>
           </div>
           <button

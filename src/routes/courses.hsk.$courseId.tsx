@@ -3,7 +3,9 @@ import { CheckCircle2, Clock, Users, Video, CalendarDays, Wallet, UserRound } fr
 import { DemoBadge, EmptyState, SectionTitle, StatusBadge } from "@/components/site/ui";
 import { useState } from "react";
 import { EnrollmentDialog } from "@/components/courses/EnrollmentDialog";
-import { formatFee, useCourseSettings } from "@/lib/course-settings";
+import { useCourseSettings } from "@/lib/course-settings";
+import { classFee, fmtDate, usePublishedClasses, type HskClass } from "@/lib/hsk-classes";
+import { STATUS_LABEL } from "@/lib/programs";
 import { getCourse } from "@/lib/data/courses";
 import { pageMeta } from "@/lib/seo";
 import { usePublicTeachers, leadTeacherForLevel, pickTeachers } from "@/lib/teachers";
@@ -49,37 +51,23 @@ function PCourse() {
   const { data: settings } = useCourseSettings();
   const st = settings?.find((x) => x.level === c.level);
   const lead = leadTeacherForLevel(teachers, c.level, st?.lead_teacher_id);
-  const open = st ? st.registration_open : true;
-  const fee = formatFee(st);
-  const [dlg, setDlg] = useState(false);
-  const Btn = ({ block }: { block?: boolean }) =>
-    open ? (
-      <button
-        onClick={() => setDlg(true)}
-        className={
-          block
-            ? "block w-full rounded-full bg-primary py-3 text-center font-semibold text-primary-foreground hover:opacity-90"
-            : "mt-8 inline-flex rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:opacity-90"
-        }
-      >
-        {tr("ĐĂNG KÝ KHÓA HỌC")}
-      </button>
-    ) : (
-      <div
-        className={
-          block
-            ? "rounded-xl bg-muted p-3 text-center text-sm"
-            : "mt-8 max-w-xl rounded-xl bg-muted p-4 text-sm"
-        }
-      >
-        <div className="font-bold text-muted-foreground">{tr("TẠM ĐÓNG ĐĂNG KÝ")}</div>
-        <p className="mt-1 text-muted-foreground">
-          {tr(
-            "Khóa học đã đủ sĩ số hoặc đã chốt danh sách. Hẹn gặp bạn ở đợt tuyển sinh tiếp theo!",
-          )}
-        </p>
-      </div>
-    );
+  const { data: classes, isLoading: lc } = usePublishedClasses();
+  const openClasses = (classes ?? []).filter(
+    (k) => k.level === c.level && k.status === "enrolling",
+  );
+  const [enroll, setEnroll] = useState<HskClass | null>(null);
+  const Btn = ({ block }: { block?: boolean }) => (
+    <a
+      href="#lop-dang-mo"
+      className={
+        block
+          ? "block w-full rounded-full bg-primary py-3 text-center font-semibold text-primary-foreground hover:opacity-90"
+          : "mt-8 inline-flex rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:opacity-90"
+      }
+    >
+      {tr("XEM LỚP ĐANG MỞ")}
+    </a>
+  );
   return (
     <>
       <section className="grid-lines border-b border-border bg-secondary">
@@ -101,6 +89,87 @@ function PCourse() {
       </section>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:px-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-12">
+          <section id="lop-dang-mo" className="scroll-mt-24">
+            <SectionTitle label="Đăng ký" title="Lớp đang tuyển sinh" />
+            <div className="mt-6">
+              {lc ? (
+                <p className="text-sm text-muted-foreground">{tr("Đang tải…")}</p>
+              ) : openClasses.length === 0 ? (
+                <>
+                  <EmptyState
+                    title={tr("Chưa có lớp mở")}
+                    desc={tr("Hiện chưa có lớp nào đang tuyển sinh cho cấp độ này.")}
+                  />
+                  <Link
+                    to="/courses"
+                    className="mt-3 inline-block text-sm font-semibold text-primary"
+                  >
+                    {tr("Xem tất cả khóa học →")}
+                  </Link>
+                </>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {openClasses.map((k) => {
+                    const full = (k.seats ?? 0) >= k.max_students;
+                    return (
+                      <div
+                        key={k.id}
+                        className="flex flex-col rounded-2xl border border-border bg-card p-5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="font-semibold">{k.name}</h3>
+                          <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                            {full ? tr("Đã đủ sĩ số") : tr(STATUS_LABEL[k.status])}
+                          </span>
+                        </div>
+                        <div className="mt-3 grid gap-1 text-sm text-muted-foreground">
+                          {(k.start_date || k.schedule) && (
+                            <span className="flex items-center gap-2">
+                              <CalendarDays className="h-4 w-4" />
+                              {[
+                                fmtDate(k.start_date) &&
+                                  `${fmtDate(k.start_date)}${k.end_date ? ` → ${fmtDate(k.end_date)}` : ""}`,
+                                k.schedule,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            {k.seats}/{k.max_students} {tr("học viên")}
+                          </span>
+                          <span className="flex items-center gap-2 font-semibold text-primary-deep">
+                            <Wallet className="h-4 w-4" />
+                            {tr(classFee(k))}
+                          </span>
+                        </div>
+                        {!full &&
+                          (k.registration_url ? (
+                            <a
+                              href={k.registration_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-4 rounded-full bg-primary py-2 text-center text-sm font-semibold text-primary-foreground"
+                            >
+                              {tr("Đăng ký")}
+                            </a>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setEnroll(k)}
+                              className="mt-4 rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground"
+                            >
+                              {tr("Đăng ký lớp này")}
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
           <section>
             <SectionTitle label="Nội dung khóa học" title="Bạn sẽ học gì" />
             <ol className="mt-6 space-y-3">
@@ -218,11 +287,10 @@ function PCourse() {
           />
           <Info icon={CalendarDays} l="Lịch học" v={c.schedule} />
           <Info icon={Video} l="Hình thức" v={c.mode} />
-          <Info icon={Wallet} l="Học phí" v={tr(fee)} />
           <Info
             icon={Users}
             l="Số lượng"
-            v={`${tr("Lớp chọn lọc, tối đa")} ${st?.capacity ?? c.capacity} ${tr("học viên")}`}
+            v={`${tr("Lớp chọn lọc, tối đa")} ${c.capacity} ${tr("học viên")}`}
           />
           <Btn block />
           <p className="text-center text-xs text-muted-foreground">
@@ -230,7 +298,15 @@ function PCourse() {
           </p>
         </aside>
       </div>
-      {dlg && <EnrollmentDialog level={c.level} fee={fee} onClose={() => setDlg(false)} />}
+      {enroll && (
+        <EnrollmentDialog
+          level={enroll.level}
+          classId={enroll.id}
+          title={enroll.name}
+          fee={classFee(enroll)}
+          onClose={() => setEnroll(null)}
+        />
+      )}
     </>
   );
 }

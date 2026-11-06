@@ -444,6 +444,15 @@ export const PHRASES: Record<string, [string, string]> = {
   "← Khóa học HSK": ["← HSK 课程", "← HSK courses"],
   "ĐĂNG KÝ KHÓA HỌC": ["报名课程", "ENROLL IN COURSE"],
   "TẠM ĐÓNG ĐĂNG KÝ": ["暂停报名", "REGISTRATION PAUSED"],
+  "XEM LỚP ĐANG MỞ": ["查看开放班级", "VIEW OPEN CLASSES"],
+  "Lớp đang tuyển sinh": ["招生中的班级", "Classes now enrolling"],
+  "Chưa có lớp mở": ["暂无开放班级", "No open classes yet"],
+  "Hiện chưa có lớp nào đang tuyển sinh cho cấp độ này.": [
+    "该级别目前没有正在招生的班级。",
+    "There are no classes enrolling for this level right now.",
+  ],
+  "Xem tất cả khóa học →": ["查看全部课程 →", "View all courses →"],
+  "lớp đang tuyển": ["个班级招生中", "classes enrolling"],
   "Khóa học đã đủ sĩ số hoặc đã chốt danh sách. Hẹn gặp bạn ở đợt tuyển sinh tiếp theo!": [
     "课程已满员或名单已确定。期待在下一期招生见到你！",
     "The class is full or the list is closed. See you in the next intake!",

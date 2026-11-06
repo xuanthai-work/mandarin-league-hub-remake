@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Clock, Users, Video, CalendarDays, Wallet, UserRound } from "lucide-react";
+import { Clock, Users, Video, CalendarDays, UserRound } from "lucide-react";
 import { PageHero } from "@/components/site/SiteLayout";
 import { Chips, DemoBadge, EmptyState, SectionTitle, StatusBadge } from "@/components/site/ui";
 import { getCourses } from "@/lib/data/courses";
 import type { CourseStatus } from "@/lib/data/types";
 import { pageMeta } from "@/lib/seo";
-import { formatFee, useCourseSettings } from "@/lib/course-settings";
+import { usePublishedClasses } from "@/lib/hsk-classes";
 import { useTr } from "@/lib/i18n";
 import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
 
@@ -25,8 +25,9 @@ function PCourses() {
   const tr = useTr();
   const courses = getCourses();
   const { data: teachers } = usePublicTeachers();
-  const { data: settings } = useCourseSettings();
-  const st = (lv: number) => settings?.find((x) => x.level === lv);
+  const { data: classes } = usePublishedClasses();
+  const openCount = (lv: number) =>
+    (classes ?? []).filter((k) => k.level === lv && k.status === "enrolling").length;
   const [level, setLevel] = useState<(typeof LEVELS)[number] | "all">("all");
   const [status, setStatus] = useState<CourseStatus | "all">("all");
   const filtered = courses.filter(
@@ -56,13 +57,7 @@ function PCourses() {
                 </span>
                 <div className="flex items-center gap-2">
                   {c.demo && <DemoBadge />}
-                  {st(c.level)?.registration_open === false ? (
-                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                      {tr("Tạm đóng đăng ký")}
-                    </span>
-                  ) : (
-                    <StatusBadge status={c.status} />
-                  )}
+                  <StatusBadge status={c.status} />
                 </div>
               </div>
               <h3 className="mt-5 text-lg font-semibold">{c.name}</h3>
@@ -77,8 +72,10 @@ function PCourses() {
                   {tr("Trực tuyến")}
                 </span>
                 <span className="col-span-2 flex items-center gap-2 font-semibold text-primary-deep">
-                  <Wallet className="h-4 w-4" />
-                  {tr(formatFee(st(c.level)))}
+                  <CalendarDays className="h-4 w-4" />
+                  {openCount(c.level) > 0
+                    ? `${openCount(c.level)} ${tr("lớp đang tuyển")}`
+                    : tr("Chưa có lớp mở")}
                 </span>
               </div>
             </Link>
@@ -134,12 +131,8 @@ function PCourses() {
                     {c.mode}
                   </span>
                   <span className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4" />
-                    {tr(formatFee(st(c.level)))}
-                  </span>
-                  <span className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    {tr("Tối đa")} {st(c.level)?.capacity ?? c.capacity} {tr("học viên")}
+                    {tr("Tối đa")} {c.capacity} {tr("học viên")}
                   </span>
                 </div>
                 <Link

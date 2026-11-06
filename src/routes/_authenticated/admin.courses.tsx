@@ -12,7 +12,7 @@ import { ReviewDrawer } from "@/components/courses/ReviewDrawer";
 import { useConfirm } from "@/components/admin/Trash";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { countApprovedByClass, type HskClass } from "@/lib/hsk-classes";
+import { countApprovedByClass } from "@/lib/hsk-classes";
 import {
   enrollmentTarget,
   planBulkApprove,
@@ -22,7 +22,6 @@ import {
   type BulkSkipReason,
   type ClassRef,
   type Enrollment,
-  type EnrollmentTarget,
   type ProgramRef,
 } from "@/lib/enrollments";
 import { matchesSearch } from "@/lib/search";
@@ -34,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ENROLL_STATUS, useCourseSettings } from "@/lib/course-settings";
+import { ENROLL_STATUS } from "@/lib/course-settings";
 import { reviewEnrollment } from "@/lib/courses.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/courses")({
@@ -48,7 +47,6 @@ export const Route = createFileRoute("/_authenticated/admin/courses")({
 function CoursesAdmin() {
   const qc = useQueryClient();
   const review = useServerFn(reviewEnrollment);
-  const { data: settings } = useCourseSettings();
   const { confirm, dialog } = useConfirm();
   const [lv, setLv] = useState(0);
   const [stF, setStF] = useState("pending");
@@ -110,7 +108,6 @@ function CoursesAdmin() {
   const allPicked = pendingVisible.length > 0 && pendingVisible.every((r) => picked.has(r.id));
   const somePicked = pendingVisible.some((r) => picked.has(r.id));
   const pendingTotal = (rows ?? []).filter((r) => r.status === "pending").length;
-  const filtered = !!(q || cid || kid || lv || stF);
   const clearFilters = () => {
     setQ("");
     setCid("");
@@ -571,12 +568,7 @@ function CoursesAdmin() {
           <ReviewDrawer
             key={sel.id}
             r={sel}
-            target={(() => {
-              const t = targetOf(sel);
-              if (t.kind !== "level") return t;
-              const st = settings?.find((x) => x.level === sel.level);
-              return st ? { ...t, fee: { fee_type: st.fee_type, fee_amount: st.fee_amount } } : t;
-            })()}
+            target={targetOf(sel)}
             onClose={() => setSel(null)}
             onDone={() => {
               setSel(null);

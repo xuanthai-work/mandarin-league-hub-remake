@@ -80,14 +80,11 @@ export const submitEnrollment = createServerFn({ method: "POST" })
       // valid default instead of failing the insert.
       if (!d.level || d.level < 1 || d.level > 6) d.level = 1;
     } else {
-      if (d.level < 1) return { ok: false as const, error: "Khóa học không hợp lệ." };
-      const { data: setting } = await db
-        .from("course_settings")
-        .select("*")
-        .eq("level", d.level)
-        .maybeSingle();
-      if (!setting?.registration_open)
-        return { ok: false as const, error: "Khóa học này hiện đã đóng đăng ký." };
+      // Chỉ nhận đơn vào một lớp HSK hoặc chương trình cụ thể (bỏ đăng ký chung theo cấp độ).
+      return {
+        ok: false as const,
+        error: "Vui lòng chọn một lớp HSK hoặc chương trình cụ thể để đăng ký.",
+      };
     }
     let dup = db
       .from("course_enrollments")
@@ -96,9 +93,7 @@ export const submitEnrollment = createServerFn({ method: "POST" })
       .eq("status", "pending");
     dup = d.hsk_class_id
       ? dup.eq("hsk_class_id", d.hsk_class_id)
-      : d.course_id
-        ? dup.eq("course_id", d.course_id)
-        : dup.eq("level", d.level).is("course_id", null).is("hsk_class_id", null);
+      : dup.eq("course_id", d.course_id!);
     const { count } = await dup;
     if ((count ?? 0) > 0)
       return {

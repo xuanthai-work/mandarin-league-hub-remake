@@ -182,6 +182,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-151-PROGRAMS-TABLE-AND-DRAWER`                                | Chương trình: bảng + lọc, menu ⋯, drawer 6 phần có link Zalo                                           | 2026-11-06     | **PASS** | [task-oc-151-programs-table-and-drawer.md](tasks/task-oc-151-programs-table-and-drawer.md)                                                               |
 | `TASK-GE-145-ADMIN-STAT-CARDS-SEPARATED`                               | Tổng quan admin: tách ô số liệu thành thẻ riêng có khoảng cách                                         | 2026-11-06     | **PASS** | [task-ge-145-admin-stat-cards-separated.md](tasks/task-ge-145-admin-stat-cards-separated.md)                                                             |
 | `TASK-OC-152-ENROLLMENTS-BULK-AND-CSV`                                 | Đơn đăng ký: tên lớp/chương trình, tự điền Zalo, duyệt hàng loạt, CSV                                  | 2026-11-06     | **PASS** | [task-oc-152-enrollments-bulk-and-csv.md](tasks/task-oc-152-enrollments-bulk-and-csv.md)                                                                 |
+| `TASK-OC-153-REMOVE-LEVEL-ONLY-ENROLLMENT`                             | Bỏ đăng ký chung theo cấp độ, trang HSK liệt kê lớp đang tuyển                                         | 2026-11-06     | **PASS** | [task-oc-153-remove-level-only-enrollment.md](tasks/task-oc-153-remove-level-only-enrollment.md)                                                         |
 
 ---
 

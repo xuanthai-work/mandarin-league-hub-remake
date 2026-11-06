@@ -13,8 +13,8 @@
 - Application status changes go through a security-definer function that snapshots the reviewer from the session into an append-only history, so reviewers cannot be spoofed or history edited.
 - Public org chart reads leaders/counts only via the security-definer `public_org_chart()` function, which respects each member's `is_public` flag, so the members table never becomes publicly readable.
 - Teachers are a separate admin-managed table linked to HSK courses by teaching level, so courses can stay static until they move to Supabase.
-- Course registrations (course_enrollments, per-level course_settings) are submitted and reviewed only via server functions, so applicants never touch the table.
-- Programs live in `courses` (soft delete, public reads published only); HSK level enrollments keep course_id null so old flows keep working.
+- Course registrations (course_enrollments) must target a concrete HSK class or program and are submitted and reviewed only via server functions, so applicants never touch the table; course_settings now holds only per-level teacher assignments and never gates registration.
+- Programs live in `courses` (soft delete, public reads published only); old level-only enrollments (no class/program) stay readable and reviewable one by one, but new ones are rejected by the server.
 - Concrete HSK classes live in `hsk_classes` under fixed levels 1–6 (no levels table); enrollments link via course_enrollments.hsk_class_id and the server re-checks status and seats, so a class can be created without touching code.
 - Programs (`courses` table) carry show_in_courses / show_in_activities flags so one record feeds both /courses and /activities without duplicates.
 - Deputy heads use their own `deputy_head` role that `my_head_department()` treats like a head, so department-scoped rules cover both without granting admin rights.
