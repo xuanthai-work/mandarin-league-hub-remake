@@ -206,6 +206,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-158-PERMISSIONS-RECRUITMENT-BENEFITS`                         | Phân quyền: Tuyển dụng + Quyền lợi sang has_perm, khóa cột hồ sơ ứng viên (mig 0054)                   | 2026-11-06     | **PASS** | [task-oc-158-permissions-recruitment-benefits.md](tasks/task-oc-158-permissions-recruitment-benefits.md)                                                 |
 | `TASK-GE-162-BENEFITS-USE-ADMIN-KIT`                                   | Trang Quyền lợi dùng bộ component admin                                                                | 2026-11-07     | **PASS** | [task-ge-162-benefits-use-admin-kit.md](tasks/task-ge-162-benefits-use-admin-kit.md)                                                                     |
 | `TASK-OC-159-PERMISSIONS-COURSES-ACADEMIC`                             | Phân quyền: Khóa học + Học thuật sang has_perm, khóa cột đơn đăng ký (mig 0055)                        | 2026-11-07     | **PASS** | [task-oc-159-permissions-courses-academic.md](tasks/task-oc-159-permissions-courses-academic.md)                                                         |
+| `TASK-OC-160-PERMISSIONS-COMMS`                                        | Phân quyền: Truyền thông sang has_perm, khóa xuất bản nội dung (mig 0056)                              | 2026-11-07     | **PASS** | [task-oc-160-permissions-comms.md](tasks/task-oc-160-permissions-comms.md)                                                                               |
 
 ---
 
