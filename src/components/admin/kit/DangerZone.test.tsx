@@ -103,4 +103,23 @@ describe("DangerZone", () => {
     const btn = screen.getByRole("button", { name: "Thực hiện xóa" });
     expect(btn).toBeDisabled();
   });
+
+  it("returns focus to action button after clicking 'Thôi'", () => {
+    render(
+      <DangerZone
+        title="Xóa đối tác"
+        description="Mô tả ban đầu"
+        actionLabel="Thực hiện xóa"
+        onConfirm={() => {}}
+      />,
+    );
+
+    const actionBtn = screen.getByRole("button", { name: "Thực hiện xóa" });
+    fireEvent.click(actionBtn);
+
+    const cancelBtn = screen.getByRole("button", { name: "Thôi" });
+    fireEvent.click(cancelBtn);
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Thực hiện xóa" }));
+  });
 });

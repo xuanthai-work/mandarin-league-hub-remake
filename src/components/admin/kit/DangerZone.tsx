@@ -31,10 +31,16 @@ export function DangerZone({
 }: DangerZoneProps) {
   const [armed, setArmed] = useState(false);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  const actionBtnRef = useRef<HTMLButtonElement>(null);
+  const wasArmed = useRef(false);
 
   useEffect(() => {
     if (armed) {
       confirmBtnRef.current?.focus();
+      wasArmed.current = true;
+    } else if (wasArmed.current) {
+      actionBtnRef.current?.focus();
+      wasArmed.current = false;
     }
   }, [armed]);
 
@@ -77,6 +83,7 @@ export function DangerZone({
             </>
           ) : (
             <Button
+              ref={actionBtnRef}
               type="button"
               variant="destructive-outline"
               size="admin"

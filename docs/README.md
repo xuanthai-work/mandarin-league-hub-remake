@@ -185,6 +185,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-153-REMOVE-LEVEL-ONLY-ENROLLMENT`                             | Bỏ đăng ký chung theo cấp độ, trang HSK liệt kê lớp đang tuyển                                         | 2026-11-06     | **PASS** | [task-oc-153-remove-level-only-enrollment.md](tasks/task-oc-153-remove-level-only-enrollment.md)                                                         |
 | `TASK-GE-146-ADMIN-KIT-BUTTON-AND-SEARCH`                              | Bộ component admin A1: kiểu nút admin trong ui/button + SearchInput                                    | 2026-11-06     | **PASS** | [task-ge-146-admin-kit-button-and-search.md](tasks/task-ge-146-admin-kit-button-and-search.md)                                                           |
 | `TASK-GE-147-ADMIN-KIT-EMPTY-DANGER-STATUS`                            | Bộ component admin A2: EmptyState, DangerZone, StatusPill                                              | 2026-11-06     | **PASS** | [task-ge-147-admin-kit-empty-danger-status.md](tasks/task-ge-147-admin-kit-empty-danger-status.md)                                                       |
+| `TASK-GE-148-ADMIN-KIT-DRAWER`                                         | Bộ component admin A3: AdminDrawer (Esc theo lớp, focus mở/đóng)                                       | 2026-11-06     | **PASS** | [task-ge-148-admin-kit-drawer.md](tasks/task-ge-148-admin-kit-drawer.md)                                                                                 |
 
 ---
 
