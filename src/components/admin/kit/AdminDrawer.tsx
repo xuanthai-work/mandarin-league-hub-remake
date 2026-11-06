@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, type FormEvent, type ReactNode } from "react";
+import { useId, type FormEvent, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAdminDialog } from "@/components/admin/kit/useAdminDialog";
 
 const WIDTH = {
   sm: "max-w-[480px]",
@@ -59,32 +60,7 @@ export function AdminDrawer({
   children,
 }: AdminDrawerProps) {
   const titleId = useId();
-  const panelRef = useRef<HTMLDivElement>(null);
-  const onCloseRef = useRef(onClose);
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  });
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented) {
-        onCloseRef.current();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    panelRef.current?.focus();
-    return () => {
-      if (previouslyFocused && document.body.contains(previouslyFocused)) {
-        previouslyFocused.focus();
-      }
-    };
-  }, []);
+  const panelRef = useAdminDialog(onClose);
 
   const content = (
     <>
