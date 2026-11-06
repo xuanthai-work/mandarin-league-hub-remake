@@ -25,6 +25,7 @@ import {
   onlyPersonalSections,
   withPersonalSections,
 } from "@/lib/admin-permissions";
+import { NO_PERMISSIONS, parseMyPermissions } from "@/lib/permission-catalog";
 import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
 import { useAdminHeader } from "@/components/admin/admin-header-context";
 
@@ -122,22 +123,25 @@ export function useAdminAccess() {
   return useQuery({
     queryKey: ["admin-access"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("my_account");
+      const [{ data }, { data: permsData, error: permsError }] = await Promise.all([
+        supabase.rpc("my_account"),
+        supabase.rpc("my_permissions"),
+      ]);
+      if (permsError) throw permsError;
       const me = data as unknown as {
         email: string;
         roles: string[];
         account: {
           account_status: string;
           must_change_password: boolean;
-          permissions?: string[];
         } | null;
         member: { department: string; full_name: string } | null;
       };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
       const department = blocked ? null : (me.member?.department ?? null);
-      const permissions = blocked ? [] : (me.account?.permissions ?? []);
-      const base = allowedSections(roles, department, permissions);
+      const perms = blocked ? NO_PERMISSIONS : parseMyPermissions(permsData);
+      const base = allowedSections(perms);
       const allowed = me.account && !blocked ? withPersonalSections(base) : base;
       return {
         email: me.email ?? "",
@@ -145,7 +149,7 @@ export function useAdminAccess() {
         roles,
         department,
         allowed,
-        permissions,
+        perms,
         hasAccount: !!me.account,
         mustChange: !!me.account?.must_change_password,
       };

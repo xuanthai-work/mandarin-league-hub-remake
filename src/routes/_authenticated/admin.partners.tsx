@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
 import { PARTNER_BUCKET, withLogos, type PartnerRow } from "@/lib/news-db";
-import { canManagePartners, canViewPartners } from "@/lib/admin-permissions";
+import { can } from "@/lib/permission-catalog";
 import { matchesSearch, removeVietnameseTones } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
@@ -74,8 +74,8 @@ const logoDownloadUrl = (p: PartnerRow) => {
 function PartnersAdmin() {
   const qc = useQueryClient();
   const access = useAdminAccess().data;
-  const manager = !!access && canManagePartners(access.roles, access.department);
-  const viewer = !!access && canViewPartners(access.roles, access.department);
+  const manager = !!access && can(access.perms, "partners.manage");
+  const viewer = manager || (!!access && can(access.perms, "partners.view"));
   const [f, setF] = useState<PartnerForm | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);

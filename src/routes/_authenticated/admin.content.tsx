@@ -24,6 +24,8 @@ import {
   type SiteKey,
 } from "@/lib/site-content-fields";
 import { useConfirm } from "@/components/admin/Trash";
+import { can } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ContentOutline } from "@/components/admin/content/ContentOutline";
@@ -51,6 +53,8 @@ function ContentAdmin() {
   const [tab, setTab] = useState<"home" | "site" | "log">("home");
   const qc = useQueryClient();
   const { confirm, dialog } = useConfirm();
+  const access = useAdminAccess();
+  const mayPublish = !!access.data && can(access.data.perms, "content.publish");
 
   const homeRow = useRow("home");
   const siteRow = useRow("site");
@@ -265,7 +269,8 @@ function ContentAdmin() {
       (currentRow.data?.published as Record<string, unknown>) ?? {},
     ).length === 0;
   const hasNothingToPublish = currentUnsaved === 0 && draftMatchesPublished;
-  const canPublish = !busy && Object.keys(currentErrors).length === 0 && !hasNothingToPublish;
+  const canPublish =
+    !busy && Object.keys(currentErrors).length === 0 && !hasNothingToPublish && mayPublish;
   const canSaveDraft = !busy && currentUnsaved > 0 && Object.keys(currentErrors).length === 0;
 
   const publishChanges = useMemo(() => {
@@ -392,6 +397,11 @@ function ContentAdmin() {
                 size="sm"
                 onClick={() => setPublishOpen(true)}
                 disabled={!canPublish}
+                title={
+                  mayPublish
+                    ? undefined
+                    : "Chỉ người có quyền xuất bản mới đưa thay đổi lên website"
+                }
               >
                 <Send className="h-4 w-4" /> Xuất bản
               </Button>

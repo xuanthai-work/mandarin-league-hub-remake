@@ -25,7 +25,7 @@
 - Site UI text uses the typed dictionary in src/lib/i18n (vi/zh/en, Vietnamese on SSR then the stored choice after hydration), so new languages or strings need no library and never cause hydration mismatches.
 - Certificate AI extraction only pre-fills the admin form via an admin-checked server function; nothing is saved until the admin confirms, so AI mistakes never reach public verification.
 - HSK results live in `hsk_results` (admin-only RLS); triggers compute totals/pass and append `hsk_score_audits`; public reads only via security-definer `verify_hsk()` (code+name or token), so scores can't be faked or enumerated.
-- Admin menu comes from role+department (src/lib/admin-permissions.ts) mirroring RLS helpers; a news trigger lets only comms heads/admin publish, so UI and DB agree and members can't self-publish.
+- Admin menu and in-page buttons come from `my_permissions()` via `allowedSections()` / `can()` (section → matrix actions in `SECTION_ACTIONS`, admin flag sees all), so the UI hides exactly what RLS would refuse; the database stays the only real gate (the news trigger and `site_content_guard_publish` still block self-publishing).
 - Public submit/lookup forms need a server-verified reCAPTCHA token; QR-token lookups skip it so QR links keep working.
 - Member benefits (shared Premium accounts) live in `benefits`/`member_benefits` (admin-only RLS); members read via definer RPCs only, so credentials never leak.
 - Portal hostnames (main/join/member) are mapped in src/lib/domain.ts and enforced both in src/server.ts (first load) and the root route (client navigation), so one codebase serves all three portals and preview hosts never redirect.

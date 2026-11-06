@@ -41,7 +41,7 @@ import {
 } from "@/lib/activities";
 
 import { useAdminAccess } from "./admin";
-import { canReviewNews } from "@/lib/admin-permissions";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
 import { TrashList, useConfirm } from "@/components/admin/Trash";
 import {
   Select,
@@ -84,7 +84,7 @@ const EMPTY: Form = {
 };
 function useCanPublish() {
   const a = useAdminAccess().data;
-  return !!a && canReviewNews(a.roles, a.department);
+  return !!a && can(a.perms, "activities.publish");
 }
 
 type Group = "ongoing" | "upcoming" | "unscheduled" | "ended" | "cancelled";
@@ -967,10 +967,12 @@ function ActivitiesAdmin() {
   const [tab, setTab] = useState<"list" | "regs" | "audit" | "trash">("list");
   const [regsPreset, setRegsPreset] = useState("");
   const [regsActivity, setRegsActivity] = useState("");
-  const isAdmin = !!useAdminAccess().data?.roles.includes("admin");
+  const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
   const canPublish = useCanPublish();
+  const canRegs = can(perms, "activities.registrations");
+  const canPurge = can(perms, "trash.purge");
   const acts = useAllActivities();
-  const regs = useAllRegs(canPublish);
+  const regs = useAllRegs(canRegs);
   const pendingRegs = (regs.data ?? []).filter((r) => r.status === "PENDING").length;
   const openTab = (k: typeof tab) => {
     setRegsPreset("");
@@ -981,7 +983,13 @@ function ActivitiesAdmin() {
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <div className="custom-scrollbar max-w-full overflow-x-auto">
         <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
-          {TABS.filter(([k]) => canPublish || k === "list").map(([k, label]) => {
+          {TABS.filter(
+            ([k]) =>
+              k === "list" ||
+              (k === "regs" && canRegs) ||
+              (k === "audit" && canPublish) ||
+              (k === "trash" && (canPublish || canPurge)),
+          ).map(([k, label]) => {
             const active = tab === k;
             const badge = k === "list" ? (acts.data?.length ?? 0) : k === "regs" ? pendingRegs : 0;
             return (
@@ -1044,7 +1052,7 @@ function ActivitiesAdmin() {
       {tab === "trash" && (
         <TrashList
           table="activities"
-          canHardDelete={isAdmin}
+          canHardDelete={canPurge}
           invalidate={["admin-activities", "public-activities"]}
         />
       )}

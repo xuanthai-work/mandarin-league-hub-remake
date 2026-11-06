@@ -15,7 +15,7 @@ import {
   type NewsRow,
   type NewsStatus,
 } from "@/lib/news-db";
-import { canReviewNews } from "@/lib/admin-permissions";
+import { can } from "@/lib/permission-catalog";
 import { useAdminAccess } from "./admin";
 import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -70,7 +70,7 @@ function NewsEditor({ id }: { id: string }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const access = useAdminAccess().data;
-  const reviewer = !!access && canReviewNews(access.roles, access.department);
+  const reviewer = !!access && can(access.perms, "news.review");
   const { confirm, dialog } = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

@@ -25,7 +25,7 @@ import {
   type NewsRow,
   type NewsStatus,
 } from "@/lib/news-db";
-import { canReviewNews } from "@/lib/admin-permissions";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
 import { matchesSearch } from "@/lib/search";
 import { useAdminAccess } from "./admin";
 import { TrashList } from "@/components/admin/Trash";
@@ -63,8 +63,9 @@ function NewsAdmin() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const access = useAdminAccess().data;
-  const reviewer = !!access && canReviewNews(access.roles, access.department);
-  const isAdmin = !!access?.roles.includes("admin");
+  const perms = access?.perms ?? NO_PERMISSIONS;
+  const reviewer = can(perms, "news.review");
+  const canPurge = can(perms, "trash.purge");
   const { confirm, dialog } = useConfirm();
 
   const [status, setStatus] = useState<NewsStatus | "">("");
@@ -273,7 +274,7 @@ function NewsAdmin() {
           </SelectContent>
         </Select>
 
-        {(reviewer || isAdmin) && (
+        {(reviewer || canPurge) && (
           <Button
             type="button"
             size="admin"
@@ -291,7 +292,7 @@ function NewsAdmin() {
       {trash ? (
         <TrashList
           table="news_articles"
-          canHardDelete={isAdmin}
+          canHardDelete={canPurge}
           invalidate={["admin-news", "public-news"]}
         />
       ) : (

@@ -51,6 +51,7 @@ import {
   type AccountStatus,
 } from "@/lib/accounts";
 import { useAdminAccess } from "./admin";
+import { can } from "@/lib/permission-catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
   staticData: { sitemap: false },
@@ -426,11 +427,10 @@ function MembersPage() {
   const qc = useQueryClient();
   const access = useAdminAccess();
   const fetchAccounts = useServerFn(getAdminMemberAccounts);
-  /** Account credentials and mutations are admin-only (server functions enforce the same rule). */
-  const isAdmin = !!access.data?.roles.includes("admin");
-  /** The fine-grained permission opens member profile creation/editing without granting account rights. */
-  const permissions: string[] = access.data?.permissions ?? [];
-  const canEditMembers = isAdmin || permissions.includes("members.edit");
+  /** Account credentials and mutations stay admin-only in the UI until the permission drawer task. */
+  const isAdmin = !!access.data?.perms.isAdmin;
+  /** Profile create/edit follows the members.edit matrix action; RLS and the guard trigger re-check rank. */
+  const canEditMembers = !!access.data && can(access.data.perms, "members.edit");
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-members"] });
     // A newly granted account makes the member assignable, so the task pickers must refetch too.

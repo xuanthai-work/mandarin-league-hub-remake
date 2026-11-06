@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { can } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -79,24 +81,13 @@ function AdminPhotos() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isAdmin = useQuery({
-    queryKey: ["is-admin"],
-    queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return false;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", u.user.id)
-        .eq("role", "admin");
-      return (data?.length ?? 0) > 0;
-    },
-  });
+  const access = useAdminAccess();
+  const canManage = !!access.data && can(access.data.perms, "photos.manage");
 
   const photos = useQuery({
     queryKey: ["activity-photos", "all"],
     queryFn: listAllPhotos,
-    enabled: isAdmin.data === true,
+    enabled: canManage,
   });
 
   const [busy, setBusy] = useState(false);
@@ -253,11 +244,11 @@ function AdminPhotos() {
     },
   };
 
-  if (isAdmin.isLoading) return <p className="p-10 text-center">Đang kiểm tra quyền…</p>;
-  if (!isAdmin.data)
+  if (access.isLoading) return <p className="p-10 text-center">Đang kiểm tra quyền…</p>;
+  if (!canManage)
     return (
       <div className="mx-auto max-w-md p-10 text-center">
-        <p>Tài khoản này không có quyền quản trị.</p>
+        <p>Bạn chưa được cấp quyền quản lý ảnh.</p>
         <Button variant="link" onClick={signOut} className="mt-4">
           <LogOut className="mr-1 inline h-4 w-4" />
           Đăng xuất

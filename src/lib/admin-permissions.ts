@@ -1,21 +1,31 @@
-import type { AdminRole } from "./admin-nav";
+import { can, type MyPermissions, type PermissionCode } from "./permission-catalog";
+
+/** Each admin section opens when the user holds at least one of these actions (any scope). */
+export const SECTION_ACTIONS: Record<string, readonly PermissionCode[]> = {
+  recruitment: ["recruitment.config"],
+  candidates: ["candidates.view"],
+  members: ["members.view"],
+  tasks: ["tasks.view"],
+  contributions: ["points.view", "points.attendance", "points.adjust"],
+  benefits: ["benefits.manage"],
+  courses: ["courses.manage", "enrollments.view", "enrollments.review"],
+  teachers: ["teachers.manage"],
+  hsk: ["hsk.view", "hsk.manage", "hsk.delete"],
+  certificates: ["certificates.manage"],
+  activities: ["activities.draft", "activities.publish", "activities.registrations"],
+  news: ["news.write", "news.review"],
+  photos: ["photos.manage"],
+  partners: ["partners.view", "partners.manage"],
+  departments: ["departments.advisors"],
+  content: ["content.edit", "content.publish"],
+};
 
 /** Admin sections a user may see. RLS enforces the same rules on the backend. */
-export function allowedSections(
-  roles: AdminRole[],
-  department: string | null,
-  permissions: string[] = [],
-): string[] | "all" {
-  if (roles.includes("admin")) return "all";
-  const isHead = roles.includes("department_head") || roles.includes("deputy_head");
-  const s = new Set<string>();
-  if (isHead) ["members", "tasks", "contributions"].forEach((x) => s.add(x));
-  // The fine-grained member permission opens the members section on its own (profile data only).
-  if (permissions.includes("members.edit")) s.add("members");
-  if (department === "comms") ["news", "activities"].forEach((x) => s.add(x));
-  if (department === "comms" && isHead) s.add("content");
-  if (canViewPartners(roles, department)) s.add("partners");
-  return [...s];
+export function allowedSections(p: MyPermissions): string[] | "all" {
+  if (p.isAdmin) return "all";
+  return Object.entries(SECTION_ACTIONS)
+    .filter(([, codes]) => codes.some((c) => can(p, c)))
+    .map(([slug]) => slug);
 }
 
 /** Sections every admin-portal user gets once they can open at least one module. */
@@ -32,18 +42,10 @@ export function onlyPersonalSections(allowed: string[] | "all"): boolean {
   return allowed.every((s) => (PERSONAL_SECTIONS as readonly string[]).includes(s));
 }
 
-export const canReviewNews = (roles: AdminRole[], department: string | null) =>
-  roles.includes("admin") ||
-  (department === "comms" && (roles.includes("department_head") || roles.includes("deputy_head")));
-
-/** Departments that read the partner list for their own work but never edit it. */
-const PARTNER_VIEW_DEPARTMENTS = ["finance", "comms", "design", "translation"];
-
-/** Full partner CRUD (create, edit, hide/show, delete) — admin only. */
-export const canManagePartners = (roles: AdminRole[], department: string | null) =>
-  roles.includes("admin");
-
-/** Read-only partner access: managers plus the departments that reuse partner info and logos. */
-export const canViewPartners = (roles: AdminRole[], department: string | null) =>
-  canManagePartners(roles, department) ||
-  (department !== null && PARTNER_VIEW_DEPARTMENTS.includes(department));
+/** Lands on /admin only when the user has real work there, not just the member list or settings. */
+export function landsOnAdmin(allowed: string[] | "all"): boolean {
+  if (allowed === "all") return true;
+  return allowed.some(
+    (s) => s !== "members" && !(PERSONAL_SECTIONS as readonly string[]).includes(s),
+  );
+}

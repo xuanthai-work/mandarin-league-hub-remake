@@ -1,143 +1,84 @@
 import { describe, expect, it } from "vitest";
-import type { AdminRole } from "./admin-nav";
+import type { MyPermissions } from "./permission-catalog";
 import {
   allowedSections,
-  canManagePartners,
-  canReviewNews,
-  canViewPartners,
+  landsOnAdmin,
   onlyPersonalSections,
   withPersonalSections,
 } from "./admin-permissions";
 
-describe("admin permissions", () => {
-  it("comms member sees news, activities, partners only", () => {
-    expect(allowedSections(["member"], "comms")).toEqual(["news", "activities", "partners"]);
+const perms = (actions: MyPermissions["actions"], isAdmin = false): MyPermissions => ({
+  isAdmin,
+  actions,
+});
+
+describe("allowedSections", () => {
+  it("gives admins every section", () => {
+    expect(allowedSections(perms({}, true))).toBe("all");
   });
-  it("only comms heads (not members) get page content", () => {
-    expect(allowedSections(["deputy_head"], "comms")).toContain("content");
-    expect(allowedSections(["member"], "comms")).not.toContain("content");
+
+  it("returns no sections without permissions", () => {
+    expect(allowedSections(perms({}))).toEqual([]);
   });
-  it("finance member sees partners only", () => {
-    expect(allowedSections(["member"], "finance")).toEqual(["partners"]);
+
+  it("opens sections for a communications member", () => {
+    const p = perms({
+      "activities.draft": "all",
+      "news.write": "all",
+      "partners.view": "all",
+      "members.view": "own",
+    });
+    const allowed = allowedSections(p);
+    expect(allowed).toContain("members");
+    expect(allowed).toContain("activities");
+    expect(allowed).toContain("news");
+    expect(allowed).toContain("partners");
+    expect(allowed).not.toContain("content");
+    expect(allowed).not.toContain("photos");
   });
-  it("departments without partner access get no admin sections", () => {
-    expect(allowedSections(["member"], "hr")).toEqual([]);
-    expect(allowedSections(["member"], "academic")).toEqual([]);
+
+  it("opens academic sections for an academic head but not certificates", () => {
+    const allowed = allowedSections(
+      perms({
+        "courses.manage": "all",
+        "teachers.manage": "all",
+        "hsk.view": "all",
+        "hsk.manage": "all",
+      }),
+    );
+    expect(allowed).toContain("courses");
+    expect(allowed).toContain("teachers");
+    expect(allowed).toContain("hsk");
+    expect(allowed).not.toContain("certificates");
   });
-  it("members.edit opens the members section on its own, members.view does not", () => {
-    expect(allowedSections(["member"], "academic", ["members.edit"])).toEqual(["members"]);
-    expect(allowedSections(["member"], "academic", ["members.view"])).toEqual([]);
-    expect(allowedSections(["member"], "finance", ["members.edit"])).toEqual([
-      "members",
-      "partners",
-    ]);
+
+  it("opens hsk from hsk.delete alone", () => {
+    expect(allowedSections(perms({ "hsk.delete": "all" }))).toEqual(["hsk"]);
   });
-  it("only comms heads/deputies and admin can publish news", () => {
-    expect(canReviewNews(["member"], "comms")).toBe(false);
-    expect(canReviewNews(["deputy_head"], "comms")).toBe(true);
-    expect(canReviewNews(["department_head"], "hr")).toBe(false);
-    expect(canReviewNews(["admin"], null)).toBe(true);
+
+  it("opens courses from enrollments.view alone", () => {
+    expect(allowedSections(perms({ "enrollments.view": "all" }))).toEqual(["courses"]);
   });
-  it("only admin manages partners, finance and comms only view", () => {
-    expect(canManagePartners(["admin"], null)).toBe(true);
-    expect(canManagePartners(["member"], "finance")).toBe(false);
-    expect(canViewPartners(["member"], "finance")).toBe(true);
-    expect(canManagePartners(["department_head"], "comms")).toBe(false);
+
+  it("does not open departments from departments.channels", () => {
+    expect(allowedSections(perms({ "departments.channels": "own" }))).toEqual([]);
+  });
+
+  it("keeps SECTION_ACTIONS key order", () => {
+    const allowed = allowedSections(
+      perms({ "news.write": "all", "members.view": "own", "content.edit": "all" }),
+    );
+    expect(allowed).toEqual(["members", "news", "content"]);
   });
 });
 
-/** Create / edit / hide-show / delete all share one server-enforced write capability. */
-const partnerCapabilities = (roles: AdminRole[], department: string | null) => {
-  const write = canManagePartners(roles, department);
-  return {
-    view: canViewPartners(roles, department),
-    create: write,
-    edit: write,
-    toggle: write,
-    delete: write,
-  };
-};
-
-describe("partners access matrix", () => {
-  const matrix: Array<{
-    user: string;
-    roles: AdminRole[];
-    department: string | null;
-    view: boolean;
-    write: boolean;
-  }> = [
-    { user: "admin", roles: ["admin"], department: null, view: true, write: true },
-    { user: "finance member", roles: ["member"], department: "finance", view: true, write: false },
-    { user: "hr member", roles: ["member"], department: "hr", view: false, write: false },
-    {
-      user: "academic member",
-      roles: ["member"],
-      department: "academic",
-      view: false,
-      write: false,
-    },
-    { user: "media member", roles: ["member"], department: "comms", view: true, write: false },
-    { user: "design member", roles: ["member"], department: "design", view: true, write: false },
-    {
-      user: "translation member",
-      roles: ["member"],
-      department: "translation",
-      view: true,
-      write: false,
-    },
-    {
-      user: "podcast member",
-      roles: ["member"],
-      department: "postcard",
-      view: false,
-      write: false,
-    },
-    { user: "unauthorized user", roles: ["member"], department: null, view: false, write: false },
-    { user: "signed-in with no roles", roles: [], department: null, view: false, write: false },
-  ];
-
-  for (const row of matrix) {
-    it(`${row.user}: view=${row.view}, create/edit/toggle/delete=${row.write}`, () => {
-      expect(partnerCapabilities(row.roles, row.department)).toEqual({
-        view: row.view,
-        create: row.write,
-        edit: row.write,
-        toggle: row.write,
-        delete: row.write,
-      });
-      // The admin layout and sidebar both use this list, so direct /admin/partners visits are gated too.
-      const allowed = allowedSections(row.roles, row.department);
-      expect(allowed === "all" || allowed.includes("partners")).toBe(row.view);
-    });
-  }
-
-  it("admin keeps full CRUD in every department", () => {
-    for (const department of ["comms", "design", "finance", "hr", "academic", null]) {
-      expect(canManagePartners(["admin"], department)).toBe(true);
-    }
-  });
-
-  it("only approved departments may view without write access", () => {
-    for (const roles of [["department_head"], ["deputy_head"]] as AdminRole[][]) {
-      expect(canViewPartners(roles, "hr")).toBe(false);
-      expect(canViewPartners(roles, "academic")).toBe(false);
-      expect(canManagePartners(roles, "hr")).toBe(false);
-    }
-    expect(canViewPartners(["member"], "finance")).toBe(true);
-    expect(canViewPartners(["member"], "design")).toBe(true);
-    expect(canViewPartners(["member"], "comms")).toBe(true);
-    expect(canViewPartners(["member"], "translation")).toBe(true);
-    expect(canViewPartners(["member"], "tech")).toBe(false);
-    expect(canViewPartners(["member"], "postcard")).toBe(false);
-    expect(canManagePartners(["member"], "tech")).toBe(false);
-    // A head role without an approved department cannot read partners.
-    expect(canViewPartners(["department_head"], null)).toBe(false);
-  });
-
-  it("supports multiple roles without granting write access", () => {
-    expect(canManagePartners(["member", "deputy_head"], "design")).toBe(false);
-    expect(canViewPartners(["member", "deputy_head"], "design")).toBe(true);
-  });
+describe("landsOnAdmin", () => {
+  it("sends admins to the admin portal", () => expect(landsOnAdmin("all")).toBe(true));
+  it("keeps member-only users on the dashboard", () =>
+    expect(landsOnAdmin(["members", "settings"])).toBe(false));
+  it("sends users with a module section to admin", () =>
+    expect(landsOnAdmin(["members", "news", "settings"])).toBe(true));
+  it("keeps users without sections on the dashboard", () => expect(landsOnAdmin([])).toBe(false));
 });
 
 describe("withPersonalSections", () => {
