@@ -56,11 +56,11 @@ export const generateOnboardingPlan = createServerFn({ method: "POST" })
       .eq("id", data.memberId)
       .maybeSingle();
     if (!m || m.status !== "active") throw new Error("Thành viên không hợp lệ.");
-    const { data: ok } = await context.supabase.rpc("can_manage_department", {
+    const { data: ok } = await context.supabase.rpc("has_perm", {
+      _action: "onboarding.manage",
       _dept: m.department,
     });
-    if (!ok)
-      throw new Error("Chỉ Trưởng Ban, Phó Ban hoặc Quản trị viên của Ban này được tạo lộ trình.");
+    if (!ok) throw new Error("Bạn không có quyền tạo lộ trình cho thành viên Ban này.");
 
     const { runResponsesText } = await import("./ai/responses.server");
     const instructions = `Bạn là điều phối viên nhân sự của The Mandarin League (Liên Đoàn Hán Ngữ) – cộng đồng học tiếng Trung tại Việt Nam.
