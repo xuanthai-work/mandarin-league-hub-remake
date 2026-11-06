@@ -1288,6 +1288,60 @@ export type Database = {
           },
         ];
       };
+      member_permission_grants: {
+        Row: {
+          action: string;
+          created_at: string;
+          expires_at: string | null;
+          granted_by: string | null;
+          id: string;
+          member_id: string;
+          note: string;
+          revoked_at: string | null;
+          revoked_by: string | null;
+          scope: string;
+        };
+        Insert: {
+          action: string;
+          created_at?: string;
+          expires_at?: string | null;
+          granted_by?: string | null;
+          id?: string;
+          member_id: string;
+          note?: string;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          scope: string;
+        };
+        Update: {
+          action?: string;
+          created_at?: string;
+          expires_at?: string | null;
+          granted_by?: string | null;
+          id?: string;
+          member_id?: string;
+          note?: string;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          scope?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "member_permission_grants_action_fkey";
+            columns: ["action"];
+            isOneToOne: false;
+            referencedRelation: "permission_actions";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "member_permission_grants_member_id_fkey";
+            columns: ["member_id"];
+            isOneToOne: false;
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       members: {
         Row: {
           application_id: string | null;
@@ -1514,6 +1568,81 @@ export type Database = {
         };
         Relationships: [];
       };
+      permission_actions: {
+        Row: {
+          code: string;
+          label: string;
+          module: string;
+          scoped: boolean;
+          sort_order: number;
+        };
+        Insert: {
+          code: string;
+          label: string;
+          module: string;
+          scoped: boolean;
+          sort_order: number;
+        };
+        Update: {
+          code?: string;
+          label?: string;
+          module?: string;
+          scoped?: boolean;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      permission_audit_logs: {
+        Row: {
+          action: string;
+          actor_id: string | null;
+          actor_label: string;
+          created_at: string;
+          department: string | null;
+          expires_at: string | null;
+          grant_id: string | null;
+          id: number;
+          kind: string;
+          member_id: string | null;
+          note: string;
+          position: string | null;
+          scope_after: string | null;
+          scope_before: string | null;
+        };
+        Insert: {
+          action: string;
+          actor_id?: string | null;
+          actor_label?: string;
+          created_at?: string;
+          department?: string | null;
+          expires_at?: string | null;
+          grant_id?: string | null;
+          id?: number;
+          kind: string;
+          member_id?: string | null;
+          note?: string;
+          position?: string | null;
+          scope_after?: string | null;
+          scope_before?: string | null;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string | null;
+          actor_label?: string;
+          created_at?: string;
+          department?: string | null;
+          expires_at?: string | null;
+          grant_id?: string | null;
+          id?: number;
+          kind?: string;
+          member_id?: string | null;
+          note?: string;
+          position?: string | null;
+          scope_after?: string | null;
+          scope_before?: string | null;
+        };
+        Relationships: [];
+      };
       point_transactions: {
         Row: {
           actor_name: string;
@@ -1568,6 +1697,41 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "tasks";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      position_permissions: {
+        Row: {
+          action: string;
+          department: string;
+          position: string;
+          scope: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          action: string;
+          department: string;
+          position: string;
+          scope: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          action?: string;
+          department?: string;
+          position?: string;
+          scope?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "position_permissions_action_fkey";
+            columns: ["action"];
+            isOneToOne: false;
+            referencedRelation: "permission_actions";
+            referencedColumns: ["code"];
           },
         ];
       };
@@ -1978,6 +2142,24 @@ export type Database = {
         };
         Returns: undefined;
       };
+      admin_grant_permission: {
+        Args: {
+          _action: string;
+          _expires_at: string | null;
+          _member: string;
+          _note: string;
+          _scope: string;
+        };
+        Returns: string;
+      };
+      admin_revoke_permission_grant: {
+        Args: { _grant: string; _note: string };
+        Returns: undefined;
+      };
+      admin_set_position_permission: {
+        Args: { _action: string; _department: string; _position: string; _scope: string | null };
+        Returns: undefined;
+      };
       benefit_access: {
         Args: { _benefit: string };
         Returns: {
@@ -1994,6 +2176,7 @@ export type Database = {
           logo_path: string;
         }[];
       };
+      can_assign_position: { Args: { _position: string }; Returns: boolean };
       can_manage_department: { Args: { _dept: string }; Returns: boolean };
       can_manage_partners: { Args: never; Returns: boolean };
       can_review_application: { Args: { _app: string }; Returns: boolean };
@@ -2026,6 +2209,7 @@ export type Database = {
         Args: { _session: string };
         Returns: boolean;
       };
+      has_perm: { Args: { _action: string; _dept?: string }; Returns: boolean };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];
@@ -2034,6 +2218,7 @@ export type Database = {
         Returns: boolean;
       };
       hsk_class_seats: { Args: { _class: string }; Returns: number };
+      is_admin: { Args: never; Returns: boolean };
       is_dept_member: { Args: { _dept: string }; Returns: boolean };
       mark_password_changed: { Args: never; Returns: undefined };
       member_update_task: {
@@ -2046,6 +2231,14 @@ export type Database = {
         Returns: undefined;
       };
       my_account: { Args: never; Returns: Json };
+      my_active_member: {
+        Args: never;
+        Returns: {
+          department: string;
+          id: string;
+          position: string;
+        }[];
+      };
       my_advisor_roles: {
         Args: never;
         Returns: {
@@ -2078,6 +2271,10 @@ export type Database = {
           pass_updated_at: string;
         }[];
       };
+      my_permissions: { Args: never; Returns: Json };
+      outranks: { Args: { _member: string }; Returns: boolean };
+      perm_scope: { Args: { _action: string }; Returns: string };
+      position_rank: { Args: { _position: string }; Returns: number };
       public_dept_advisors: {
         Args: never;
         Returns: {
