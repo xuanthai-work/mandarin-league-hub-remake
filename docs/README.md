@@ -190,6 +190,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-150-ADMIN-KIT-TABLE`                                          | Bộ component admin A4: AdminTable + dòng mở bằng bàn phím                                              | 2026-11-06     | **PASS** | [task-ge-150-admin-kit-table.md](tasks/task-ge-150-admin-kit-table.md)                                                                                   |
 | `TASK-GE-151-ADMIN-KIT-FORM-FIELD`                                     | Bộ component admin A5a: FormField, AdminInput, chuyển useConfirm                                       | 2026-11-06     | **PASS** | [task-ge-151-admin-kit-form-field.md](tasks/task-ge-151-admin-kit-form-field.md)                                                                         |
 | `TASK-GE-152-ADMIN-KIT-MODAL`                                          | Bộ component admin A5b: AdminModal + ngăn xếp Esc dùng chung                                           | 2026-11-06     | **PASS** | [task-ge-152-admin-kit-modal.md](tasks/task-ge-152-admin-kit-modal.md)                                                                                   |
+| `TASK-GE-153-ADMIN-KIT-LINT-RATCHET`                                   | Bộ component admin A6: luật ESLint siết dần + form Đối tác                                             | 2026-11-06     | **PASS** | [task-ge-153-admin-kit-lint-ratchet.md](tasks/task-ge-153-admin-kit-lint-ratchet.md)                                                                     |
 
 ---
 

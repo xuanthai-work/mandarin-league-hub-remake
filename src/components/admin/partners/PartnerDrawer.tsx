@@ -9,7 +9,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
 import { DangerZone } from "@/components/admin/kit/DangerZone";
+import { FormField } from "@/components/admin/kit/FormField";
 import { StatusPill } from "@/components/admin/kit/StatusPill";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
 import type { PartnerCategory } from "@/lib/data/types";
@@ -19,8 +21,6 @@ export type PartnerForm = Omit<PartnerRow, "id" | "logo"> & { id?: string };
 
 /** One option of the "Vị trí" select. occupant = tên đối tác khác đang giữ vị trí đó, null nếu trống. */
 export type PartnerPosition = { value: number; occupant: string | null };
-
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 
 const SECTION = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
@@ -145,59 +145,61 @@ export function PartnerDrawer({
       <section className="space-y-3">
         <h3 className={SECTION}>Thông tin</h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs text-muted-foreground">
-            Tên đối tác <span className="text-destructive">*</span>
-            <input
-              className={`${inp} mt-1`}
-              value={value.name}
-              onChange={(e) => onChange({ name: e.target.value })}
-            />
-          </label>
-          <div className="block text-xs text-muted-foreground">
-            Phân loại
-            <Select value={value.category} onValueChange={(v) => onChange({ category: v })}>
-              <SelectTrigger
-                aria-label="Phân loại đối tác"
-                className="mt-1 h-9 w-full rounded-lg text-sm"
-              >
-                <SelectValue>{value.category}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="z-[95] rounded-xl">
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c} className="text-xs">
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <label className="block text-xs text-muted-foreground">
-            Lĩnh vực
-            <input
-              className={`${inp} mt-1`}
-              placeholder="VD: Công nghệ thông tin"
-              value={value.field}
-              onChange={(e) => onChange({ field: e.target.value })}
-            />
-          </label>
-          <label className="block text-xs text-muted-foreground">
-            Website
-            <input
-              className={`${inp} mt-1`}
-              placeholder="https://"
-              value={value.website_url}
-              onChange={(e) => onChange({ website_url: e.target.value.trim() })}
-            />
-          </label>
-          <label className="block text-xs text-muted-foreground sm:col-span-2">
-            Mô tả
-            <textarea
-              rows={4}
-              className={`${inp} mt-1`}
-              value={value.description}
-              onChange={(e) => onChange({ description: e.target.value })}
-            />
-          </label>
+          <FormField label="Tên đối tác" required>
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.name}
+                onChange={(e) => onChange({ name: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Phân loại">
+            {(field) => (
+              <Select value={value.category} onValueChange={(v) => onChange({ category: v })}>
+                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                  <SelectValue>{value.category}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="z-[95] rounded-xl">
+                  {categories.map((c) => (
+                    <SelectItem key={c} value={c} className="text-xs">
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+          <FormField label="Lĩnh vực">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="VD: Công nghệ thông tin"
+                value={value.field}
+                onChange={(e) => onChange({ field: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Website">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="https://"
+                value={value.website_url}
+                onChange={(e) => onChange({ website_url: e.target.value.trim() })}
+              />
+            )}
+          </FormField>
+          <FormField label="Mô tả" className="sm:col-span-2">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={4}
+                value={value.description}
+                onChange={(e) => onChange({ description: e.target.value })}
+              />
+            )}
+          </FormField>
         </div>
       </section>
 
@@ -217,28 +219,30 @@ export function PartnerDrawer({
           />
         </div>
         <div>
-          <span className="block text-xs text-muted-foreground">Vị trí hiển thị</span>
-          <Select
-            value={String(value.sort_order)}
-            onValueChange={(v) => onChange({ sort_order: Number(v) })}
+          <FormField
+            label="Vị trí hiển thị"
+            hint="Số nhỏ hiển thị trước. Chọn vị trí đã có đối tác thì hai đối tác sẽ đổi chỗ cho nhau."
           >
-            <SelectTrigger
-              aria-label="Vị trí hiển thị"
-              className="mt-1 h-9 w-full rounded-lg text-sm"
-            >
-              <SelectValue>{`#${value.sort_order}`}</SelectValue>
-            </SelectTrigger>
-            <SelectContent className="z-[95] rounded-xl">
-              {positions.map((p) => (
-                <SelectItem key={p.value} value={String(p.value)} className="text-xs">
-                  {p.occupant === null ? `#${p.value}` : `#${p.value} · đổi chỗ với ${p.occupant}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Số nhỏ hiển thị trước. Chọn vị trí đã có đối tác thì hai đối tác sẽ đổi chỗ cho nhau.
-          </p>
+            {(field) => (
+              <Select
+                value={String(value.sort_order)}
+                onValueChange={(v) => onChange({ sort_order: Number(v) })}
+              >
+                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                  <SelectValue>{`#${value.sort_order}`}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="z-[95] rounded-xl">
+                  {positions.map((p) => (
+                    <SelectItem key={p.value} value={String(p.value)} className="text-xs">
+                      {p.occupant === null
+                        ? `#${p.value}`
+                        : `#${p.value} · đổi chỗ với ${p.occupant}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
         </div>
       </section>
 
