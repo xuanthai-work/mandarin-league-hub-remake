@@ -169,6 +169,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-138-LINT-ADMIN-PERMISSIONS-TEST-FORMAT`                       | Định dạng lại test quyền admin, lint về 0 lỗi                                                          | 2026-11-06     | **PASS** | [task-ge-138-lint-admin-permissions-test-format.md](tasks/task-ge-138-lint-admin-permissions-test-format.md)                                             |
 | `TASK-OC-145-ADMIN-SETTINGS-REDESIGN`                                  | Cài đặt mở cho mọi người vào admin: mục lục trái, Hồ sơ, Bảo mật, Giao diện, Riêng tư                  | 2026-11-06     | **PASS** | [task-oc-145-admin-settings-redesign.md](tasks/task-oc-145-admin-settings-redesign.md)                                                                   |
 | `TASK-GE-139-CONTENT-PAGE-OUTLINE-EDITOR`                              | Trang & Nội dung: bản đồ trang, trạng thái từng ô, chặn rời trang khi chưa lưu                         | 2026-11-06     | **PASS** | [task-ge-139-content-page-outline-editor.md](tasks/task-ge-139-content-page-outline-editor.md)                                                           |
+| `TASK-OC-146-ADMIN-SYSTEM-STATUS`                                      | Cài đặt: khối Hệ thống cho Admin, trạng thái biến môi trường và độ trễ DB                              | 2026-11-06     | **PASS** | [task-oc-146-admin-system-status.md](tasks/task-oc-146-admin-system-status.md)                                                                           |
 
 ---
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowUpRight, Eye, Globe, Palette, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowUpRight, Eye, Globe, Palette, ServerCog, ShieldCheck, UserRound } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { HomeLink } from "@/components/site/HomeLink";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { AppearanceSection } from "@/components/admin/settings/AppearanceSection
 import { PrivacySection } from "@/components/admin/settings/PrivacySection";
 import { ProfileSection } from "@/components/admin/settings/ProfileSection";
 import { SecuritySection } from "@/components/admin/settings/SecuritySection";
+import { SystemSection } from "@/components/admin/settings/SystemSection";
 import { useMyAccount } from "@/components/admin/settings/shared";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
@@ -31,6 +32,7 @@ function AdminSettings() {
   const me = useMyAccount();
   const [active, setActive] = useState("profile");
   const lockRef = useRef(0);
+  const isAdmin = !!me.data?.roles.includes("admin");
 
   const items = me.isError
     ? [{ id: "appearance", label: "Giao diện", icon: Palette }]
@@ -39,6 +41,7 @@ function AdminSettings() {
         { id: "security", label: "Bảo mật", icon: ShieldCheck },
         { id: "appearance", label: "Giao diện", icon: Palette },
         ...(me.data?.member ? [{ id: "privacy", label: "Riêng tư", icon: Eye }] : []),
+        ...(isAdmin ? [{ id: "system", label: "Hệ thống", icon: ServerCog }] : []),
       ];
   const itemsKey = items.map((i) => i.id).join(",");
 
@@ -155,6 +158,7 @@ function AdminSettings() {
               <SecuritySection me={me.data} />
               <AppearanceSection />
               {me.data.member && <PrivacySection member={me.data.member} />}
+              {isAdmin && <SystemSection />}
             </>
           ) : (
             <AppearanceSection />
