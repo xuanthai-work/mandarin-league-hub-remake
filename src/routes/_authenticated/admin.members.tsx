@@ -5,7 +5,18 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Check, Copy, KeyRound, Loader2, Plus, QrCode, Search, Trash2, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  KeyRound,
+  Loader2,
+  Plus,
+  QrCode,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useConfirm } from "@/components/admin/Trash";
 import { deptName } from "@/lib/recruitment";
+import { csvCell } from "@/lib/csv";
 import { matchesSearch } from "@/lib/search";
 import { type AdminRole } from "@/lib/admin-nav";
 import {
@@ -45,6 +57,8 @@ export const Route = createFileRoute("/_authenticated/admin/members")({
   head: () => ({
     meta: [{ title: "Thành viên | TML Admin" }, { name: "robots", content: "noindex" }],
   }),
+  validateSearch: (s: Record<string, unknown>): { dept?: string } =>
+    typeof s["dept"] === "string" && /^[a-z_-]{2,30}$/.test(s["dept"]) ? { dept: s["dept"] } : {},
   component: MembersPage,
 });
 
@@ -93,6 +107,7 @@ type Row = {
   joined_on: string;
   contribution_points: number;
   status: string;
+  phone: string | null;
   is_public: boolean;
   leave_from: string | null;
   leave_until: string | null;
@@ -401,7 +416,10 @@ function DepartmentSection({
 function MembersPage() {
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<UnifiedStatus>("active");
-  const [deptFilter, setDeptFilter] = useState<string>("");
+  const { dept } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const deptFilter = dept ?? "";
+  const setDeptFilter = (v: string) => navigate({ search: v ? { dept: v } : {}, replace: true });
   const [selId, setSelId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const { confirm, dialog } = useConfirm();
@@ -486,6 +504,48 @@ function MembersPage() {
   const selected = all.find((m) => m.id === selId);
   const open = (m: MemberRow) => setSelId(m.id);
 
+  const exportCsv = () => {
+    const order = new Map(deptList.map((d, i) => [d.id, i]));
+    const sorted = [...rows].sort(
+      (a, b) =>
+        (order.get(a.department) ?? 99) - (order.get(b.department) ?? 99) ||
+        a.member_code.localeCompare(b.member_code),
+    );
+    const head = [
+      "Mã thành viên",
+      "Họ tên",
+      "Ban",
+      "Chức vụ",
+      "Trạng thái",
+      "Email",
+      "Điện thoại",
+      "Ngày gia nhập",
+      "Điểm",
+    ];
+    const body = sorted.map((m) => [
+      m.member_code,
+      m.full_name,
+      deptName(m.department),
+      m.position,
+      UNIFIED_STATUS_MAP[unifiedStatus(m)].label,
+      m.email,
+      m.phone ?? "",
+      fmt(m.joined_on),
+      m.contribution_points,
+    ]);
+    const blob = new Blob(
+      ["\uFEFF" + [head, ...body].map((r) => r.map(csvCell).join(",")).join("\n")],
+      { type: "text/csv;charset=utf-8" },
+    );
+    const url = URL.createObjectURL(blob);
+    const today = new Date().toISOString().slice(0, 10);
+    Object.assign(document.createElement("a"), {
+      href: url,
+      download: `thanh-vien-${deptFilter || "tat-ca"}-${tab}-${today}.csv`,
+    }).click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       {dialog}
@@ -494,13 +554,26 @@ function MembersPage() {
         description="Hồ sơ nhân sự và tài khoản đăng nhập của thành viên. Bấm vào một dòng để xem hồ sơ và quản lý tài khoản."
         actions={
           canEditMembers ? (
-            <button
-              onClick={() => setCreating(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              Thêm thành viên
-            </button>
+            <>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={exportCsv}
+                  disabled={rows.length === 0}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+                >
+                  <Download className="h-4 w-4" />
+                  Xuất CSV ({rows.length})
+                </button>
+              )}
+              <button
+                onClick={() => setCreating(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                Thêm thành viên
+              </button>
+            </>
           ) : null
         }
       />
