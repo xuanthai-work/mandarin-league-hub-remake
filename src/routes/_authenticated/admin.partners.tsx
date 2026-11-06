@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { ArrowUpRight, Download, Handshake, Plus, Search, X } from "lucide-react";
+import { ArrowUpRight, Download, Handshake, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
@@ -10,6 +10,10 @@ import { PARTNER_BUCKET, withLogos, type PartnerRow } from "@/lib/news-db";
 import { canManagePartners, canViewPartners } from "@/lib/admin-permissions";
 import { matchesSearch, removeVietnameseTones } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -225,44 +229,26 @@ function PartnersAdmin() {
         }
         actions={
           manager ? (
-            <button
+            <Button
+              size="admin"
               onClick={() => {
                 setLogoPreview(null);
                 setF({ ...EMPTY, sort_order: nextSortOrder });
               }}
-              className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
             >
               <Plus className="h-4 w-4" /> Thêm đối tác
-            </button>
+            </Button>
           ) : null
         }
       />
 
       <div className="flex flex-wrap items-center gap-2.5">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm tên hoặc lĩnh vực…"
-            aria-label="Tìm kiếm đối tác"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tên hoặc lĩnh vực…"
+          label="Tìm kiếm đối tác"
+        />
         <Select value={cat} onValueChange={setCat}>
           <SelectTrigger
             aria-label="Lọc theo phân loại"
@@ -312,24 +298,18 @@ function PartnersAdmin() {
       </div>
 
       {list.isLoading ? (
-        <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          Đang tải danh sách đối tác…
-        </p>
+        <EmptyState title="Đang tải danh sách đối tác…" />
       ) : partners.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-          <Handshake className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm font-medium">Chưa có đối tác nào</p>
-          {manager && (
-            <p className="mt-1 text-xs text-muted-foreground">Bấm “Thêm đối tác” để bắt đầu.</p>
-          )}
-        </div>
+        <EmptyState
+          icon={Handshake}
+          title="Chưa có đối tác nào"
+          description={manager ? "Bấm “Thêm đối tác” để bắt đầu." : undefined}
+        />
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-          <p className="text-sm font-medium">Không tìm thấy đối tác phù hợp</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Thử xóa từ khóa hoặc chọn lại bộ lọc phân loại và trạng thái.
-          </p>
-        </div>
+        <EmptyState
+          title="Không tìm thấy đối tác phù hợp"
+          description="Thử xóa từ khóa hoặc chọn lại bộ lọc phân loại và trạng thái."
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {rows.map((p) => (
@@ -486,15 +466,9 @@ function PartnerCard({
               }
             />
           ) : (
-            <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                p.is_active
-                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
+            <StatusPill tone={p.is_active ? "success" : "neutral"}>
               {p.is_active ? "Đang hiển thị" : "Đang ẩn"}
-            </span>
+            </StatusPill>
           )}
         </div>
       </div>

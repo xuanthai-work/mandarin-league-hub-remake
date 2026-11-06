@@ -186,6 +186,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-146-ADMIN-KIT-BUTTON-AND-SEARCH`                              | Bộ component admin A1: kiểu nút admin trong ui/button + SearchInput                                    | 2026-11-06     | **PASS** | [task-ge-146-admin-kit-button-and-search.md](tasks/task-ge-146-admin-kit-button-and-search.md)                                                           |
 | `TASK-GE-147-ADMIN-KIT-EMPTY-DANGER-STATUS`                            | Bộ component admin A2: EmptyState, DangerZone, StatusPill                                              | 2026-11-06     | **PASS** | [task-ge-147-admin-kit-empty-danger-status.md](tasks/task-ge-147-admin-kit-empty-danger-status.md)                                                       |
 | `TASK-GE-148-ADMIN-KIT-DRAWER`                                         | Bộ component admin A3: AdminDrawer (Esc theo lớp, focus mở/đóng)                                       | 2026-11-06     | **PASS** | [task-ge-148-admin-kit-drawer.md](tasks/task-ge-148-admin-kit-drawer.md)                                                                                 |
+| `TASK-GE-149-PARTNERS-USE-ADMIN-KIT`                                   | Trang Đối tác dùng bộ component admin (trang thử)                                                      | 2026-11-06     | **PASS** | [task-ge-149-partners-use-admin-kit.md](tasks/task-ge-149-partners-use-admin-kit.md)                                                                     |
 
 ---
 
