@@ -303,8 +303,12 @@ function StatCell({
     <Link
       to="/admin/$section"
       params={{ section }}
-      className={`group flex min-w-0 flex-col gap-2 bg-card px-4 py-3.5 transition-colors hover:bg-accent/40 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 ${className}`}
+      className={`group relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-xl border border-border/70 bg-card px-4 py-3.5 shadow-xs transition-colors hover:border-primary/30 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${className}`}
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-gold/60 via-gold/20 to-transparent"
+      />
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         <Icon aria-hidden className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={1.75} />
         <span className="truncate">{label}</span>
@@ -591,25 +595,17 @@ function Overview() {
       {cells.length > 0 ? (
         <section
           aria-label="Số liệu tổng hợp"
-          className="relative mt-5 overflow-hidden rounded-2xl border border-border/70 bg-border/60 shadow-xs"
+          className={`mt-5 grid gap-3 ${cells.length > 1 ? "grid-cols-2" : "grid-cols-1"} ${XL_COLS[cells.length]}`}
         >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-gold/70 via-gold/25 to-transparent"
-          />
-          <div
-            className={`grid gap-px ${cells.length > 1 ? "grid-cols-2" : "grid-cols-1"} ${XL_COLS[cells.length]}`}
-          >
-            {cells.map((c, i) =>
-              cells.length % 2 === 1 && i === cells.length - 1 && cells.length > 1 ? (
-                <div key={i} className="col-span-2 grid xl:col-span-1">
-                  {c}
-                </div>
-              ) : (
-                c
-              ),
-            )}
-          </div>
+          {cells.map((c, i) =>
+            cells.length % 2 === 1 && i === cells.length - 1 && cells.length > 1 ? (
+              <div key={i} className="col-span-2 grid xl:col-span-1">
+                {c}
+              </div>
+            ) : (
+              c
+            ),
+          )}
         </section>
       ) : (
         <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-sm text-muted-foreground">

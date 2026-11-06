@@ -180,6 +180,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-144-ADMIN-OVERVIEW-COMPACT`                                   | Tổng quan admin: dải số liệu gọn, Cần xử lý theo nội dung, bỏ Lối tắt                                  | 2026-11-06     | **PASS** | [task-ge-144-admin-overview-compact.md](tasks/task-ge-144-admin-overview-compact.md)                                                                     |
 | `TASK-OC-150-HSK-CLASSES-TABLE-AND-DRAWER`                             | Lớp HSK: một bảng + lọc, sĩ số tại chỗ, drawer có link Zalo (mig 0049)                                 | 2026-11-06     | **PASS** | [task-oc-150-hsk-classes-table-and-drawer.md](tasks/task-oc-150-hsk-classes-table-and-drawer.md)                                                         |
 | `TASK-OC-151-PROGRAMS-TABLE-AND-DRAWER`                                | Chương trình: bảng + lọc, menu ⋯, drawer 6 phần có link Zalo                                           | 2026-11-06     | **PASS** | [task-oc-151-programs-table-and-drawer.md](tasks/task-oc-151-programs-table-and-drawer.md)                                                               |
+| `TASK-GE-145-ADMIN-STAT-CARDS-SEPARATED`                               | Tổng quan admin: tách ô số liệu thành thẻ riêng có khoảng cách                                         | 2026-11-06     | **PASS** | [task-ge-145-admin-stat-cards-separated.md](tasks/task-ge-145-admin-stat-cards-separated.md)                                                             |
 
 ---
 
