@@ -21,6 +21,7 @@ const ADMIN_KIT_FILES = [
   "src/components/courses/ClassDrawer.tsx",
   "src/routes/_authenticated/admin.courses.tsx",
   "src/components/courses/ReviewDrawer.tsx",
+  "src/routes/_authenticated/admin.certificates.tsx",
 ];
 
 export default tseslint.config(

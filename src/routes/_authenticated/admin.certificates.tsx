@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import {
   Award,
   Ban,
@@ -11,7 +11,6 @@ import {
   Paperclip,
   Plus,
   RotateCcw,
-  Search,
   ShieldCheck,
   Sparkles,
   Wand2,
@@ -26,6 +25,15 @@ import { csvCell } from "@/lib/csv";
 import { extractCertificate } from "@/lib/certificate-extract.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MemberCombobox } from "@/components/admin/MemberCombobox";
+import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
+import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { FormField } from "@/components/admin/kit/FormField";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
@@ -82,9 +90,8 @@ const EMPTY: Draft = {
   file_path: "",
   file_name: "",
 };
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 
-const CERT_COLS = [
+const CERT_COLS: AdminColumn[] = [
   { label: "Mã chứng nhận", className: "w-[180px]" },
   { label: "Người nhận", className: "w-[200px]" },
   { label: "Chương trình", className: "w-[200px]" },
@@ -92,7 +99,7 @@ const CERT_COLS = [
   { label: "Ngày cấp", className: "w-[110px]" },
   { label: "Trạng thái", className: "w-[120px]" },
   { label: "Thao tác", className: "w-[80px] text-right" },
-] as const;
+];
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -364,93 +371,54 @@ function CertificatesPage() {
         description="Cấp, thu hồi và quản lý chứng nhận tra cứu tại trang Xác minh."
         actions={
           <>
-            <button
-              onClick={exportCsv}
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold"
-            >
-              <Download className="h-4 w-4" />
-              Xuất CSV
-            </button>
-            <button
-              onClick={openNew}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              Cấp chứng nhận
-            </button>
+            <Button type="button" size="admin" variant="outline" onClick={exportCsv}>
+              <Download /> Xuất CSV
+            </Button>
+            <Button type="button" size="admin" onClick={openNew}>
+              <Plus /> Cấp chứng nhận
+            </Button>
           </>
         }
       />
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Tổng chứng nhận</span>
-            <Award className="h-4 w-4" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{totalRecords}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Đã phát hành trên hệ thống</p>
-        </div>
-
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Chứng nhận hợp lệ</span>
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-            {validRecords.length}{" "}
-            <span className="text-xs font-normal text-muted-foreground">({validRate}%)</span>
-          </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Đang có hiệu lực tra cứu</p>
-        </div>
-
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Loại phổ biến nhất</span>
-            <CheckCircle2 className="h-4 w-4 text-primary" />
-          </div>
-          <p className="mt-2 truncate text-base font-bold text-foreground">{topTypeName}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {topTypeCount > 0 ? `${topTypeCount} chứng nhận đã cấp` : "Chưa có dữ liệu"}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Đã thu hồi</span>
-            <Ban className="h-4 w-4 text-destructive" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-destructive">
-            {revokedRecords.length}
-          </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Chứng nhận vô hiệu lực</p>
-        </div>
+        <StatFilterCard
+          label="Tổng chứng nhận"
+          icon={Award}
+          value={totalRecords}
+          hint="Đã phát hành trên hệ thống"
+        />
+        <StatFilterCard
+          label="Chứng nhận hợp lệ"
+          icon={ShieldCheck}
+          value={
+            <>
+              {validRecords.length}{" "}
+              <span className="text-xs font-normal text-muted-foreground">({validRate}%)</span>
+            </>
+          }
+          hint="Đang có hiệu lực tra cứu"
+        />
+        <StatFilterCard
+          label="Loại phổ biến nhất"
+          icon={CheckCircle2}
+          value={<span className="block truncate text-base">{topTypeName}</span>}
+          hint={topTypeCount > 0 ? `${topTypeCount} chứng nhận đã cấp` : "Chưa có dữ liệu"}
+        />
+        <StatFilterCard
+          label="Đã thu hồi"
+          icon={Ban}
+          value={revokedRecords.length}
+          hint="Chứng nhận vô hiệu lực"
+        />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm mã, tên, chương trình…"
-            aria-label="Tìm kiếm chứng nhận"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm mã, tên, chương trình…"
+          label="Tìm kiếm chứng nhận"
+        />
         <Select value={type || "all"} onValueChange={(v) => setType(v === "all" ? "" : v)}>
           <SelectTrigger
             aria-label="Lọc theo loại chứng nhận"
@@ -500,134 +468,110 @@ function CertificatesPage() {
       </div>
 
       {!isLoading && rows.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-border/80 bg-card/50 p-10 text-center">
-          <Award className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm font-medium text-foreground">
-            Không tìm thấy chứng nhận phù hợp
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Thử tìm bằng từ khóa khác hoặc bỏ bớt các bộ lọc loại và trạng thái.
-          </p>
-        </div>
+        <EmptyState
+          className="mt-4"
+          icon={Award}
+          title="Không tìm thấy chứng nhận phù hợp"
+          description="Thử tìm bằng từ khóa khác hoặc bỏ bớt các bộ lọc loại và trạng thái."
+        />
       ) : (
-        <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full min-w-[1020px] table-fixed text-sm">
-              <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-                <tr>
-                  {CERT_COLS.map((col) => (
-                    <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
-                      {col.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading && (
-                  <tr>
-                    <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
-                      Đang tải…
-                    </td>
-                  </tr>
+        <AdminTable
+          className="mt-4"
+          columns={CERT_COLS}
+          minWidth="min-w-[1020px]"
+          isEmpty={isLoading}
+          emptyMessage="Đang tải…"
+        >
+          {rows.map((c) => (
+            <AdminTableRow
+              key={c.id}
+              onOpen={() => {
+                setFile(null);
+                setEdit({ ...c });
+              }}
+            >
+              <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">
+                {c.certificate_code}
+              </td>
+              <td className="p-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                    {initials(c.holder_name)}
+                  </span>
+                  <div className="min-w-0">
+                    <span
+                      className="block truncate font-medium text-foreground"
+                      title={c.holder_name}
+                    >
+                      {c.holder_name}
+                    </span>
+                    {c.member_id && (
+                      <StatusPill tone="info" dot={false}>
+                        Thành viên TML
+                      </StatusPill>
+                    )}
+                  </div>
+                </div>
+              </td>
+              <td className="p-3">
+                <div className="truncate font-medium text-foreground" title={c.program_name}>
+                  {c.program_name}
+                </div>
+                {c.classification && (
+                  <div className="truncate text-xs text-muted-foreground">{c.classification}</div>
                 )}
-                {rows.map((c) => (
-                  <tr
-                    key={c.id}
-                    onClick={() => {
-                      setFile(null);
-                      setEdit({ ...c });
-                    }}
-                    className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50"
-                  >
-                    <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">
-                      {c.certificate_code}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                          {initials(c.holder_name)}
-                        </span>
-                        <div className="min-w-0">
-                          <span
-                            className="block truncate font-medium text-foreground"
-                            title={c.holder_name}
-                          >
-                            {c.holder_name}
-                          </span>
-                          {c.member_id && (
-                            <span className="inline-block rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                              Thành viên TML
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <div className="truncate font-medium text-foreground" title={c.program_name}>
-                        {c.program_name}
-                      </div>
-                      {c.classification && (
-                        <div className="truncate text-xs text-muted-foreground">
-                          {c.classification}
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-3 text-xs text-muted-foreground">
-                      <span
-                        className="block truncate"
-                        title={CERT_TYPES[c.certificate_type] ?? c.certificate_type}
-                      >
-                        {CERT_TYPES[c.certificate_type] ?? c.certificate_type}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
-                      {new Date(c.issue_date).toLocaleDateString("vi-VN")}
-                    </td>
-                    <td className="p-3">
-                      {c.status === "VALID" ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Hợp lệ
-                        </span>
-                      ) : (
-                        <span
-                          title={c.revoked_reason}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-medium text-destructive"
-                        >
-                          <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                          Đã thu hồi
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          to="/verify/certificate/$code"
-                          params={{ code: c.certificate_code }}
-                          search={{ t: c.verify_token }}
-                          target="_blank"
-                          title="Xem trang tra cứu"
-                          className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Link>
-                        {c.file_path && (
-                          <button
-                            title="Xem tệp gốc"
-                            onClick={() => void viewFile(c)}
-                            className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                          >
-                            <Paperclip className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </td>
+              <td className="p-3 text-xs text-muted-foreground">
+                <span
+                  className="block truncate"
+                  title={CERT_TYPES[c.certificate_type] ?? c.certificate_type}
+                >
+                  {CERT_TYPES[c.certificate_type] ?? c.certificate_type}
+                </span>
+              </td>
+              <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
+                {new Date(c.issue_date).toLocaleDateString("vi-VN")}
+              </td>
+              <td className="p-3">
+                {c.status === "VALID" ? (
+                  <StatusPill tone="success">Hợp lệ</StatusPill>
+                ) : (
+                  <span title={c.revoked_reason}>
+                    <StatusPill tone="danger">Đã thu hồi</StatusPill>
+                  </span>
+                )}
+              </td>
+              <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-end gap-1.5">
+                  <Button asChild variant="outline" size="admin-icon">
+                    <Link
+                      to="/verify/certificate/$code"
+                      params={{ code: c.certificate_code }}
+                      search={{ t: c.verify_token }}
+                      target="_blank"
+                      title="Xem trang tra cứu"
+                      aria-label="Xem trang tra cứu"
+                    >
+                      <ExternalLink />
+                    </Link>
+                  </Button>
+                  {c.file_path && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="admin-icon"
+                      title="Xem tệp gốc"
+                      aria-label="Xem tệp gốc"
+                      onClick={() => void viewFile(c)}
+                    >
+                      <Paperclip />
+                    </Button>
+                  )}
+                </div>
+              </td>
+            </AdminTableRow>
+          ))}
+        </AdminTable>
       )}
       <AnimatePresence>
         {edit && (
@@ -667,8 +611,6 @@ function CertificatesPage() {
 // ---------------------------------------------------------------- certificate drawer
 
 const SECTION_TITLE = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
-const FIELD =
-  "h-9 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-primary/20";
 
 function CertificateDrawer({
   value,
@@ -708,14 +650,6 @@ function CertificateDrawer({
   const [revokeReason, setRevokeReason] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented) onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
   const isEditing = !!value.id;
   const isRevoked = value.status === "REVOKED";
 
@@ -736,405 +670,346 @@ function CertificateDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/20 backdrop-blur-xs"
-        onClick={onClose}
-      />
-
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEditing ? "Chỉnh sửa chứng nhận" : "Cấp chứng nhận mới"}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="relative z-10 flex h-full w-full max-w-[620px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
-              <Award className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-foreground">
-                {isEditing ? "Chỉnh sửa chứng nhận" : "Cấp chứng nhận mới"}
-              </h2>
-              <div className="flex items-center gap-2 pt-0.5">
-                <span className="truncate font-mono text-xs font-semibold text-primary">
-                  {value.certificate_code || "Chưa có mã"}
-                </span>
-                {isEditing && (
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                      isRevoked
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                    }`}
-                  >
-                    {isRevoked ? "Đã thu hồi" : "Hợp lệ"}
-                  </span>
-                )}
-              </div>
+    <AdminDrawer
+      width="lg"
+      title={isEditing ? "Chỉnh sửa chứng nhận" : "Cấp chứng nhận mới"}
+      leading={
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
+          <Award className="h-5 w-5" />
+        </span>
+      }
+      subtitle={
+        <span className="flex items-center gap-2">
+          <span className="truncate font-mono font-semibold text-primary">
+            {value.certificate_code || "Chưa có mã"}
+          </span>
+          {isEditing && (
+            <StatusPill tone={isRevoked ? "danger" : "success"}>
+              {isRevoked ? "Đã thu hồi" : "Hợp lệ"}
+            </StatusPill>
+          )}
+        </span>
+      }
+      onClose={onClose}
+      dismissible={!saving && !actionBusy}
+      footer={
+        <Button type="button" size="admin-lg" disabled={saving} onClick={onSave}>
+          {saving ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Cấp chứng nhận"}
+        </Button>
+      }
+    >
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Mã chứng nhận & Xác thực</h3>
+        <FormField
+          label="Mã chứng nhận"
+          hint="Mã ngẫu nhiên chống dò, có thể gõ mã riêng (3–50 ký tự, không khoảng trắng, tự viết hoa)."
+        >
+          {(field) => (
+            <div className="flex gap-2">
+              <AdminInput
+                {...field}
+                className="flex-1 font-mono font-semibold uppercase tracking-wider"
+                value={value.certificate_code}
+                maxLength={50}
+                placeholder="VD: TML-CERT-2610-8K3P9M"
+                onChange={(e) => onChange({ certificate_code: normalizeCode(e.target.value) })}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="admin"
+                title="Tạo mã ngẫu nhiên"
+                onClick={onGenCode}
+              >
+                <Sparkles className="text-primary" /> Tạo mã
+              </Button>
             </div>
+          )}
+        </FormField>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Người nhận chứng nhận</h3>
+        <div className="space-y-2.5">
+          <FormField label="Chọn thành viên nội bộ (tùy chọn)">
+            {(field) => (
+              <MemberCombobox
+                id={field.id}
+                members={members}
+                value={value.member_id}
+                onChange={(memberId) => {
+                  const m = members.find((x) => x.id === memberId);
+                  onChange({
+                    member_id: m?.id ?? null,
+                    holder_name: m ? m.full_name : value.holder_name,
+                  });
+                }}
+              />
+            )}
+          </FormField>
+
+          <FormField label="Họ tên người nhận" required>
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.holder_name}
+                onChange={(e) => onChange({ holder_name: e.target.value })}
+                placeholder="Nhập họ và tên người nhận"
+              />
+            )}
+          </FormField>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Chương trình & Phân loại</h3>
+        <div className="space-y-2.5">
+          <FormField label="Chương trình / Khóa học / Sự kiện" required>
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.program_name}
+                onChange={(e) => onChange({ program_name: e.target.value })}
+                placeholder="VD: Hán ngữ Sơ cấp 1, Trại hè Ngôn ngữ 2026…"
+              />
+            )}
+          </FormField>
+
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <FormField label="Loại chứng nhận" required>
+              {(field) => (
+                <Select
+                  value={value.certificate_type}
+                  onValueChange={(v) => onChange({ certificate_type: v })}
+                >
+                  <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                    <SelectValue>
+                      {CERT_TYPES[value.certificate_type] ?? value.certificate_type}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {Object.entries(CERT_TYPES).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+
+            <FormField label="Xếp loại / Vai trò">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  value={value.classification}
+                  onChange={(e) => onChange({ classification: e.target.value })}
+                  placeholder="VD: Hoàn thành, Xuất sắc, Trưởng ban…"
+                />
+              )}
+            </FormField>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Thời hạn & Đơn vị cấp</h3>
+        <div className="space-y-2.5">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <FormField label="Ngày cấp" required>
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={value.issue_date}
+                  onChange={(dateISO) => onChange({ issue_date: dateISO })}
+                  placeholder="Chọn ngày cấp"
+                />
+              )}
+            </FormField>
+            <FormField label="Hiệu lực đến (bỏ trống nếu vĩnh viễn)">
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={value.expiry_date ?? ""}
+                  onChange={(dateISO) => onChange({ expiry_date: dateISO || null })}
+                  {...(value.issue_date ? { min: value.issue_date } : {})}
+                  placeholder="Vĩnh viễn"
+                  clearable
+                  clearLabel="Bỏ trống (vĩnh viễn)"
+                />
+              )}
+            </FormField>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            title="Đóng (Esc)"
-            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <FormField label="Đơn vị / Người cấp">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.issuer}
+                onChange={(e) => onChange({ issuer: e.target.value })}
+                placeholder="VD: Ban Chuyên môn The Mandarin League"
+              />
+            )}
+          </FormField>
         </div>
+      </section>
 
-        <div className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto p-6 text-xs">
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Mã chứng nhận & Xác thực</h3>
-            <div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={value.certificate_code}
-                  onChange={(e) => onChange({ certificate_code: normalizeCode(e.target.value) })}
-                  placeholder="VD: TML-CERT-2610-8K3P9M"
-                  maxLength={50}
-                  className="h-9 flex-1 rounded-xl border border-input bg-background px-3 font-mono text-xs font-semibold uppercase tracking-wider text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <button
-                  type="button"
-                  onClick={onGenCode}
-                  title="Tạo mã ngẫu nhiên"
-                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-xs font-medium text-foreground shadow-xs hover:bg-accent"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  Tạo mã
-                </button>
-              </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Mã ngẫu nhiên chống dò, có thể gõ mã riêng (3–50 ký tự, không khoảng trắng, tự viết
-                hoa).
-              </p>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Người nhận chứng nhận</h3>
-            <div className="space-y-2.5">
-              <div>
-                <label htmlFor="cert-member" className="mb-1 block font-medium text-foreground">
-                  Chọn thành viên nội bộ (tùy chọn)
-                </label>
-                <MemberCombobox
-                  id="cert-member"
-                  members={members}
-                  value={value.member_id}
-                  onChange={(memberId) => {
-                    const m = members.find((x) => x.id === memberId);
-                    onChange({
-                      member_id: m?.id ?? null,
-                      holder_name: m ? m.full_name : value.holder_name,
-                    });
-                  }}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block font-medium text-foreground">
-                  Họ tên người nhận <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={value.holder_name}
-                  onChange={(e) => onChange({ holder_name: e.target.value })}
-                  placeholder="Nhập họ và tên người nhận"
-                  className={FIELD}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Chương trình & Phân loại</h3>
-            <div className="space-y-2.5">
-              <div>
-                <label className="mb-1 block font-medium text-foreground">
-                  Chương trình / Khóa học / Sự kiện <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={value.program_name}
-                  onChange={(e) => onChange({ program_name: e.target.value })}
-                  placeholder="VD: Hán ngữ Sơ cấp 1, Trại hè Ngôn ngữ 2026…"
-                  className={FIELD}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block font-medium text-foreground">
-                    Loại chứng nhận <span className="text-destructive">*</span>
-                  </label>
-                  <Select
-                    value={value.certificate_type}
-                    onValueChange={(v) => onChange({ certificate_type: v })}
-                  >
-                    <SelectTrigger
-                      aria-label="Loại chứng nhận"
-                      className="h-9 w-full rounded-xl border-input bg-background text-xs font-normal shadow-xs"
-                    >
-                      <SelectValue>
-                        {CERT_TYPES[value.certificate_type] ?? value.certificate_type}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {Object.entries(CERT_TYPES).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-xs">
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block font-medium text-foreground">
-                    Xếp loại / Vai trò
-                  </label>
-                  <input
-                    type="text"
-                    value={value.classification}
-                    onChange={(e) => onChange({ classification: e.target.value })}
-                    placeholder="VD: Hoàn thành, Xuất sắc, Trưởng ban…"
-                    className={FIELD}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Thời hạn & Đơn vị cấp</h3>
-            <div className="space-y-2.5">
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="cert-issue-date"
-                    className="mb-1 block font-medium text-foreground"
-                  >
-                    Ngày cấp <span className="text-destructive">*</span>
-                  </label>
-                  <DatePicker
-                    id="cert-issue-date"
-                    value={value.issue_date}
-                    onChange={(dateISO) => onChange({ issue_date: dateISO })}
-                    placeholder="Chọn ngày cấp"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="cert-expiry-date"
-                    className="mb-1 block font-medium text-foreground"
-                  >
-                    Hiệu lực đến (bỏ trống nếu vĩnh viễn)
-                  </label>
-                  <DatePicker
-                    id="cert-expiry-date"
-                    value={value.expiry_date ?? ""}
-                    onChange={(dateISO) => onChange({ expiry_date: dateISO || null })}
-                    {...(value.issue_date ? { min: value.issue_date } : {})}
-                    placeholder="Vĩnh viễn"
-                    clearable
-                    clearLabel="Bỏ trống (vĩnh viễn)"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block font-medium text-foreground">Đơn vị / Người cấp</label>
-                <input
-                  type="text"
-                  value={value.issuer}
-                  onChange={(e) => onChange({ issuer: e.target.value })}
-                  placeholder="VD: Ban Chuyên môn The Mandarin League"
-                  className={FIELD}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Tệp chứng nhận gốc & AI Scanner</h3>
-            <div className="space-y-2">
-              <div className="flex items-stretch gap-2">
-                <label
-                  title="Kéo thả hoặc bấm để chọn tệp khác"
-                  className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-3.5 transition-colors hover:bg-secondary/40"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    onPickFile(e.dataTransfer.files[0]);
-                  }}
-                >
-                  <Paperclip className="h-4 w-4 shrink-0 text-primary" />
-                  {file || value.file_path ? (
-                    <>
-                      <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
-                        {file
-                          ? `${file.name} · ${(file.size / 1024).toFixed(0)}KB`
-                          : value.file_name || "Tệp đã đính kèm"}
-                      </span>
-                      <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">
-                        Bấm để thay
-                      </span>
-                    </>
-                  ) : (
-                    <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                      Kéo thả hoặc bấm để chọn tệp (PDF/Ảnh ≤ 1MB)
-                    </span>
-                  )}
-                  <input
-                    type="file"
-                    accept="application/pdf,image/png,image/jpeg,image/webp"
-                    className="hidden"
-                    onChange={(e) => onPickFile(e.target.files?.[0])}
-                  />
-                </label>
-
-                {value.file_path && (
-                  <button
-                    type="button"
-                    onClick={onViewFile}
-                    title="Xem tệp gốc"
-                    aria-label="Xem tệp gốc"
-                    className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Xem</span>
-                  </button>
-                )}
-                {(file || value.file_path) && (
-                  <button
-                    type="button"
-                    onClick={onRemoveFile}
-                    title="Gỡ tệp đính kèm"
-                    aria-label="Gỡ tệp đính kèm"
-                    className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-destructive/30 px-3 text-xs text-destructive transition-colors hover:bg-destructive/10"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Gỡ</span>
-                  </button>
-                )}
-              </div>
-
-              {file && (
-                <button
-                  type="button"
-                  disabled={extracting}
-                  onClick={onRunExtract}
-                  className="inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-lg bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
-                >
-                  <Wand2 className="h-3.5 w-3.5" />
-                  {extracting ? "AI đang đọc…" : "AI đọc & điền sẵn thông tin"}
-                </button>
-              )}
-
-              {aiNote && (
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
-                  {aiNote}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Ghi chú nội bộ</h3>
-            <textarea
-              rows={2}
-              value={value.notes}
-              onChange={(e) => onChange({ notes: e.target.value })}
-              placeholder="Chỉ quản trị viên nhìn thấy, không hiển thị trên trang tra cứu công khai…"
-              className="w-full rounded-xl border border-input bg-background p-3 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </section>
-
-          {isEditing && (
-            <div className="pt-2">
-              {!isRevoked ? (
-                <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-                  <div className="flex items-center gap-2 text-destructive">
-                    <Ban className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">
-                      Thu hồi chứng nhận
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Chứng nhận này sẽ bị đánh dấu vô hiệu hóa trên hệ thống tra cứu công khai.
-                  </p>
-                  <input
-                    type="text"
-                    value={revokeReason}
-                    onChange={(e) => setRevokeReason(e.target.value)}
-                    placeholder="Nhập lý do thu hồi (bắt buộc)…"
-                    className="h-9 w-full rounded-xl border border-destructive/30 bg-background px-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-destructive/30"
-                  />
-                  <button
-                    type="button"
-                    disabled={!revokeReason.trim() || actionBusy}
-                    onClick={() => void handleRevoke()}
-                    className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-destructive px-3.5 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
-                  >
-                    <Ban className="h-3.5 w-3.5" />
-                    {actionBusy ? "Đang thu hồi…" : "Xác nhận thu hồi chứng nhận"}
-                  </button>
-                </div>
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Tệp chứng nhận gốc & AI Scanner</h3>
+        <div className="space-y-2">
+          <div className="flex items-stretch gap-2">
+            <label
+              title="Kéo thả hoặc bấm để chọn tệp khác"
+              className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-3.5 transition-colors hover:bg-secondary/40"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                onPickFile(e.dataTransfer.files[0]);
+              }}
+            >
+              <Paperclip className="h-4 w-4 shrink-0 text-primary" />
+              {file || value.file_path ? (
+                <>
+                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+                    {file
+                      ? `${file.name} · ${(file.size / 1024).toFixed(0)}KB`
+                      : value.file_name || "Tệp đã đính kèm"}
+                  </span>
+                  <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">
+                    Bấm để thay
+                  </span>
+                </>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                    <RotateCcw className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">
-                      Khôi phục hiệu lực chứng nhận
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Lý do đã thu hồi:{" "}
-                    <span className="font-medium text-foreground">
-                      {value.revoked_reason || "Không ghi nhận lý do"}
-                    </span>
-                  </p>
-                  <button
-                    type="button"
-                    disabled={actionBusy}
-                    onClick={() => void handleRestore()}
-                    className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-500/20 disabled:opacity-50 dark:text-amber-300"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    {actionBusy ? "Đang khôi phục…" : "Khôi phục trạng thái Hợp lệ"}
-                  </button>
-                </div>
+                <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                  Kéo thả hoặc bấm để chọn tệp (PDF/Ảnh ≤ 1MB)
+                </span>
               )}
+              <input
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => onPickFile(e.target.files?.[0])}
+              />
+            </label>
+
+            {value.file_path && (
+              <Button
+                type="button"
+                variant="outline"
+                size="admin"
+                title="Xem tệp gốc"
+                aria-label="Xem tệp gốc"
+                onClick={onViewFile}
+              >
+                <ExternalLink />
+                <span className="hidden sm:inline">Xem</span>
+              </Button>
+            )}
+            {(file || value.file_path) && (
+              <Button
+                type="button"
+                variant="destructive-outline"
+                size="admin"
+                title="Gỡ tệp đính kèm"
+                aria-label="Gỡ tệp đính kèm"
+                onClick={onRemoveFile}
+              >
+                <X />
+                <span className="hidden sm:inline">Gỡ</span>
+              </Button>
+            )}
+          </div>
+
+          {file && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="admin-sm"
+              className="w-fit"
+              disabled={extracting}
+              onClick={onRunExtract}
+            >
+              <Wand2 />
+              {extracting ? "AI đang đọc…" : "AI đọc & điền sẵn thông tin"}
+            </Button>
+          )}
+
+          {aiNote && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
+              {aiNote}
             </div>
           )}
         </div>
+      </section>
 
-        <div className="flex shrink-0 items-center justify-end gap-2.5 border-t border-border/70 bg-card px-6 py-4">
-          <button
-            type="button"
-            disabled={saving}
-            onClick={onSave}
-            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
-          >
-            {saving ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Cấp chứng nhận"}
-          </button>
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Ghi chú nội bộ</h3>
+        <AdminTextarea
+          rows={2}
+          aria-label="Ghi chú nội bộ"
+          value={value.notes}
+          onChange={(e) => onChange({ notes: e.target.value })}
+          placeholder="Chỉ quản trị viên nhìn thấy, không hiển thị trên trang tra cứu công khai…"
+        />
+      </section>
+
+      {isEditing && (
+        <div className="pt-2">
+          {!isRevoked ? (
+            <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+              <div className="flex items-center gap-2 text-destructive">
+                <Ban className="h-4 w-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Thu hồi chứng nhận
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Chứng nhận này sẽ bị đánh dấu vô hiệu hóa trên hệ thống tra cứu công khai.
+              </p>
+              <AdminInput
+                aria-label="Lý do thu hồi"
+                className="border-destructive/30 focus-visible:ring-destructive/30"
+                value={revokeReason}
+                onChange={(e) => setRevokeReason(e.target.value)}
+                placeholder="Nhập lý do thu hồi (bắt buộc)…"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="admin"
+                disabled={!revokeReason.trim() || actionBusy}
+                onClick={() => void handleRevoke()}
+              >
+                <Ban /> {actionBusy ? "Đang thu hồi…" : "Xác nhận thu hồi chứng nhận"}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3 rounded-2xl border border-warning-foreground/25 bg-warning-soft p-4">
+              <div className="flex items-center gap-2 text-warning-foreground">
+                <RotateCcw className="h-4 w-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Khôi phục hiệu lực chứng nhận
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Lý do đã thu hồi:{" "}
+                <span className="font-medium text-foreground">
+                  {value.revoked_reason || "Không ghi nhận lý do"}
+                </span>
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="admin"
+                disabled={actionBusy}
+                onClick={() => void handleRestore()}
+              >
+                <RotateCcw /> {actionBusy ? "Đang khôi phục…" : "Khôi phục trạng thái Hợp lệ"}
+              </Button>
+            </div>
+          )}
         </div>
-      </motion.div>
-    </div>
+      )}
+    </AdminDrawer>
   );
 }
