@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { COURSE_BUCKET, type ProgramStatus } from "@/lib/programs";
+import { matchesSearch } from "@/lib/search";
 
 /** Concrete HSK classes (backend table `hsk_classes`) under fixed levels 1–6. */
 export const HSK_LEVELS = [1, 2, 3, 4, 5, 6] as const;
@@ -36,7 +37,10 @@ export const classFee = (c: Pick<HskClass, "fee_type" | "fee_amount">) =>
       : "Liên hệ";
 export const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
 
-export async function decorateClasses(rows: HskClass[]): Promise<HskClass[]> {
+export async function decorateClasses(
+  rows: HskClass[],
+  opts: { seats?: boolean } = {},
+): Promise<HskClass[]> {
   const paths = rows.map((r) => r.thumbnail_path).filter(Boolean);
   const map = new Map<string, string>();
   if (paths.length) {
@@ -47,14 +51,55 @@ export async function decorateClasses(rows: HskClass[]): Promise<HskClass[]> {
       if (d.path && d.signedUrl) map.set(d.path, d.signedUrl);
     });
   }
-  const seats = await Promise.all(
-    rows.map((r) => supabase.rpc("hsk_class_seats", { _class: r.id })),
-  );
-  return rows.map((r, i) => ({
-    ...r,
-    thumb: map.get(r.thumbnail_path) ?? "",
-    seats: (seats[i]?.data as number) ?? 0,
-  }));
+  const withSeats = opts.seats !== false;
+  const seats = withSeats
+    ? await Promise.all(rows.map((r) => supabase.rpc("hsk_class_seats", { _class: r.id })))
+    : [];
+  return rows.map((r, i) => {
+    const base = { ...r, thumb: map.get(r.thumbnail_path) ?? "" };
+    return withSeats ? { ...base, seats: (seats[i]?.data as number) ?? 0 } : base;
+  });
+}
+
+export type ClassStatusFilter = "open" | "enrolling" | "upcoming" | "ongoing" | "ended" | "all";
+
+/** "open" = mọi trạng thái trừ "ended" (mặc định của màn admin). */
+export function filterClasses(
+  rows: HskClass[],
+  f: {
+    level: number;
+    status: ClassStatusFilter;
+    q: string;
+    teacherName: (id: string | null) => string;
+  },
+): HskClass[] {
+  const byStart = (a: HskClass, b: HskClass) => {
+    if (!a.start_date && !b.start_date) return 0;
+    if (!a.start_date) return 1;
+    if (!b.start_date) return -1;
+    return b.start_date.localeCompare(a.start_date);
+  };
+  return rows
+    .filter((c) => f.level === 0 || c.level === f.level)
+    .filter((c) => {
+      if (f.status === "all") return true;
+      if (f.status === "open") return c.status !== "ended";
+      return c.status === f.status;
+    })
+    .filter((c) => matchesSearch(`${c.name} ${f.teacherName(c.teacher_id)}`, f.q))
+    .sort((a, b) => a.level - b.level || byStart(a, b));
+}
+
+/** Đơn "approved" theo lớp: dùng ở admin thay cho N lệnh RPC hsk_class_seats. */
+export function countApprovedByClass(
+  rows: { hsk_class_id: string | null; status: string }[],
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    if (r.status !== "approved" || !r.hsk_class_id) continue;
+    counts.set(r.hsk_class_id, (counts.get(r.hsk_class_id) ?? 0) + 1);
+  }
+  return counts;
 }
 
 export function usePublishedClasses() {

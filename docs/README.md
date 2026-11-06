@@ -178,6 +178,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-149-DEPARTMENTS-STRUCTURE-PAGE`                               | Màn Ban thành Cơ cấu Ban: 8 thẻ, drawer kênh làm việc và cố vấn                                        | 2026-11-06     | **PASS** | [task-oc-149-departments-structure-page.md](tasks/task-oc-149-departments-structure-page.md)                                                             |
 | `TASK-GE-143-MEMBER-PORTAL-CARD-ONLY`                                  | Cổng thành viên chỉ còn thẻ, mặt sau thành mã bảo an (QR, mã vạch)                                     | 2026-11-06     | **PASS** | [task-ge-143-member-portal-card-only.md](tasks/task-ge-143-member-portal-card-only.md)                                                                   |
 | `TASK-GE-144-ADMIN-OVERVIEW-COMPACT`                                   | Tổng quan admin: dải số liệu gọn, Cần xử lý theo nội dung, bỏ Lối tắt                                  | 2026-11-06     | **PASS** | [task-ge-144-admin-overview-compact.md](tasks/task-ge-144-admin-overview-compact.md)                                                                     |
+| `TASK-OC-150-HSK-CLASSES-TABLE-AND-DRAWER`                             | Lớp HSK: một bảng + lọc, sĩ số tại chỗ, drawer có link Zalo (mig 0049)                                 | 2026-11-06     | **PASS** | [task-oc-150-hsk-classes-table-and-drawer.md](tasks/task-oc-150-hsk-classes-table-and-drawer.md)                                                         |
 
 ---
 

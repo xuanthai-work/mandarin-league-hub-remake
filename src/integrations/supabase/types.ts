@@ -592,6 +592,45 @@ export type Database = {
           },
         ];
       };
+      course_group_links: {
+        Row: {
+          course_id: string | null;
+          hsk_class_id: string | null;
+          id: string;
+          updated_at: string;
+          zalo_url: string;
+        };
+        Insert: {
+          course_id?: string | null;
+          hsk_class_id?: string | null;
+          id?: string;
+          updated_at?: string;
+          zalo_url?: string;
+        };
+        Update: {
+          course_id?: string | null;
+          hsk_class_id?: string | null;
+          id?: string;
+          updated_at?: string;
+          zalo_url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "course_group_links_course_id_fkey";
+            columns: ["course_id"];
+            isOneToOne: true;
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "course_group_links_hsk_class_id_fkey";
+            columns: ["hsk_class_id"];
+            isOneToOne: true;
+            referencedRelation: "hsk_classes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       course_settings: {
         Row: {
           assistant_ids: string[];

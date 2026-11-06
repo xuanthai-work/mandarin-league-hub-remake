@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramsAdmin } from "@/components/courses/ProgramsAdmin";
 import { HskClassesAdmin } from "@/components/courses/HskClassesAdmin";
-import { classFee, type HskClass } from "@/lib/hsk-classes";
+import { classFee, countApprovedByClass, type HskClass } from "@/lib/hsk-classes";
 import { reviewEnrollment } from "@/lib/courses.functions";
 import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -171,6 +171,7 @@ function CoursesAdmin() {
         <HskClassesAdmin
           createOpen={createHskOpen}
           onClearCreate={() => setCreateHskOpen(false)}
+          seatCounts={countApprovedByClass(rows ?? [])}
           pendingCounts={(rows ?? []).reduce(
             (m, r) =>
               r.hsk_class_id && r.status === "pending"
