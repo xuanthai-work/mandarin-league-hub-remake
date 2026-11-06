@@ -61,6 +61,7 @@ function CoursesAdmin() {
   const [sel, setSel] = useState<Enrollment | null>(null);
   const [tab, setTab] = useState<"hsk" | "programs" | "enroll">("hsk");
   const [createHskOpen, setCreateHskOpen] = useState(false);
+  const [createProgramOpen, setCreateProgramOpen] = useState(false);
   const [kid, setKid] = useState("");
   const { data: classes } = useQuery({
     queryKey: ["admin-class-names"],
@@ -122,6 +123,15 @@ function CoursesAdmin() {
             >
               <Plus className="h-4 w-4" />
               Tạo lớp HSK
+            </button>
+          ) : tab === "programs" ? (
+            <button
+              type="button"
+              onClick={() => setCreateProgramOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              Tạo chương trình
             </button>
           ) : null
         }
@@ -190,6 +200,8 @@ function CoursesAdmin() {
       )}
       {tab === "programs" && (
         <ProgramsAdmin
+          createOpen={createProgramOpen}
+          onClearCreate={() => setCreateProgramOpen(false)}
           enrollCounts={(rows ?? []).reduce(
             (m, r) => (r.course_id ? m.set(r.course_id, (m.get(r.course_id) ?? 0) + 1) : m),
             new Map<string, number>(),

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { matchesSearch } from "@/lib/search";
 
 /** Program catalog (backend table `courses`). Client-safe shared types/labels/hooks. */
 export type CourseType = "FREE_COMMUNITY" | "PAID" | "SPECIAL_PROGRAM";
@@ -61,6 +62,30 @@ export const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 80);
+
+export type ProgramStatusFilter = "open" | ProgramStatus | "all";
+export type ProgramTypeFilter = CourseType | "all";
+
+/** "open" = mọi trạng thái trừ "ended". Sắp theo created_at mới trước. */
+export function filterPrograms(
+  rows: Program[],
+  f: {
+    type: ProgramTypeFilter;
+    status: ProgramStatusFilter;
+    q: string;
+    teacherNames: (id: string) => string;
+  },
+): Program[] {
+  return rows
+    .filter((p) => f.type === "all" || p.course_type === f.type)
+    .filter((p) => {
+      if (f.status === "all") return true;
+      if (f.status === "open") return p.status !== "ended";
+      return p.status === f.status;
+    })
+    .filter((p) => matchesSearch(`${p.title} ${p.level} ${f.teacherNames(p.id)}`, f.q))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
 
 export async function withThumbs(rows: Program[]): Promise<Program[]> {
   const paths = rows.map((r) => r.thumbnail_path).filter(Boolean);
