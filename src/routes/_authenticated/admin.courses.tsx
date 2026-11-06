@@ -2,14 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { Download, Plus, RotateCw, Search, X } from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { Download, Plus, RotateCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramsAdmin } from "@/components/courses/ProgramsAdmin";
 import { HskClassesAdmin } from "@/components/courses/HskClassesAdmin";
 import { ReviewDrawer } from "@/components/courses/ReviewDrawer";
-import { useConfirm } from "@/components/admin/Trash";
+import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { countApprovedByClass } from "@/lib/hsk-classes";
@@ -33,13 +33,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ENROLL_STATUS } from "@/lib/course-settings";
+import { ENROLL_STATUS, ENROLL_STATUS_TONE } from "@/lib/course-settings";
 import { reviewEnrollment } from "@/lib/courses.functions";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
 
 export const Route = createFileRoute("/_authenticated/admin/courses")({
   staticData: { sitemap: false },
   head: () => ({
-    meta: [{ title: "Khóa học & Đăng ký | TML Admin" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Khóa học & Đơn đăng ký | TML Admin" }, { name: "robots", content: "noindex" }],
   }),
   component: CoursesAdmin,
 });
@@ -187,6 +191,65 @@ function CoursesAdmin() {
     URL.revokeObjectURL(url);
   };
 
+  const ENROLL_COLS: AdminColumn[] = [
+    {
+      key: "select",
+      className: "w-10",
+      label:
+        pendingVisible.length > 0 ? (
+          <Checkbox
+            aria-label="Chọn mọi đơn đang chờ"
+            checked={allPicked ? true : somePicked ? "indeterminate" : false}
+            onCheckedChange={(v) =>
+              setPicked(v === true ? new Set(pendingVisible.map((r) => r.id)) : new Set())
+            }
+            disabled={bulkBusy}
+          />
+        ) : (
+          <span className="sr-only">Chọn đơn</span>
+        ),
+    },
+    { label: "Mã", className: "w-[13%]" },
+    { label: "Họ tên", className: "w-[15%]" },
+    { label: "Liên hệ", className: "w-[20%]" },
+    { label: "Lớp / Chương trình", className: "w-[20%]" },
+    { label: "Ngày", className: "w-[12%]" },
+    { label: "Trạng thái", className: "w-[16%]" },
+  ];
+
+  const emptyMessage = isLoading ? (
+    "Đang tải…"
+  ) : isError && !rows ? (
+    <>
+      Không tải được danh sách đơn đăng ký.{" "}
+      <Button
+        type="button"
+        variant="outline"
+        size="admin-sm"
+        className="ml-2"
+        disabled={isFetching}
+        onClick={() => void refetch()}
+      >
+        <RotateCw /> Thử lại
+      </Button>
+    </>
+  ) : (rows ?? []).length === 0 ? (
+    "Chưa có đơn đăng ký."
+  ) : (
+    <>
+      Không có đơn nào khớp bộ lọc.{" "}
+      <Button
+        type="button"
+        variant="outline"
+        size="admin-sm"
+        className="ml-2"
+        onClick={clearFilters}
+      >
+        Xóa bộ lọc
+      </Button>
+    </>
+  );
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       {dialog}
@@ -195,76 +258,53 @@ function CoursesAdmin() {
         description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên."
         actions={
           tab === "hsk" ? (
-            <button
-              type="button"
-              onClick={() => setCreateHskOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
+            <Button type="button" size="admin" onClick={() => setCreateHskOpen(true)}>
+              <Plus />
               Tạo lớp HSK
-            </button>
+            </Button>
           ) : tab === "programs" ? (
-            <button
-              type="button"
-              onClick={() => setCreateProgramOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
+            <Button type="button" size="admin" onClick={() => setCreateProgramOpen(true)}>
+              <Plus />
               Tạo chương trình
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="button"
-              onClick={exportCsv}
+              size="admin"
+              variant="outline"
               disabled={list.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-xs transition-colors hover:bg-muted disabled:opacity-50"
+              onClick={exportCsv}
             >
-              <Download className="h-4 w-4" />
+              <Download />
               Xuất CSV ({list.length})
-            </button>
+            </Button>
           )
         }
       />
-      <div className="custom-scrollbar max-w-full overflow-x-auto">
-        <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
-          {(
-            [
-              ["hsk", "Khóa học HSK"],
-              ["programs", "Chương trình học"],
-              ["enroll", "Đơn đăng ký"],
-            ] as const
-          ).map(([k, l]) => {
-            const active = tab === k;
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setTab(k)}
-                aria-pressed={active}
-                className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-4 ${
-                  active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="courses-tab-pill"
-                    className="absolute inset-0 rounded-lg bg-primary shadow-xs"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
+
+      <SegmentedControl
+        label="Phần quản lý khóa học"
+        value={tab}
+        onChange={setTab}
+        className="custom-scrollbar max-w-full overflow-x-auto"
+        options={[
+          { value: "hsk", label: "Khóa học HSK" },
+          { value: "programs", label: "Chương trình học" },
+          {
+            value: "enroll",
+            label: (
+              <>
+                Đơn đăng ký
+                {pendingTotal > 0 && (
+                  <span className="ml-1.5 rounded-full bg-warning-soft px-1.5 text-[10px] font-bold text-warning-foreground">
+                    {pendingTotal}
+                  </span>
                 )}
-                <span className="relative z-10 flex items-center">
-                  {l}
-                  {k === "enroll" && pendingTotal > 0 && (
-                    <span className="relative ml-1.5 rounded-full bg-warning-soft px-1.5 text-[10px] font-bold text-warning-foreground">
-                      {pendingTotal}
-                    </span>
-                  )}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+              </>
+            ),
+          },
+        ]}
+      />
 
       {tab === "hsk" && (
         <HskClassesAdmin
@@ -306,40 +346,28 @@ function CoursesAdmin() {
       )}
 
       {tab === "enroll" && (
-        <section className="overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="flex flex-wrap items-center gap-2.5 p-4">
-            <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-              <Search
-                aria-hidden
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                type="text"
-                className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Tìm mã, tên, email, SĐT, lớp…"
-                aria-label="Tìm kiếm đơn đăng ký"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-              {q && (
-                <button
-                  type="button"
-                  onClick={() => setQ("")}
-                  aria-label="Xóa nội dung tìm kiếm"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder="Tìm mã, tên, email, SĐT, lớp…"
+              label="Tìm kiếm đơn đăng ký"
+            />
             {cid && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="admin"
+                className="max-w-[260px] rounded-full"
                 onClick={() => setCid("")}
-                className="h-9 max-w-[260px] truncate rounded-full bg-accent px-3 text-xs font-semibold text-primary"
+                aria-label="Bỏ lọc chương trình"
               >
-                Chương trình: {programs?.find((p) => p.id === cid)?.title ?? "đã chọn"} ✕
-              </button>
+                <span className="truncate">
+                  Chương trình: {programs?.find((p) => p.id === cid)?.title ?? "đã chọn"}
+                </span>
+                <X />
+              </Button>
             )}
             <Select value={kid || "all"} onValueChange={(v) => setKid(v === "all" ? "" : v)}>
               <SelectTrigger
@@ -405,19 +433,21 @@ function CoursesAdmin() {
               {list.length} đơn
             </span>
           </div>
+
           {pickedRows.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 border-t border-border/60 bg-accent/40 px-4 py-2.5 text-xs">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-accent/40 px-4 py-2.5 text-xs">
               <span className="font-semibold text-foreground">Đã chọn {pickedRows.length} đơn</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="admin-sm"
                 disabled={bulkBusy}
                 onClick={() => setPicked(new Set())}
-                className="rounded-lg px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
               >
                 Bỏ chọn
-              </button>
+              </Button>
               <Button
-                size="sm"
+                size="admin-sm"
                 className="ml-auto"
                 disabled={bulkBusy}
                 onClick={() => void bulkApprove()}
@@ -428,141 +458,63 @@ function CoursesAdmin() {
               </Button>
             </div>
           )}
-          <div className="overflow-x-auto border-t border-border/60 custom-scrollbar">
-            <table className="w-full min-w-[860px] table-fixed text-sm">
-              <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-                <tr>
-                  <th className="w-10 p-3 font-semibold">
-                    {pendingVisible.length > 0 && (
-                      <Checkbox
-                        aria-label="Chọn mọi đơn đang chờ"
-                        checked={allPicked ? true : somePicked ? "indeterminate" : false}
-                        onCheckedChange={(v) =>
-                          setPicked(
-                            v === true ? new Set(pendingVisible.map((r) => r.id)) : new Set(),
-                          )
-                        }
-                        disabled={bulkBusy}
-                      />
-                    )}
-                  </th>
-                  <th className="w-[13%] p-3 font-semibold">Mã</th>
-                  <th className="w-[15%] p-3 font-semibold">Họ tên</th>
-                  <th className="w-[20%] p-3 font-semibold">Liên hệ</th>
-                  <th className="w-[20%] p-3 font-semibold">Lớp / Chương trình</th>
-                  <th className="w-[12%] p-3 font-semibold">Ngày</th>
-                  <th className="w-[16%] p-3 font-semibold">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading && (
-                  <tr>
-                    <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
-                      Đang tải…
-                    </td>
-                  </tr>
-                )}
-                {!isLoading && isError && !rows && (
-                  <tr>
-                    <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
-                      Không tải được danh sách đơn đăng ký.
-                      <button
-                        type="button"
-                        onClick={() => void refetch()}
-                        disabled={isFetching}
-                        className="ml-2 inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs font-medium hover:bg-accent"
-                      >
-                        <RotateCw className="h-3 w-3" />
-                        Thử lại
-                      </button>
-                    </td>
-                  </tr>
-                )}
-                {!isLoading && !isError && (rows ?? []).length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
-                      Chưa có đơn đăng ký.
-                    </td>
-                  </tr>
-                )}
-                {!isLoading && !isError && (rows ?? []).length > 0 && list.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
-                      Không có đơn nào khớp bộ lọc.
-                      <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="ml-2 inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs font-medium hover:bg-accent"
-                      >
-                        Xóa bộ lọc
-                      </button>
-                    </td>
-                  </tr>
-                )}
-                {list.map((r) => (
-                  <tr
-                    key={r.id}
-                    onClick={() => setSel(r)}
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.target !== e.currentTarget) return;
-                      if (e.key !== "Enter" && e.key !== " ") return;
-                      e.preventDefault();
-                      setSel(r);
-                    }}
-                    className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50"
-                  >
-                    <td className="w-10 p-3" onClick={(e) => e.stopPropagation()}>
-                      {r.status === "pending" && (
-                        <Checkbox
-                          aria-label={`Chọn đơn ${r.code}`}
-                          checked={picked.has(r.id)}
-                          disabled={bulkBusy}
-                          onCheckedChange={(v) =>
-                            setPicked((prev) => {
-                              const next = new Set(prev);
-                              if (v === true) next.add(r.id);
-                              else next.delete(r.id);
-                              return next;
-                            })
-                          }
-                        />
-                      )}
-                    </td>
-                    <td className="truncate p-3 font-mono text-xs font-medium text-primary">
-                      {r.code}
-                    </td>
-                    <td className="truncate p-3 font-medium text-foreground" title={r.full_name}>
-                      {r.full_name}
-                    </td>
-                    <td className="p-3 text-xs">
-                      <div>{r.phone}</div>
-                      <div className="truncate text-muted-foreground" title={r.email}>
-                        {r.email}
-                      </div>
-                    </td>
-                    <td className="truncate p-3 text-muted-foreground" title={targetOf(r).label}>
-                      {targetOf(r).label}
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
-                      <span title={new Date(r.created_at).toLocaleString("vi-VN")}>
-                        {relativeTime(r.created_at)}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${ENROLL_STATUS[r.status]?.tone}`}
-                      >
-                        {ENROLL_STATUS[r.status]?.label}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+
+          <AdminTable
+            columns={ENROLL_COLS}
+            minWidth="min-w-[860px]"
+            isEmpty={isLoading || (isError && !rows) || list.length === 0}
+            emptyMessage={emptyMessage}
+          >
+            {list.map((r) => (
+              <AdminTableRow key={r.id} onOpen={() => setSel(r)}>
+                <td className="w-10 p-3" onClick={(e) => e.stopPropagation()}>
+                  {r.status === "pending" && (
+                    <Checkbox
+                      aria-label={`Chọn đơn ${r.code}`}
+                      checked={picked.has(r.id)}
+                      disabled={bulkBusy}
+                      onCheckedChange={(v) =>
+                        setPicked((prev) => {
+                          const next = new Set(prev);
+                          if (v === true) next.add(r.id);
+                          else next.delete(r.id);
+                          return next;
+                        })
+                      }
+                    />
+                  )}
+                </td>
+                <td className="truncate p-3 font-mono text-xs font-medium text-primary">
+                  {r.code}
+                </td>
+                <td className="truncate p-3 font-medium text-foreground" title={r.full_name}>
+                  {r.full_name}
+                </td>
+                <td className="p-3 text-xs">
+                  <div>{r.phone}</div>
+                  <div className="truncate text-muted-foreground" title={r.email}>
+                    {r.email}
+                  </div>
+                </td>
+                <td className="truncate p-3 text-muted-foreground" title={targetOf(r).label}>
+                  {targetOf(r).label}
+                </td>
+                <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
+                  <span title={new Date(r.created_at).toLocaleString("vi-VN")}>
+                    {relativeTime(r.created_at)}
+                  </span>
+                </td>
+                <td className="p-3">
+                  <StatusPill tone={ENROLL_STATUS_TONE[r.status] ?? "neutral"}>
+                    {ENROLL_STATUS[r.status]?.label ?? r.status}
+                  </StatusPill>
+                </td>
+              </AdminTableRow>
+            ))}
+          </AdminTable>
         </section>
       )}
+
       <AnimatePresence>
         {sel && (
           <ReviewDrawer
