@@ -175,6 +175,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-141-CONTENT-VI-ONLY-AND-STATS`                                | Chữ tùy chỉnh chỉ cho tiếng Việt (zh/en dùng bản dịch), sửa được 3 ô số liệu                           | 2026-11-06     | **PASS** | [task-ge-141-content-vi-only-and-stats.md](tasks/task-ge-141-content-vi-only-and-stats.md)                                                               |
 | `TASK-OC-148-MEMBERS-DEPT-LINK-AND-CSV`                                | Thành viên: lọc Ban qua ?dept=, Xuất CSV theo bộ lọc (Admin)                                           | 2026-11-06     | **PASS** | [task-oc-148-members-dept-link-and-csv.md](tasks/task-oc-148-members-dept-link-and-csv.md)                                                               |
 | `TASK-GE-142-SETTINGS-FOR-EVERY-MEMBER`                                | Mở Hệ thống > Cài đặt cho mọi thành viên có tài khoản đang hoạt động                                   | 2026-11-06     | **PASS** | [task-ge-142-settings-for-every-member.md](tasks/task-ge-142-settings-for-every-member.md)                                                               |
+| `TASK-OC-149-DEPARTMENTS-STRUCTURE-PAGE`                               | Màn Ban thành Cơ cấu Ban: 8 thẻ, drawer kênh làm việc và cố vấn                                        | 2026-11-06     | **PASS** | [task-oc-149-departments-structure-page.md](tasks/task-oc-149-departments-structure-page.md)                                                             |
 
 ---
 
