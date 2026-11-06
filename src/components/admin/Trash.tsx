@@ -1,66 +1,10 @@
-import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm, type ConfirmOpts } from "@/components/admin/kit/useConfirm";
 
-type ConfirmOpts = {
-  title: string;
-  description: string;
-  confirmLabel?: string;
-  destructive?: boolean;
-};
-
-/** Promise-based confirm dialog replacing window.confirm. */
-export function useConfirm() {
-  const [opts, setOpts] = useState<ConfirmOpts | null>(null);
-  const resolver = useRef<(v: boolean) => void>(() => {});
-  const confirm = (o: ConfirmOpts) =>
-    new Promise<boolean>((res) => {
-      resolver.current = res;
-      setOpts(o);
-    });
-  const close = (v: boolean) => {
-    resolver.current(v);
-    setOpts(null);
-  };
-  const dialog = (
-    <AlertDialog open={!!opts} onOpenChange={(o) => !o && close(false)}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{opts?.title}</AlertDialogTitle>
-          <AlertDialogDescription className="whitespace-pre-line">
-            {opts?.description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => close(false)}>Hủy</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => close(true)}
-            className={
-              opts?.destructive
-                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                : ""
-            }
-          >
-            {opts?.confirmLabel ?? "Xác nhận"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-  return { confirm, dialog };
-}
+export { useConfirm, type ConfirmOpts };
 
 type TrashTable = "news_articles" | "activities" | "courses" | "hsk_classes";
 const TITLE: Record<TrashTable, string> = {
