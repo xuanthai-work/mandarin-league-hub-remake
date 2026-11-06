@@ -1,21 +1,24 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, UserRound } from "lucide-react";
+import { Camera, Copy, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { ROLE_LABELS, ROLE_PRIORITY } from "@/lib/admin-nav";
 import { getDepartment } from "@/lib/data/departments";
 import { SettingsRow, SettingsSection, type MyAccount } from "./shared";
+import { AvatarCropDialog } from "@/components/portal/AvatarCropDialog";
+import { AvatarLightbox } from "@/components/portal/AvatarLightbox";
 
 export function ProfileSection({ me }: { me: MyAccount }) {
   const qc = useQueryClient();
   const member = me.member;
   const [name, setName] = useState(member?.full_name ?? "");
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [zoomAvatar, setZoomAvatar] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const avatar = useQuery({
@@ -55,29 +58,47 @@ export function ProfileSection({ me }: { me: MyAccount }) {
     qc.invalidateQueries({ queryKey: ["my-account"] });
   };
 
-  const uploadAvatar = async (file: File) => {
-    if (
-      !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
-      file.size > 3 * 1024 * 1024
-    )
-      return void toast.error("Ảnh phải là PNG/JPG/WEBP và ≤ 3MB.");
-    if (!member) return;
-    setUploading(true);
-    const { data: u } = await supabase.auth.getUser();
-    const path = `${u.user!.id}/${Date.now()}.${file.name.split(".").pop()}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    if (error) {
-      setUploading(false);
-      return void toast.error("Không tải được ảnh: " + error.message);
+  const pickAvatar = (file: File) => {
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      return void toast.error("Chỉ chấp nhận ảnh PNG, JPG hoặc WebP.");
     }
-    const { error: e2 } = await supabase.rpc("update_my_profile", {
-      _full_name: member.full_name,
-      _avatar_path: path,
-    });
-    setUploading(false);
-    if (e2) return void toast.error(e2.message);
-    toast.success("Đã cập nhật ảnh đại diện");
-    qc.invalidateQueries({ queryKey: ["my-account"] });
+    if (file.size > 5 * 1024 * 1024) {
+      return void toast.error("Kích thước ảnh tối đa là 5 MB.");
+    }
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const saveAvatar = async (blob: Blob) => {
+    if (!member) return;
+    setSavingAvatar(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Chưa đăng nhập");
+      const path = `${u.user.id}/${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from("avatars").upload(path, blob, {
+        upsert: true,
+        contentType: "image/jpeg",
+      });
+      if (error) throw error;
+      const { error: e2 } = await supabase.rpc("update_my_profile", {
+        _full_name: member.full_name,
+        _avatar_path: path,
+      });
+      if (e2) throw e2;
+      toast.success("Đã cập nhật ảnh đại diện");
+      setCropSrc(null);
+      setZoomAvatar(false);
+      qc.invalidateQueries({ queryKey: ["my-account"] });
+      qc.invalidateQueries({ queryKey: ["my-avatar"] });
+    } catch (err) {
+      toast.error(
+        "Không lưu được ảnh: " + (err instanceof Error ? err.message : "Lỗi không xác định"),
+      );
+    } finally {
+      setSavingAvatar(false);
+    }
   };
 
   const displayName = member?.full_name ?? me.email;
@@ -92,17 +113,28 @@ export function ProfileSection({ me }: { me: MyAccount }) {
     >
       <div className="flex items-center gap-4 py-4">
         {member ? (
-          avatar.data ? (
-            <img
-              src={avatar.data}
-              alt=""
-              className="h-16 w-16 shrink-0 rounded-xl object-cover ring-2 ring-border/80"
-            />
-          ) : (
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-primary/10 text-lg font-semibold text-primary ring-2 ring-border/80">
-              {initial || <UserRound className="h-6 w-6" />}
-            </div>
-          )
+          <button
+            type="button"
+            onClick={() => setZoomAvatar(true)}
+            title={avatar.data ? "Nhấp để xem hoặc đổi ảnh đại diện" : "Thêm ảnh đại diện"}
+            aria-label={avatar.data ? "Xem hoặc đổi ảnh đại diện" : "Thêm ảnh đại diện"}
+            className="group relative shrink-0 cursor-zoom-in rounded-xl transition hover:brightness-105"
+          >
+            {avatar.data ? (
+              <img
+                src={avatar.data}
+                alt={member.full_name}
+                className="h-16 w-16 rounded-xl object-cover ring-2 ring-border/80"
+              />
+            ) : (
+              <span className="grid h-16 w-16 place-items-center rounded-xl bg-primary/10 text-lg font-semibold text-primary ring-2 ring-border/80">
+                {initial || <UserRound className="h-6 w-6" />}
+              </span>
+            )}
+            <span className="pointer-events-none absolute inset-0 grid place-items-center rounded-xl bg-black/40 text-white opacity-0 transition group-hover:opacity-100">
+              <Camera className="h-5 w-5" />
+            </span>
+          </button>
         ) : (
           <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-border/80">
             <UserRound className="h-6 w-6" />
@@ -152,34 +184,44 @@ export function ProfileSection({ me }: { me: MyAccount }) {
               </Button>
             </div>
           </SettingsRow>
-
-          <SettingsRow label="Ảnh đại diện" hint="PNG, JPG hoặc WebP, tối đa 3 MB">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) void uploadAvatar(file);
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={uploading}
-              onClick={() => fileRef.current?.click()}
-            >
-              {uploading ? <Spinner className="h-4 w-4" /> : null}
-              Đổi ảnh
-            </Button>
-          </SettingsRow>
         </>
       ) : (
         <p className="py-4 text-sm text-muted-foreground">
           Tài khoản này chưa gắn hồ sơ thành viên nên không có tên và ảnh để chỉnh.
         </p>
+      )}
+      {zoomAvatar && member && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) pickAvatar(file);
+            }}
+          />
+          <AvatarLightbox
+            src={avatar.data ?? null}
+            name={member.full_name}
+            initial={initial}
+            onChange={() => fileRef.current?.click()}
+            onClose={() => setZoomAvatar(false)}
+          />
+        </>
+      )}
+
+      {cropSrc && (
+        <AvatarCropDialog
+          src={cropSrc}
+          saving={savingAvatar}
+          onCancel={() => {
+            if (!savingAvatar) setCropSrc(null);
+          }}
+          onConfirm={saveAvatar}
+        />
       )}
     </SettingsSection>
   );

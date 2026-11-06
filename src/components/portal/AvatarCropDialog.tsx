@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Minus, Plus, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Camera, Minus, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /** Preview frame is 3:4 to match the pass portrait; the exported file is 720×960. */
 const FRAME_W = 240;
@@ -120,7 +122,7 @@ export function AvatarCropDialog({ src, saving = false, onCancel, onConfirm }: P
 
   const view = dims(zoom);
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -129,80 +131,96 @@ export function AvatarCropDialog({ src, saving = false, onCancel, onConfirm }: P
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-gold/30 bg-[color:var(--portal-bg,#0d1527)]/95 p-5 text-white shadow-2xl shadow-black/80 backdrop-blur-xl"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-primary/30 bg-[color:var(--portal-bg,#0d1527)]/95 p-5 text-white shadow-2xl shadow-black/80 ring-1 ring-primary/15 backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
-          <h2 className="text-lg font-bold text-gold">Chỉnh ảnh đại diện</h2>
-          <button
+        <div className="flex items-center justify-between gap-3 border-b border-primary/15 pb-3">
+          <h2 className="inline-flex items-center gap-2 text-lg font-bold text-primary">
+            <Camera className="h-5 w-5" />
+            Chỉnh ảnh đại diện
+          </h2>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={onCancel}
             aria-label="Đóng"
-            className="rounded-full border border-gold/20 p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="rounded-full border border-primary/25 text-white/70 hover:bg-primary/15 hover:text-white"
           >
-            <X className="h-5 w-5" />
-          </button>
+            <X />
+          </Button>
         </div>
 
         <p className="mt-3 text-center text-xs text-white/60">
-          Kéo ảnh để chọn vùng hiển thị · dùng + / − để thu phóng
+          Kéo ảnh để căn khung <span className="font-semibold text-primary">3:4</span> · dùng + / −
+          để thu phóng
         </p>
 
         <div className="mt-3 flex justify-center">
-          <div
-            className="relative h-[320px] w-[240px] touch-none select-none overflow-hidden rounded-xl border border-gold/40 bg-black/40"
-            onPointerDown={(e) => {
-              if (!ready) return;
-              e.currentTarget.setPointerCapture(e.pointerId);
-              dragRef.current = {
-                id: e.pointerId,
-                x: e.clientX,
-                y: e.clientY,
-                ox: offset.x,
-                oy: offset.y,
-              };
-            }}
-            onPointerMove={(e) => {
-              const d = dragRef.current;
-              if (!d || d.id !== e.pointerId) return;
-              setOffset(clamp({ x: d.ox + (e.clientX - d.x), y: d.oy + (e.clientY - d.y) }, zoom));
-            }}
-            onPointerUp={stopDrag}
-            onPointerCancel={stopDrag}
-            onLostPointerCapture={stopDrag}
-            style={{ cursor: ready ? "grab" : "default" }}
-          >
-            {ready ? (
-              <img
-                src={src}
-                alt=""
-                draggable={false}
-                className="pointer-events-none absolute left-0 top-0 max-w-none select-none"
-                style={{
-                  width: view.w,
-                  height: view.h,
-                  transform: `translate(${offset.x}px, ${offset.y}px)`,
-                }}
-              />
-            ) : (
-              <span className="absolute inset-0 grid place-items-center text-xs text-white/60">
-                Đang tải ảnh…
-              </span>
-            )}
-            <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-gold/30" />
+          <div className="rounded-[18px] bg-gradient-to-br from-primary/80 via-primary/35 to-sky-300/70 p-[2px] shadow-[0_0_38px_-10px_var(--primary)]">
+            <div
+              className="relative h-[320px] w-[240px] touch-none select-none overflow-hidden rounded-2xl bg-black/50"
+              onPointerDown={(e) => {
+                if (!ready) return;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                dragRef.current = {
+                  id: e.pointerId,
+                  x: e.clientX,
+                  y: e.clientY,
+                  ox: offset.x,
+                  oy: offset.y,
+                };
+              }}
+              onPointerMove={(e) => {
+                const d = dragRef.current;
+                if (!d || d.id !== e.pointerId) return;
+                setOffset(
+                  clamp({ x: d.ox + (e.clientX - d.x), y: d.oy + (e.clientY - d.y) }, zoom),
+                );
+              }}
+              onPointerUp={stopDrag}
+              onPointerCancel={stopDrag}
+              onLostPointerCapture={stopDrag}
+              style={{ cursor: ready ? "grab" : "default" }}
+            >
+              {ready ? (
+                <img
+                  src={src}
+                  alt=""
+                  draggable={false}
+                  className="pointer-events-none absolute left-0 top-0 max-w-none select-none"
+                  style={{
+                    width: view.w,
+                    height: view.h,
+                    transform: `translate(${offset.x}px, ${offset.y}px)`,
+                  }}
+                />
+              ) : (
+                <span className="absolute inset-0 grid place-items-center text-xs text-white/60">
+                  Đang tải ảnh…
+                </span>
+              )}
+              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10" />
+              <span className="pointer-events-none absolute left-2 top-2 h-5 w-5 rounded-tl-md border-l-2 border-t-2 border-primary/80" />
+              <span className="pointer-events-none absolute right-2 top-2 h-5 w-5 rounded-tr-md border-r-2 border-t-2 border-primary/80" />
+              <span className="pointer-events-none absolute bottom-2 left-2 h-5 w-5 rounded-bl-md border-b-2 border-l-2 border-primary/80" />
+              <span className="pointer-events-none absolute bottom-2 right-2 h-5 w-5 rounded-br-md border-b-2 border-r-2 border-primary/80" />
+            </div>
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-center gap-3">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon-sm"
             onClick={() => zoomTo(zoom - 0.2)}
             disabled={zoom <= 1}
             aria-label="Thu nhỏ"
-            className="rounded-full border border-white/20 p-1.5 text-white/80 transition hover:bg-white/10 disabled:opacity-40"
+            className="rounded-full border-primary/40 bg-white/5 text-primary hover:bg-primary/15 hover:text-primary"
           >
-            <Minus className="h-4 w-4" />
-          </button>
+            <Minus />
+          </Button>
           <input
             type="range"
             min={1}
@@ -211,37 +229,46 @@ export function AvatarCropDialog({ src, saving = false, onCancel, onConfirm }: P
             value={zoom}
             onChange={(e) => zoomTo(Number(e.target.value))}
             aria-label="Thu phóng ảnh"
-            className="w-44 accent-amber-400"
+            className="w-44 accent-[var(--primary)]"
           />
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon-sm"
             onClick={() => zoomTo(zoom + 0.2)}
             disabled={zoom >= MAX_ZOOM}
             aria-label="Phóng to"
-            className="rounded-full border border-white/20 p-1.5 text-white/80 transition hover:bg-white/10 disabled:opacity-40"
+            className="rounded-full border-primary/40 bg-white/5 text-primary hover:bg-primary/15 hover:text-primary"
           >
-            <Plus className="h-4 w-4" />
-          </button>
+            <Plus />
+          </Button>
         </div>
+        <p className="mt-1.5 text-center font-mono text-[11px] text-white/50">
+          Thu phóng {Math.round(zoom * 100)}%
+        </p>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <button
+        <div className="mt-4 flex justify-end gap-2 border-t border-primary/10 pt-4">
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onCancel}
-            className="rounded-full border border-white/20 px-4 py-1.5 text-sm text-white/80 transition hover:bg-white/10"
+            className="rounded-full border-primary/40 bg-transparent text-white/85 hover:bg-primary/15 hover:text-white"
           >
             Hủy
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            size="sm"
             onClick={confirm}
             disabled={!ready || busy || saving}
-            className="rounded-full bg-gold px-5 py-1.5 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-60"
+            className="rounded-full px-5"
           >
             {busy || saving ? "Đang lưu…" : "Lưu ảnh"}
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

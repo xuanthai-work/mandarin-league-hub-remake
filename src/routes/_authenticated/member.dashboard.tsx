@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type React from "react";
 import {
-  Camera,
   Check,
   Copy,
   Download,
@@ -14,6 +13,7 @@ import {
   RotateCw,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
@@ -29,6 +29,7 @@ import {
 } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
 import { AvatarCropDialog } from "@/components/portal/AvatarCropDialog";
+import { AvatarLightbox } from "@/components/portal/AvatarLightbox";
 import { mainHomeUrl } from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({
@@ -125,8 +126,10 @@ function MemberDashboard() {
   const [copied, setCopied] = useState(false);
   const [tierOpen, setTierOpen] = useState(false);
   const [previewTone, setPreviewTone] = useState<string | null>(null);
+  const [zoomAvatar, setZoomAvatar] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [savingAvatar, setSavingAvatar] = useState(false);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [qr, setQr] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -269,47 +272,42 @@ function MemberDashboard() {
     }
   };
 
-  /** Validate then open the drag/zoom cropper instead of uploading the raw file. */
+  /** Lightbox "Đổi ảnh": validate, then open the shared 3:4 cropper. */
   const pickAvatar = (file: File) => {
-    setErr("");
-    if (
-      !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
-      file.size > 10 * 1024 * 1024
-    ) {
-      setErr("Ảnh phải là PNG/JPG/WEBP và ≤ 10MB.");
-      return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      return void toast.error("Chỉ chấp nhận ảnh PNG, JPG hoặc WebP.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return void toast.error("Kích thước ảnh tối đa là 5 MB.");
     }
     const reader = new FileReader();
     reader.onload = () => setCropSrc(String(reader.result));
     reader.readAsDataURL(file);
   };
 
-  /** Upload the 3:4 crop exactly as the member framed it. */
   const saveAvatar = async (blob: Blob) => {
-    setErr("");
     setSavingAvatar(true);
     try {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
+      if (!u.user) throw new Error("Chưa đăng nhập");
       const path = `${u.user.id}/${Date.now()}.jpg`;
       const { error } = await supabase.storage.from("avatars").upload(path, blob, {
         upsert: true,
         contentType: "image/jpeg",
       });
-      if (error) {
-        setErr("Không tải được ảnh: " + error.message);
-        return;
-      }
+      if (error) throw error;
       const { error: e2 } = await supabase.rpc("update_my_profile", {
         _full_name: m.full_name,
         _avatar_path: path,
       });
-      if (e2) {
-        setErr(e2.message);
-        return;
-      }
+      if (e2) throw e2;
+      toast.success("Đã cập nhật ảnh đại diện");
       setCropSrc(null);
+      setZoomAvatar(false);
       qc.invalidateQueries({ queryKey: ["my-account"] });
+      qc.invalidateQueries({ queryKey: ["my-avatar"] });
+    } catch (e) {
+      toast.error("Không lưu được ảnh: " + (e instanceof Error ? e.message : "Lỗi không xác định"));
     } finally {
       setSavingAvatar(false);
     }
@@ -374,10 +372,12 @@ function MemberDashboard() {
     </button>
   );
   const avatarEl = (size: string) => (
-    <label
-      className={`group/avatar relative block ${size} shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60`}
-      title="Đổi ảnh đại diện"
-      aria-label="Đổi ảnh đại diện"
+    <button
+      type="button"
+      onClick={() => setZoomAvatar(true)}
+      title={avatar.data ? "Nhấp để xem hoặc đổi ảnh đại diện" : "Thêm ảnh đại diện"}
+      aria-label={avatar.data ? "Xem hoặc đổi ảnh đại diện" : "Thêm ảnh đại diện"}
+      className={`relative block ${size} shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60 transition hover:brightness-105`}
     >
       {avatar.data ? (
         <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" />
@@ -386,20 +386,7 @@ function MemberDashboard() {
           {m.full_name.charAt(0)}
         </span>
       )}
-      <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-foreground/50 text-background opacity-0 transition group-hover/avatar:opacity-100 group-active/avatar:opacity-100">
-        <Camera className="h-5 w-5 md:h-7 md:w-7" />
-      </span>
-      <input
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) pickAvatar(f);
-          e.target.value = "";
-        }}
-      />
-    </label>
+    </button>
   );
   /**
    * Đông Sơn drum watermark: a transparent gold vector, blended into the porcelain.
@@ -1032,17 +1019,6 @@ function MemberDashboard() {
           .
         </p>
 
-        {cropSrc && (
-          <AvatarCropDialog
-            src={cropSrc}
-            saving={savingAvatar}
-            onCancel={() => {
-              if (!savingAvatar) setCropSrc(null);
-            }}
-            onConfirm={saveAvatar}
-          />
-        )}
-
         {/* ===== Tier & points popup (opened from the rank badge or label) ===== */}
         {tierOpen && (
           <div
@@ -1155,6 +1131,40 @@ function MemberDashboard() {
               </div>
             </div>
           </div>
+        )}
+
+        {zoomAvatar && (
+          <>
+            <input
+              ref={avatarFileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) pickAvatar(file);
+              }}
+            />
+            <AvatarLightbox
+              src={avatar.data ?? null}
+              name={m.full_name}
+              initial={m.full_name.charAt(0)}
+              onChange={() => avatarFileRef.current?.click()}
+              onClose={() => setZoomAvatar(false)}
+            />
+          </>
+        )}
+
+        {cropSrc && (
+          <AvatarCropDialog
+            src={cropSrc}
+            saving={savingAvatar}
+            onCancel={() => {
+              if (!savingAvatar) setCropSrc(null);
+            }}
+            onConfirm={saveAvatar}
+          />
         )}
 
         {savedImg && (
