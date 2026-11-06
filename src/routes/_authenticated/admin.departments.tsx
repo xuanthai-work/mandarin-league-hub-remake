@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEPARTMENTS } from "@/lib/data/departments";
+import { matchesSearch } from "@/lib/search";
 import { csvCell } from "@/lib/csv";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
@@ -97,10 +98,10 @@ function DeptDetail({
       (RANK[a.position] ?? 9) - (RANK[b.position] ?? 9) ||
       a.member_code.localeCompare(b.member_code),
   );
-  const term = q.trim().toLowerCase();
+  const term = q.trim();
   const visible = term
     ? sorted.filter((m) =>
-        `${m.member_code} ${m.full_name} ${m.email} ${m.position}`.toLowerCase().includes(term),
+        matchesSearch(`${m.member_code} ${m.full_name} ${m.email ?? ""} ${m.position ?? ""}`, term),
       )
     : sorted;
   const leaders = visible.filter((m) => m.position in RANK);

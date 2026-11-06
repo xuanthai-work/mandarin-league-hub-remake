@@ -79,18 +79,14 @@ export function HskClassesAdmin({
     const n = pendingCounts.get(c.id) ?? 0;
     if (
       !(await confirm({
-        title: "Chuyển lớp vào Thùng rác?",
-        description: `"${c.name}" sẽ bị ẩn khỏi website.${n ? `\nLớp đang có ${n} đơn chờ duyệt — các đơn vẫn được giữ lại.` : " Đơn đăng ký vẫn được giữ lại."}\nBạn có thể khôi phục trong tab Thùng rác.`,
-        confirmLabel: "Chuyển vào Thùng rác",
+        title: "Xóa lớp học?",
+        description: `"${c.name}" sẽ bị xóa khỏi danh sách và website.${n ? `\nLớp đang có ${n} đơn chờ duyệt — các đơn vẫn được giữ lại.` : " Đơn đăng ký vẫn được giữ lại."}`,
+        confirmLabel: "Xóa lớp",
         destructive: true,
       }))
     )
       return;
-    patch(
-      c,
-      { deleted_at: new Date().toISOString(), is_published: false },
-      "Đã chuyển vào Thùng rác",
-    );
+    patch(c, { deleted_at: new Date().toISOString(), is_published: false }, "Đã xóa lớp học");
   };
   const { data: list } = useQuery({
     queryKey: ["admin-hsk-classes"],

@@ -150,9 +150,9 @@ export function ProgramsAdmin({
     const n = enrollCounts.get(p.id) ?? 0;
     if (
       !(await confirm({
-        title: "Chuyển chương trình vào Thùng rác?",
-        description: `"${p.title}" sẽ bị ẩn khỏi website.${n ? `\nChương trình có ${n} đơn đăng ký — đơn vẫn được giữ lại.` : ""}\nBạn có thể khôi phục trong tab Thùng rác.`,
-        confirmLabel: "Chuyển vào Thùng rác",
+        title: "Xóa chương trình học?",
+        description: `"${p.title}" sẽ bị xóa khỏi danh sách và website.${n ? `\nChương trình có ${n} đơn đăng ký — đơn vẫn được giữ lại.` : ""}`,
+        confirmLabel: "Xóa chương trình",
         destructive: true,
       }))
     )
@@ -160,7 +160,7 @@ export function ProgramsAdmin({
     patch(
       p,
       { deleted_at: new Date().toISOString(), is_published: false },
-      "Đã chuyển vào Thùng rác",
+      "Đã xóa chương trình học",
     );
   };
 

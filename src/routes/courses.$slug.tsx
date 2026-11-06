@@ -92,6 +92,12 @@ function ProgramPage() {
       {tr("ĐĂNG KÝ THAM GIA")}
     </button>
   );
+  // Admin form now saves short_description = first 300 chars of description;
+  // only show it in the hero when it is a separately written summary.
+  const lead =
+    p.short_description && !(p.description ?? "").startsWith(p.short_description.trim())
+      ? p.short_description
+      : "";
   return (
     <>
       <section className="grid-lines border-b border-border bg-secondary">
@@ -111,9 +117,7 @@ function ProgramPage() {
               </span>
             </div>
             <h1 className="mt-4 text-3xl font-bold text-primary-deep md:text-5xl">{p.title}</h1>
-            <p className="mt-4 line-clamp-3 text-muted-foreground">
-              {p.short_description || p.description}
-            </p>
+            {lead && <p className="mt-4 line-clamp-3 text-muted-foreground">{lead}</p>}
           </div>
           {p.thumb && (
             <img
