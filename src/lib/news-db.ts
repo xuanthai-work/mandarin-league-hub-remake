@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { StatusTone } from "@/components/admin/kit/StatusPill";
 
 export const NEWS_BUCKET = "news-covers";
 export const PARTNER_BUCKET = "partner-logos";
@@ -11,6 +12,15 @@ export const NEWS_STATUS_LABEL: Record<NewsStatus, string> = {
   needs_revision: "Cần chỉnh sửa",
   published: "Đã xuất bản",
   archived: "Lưu trữ",
+};
+
+/** Tông StatusPill cho từng trạng thái bài viết (dùng chung trang danh sách và trang soạn). */
+export const NEWS_STATUS_TONE: Record<NewsStatus, StatusTone> = {
+  draft: "neutral",
+  pending_review: "gold",
+  needs_revision: "danger",
+  published: "info",
+  archived: "neutral",
 };
 
 export type NewsRow = {

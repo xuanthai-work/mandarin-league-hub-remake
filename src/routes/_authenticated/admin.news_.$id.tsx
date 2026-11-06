@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Check, Save, Send, Trash2, Undo2, Upload, X } from "lucide-react";
+import { ArrowLeft, Check, Save, Send, Undo2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/programs";
@@ -9,6 +9,7 @@ import { NEWS_CATEGORIES } from "@/lib/data/news";
 import {
   NEWS_BUCKET,
   NEWS_STATUS_LABEL,
+  NEWS_STATUS_TONE,
   fmtDate,
   withCovers,
   type NewsRow,
@@ -16,9 +17,15 @@ import {
 } from "@/lib/news-db";
 import { canReviewNews } from "@/lib/admin-permissions";
 import { useAdminAccess } from "./admin";
-import { useConfirm } from "@/components/admin/Trash";
+import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { EmptyState } from "@/components/site/ui";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
+import { DangerZone } from "@/components/admin/kit/DangerZone";
+import { FormField } from "@/components/admin/kit/FormField";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
 import {
   Select,
   SelectContent,
@@ -51,14 +58,6 @@ const EMPTY: FormState = {
   content: "",
   category: NEWS_CATEGORIES[0] ?? "Tin tức",
   cover_path: "",
-};
-
-const TONE: Record<NewsStatus, string> = {
-  draft: "bg-secondary text-secondary-foreground",
-  pending_review: "bg-gold/20 text-primary-deep",
-  needs_revision: "bg-destructive/15 text-destructive",
-  published: "bg-primary/15 text-primary",
-  archived: "bg-muted text-muted-foreground",
 };
 
 function NewsEditorPage() {
@@ -292,13 +291,6 @@ function NewsEditor({ id }: { id: string }) {
 
   const handleMoveToTrash = async () => {
     if (!row) return;
-    const ok = await confirm({
-      title: "Chuyển vào Thùng rác?",
-      description: `Bài "${row.title}" sẽ bị ẩn khỏi website. Bạn có thể khôi phục lại trong mục Thùng rác.`,
-      confirmLabel: "Chuyển vào Thùng rác",
-      destructive: true,
-    });
-    if (!ok) return;
 
     setBusy(true);
     try {
@@ -378,16 +370,16 @@ function NewsEditor({ id }: { id: string }) {
 
     if (currentStatus === "published") {
       return (
-        <button
+        <Button
           type="button"
+          size="admin"
           disabled={busy}
           onClick={handleSaveDraftOrPublished}
           title="Lưu thay đổi"
-          className="disabled:opacity-50"
         >
-          <Save className="h-3.5 w-3.5" />
+          <Save />
           <span>Lưu thay đổi</span>
-        </button>
+        </Button>
       );
     }
 
@@ -395,51 +387,53 @@ function NewsEditor({ id }: { id: string }) {
       if (reviewer) {
         return (
           <>
-            <button
+            <Button
               type="button"
+              size="admin"
               disabled={busy}
               onClick={handleSaveDraftOrPublished}
               title="Lưu nháp"
-              className="!border-border !bg-secondary !text-secondary-foreground hover:!bg-accent disabled:opacity-50"
+              className="!border-border !bg-secondary !text-secondary-foreground hover:!bg-accent"
             >
-              <Save className="h-3.5 w-3.5" />
+              <Save />
               <span>Lưu nháp</span>
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="admin"
               disabled={busy}
               onClick={handlePublish}
               title="Duyệt & xuất bản"
-              className="disabled:opacity-50"
             >
-              <Check className="h-3.5 w-3.5" />
+              <Check />
               <span>Duyệt & xuất bản</span>
-            </button>
+            </Button>
           </>
         );
       }
       return (
         <>
-          <button
+          <Button
             type="button"
+            size="admin"
             disabled={busy}
             onClick={handleSaveDraftOrPublished}
             title="Lưu nháp"
-            className="!border-border !bg-secondary !text-secondary-foreground hover:!bg-accent disabled:opacity-50"
+            className="!border-border !bg-secondary !text-secondary-foreground hover:!bg-accent"
           >
-            <Save className="h-3.5 w-3.5" />
+            <Save />
             <span>Lưu nháp</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            size="admin"
             disabled={busy}
             onClick={handleSendReview}
             title="Gửi duyệt"
-            className="disabled:opacity-50"
           >
-            <Send className="h-3.5 w-3.5" />
+            <Send />
             <span>Gửi duyệt</span>
-          </button>
+          </Button>
         </>
       );
     }
@@ -447,37 +441,39 @@ function NewsEditor({ id }: { id: string }) {
     // new / draft / needs_revision / archived
     return (
       <>
-        <button
+        <Button
           type="button"
+          size="admin"
           disabled={busy}
           onClick={handleSaveDraftOrPublished}
           title="Lưu nháp"
-          className="!border-border !bg-secondary !text-secondary-foreground hover:!bg-accent disabled:opacity-50"
+          className="!border-border !bg-secondary !text-secondary-foreground hover:!bg-accent"
         >
-          <Save className="h-3.5 w-3.5" />
+          <Save />
           <span>Lưu nháp</span>
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          size="admin"
           disabled={busy}
           onClick={handleSendReview}
           title="Gửi duyệt"
-          className="!bg-primary/90 !text-primary-foreground hover:!opacity-90 disabled:opacity-50"
+          className="!bg-primary/90 !text-primary-foreground hover:!opacity-90"
         >
-          <Send className="h-3.5 w-3.5" />
+          <Send />
           <span>Gửi duyệt</span>
-        </button>
+        </Button>
         {reviewer && (
-          <button
+          <Button
             type="button"
+            size="admin"
             disabled={busy}
             onClick={handlePublish}
             title="Duyệt & xuất bản"
-            className="disabled:opacity-50"
           >
-            <Check className="h-3.5 w-3.5" />
+            <Check />
             <span>Duyệt & xuất bản</span>
-          </button>
+          </Button>
         )}
       </>
     );
@@ -490,20 +486,18 @@ function NewsEditor({ id }: { id: string }) {
   if (!isNew && !articleQuery.isLoading && !row) {
     return (
       <div className="mx-auto max-w-7xl px-4 pt-3 pb-8 sm:px-6 sm:pt-4">
-        <div className="mx-auto max-w-3xl py-20 text-center">
+        <div className="mx-auto max-w-3xl py-20">
           <EmptyState
             title="Không tìm thấy bài viết"
-            desc="Bài viết không tồn tại hoặc bạn không có quyền xem."
+            description="Bài viết không tồn tại hoặc bạn không có quyền xem."
+            action={
+              <Button asChild variant="outline" size="admin">
+                <Link to="/admin/news">
+                  <ArrowLeft /> Tin tức
+                </Link>
+              </Button>
+            }
           />
-          <div className="mt-6">
-            <Link
-              to="/admin/news"
-              className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Tin tức
-            </Link>
-          </div>
         </div>
       </div>
     );
@@ -520,47 +514,29 @@ function NewsEditor({ id }: { id: string }) {
       {/* Top bar: Back link, status badge, and mode toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
         <div className="flex items-center gap-2.5">
-          <Link
-            to="/admin/news"
-            aria-label="Quay lại danh sách tin tức"
-            title="Quay lại danh sách"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-border/60 bg-card text-muted-foreground shadow-2xs transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <span
-            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-              TONE[currentStatus] ?? TONE.draft
-            }`}
-          >
+          <Button asChild variant="outline" size="admin-icon">
+            <Link
+              to="/admin/news"
+              aria-label="Quay lại danh sách tin tức"
+              title="Quay lại danh sách"
+            >
+              <ArrowLeft />
+            </Link>
+          </Button>
+          <StatusPill tone={NEWS_STATUS_TONE[currentStatus] ?? "neutral"}>
             {NEWS_STATUS_LABEL[currentStatus] ?? "Nháp"}
-          </span>
+          </StatusPill>
         </div>
 
-        <div className="inline-flex rounded-lg border border-border bg-muted/50 p-1 text-xs">
-          <button
-            type="button"
-            onClick={() => setMode("edit")}
-            className={`rounded-md px-3 py-1 font-medium transition-colors ${
-              mode === "edit"
-                ? "bg-background font-semibold text-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Soạn
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("preview")}
-            className={`rounded-md px-3 py-1 font-medium transition-colors ${
-              mode === "preview"
-                ? "bg-background font-semibold text-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Xem trước
-          </button>
-        </div>
+        <SegmentedControl
+          label="Chế độ soạn bài"
+          value={mode}
+          onChange={setMode}
+          options={[
+            { value: "edit", label: "Soạn" },
+            { value: "preview", label: "Xem trước" },
+          ]}
+        />
       </div>
 
       {mode === "preview" ? (
@@ -594,7 +570,7 @@ function NewsEditor({ id }: { id: string }) {
           {/* Cột soạn (Trái) */}
           <div className="space-y-5">
             {!editable && (
-              <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3.5 text-sm text-amber-900 dark:text-amber-200">
+              <div className="rounded-xl border border-warning-foreground/25 bg-warning-soft p-3.5 text-sm text-warning-foreground">
                 {row?.status === "archived"
                   ? "Bài đã lưu trữ. Chỉ Trưởng/Phó Ban Truyền thông hoặc admin được chỉnh sửa."
                   : "Bài đã xuất bản. Chỉ Trưởng/Phó Ban Truyền thông hoặc admin được chỉnh sửa."}
@@ -608,9 +584,10 @@ function NewsEditor({ id }: { id: string }) {
               </div>
             )}
 
-            <input
+            <AdminInput
               type="text"
               disabled={!editable}
+              aria-label="Tiêu đề bài viết"
               placeholder="Tiêu đề bài viết"
               value={form.title}
               onChange={(e) => {
@@ -621,58 +598,51 @@ function NewsEditor({ id }: { id: string }) {
                   slug: isNew && !slugTouched ? slugify(newTitle) : f.slug,
                 }));
               }}
-              className="w-full border-b border-border/40 bg-transparent pb-2 text-2xl font-bold placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none disabled:opacity-60 md:text-3xl"
+              className="h-auto rounded-none border-0 border-b border-border/40 bg-transparent px-0 pb-2 text-2xl font-bold shadow-none placeholder:text-muted-foreground/50 focus-visible:border-primary/50 focus-visible:ring-0 disabled:opacity-60 md:text-3xl"
             />
 
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <label htmlFor="news-summary" className="font-medium">
-                  Tóm tắt
-                </label>
-                <span
-                  className={
-                    form.summary.length > 200
-                      ? "font-semibold text-destructive"
-                      : "text-muted-foreground"
-                  }
-                >
+            <FormField
+              label="Tóm tắt"
+              hint={
+                <span className={form.summary.length > 200 ? "font-semibold text-destructive" : ""}>
                   {form.summary.length}/200
                 </span>
-              </div>
-              <textarea
-                id="news-summary"
-                rows={3}
-                disabled={!editable}
-                placeholder="Tóm tắt ngắn gọn nội dung bài viết..."
-                value={form.summary}
-                onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
-                className="w-full resize-y rounded-xl border border-input bg-background p-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
-              />
-            </div>
+              }
+            >
+              {(field) => (
+                <AdminTextarea
+                  {...field}
+                  rows={3}
+                  disabled={!editable}
+                  placeholder="Tóm tắt ngắn gọn nội dung bài viết..."
+                  value={form.summary}
+                  onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
+                  className="resize-y p-3"
+                />
+              )}
+            </FormField>
 
-            <div className="space-y-1.5">
-              <label htmlFor="news-content" className="text-xs font-medium text-muted-foreground">
-                Nội dung
-              </label>
-              <textarea
-                id="news-content"
-                rows={16}
-                disabled={!editable}
-                placeholder="Nội dung bài viết..."
-                value={form.content}
-                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                style={{ fieldSizing: "content" } as React.CSSProperties}
-                className="min-h-[420px] w-full resize-y rounded-xl border border-input bg-background p-3.5 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
-              />
-              <p className="text-xs text-muted-foreground">Cách một dòng trống giữa các đoạn.</p>
-            </div>
+            <FormField label="Nội dung" hint="Cách một dòng trống giữa các đoạn.">
+              {(field) => (
+                <AdminTextarea
+                  {...field}
+                  rows={16}
+                  disabled={!editable}
+                  placeholder="Nội dung bài viết..."
+                  value={form.content}
+                  onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                  style={{ fieldSizing: "content" } as React.CSSProperties}
+                  className="min-h-[420px] resize-y p-3.5 leading-relaxed"
+                />
+              )}
+            </FormField>
           </div>
 
           {/* Cột bên (Phải: 340px, sticky top-4) */}
           <aside className="space-y-5 self-start lg:sticky lg:top-4">
             {/* 1. Ảnh bìa */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Ảnh bìa</label>
+              <p className="text-xs font-medium text-muted-foreground">Ảnh bìa</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -696,29 +666,42 @@ function NewsEditor({ id }: { id: string }) {
                   </div>
                   {editable && (
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="admin-sm"
                         disabled={busy}
                         onClick={() => fileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
                       >
-                        <Upload className="h-3.5 w-3.5" />
+                        <Upload />
                         Đổi ảnh
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="destructive-outline"
+                        size="admin-sm"
                         disabled={busy}
                         onClick={handleRemoveCover}
-                        className="inline-flex items-center gap-1 rounded-lg border border-destructive/20 bg-destructive/10 px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/20 disabled:opacity-50"
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <X />
                         Gỡ ảnh
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
               ) : (
                 <div
+                  role="button"
+                  tabIndex={editable ? 0 : -1}
+                  aria-disabled={!editable}
+                  aria-label="Chọn ảnh bìa"
+                  onKeyDown={(e) => {
+                    if (!editable) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
                   onDragOver={(e) => {
                     e.preventDefault();
                     if (editable) setIsDragging(true);
@@ -752,49 +735,51 @@ function NewsEditor({ id }: { id: string }) {
             </div>
 
             {/* 2. Chuyên mục */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Chuyên mục</label>
-              <Select
-                disabled={!editable}
-                value={form.category}
-                onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}
-              >
-                <SelectTrigger className="h-9 w-full rounded-lg border-input bg-background text-sm">
-                  <SelectValue placeholder="Chọn chuyên mục" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {NEWS_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <FormField label="Chuyên mục">
+              {(field) => (
+                <Select
+                  disabled={!editable}
+                  value={form.category}
+                  onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}
+                >
+                  <SelectTrigger
+                    {...field}
+                    className="h-9 w-full rounded-lg border-input bg-background text-sm"
+                  >
+                    <SelectValue placeholder="Chọn chuyên mục" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {NEWS_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
 
             {/* 3. Đường dẫn */}
-            <div className="space-y-1.5">
-              <label htmlFor="news-slug" className="text-xs font-medium text-muted-foreground">
-                Đường dẫn
-              </label>
-              <div className="flex items-center overflow-hidden rounded-lg border border-input bg-background focus-within:ring-1 focus-within:ring-ring">
-                <span className="select-none border-r border-input bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
-                  /news/
-                </span>
-                <input
-                  id="news-slug"
-                  type="text"
-                  disabled={!editable}
-                  value={form.slug}
-                  onChange={(e) => {
-                    setSlugTouched(true);
-                    setForm((f) => ({ ...f, slug: slugify(e.target.value) }));
-                  }}
-                  placeholder="duong-dan-bai-viet"
-                  className="h-9 w-full bg-transparent px-3 py-1.5 text-sm focus:outline-none disabled:opacity-60"
-                />
-              </div>
-            </div>
+            <FormField label="Đường dẫn">
+              {(field) => (
+                <div className="flex items-center overflow-hidden rounded-lg border border-input bg-background focus-within:ring-1 focus-within:ring-ring">
+                  <span className="select-none border-r border-input bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
+                    /news/
+                  </span>
+                  <AdminInput
+                    {...field}
+                    disabled={!editable}
+                    value={form.slug}
+                    onChange={(e) => {
+                      setSlugTouched(true);
+                      setForm((f) => ({ ...f, slug: slugify(e.target.value) }));
+                    }}
+                    placeholder="duong-dan-bai-viet"
+                    className="h-9 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+                  />
+                </div>
+              )}
+            </FormField>
 
             {/* 4. Thông tin bài viết */}
             {!isNew && row && (
@@ -821,61 +806,55 @@ function NewsEditor({ id }: { id: string }) {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-primary-deep">
                   Duyệt bài viết
                 </h3>
-                <div className="space-y-1.5">
-                  <label htmlFor="review-note" className="text-xs text-muted-foreground">
-                    Góp ý cho tác giả
-                  </label>
-                  <textarea
-                    id="review-note"
-                    rows={3}
-                    value={reviewNote}
-                    onChange={(e) => setReviewNote(e.target.value)}
-                    placeholder="Nội dung cần chỉnh sửa, góp ý..."
-                    className="w-full rounded-lg border border-input bg-background p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                  />
-                </div>
+                <FormField label="Góp ý cho tác giả">
+                  {(field) => (
+                    <AdminTextarea
+                      {...field}
+                      rows={3}
+                      value={reviewNote}
+                      onChange={(e) => setReviewNote(e.target.value)}
+                      placeholder="Nội dung cần chỉnh sửa, góp ý..."
+                      className="text-xs"
+                    />
+                  )}
+                </FormField>
                 <div className="flex flex-col gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive-outline"
+                    size="admin"
+                    className="w-full"
                     disabled={busy}
                     onClick={handleRequestRevision}
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/20 disabled:opacity-50"
                   >
-                    <Undo2 className="h-3.5 w-3.5" />
+                    <Undo2 />
                     Yêu cầu chỉnh sửa
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    size="admin"
+                    className="w-full"
                     disabled={busy}
                     onClick={handlePublish}
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
                   >
-                    <Check className="h-3.5 w-3.5" />
+                    <Check />
                     Duyệt & xuất bản
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
 
             {/* 6. Danger zone */}
             {canDelete && (
-              <div className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-destructive">
-                  Khu vực nguy hiểm
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Bài viết sẽ bị ẩn khỏi website và chuyển vào Thùng rác.
-                </p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={handleMoveToTrash}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/20 disabled:opacity-50"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Chuyển vào thùng rác
-                </button>
-              </div>
+              <DangerZone
+                title="Chuyển vào thùng rác"
+                description="Bài viết sẽ bị ẩn khỏi website và chuyển vào Thùng rác."
+                confirmDescription="Bấm “Xác nhận chuyển” để hoàn tất. Có thể khôi phục lại trong mục Thùng rác."
+                actionLabel="Chuyển vào thùng rác"
+                confirmLabel="Xác nhận chuyển"
+                onConfirm={() => void handleMoveToTrash()}
+                disabled={busy}
+              />
             )}
           </aside>
         </div>

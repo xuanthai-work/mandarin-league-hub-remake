@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NEWS_CATEGORIES } from "@/lib/data/news";
 import {
   NEWS_STATUS_LABEL,
+  NEWS_STATUS_TONE,
   fmtDate,
   withCovers,
   type NewsRow,
@@ -33,7 +34,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
-import { StatusPill, type StatusTone } from "@/components/admin/kit/StatusPill";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
 import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
 import {
   Select,
@@ -57,14 +58,6 @@ export const Route = createFileRoute("/_authenticated/admin/news")({
   }),
   component: NewsAdmin,
 });
-
-const STATUS_TONE: Record<NewsStatus, StatusTone> = {
-  draft: "neutral",
-  pending_review: "gold",
-  needs_revision: "danger",
-  published: "info",
-  archived: "neutral",
-};
 
 function NewsAdmin() {
   const navigate = useNavigate();
@@ -389,7 +382,7 @@ function NewsAdmin() {
                 {/* Nội dung */}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <StatusPill tone={STATUS_TONE[a.status] ?? "neutral"}>
+                    <StatusPill tone={NEWS_STATUS_TONE[a.status] ?? "neutral"}>
                       {NEWS_STATUS_LABEL[a.status] ?? a.status}
                     </StatusPill>
                     <span className="text-xs font-medium text-primary">{a.category}</span>
