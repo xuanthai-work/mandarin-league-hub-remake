@@ -15,6 +15,7 @@ import {
   BadgeCheck,
   FileCheck2,
   FileText,
+  KeyRound,
   Settings,
   Megaphone,
   Gift,
@@ -78,6 +79,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     sections: [
       { slug: "departments", label: "Ban", icon: Building2 },
       { slug: "content", label: "Trang & Nội dung", icon: FileText },
+      { slug: "permissions", label: "Phân quyền", icon: KeyRound },
       { slug: "settings", label: "Cài đặt", icon: Settings },
     ],
   },
