@@ -2179,6 +2179,10 @@ export type Database = {
       can_assign_position: { Args: { _position: string }; Returns: boolean };
       can_manage_department: { Args: { _dept: string }; Returns: boolean };
       can_manage_partners: { Args: never; Returns: boolean };
+      can_on_application: {
+        Args: { _action: string; _app: string };
+        Returns: boolean;
+      };
       can_review_application: { Args: { _app: string }; Returns: boolean };
       claim_invited_role: { Args: never; Returns: undefined };
       create_task: {
@@ -2285,6 +2289,7 @@ export type Database = {
       };
       my_permissions: { Args: never; Returns: Json };
       outranks: { Args: { _member: string }; Returns: boolean };
+      perm_on_choices: { Args: { _action: string; _choices: Json }; Returns: boolean };
       perm_scope: { Args: { _action: string }; Returns: string };
       position_rank: { Args: { _position: string }; Returns: number };
       public_dept_advisors: {

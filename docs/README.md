@@ -203,6 +203,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-160-ENROLLMENTS-USE-ADMIN-KIT`                                | Khóa học (3/3): Đơn đăng ký học dùng bộ component admin                                                | 2026-11-06     | **PASS** | [task-ge-160-enrollments-use-admin-kit.md](tasks/task-ge-160-enrollments-use-admin-kit.md)                                                               |
 | `TASK-OC-157-PERMISSIONS-ACCOUNTS`                                     | Phân quyền: tài khoản theo accounts.manage + thứ bậc, member_permissions (mig 0053)                    | 2026-11-06     | **PASS** | [task-oc-157-permissions-accounts.md](tasks/task-oc-157-permissions-accounts.md)                                                                         |
 | `TASK-GE-161-CERTIFICATES-USE-ADMIN-KIT`                               | Trang Chứng nhận dùng bộ component admin                                                               | 2026-11-06     | **PASS** | [task-ge-161-certificates-use-admin-kit.md](tasks/task-ge-161-certificates-use-admin-kit.md)                                                             |
+| `TASK-OC-158-PERMISSIONS-RECRUITMENT-BENEFITS`                         | Phân quyền: Tuyển dụng + Quyền lợi sang has_perm, khóa cột hồ sơ ứng viên (mig 0054)                   | 2026-11-06     | **PASS** | [task-oc-158-permissions-recruitment-benefits.md](tasks/task-oc-158-permissions-recruitment-benefits.md)                                                 |
 
 ---
 
