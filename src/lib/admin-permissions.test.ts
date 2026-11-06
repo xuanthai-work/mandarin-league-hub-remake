@@ -5,6 +5,7 @@ import {
   canManagePartners,
   canReviewNews,
   canViewPartners,
+  withPersonalSections,
 } from "./admin-permissions";
 
 describe("admin permissions", () => {
@@ -135,5 +136,17 @@ describe("partners access matrix", () => {
   it("supports multiple roles without granting write access", () => {
     expect(canManagePartners(["member", "deputy_head"], "design")).toBe(false);
     expect(canViewPartners(["member", "deputy_head"], "design")).toBe(true);
+  });
+});
+
+describe("withPersonalSections", () => {
+  it("keeps full access and empty access untouched", () => {
+    expect(withPersonalSections("all")).toBe("all");
+    expect(withPersonalSections([])).toEqual([]);
+  });
+
+  it("adds settings once, keeping module sections intact", () => {
+    expect(withPersonalSections(["partners"])).toEqual(["partners", "settings"]);
+    expect(withPersonalSections(["partners", "settings"])).toEqual(["partners", "settings"]);
   });
 });

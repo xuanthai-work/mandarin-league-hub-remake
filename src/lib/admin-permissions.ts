@@ -18,6 +18,14 @@ export function allowedSections(
   return [...s];
 }
 
+/** Sections every admin-portal user gets once they can open at least one module. */
+export const PERSONAL_SECTIONS = ["settings"] as const;
+
+export function withPersonalSections(allowed: string[] | "all"): string[] | "all" {
+  if (allowed === "all" || allowed.length === 0) return allowed;
+  return [...allowed, ...PERSONAL_SECTIONS.filter((s) => !allowed.includes(s))];
+}
+
 export const canReviewNews = (roles: AdminRole[], department: string | null) =>
   roles.includes("admin") ||
   (department === "comms" && (roles.includes("department_head") || roles.includes("deputy_head")));

@@ -20,7 +20,7 @@ import {
   navGroupsFor,
   type AdminNavGroup,
 } from "@/lib/admin-nav";
-import { allowedSections } from "@/lib/admin-permissions";
+import { allowedSections, withPersonalSections } from "@/lib/admin-permissions";
 import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
 import { useAdminHeader } from "@/components/admin/admin-header-context";
 
@@ -133,7 +133,7 @@ export function useAdminAccess() {
       const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
       const department = blocked ? null : (me.member?.department ?? null);
       const permissions = blocked ? [] : (me.account?.permissions ?? []);
-      const allowed = allowedSections(roles, department, permissions);
+      const allowed = withPersonalSections(allowedSections(roles, department, permissions));
       return {
         email: me.email ?? "",
         name: blocked ? "" : (me.member?.full_name ?? ""),

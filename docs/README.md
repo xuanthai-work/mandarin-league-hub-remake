@@ -167,6 +167,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-144-COURSE-ENROLLMENTS-TAB`                                   | Khóa học: tab trượt, tìm đơn không dấu, trạng thái lỗi/trống, drawer duyệt đơn                         | 2026-11-06     | **PASS** | [task-oc-144-course-enrollments-tab.md](tasks/task-oc-144-course-enrollments-tab.md)                                                                     |
 | `TASK-GE-137-POST-REVIEW-COURSES-DEPARTMENTS-FIXES`                    | Sửa sau review: chữ nút Xóa Khóa học, tìm Ban không dấu, bỏ lặp mô tả hero                             | 2026-11-06     | **PASS** | [task-ge-137-post-review-courses-departments-fixes.md](tasks/task-ge-137-post-review-courses-departments-fixes.md)                                       |
 | `TASK-GE-138-LINT-ADMIN-PERMISSIONS-TEST-FORMAT`                       | Định dạng lại test quyền admin, lint về 0 lỗi                                                          | 2026-11-06     | **PASS** | [task-ge-138-lint-admin-permissions-test-format.md](tasks/task-ge-138-lint-admin-permissions-test-format.md)                                             |
+| `TASK-OC-145-ADMIN-SETTINGS-REDESIGN`                                  | Cài đặt mở cho mọi người vào admin: mục lục trái, Hồ sơ, Bảo mật, Giao diện, Riêng tư                  | 2026-11-06     | **PASS** | [task-oc-145-admin-settings-redesign.md](tasks/task-oc-145-admin-settings-redesign.md)                                                                   |
 
 ---
 
