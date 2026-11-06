@@ -1,5 +1,6 @@
 import { Check, Clock, ExternalLink, MessageCircle, RotateCcw } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   PRIORITY_TONE,
@@ -90,7 +91,7 @@ export function TaskKanbanCard({
 
       {inReview && (
         <div
-          className="mt-2.5 space-y-2 rounded-xl border border-amber-300/50 bg-amber-500/5 p-2.5 dark:border-amber-400/25"
+          className="mt-2.5 space-y-2 rounded-xl border border-warning-foreground/25 bg-warning-soft/40 p-2.5"
           onClick={(e) => e.stopPropagation()}
         >
           {evidence ? (
@@ -118,22 +119,23 @@ export function TaskKanbanCard({
           )}
 
           <div className="flex flex-wrap items-center gap-1.5">
-            <button
+            <Button
               type="button"
+              size="admin-sm"
               onClick={() => onApprove(group)}
-              className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
+              className="h-7 gap-1 bg-success px-2.5 text-[11px] text-success-foreground hover:bg-success/90 [&_svg]:size-3.5"
             >
-              <Check aria-hidden className="h-3.5 w-3.5" />
-              Duyệt (+{pendingPoints}đ)
-            </button>
-            <button
+              <Check aria-hidden /> Duyệt (+{pendingPoints}đ)
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="admin-sm"
               onClick={() => onRequestRevision(group)}
-              className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-accent"
+              className="h-7 gap-1 px-2.5 text-[11px] [&_svg]:size-3.5"
             >
-              <RotateCcw aria-hidden className="h-3.5 w-3.5" />
-              Làm lại
-            </button>
+              <RotateCcw aria-hidden /> Làm lại
+            </Button>
           </div>
         </div>
       )}
@@ -159,15 +161,17 @@ export function TaskKanbanCard({
           </span>
           <div className="flex -space-x-1.5" title={names.join(", ")}>
             {visible.map((assignee) => (
-              <button
+              <Button
                 key={assignee.taskId}
                 type="button"
+                variant="ghost"
                 onClick={() => onFilterPerson(assignee.id)}
+                aria-label={`Lọc nhiệm vụ của ${assignee.full_name}`}
                 title={`${assignee.full_name} · ${assignee.member_code}`}
-                className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary ring-2 ring-card transition-transform hover:-translate-y-0.5"
+                className="h-6 w-6 rounded-full bg-primary/15 p-0 text-[10px] font-bold text-primary ring-2 ring-card transition-transform hover:-translate-y-0.5 hover:bg-primary/25 hover:text-primary"
               >
                 {initials(assignee.full_name)}
-              </button>
+              </Button>
             ))}
             {overflow > 0 && (
               <span className="grid h-6 w-6 place-items-center rounded-full bg-secondary text-[9px] font-bold text-muted-foreground ring-2 ring-card">

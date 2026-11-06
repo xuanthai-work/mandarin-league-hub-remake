@@ -7,7 +7,8 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { useConfirm } from "@/components/admin/Trash";
+import { useConfirm } from "@/components/admin/kit/useConfirm";
+import { Button } from "@/components/ui/button";
 import { TaskCreateModal } from "@/components/admin/tasks/TaskCreateModal";
 import { TaskDetailModal } from "@/components/admin/tasks/TaskDetailModal";
 import { TaskFilterToolbar } from "@/components/admin/tasks/TaskFilterToolbar";
@@ -219,16 +220,16 @@ function TasksPage() {
         title="Nhiệm vụ"
         description="Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Trưởng Ban chỉ quản lý Ban mình."
         actions={
-          <button
+          <Button
             type="button"
+            size="admin"
             onClick={() => setCreating(true)}
             aria-label="Giao nhiệm vụ"
             title="Giao nhiệm vụ"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:px-4"
           >
-            <Plus className="h-4 w-4" />
+            <Plus aria-hidden />
             <span className="hidden sm:inline">Giao nhiệm vụ</span>
-          </button>
+          </Button>
         }
       />
 
@@ -237,13 +238,14 @@ function TasksPage() {
       {person && (
         <p className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">
           Đang xem nhiệm vụ của <b>{memberById.get(person)?.full_name ?? "thành viên"}</b> ·{" "}
-          <button
+          <Button
             type="button"
+            variant="link"
+            className="h-auto p-0 text-xs font-medium underline"
             onClick={() => setPerson("")}
-            className="font-medium text-primary underline"
           >
             Xem tất cả
-          </button>
+          </Button>
         </p>
       )}
 

@@ -70,13 +70,13 @@ export function TaskKanbanBoard({
               <span
                 className={cn(
                   "ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-bold text-muted-foreground",
-                  needsAttention && "border-amber-400/60 text-amber-700 dark:text-amber-300",
+                  needsAttention && "border-warning-foreground/40 text-warning-foreground",
                 )}
               >
                 {needsAttention && (
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-70" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning-foreground opacity-70" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-warning-foreground" />
                   </span>
                 )}
                 {items.length}

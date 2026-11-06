@@ -41,15 +41,15 @@ export const EMPTY_TASK_FILTERS: TaskFilters = {
 };
 
 export const PRIORITY_TONE: Record<string, string> = {
-  high: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-  medium: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  low: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  high: "bg-destructive/10 text-destructive",
+  medium: "bg-warning-soft text-warning-foreground",
+  low: "bg-primary/10 text-primary",
 };
 
 export const PRIORITY_DOT: Record<string, string> = {
-  high: "bg-rose-500",
-  medium: "bg-amber-500",
-  low: "bg-sky-500",
+  high: "bg-destructive",
+  medium: "bg-warning-foreground",
+  low: "bg-primary",
 };
 
 export const priorityLabel = (priority: string) => PRIORITY[priority] ?? priority;
@@ -256,15 +256,15 @@ export const BOARD_COLUMNS: {
     label: "Chờ duyệt báo cáo",
     hint: "Cần Trưởng Ban nghiệm thu",
     statuses: ["submitted"],
-    tone: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-    accent: "border-amber-300/60 bg-amber-50/50 dark:border-amber-400/25 dark:bg-amber-400/5",
+    tone: "bg-warning-soft text-warning-foreground",
+    accent: "border-warning-foreground/25 bg-warning-soft/30",
   },
   {
     key: "done",
     label: "Đã hoàn thành",
     hint: "Điểm thưởng đã cộng vào ví",
     statuses: ["done"],
-    tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+    tone: "bg-success/15 text-success",
     accent: "border-border bg-secondary/25",
   },
 ];
@@ -475,14 +475,14 @@ export const deptTag = (department: string) => deptName(department);
 /**
  * Deadline tint (text-only, no background pill):
  * - no due date: grey (text-muted-foreground)
- * - overdue (< 0 days): red (text-rose-600)
- * - due within 3 days (0..3): amber (text-amber-600)
- * - more than 3 days out: sky blue (text-sky-600)
+ * - overdue (< 0 days): destructive (text-destructive)
+ * - due within 3 days (0..3): warning (text-warning-foreground)
+ * - more than 3 days out: primary (text-primary)
  */
 export function dueBadgeTone(due: string | null) {
   const diff = dueDiff(due);
   if (diff === null) return "text-muted-foreground";
-  if (diff < 0) return "text-rose-600 dark:text-rose-400 font-medium";
-  if (diff <= 3) return "text-amber-600 dark:text-amber-400 font-medium";
-  return "text-sky-600 dark:text-sky-400";
+  if (diff < 0) return "text-destructive font-medium";
+  if (diff <= 3) return "text-warning-foreground font-medium";
+  return "text-primary";
 }
