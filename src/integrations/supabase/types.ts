@@ -2221,6 +2221,18 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean };
       is_dept_member: { Args: { _dept: string }; Returns: boolean };
       mark_password_changed: { Args: never; Returns: undefined };
+      member_permissions: {
+        Args: { _member: string };
+        Returns: {
+          action: string;
+          scope: string;
+          source: string;
+          grant_id: string | null;
+          expires_at: string | null;
+          note: string;
+          granted_by_label: string;
+        }[];
+      };
       member_update_task: {
         Args: {
           _action: string;

@@ -2,19 +2,32 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { currentAccessOf, legacyAccessChangeError } from "@/lib/account-rules";
+import type { PermissionCode } from "@/lib/permission-catalog";
 
 const access = z.enum(["admin", "department_head", "deputy_head", "member"]);
 const status = z.enum(["inactive", "active", "suspended", "disabled"]);
 const perms = z.array(z.string().max(40)).max(30);
 
-async function adminClient(context: { supabase: SupabaseClient; userId: string }) {
-  const { data: isAdmin } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!isAdmin) throw new Error("Chỉ Quản trị viên được thực hiện thao tác này.");
+type Ctx = { supabase: SupabaseClient; userId: string };
+
+async function serviceDb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
+}
+async function rpcBool(ctx: Ctx, fn: string, args: Record<string, unknown>) {
+  const { data, error } = await ctx.supabase.rpc(fn as never, args as never);
+  if (error) throw new Error(error.message);
+  return data === true;
+}
+const isAdmin = (ctx: Ctx) => rpcBool(ctx, "is_admin", {});
+const hasPerm = (ctx: Ctx, action: PermissionCode, dept: string | null) =>
+  rpcBool(ctx, "has_perm", { _action: action, _dept: dept });
+const outranks = (ctx: Ctx, memberId: string) => rpcBool(ctx, "outranks", { _member: memberId });
+const canAssign = (ctx: Ctx, position: string) =>
+  rpcBool(ctx, "can_assign_position", { _position: position });
+async function must(ok: Promise<boolean>, message: string) {
+  if (!(await ok)) throw new Error(message);
 }
 
 const ban = (s: string) => (s === "active" ? "none" : "876000h");
@@ -36,7 +49,8 @@ async function adminCount(db: SupabaseClient) {
 export const listAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const db = await adminClient(context);
+    await must(isAdmin(context), "Chỉ Quản trị viên được xem toàn bộ tài khoản.");
+    const db = await serviceDb();
     const [{ data: accts }, { data: roles }, { data: users }] = await Promise.all([
       db.from("member_accounts").select("*, members(*)").order("created_at", { ascending: false }),
       db.from("user_roles").select("user_id, role"),
@@ -65,31 +79,48 @@ export const listAccounts = createServerFn({ method: "GET" })
 export const getAdminMemberAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const db = await adminClient(context);
+    const { data: scope } = await context.supabase.rpc("perm_scope", {
+      _action: "accounts.manage",
+    });
+    if (!scope) return [];
+    const db = await serviceDb();
     const [{ data: accts }, { data: roles }] = await Promise.all([
       db
         .from("member_accounts")
         .select(
-          "user_id, member_id, login_email, account_status, must_change_password, permissions",
+          "user_id, member_id, login_email, account_status, must_change_password, permissions, members(department)",
         ),
       db.from("user_roles").select("user_id, role"),
     ]);
 
-    const roleOf = new Map<string, string>();
+    const rolesOf = new Map<string, string[]>();
     for (const r of roles ?? []) {
-      if (!roleOf.has(r.user_id)) roleOf.set(r.user_id, r.role);
+      rolesOf.set(r.user_id, [...(rolesOf.get(r.user_id) ?? []), r.role]);
     }
 
-    return (accts ?? []).map((a) => ({
-      userId: a.user_id as string,
-      memberId: a.member_id as string,
-      email: a.login_email as string,
-      status: a.account_status as string,
-      mustChange: a.must_change_password as boolean,
-      permissions: (a.permissions ?? []) as string[],
-      access: (roleOf.get(a.user_id) ?? "member") as
-        "admin" | "department_head" | "deputy_head" | "member",
-    }));
+    /** Scope "own" is filtered to the caller's department; admins always resolve to "all". */
+    const restrictDept = !(await isAdmin(context)) && scope === "own";
+    let myDept: string | null = null;
+    if (restrictDept) {
+      const { data: me } = await context.supabase.rpc("my_active_member");
+      myDept = me?.[0]?.department ?? null;
+    }
+
+    return (accts ?? [])
+      .filter((a) => {
+        if (!restrictDept) return true;
+        const member = a.members as { department: string } | null;
+        return myDept !== null && member?.department === myDept;
+      })
+      .map((a) => ({
+        userId: a.user_id as string,
+        memberId: a.member_id as string,
+        email: a.login_email as string,
+        status: a.account_status as string,
+        mustChange: a.must_change_password as boolean,
+        permissions: (a.permissions ?? []) as string[],
+        access: currentAccessOf(rolesOf.get(a.user_id) ?? []),
+      }));
   });
 
 /**
@@ -144,7 +175,20 @@ export const createAccount = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await adminClient(context);
+    const db = await serviceDb();
+    const admin = await isAdmin(context);
+    await must(
+      hasPerm(context, "accounts.manage", data.department),
+      "Bạn không có quyền tạo tài khoản cho Ban này.",
+    );
+    await must(canAssign(context, data.position), "Chỉ được gán chức vụ thấp hơn chức vụ của bạn.");
+    const legacyError = legacyAccessChangeError(admin, null, {
+      access: data.access,
+      permissions: data.permissions,
+    });
+    if (legacyError) throw new Error(legacyError);
+    const permissions = admin ? data.permissions : [];
+
     let memberId = data.memberId;
     if (memberId) {
       const { data: linked } = await db
@@ -153,6 +197,26 @@ export const createAccount = createServerFn({ method: "POST" })
         .eq("member_id", memberId)
         .maybeSingle();
       if (linked) throw new Error("Thành viên này đã có tài khoản nội bộ.");
+      const { data: member } = await db
+        .from("members")
+        .select("department, position")
+        .eq("id", memberId)
+        .single();
+      if (!member) throw new Error("Không tìm thấy thành viên.");
+      await must(
+        outranks(context, memberId),
+        "Chỉ được cấp tài khoản cho người có chức vụ thấp hơn bạn.",
+      );
+      if (member.department !== data.department || member.position !== data.position) {
+        await must(
+          hasPerm(context, "members.position", member.department),
+          "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
+        );
+        await must(
+          hasPerm(context, "members.position", data.department),
+          "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
+        );
+      }
       // Cấp lại tài khoản cũng đưa hồ sơ đã "Đã rời" trở lại hoạt động.
       await db
         .from("members")
@@ -165,6 +229,10 @@ export const createAccount = createServerFn({ method: "POST" })
         })
         .eq("id", memberId);
     } else {
+      await must(
+        hasPerm(context, "members.create", data.department),
+        "Bạn không có quyền thêm thành viên vào Ban này.",
+      );
       if (!data.newMember) throw new Error("Cần chọn hoặc nhập thông tin thành viên.");
       const { data: m, error } = await db
         .from("members")
@@ -198,7 +266,7 @@ export const createAccount = createServerFn({ method: "POST" })
       login_email: data.email,
       account_status: data.status,
       must_change_password: data.mustChange,
-      permissions: data.permissions,
+      permissions,
     });
     if (aErr) {
       await db.auth.admin.deleteUser(uid);
@@ -223,9 +291,54 @@ export const updateAccount = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await adminClient(context);
-    const { data: cur } = await db.from("user_roles").select("role").eq("user_id", data.userId);
-    const wasAdmin = (cur ?? []).some((r: { role: string }) => r.role === "admin");
+    const db = await serviceDb();
+    const admin = await isAdmin(context);
+    const [{ data: acct }, { data: cur }] = await Promise.all([
+      db
+        .from("member_accounts")
+        .select("member_id, permissions, members(department, position)")
+        .eq("user_id", data.userId)
+        .maybeSingle(),
+      db.from("user_roles").select("role").eq("user_id", data.userId),
+    ]);
+    if (!acct) throw new Error("Không tìm thấy tài khoản.");
+    const member = acct.members as { department: string; position: string } | null;
+    if (!member) throw new Error("Không tìm thấy hồ sơ thành viên.");
+    const roles = (cur ?? []).map((r: { role: string }) => r.role);
+    const currentPermissions = (acct.permissions ?? []) as string[];
+
+    await must(
+      hasPerm(context, "accounts.manage", member.department),
+      "Bạn không có quyền quản lý tài khoản của Ban này.",
+    );
+    await must(
+      outranks(context, acct.member_id),
+      "Chỉ được quản lý tài khoản của người có chức vụ thấp hơn bạn.",
+    );
+    if (member.department !== data.department || member.position !== data.position) {
+      await must(
+        hasPerm(context, "members.position", member.department),
+        "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
+      );
+      await must(
+        hasPerm(context, "members.position", data.department),
+        "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
+      );
+      await must(
+        canAssign(context, data.position),
+        "Chỉ được gán chức vụ thấp hơn chức vụ của bạn.",
+      );
+    }
+
+    const currentAccess = currentAccessOf(roles);
+    const legacyError = legacyAccessChangeError(
+      admin,
+      { access: currentAccess, permissions: currentPermissions },
+      { access: data.access, permissions: data.permissions },
+    );
+    if (legacyError) throw new Error(legacyError);
+
+    const wasAdmin = roles.includes("admin");
     const losesAdmin = wasAdmin && (data.access !== "admin" || data.status !== "active");
     if (losesAdmin && data.userId === context.userId)
       throw new Error(
@@ -233,21 +346,20 @@ export const updateAccount = createServerFn({ method: "POST" })
       );
     if (losesAdmin && (await adminCount(db)) <= 1)
       throw new Error("Hệ thống phải luôn còn ít nhất một Quản trị viên.");
-    const { data: acct } = await db
-      .from("member_accounts")
-      .select("member_id")
-      .eq("user_id", data.userId)
-      .single();
+
     await db
       .from("members")
       .update({ department: data.department, position: data.position })
-      .eq("id", acct!.member_id);
+      .eq("id", acct.member_id);
     await db
       .from("member_accounts")
-      .update({ account_status: data.status, permissions: data.permissions })
+      .update({
+        account_status: data.status,
+        permissions: admin ? data.permissions : currentPermissions,
+      })
       .eq("user_id", data.userId);
     await db.auth.admin.updateUserById(data.userId, { ban_duration: ban(data.status) });
-    await setAccess(db, data.userId, data.access);
+    if (data.access !== currentAccess) await setAccess(db, data.userId, data.access);
     return { ok: true };
   });
 
@@ -264,13 +376,23 @@ export const resetAccountPassword = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await adminClient(context);
+    const db = await serviceDb();
     const { data: acct } = await db
       .from("member_accounts")
-      .select("login_email")
+      .select("login_email, member_id, members(department)")
       .eq("user_id", data.userId)
-      .single();
+      .maybeSingle();
     if (!acct) throw new Error("Không tìm thấy tài khoản.");
+    const member = acct.members as { department: string } | null;
+    if (!member) throw new Error("Không tìm thấy tài khoản.");
+    await must(
+      hasPerm(context, "accounts.manage", member.department),
+      "Bạn không có quyền quản lý tài khoản của Ban này.",
+    );
+    await must(
+      outranks(context, acct.member_id),
+      "Chỉ được quản lý tài khoản của người có chức vụ thấp hơn bạn.",
+    );
     if (data.mode === "temp") {
       if (!data.password) throw new Error("Cần nhập mật khẩu tạm thời.");
       const { error } = await db.auth.admin.updateUserById(data.userId, {
@@ -295,20 +417,33 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const db = await adminClient(context);
+    const db = await serviceDb();
     if (data.userId === context.userId)
       throw new Error("Bạn không thể tự xóa tài khoản của chính mình.");
-    const { data: cur } = await db.from("user_roles").select("role").eq("user_id", data.userId);
+    const [{ data: acct }, { data: cur }] = await Promise.all([
+      db
+        .from("member_accounts")
+        .select("member_id, members(department)")
+        .eq("user_id", data.userId)
+        .maybeSingle(),
+      db.from("user_roles").select("role").eq("user_id", data.userId),
+    ]);
+    if (!acct) throw new Error("Không tìm thấy tài khoản.");
+    const member = acct.members as { department: string } | null;
+    if (!member) throw new Error("Không tìm thấy hồ sơ thành viên.");
+    await must(
+      hasPerm(context, "accounts.manage", member.department),
+      "Bạn không có quyền quản lý tài khoản của Ban này.",
+    );
+    await must(
+      outranks(context, acct.member_id),
+      "Chỉ được quản lý tài khoản của người có chức vụ thấp hơn bạn.",
+    );
     if (
       (cur ?? []).some((r: { role: string }) => r.role === "admin") &&
       (await adminCount(db)) <= 1
     )
       throw new Error("Hệ thống phải luôn còn ít nhất một Quản trị viên.");
-    const { data: acct } = await db
-      .from("member_accounts")
-      .select("member_id")
-      .eq("user_id", data.userId)
-      .maybeSingle();
 
     // 1. Xóa thông tin đăng nhập, quyền và liên kết tài khoản.
     await db.from("user_roles").delete().eq("user_id", data.userId);
@@ -341,7 +476,21 @@ export const deleteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ memberId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const db = await adminClient(context);
+    const db = await serviceDb();
+    const { data: member } = await db
+      .from("members")
+      .select("department")
+      .eq("id", data.memberId)
+      .maybeSingle();
+    if (!member) throw new Error("Không tìm thấy hồ sơ thành viên.");
+    await must(
+      hasPerm(context, "members.delete", member.department),
+      "Bạn không có quyền xóa hồ sơ thành viên Ban này.",
+    );
+    await must(
+      outranks(context, data.memberId),
+      "Chỉ được xóa hồ sơ của người có chức vụ thấp hơn bạn.",
+    );
     const { data: linked } = await db
       .from("member_accounts")
       .select("user_id")
@@ -368,7 +517,12 @@ export const approveApplication = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await adminClient(context);
+    const db = await serviceDb();
+    await must(
+      hasPerm(context, "candidates.convert", data.department),
+      "Bạn không có quyền kết nạp thành viên vào Ban này.",
+    );
+    await must(canAssign(context, data.position), "Chỉ được gán chức vụ thấp hơn chức vụ của bạn.");
     const { data: app } = await db
       .from("candidate_applications")
       .select("id, full_name, email, phone")
