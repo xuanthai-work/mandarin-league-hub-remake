@@ -1,21 +1,32 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { ExternalLink, Save, Send } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "motion/react";
+import { ArrowUpRight, ExternalLink, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  HOME_DEFAULTS,
-  HOME_SECTIONS,
-  SITE_DEFAULTS,
-  mergeContent,
   type ContentKey,
   type HomeContent,
   type HomeSectionKey,
   type SiteSettings,
 } from "@/lib/site-content";
+import {
+  HOME_BLOCKS,
+  SITE_BLOCKS,
+  changedKeys,
+  fieldError,
+  toHomeForm,
+  toSiteForm,
+  type ContentBlock,
+  type HomeTextKey,
+  type SiteKey,
+} from "@/lib/site-content-fields";
 import { useConfirm } from "@/components/admin/Trash";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { ContentOutline } from "@/components/admin/content/ContentOutline";
+import { ContentFieldInput } from "@/components/admin/content/ContentFieldInput";
 
 export const Route = createFileRoute("/_authenticated/admin/content")({
   staticData: { sitemap: false },
@@ -24,8 +35,6 @@ export const Route = createFileRoute("/_authenticated/admin/content")({
   }),
   component: ContentAdmin,
 });
-
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 
 function useRow(key: ContentKey) {
   return useQuery({
@@ -37,270 +46,485 @@ function useRow(key: ContentKey) {
 
 function ContentAdmin() {
   const [tab, setTab] = useState<"home" | "site" | "log">("home");
+  const qc = useQueryClient();
+  const { confirm, dialog } = useConfirm();
+
+  const homeRow = useRow("home");
+  const siteRow = useRow("site");
+
+  const [activeHomeId, setActiveHomeId] = useState(HOME_BLOCKS[0]?.id ?? "hero");
+  const [activeSiteId, setActiveSiteId] = useState(SITE_BLOCKS[0]?.id ?? "contact");
+
+  const [homeForm, setHomeForm] = useState<HomeContent>(() => toHomeForm({}));
+  const [siteForm, setSiteForm] = useState<SiteSettings>(() => toSiteForm({}));
+  const [busy, setBusy] = useState(false);
+
+  const homeSaved = useMemo(() => toHomeForm(homeRow.data?.draft), [homeRow.data?.draft]);
+  const siteSaved = useMemo(() => toSiteForm(siteRow.data?.draft), [siteRow.data?.draft]);
+
+  const prevHomeSavedRef = useRef<HomeContent | null>(null);
+  const prevSiteSavedRef = useRef<SiteSettings | null>(null);
+
+  useEffect(() => {
+    if (homeRow.data !== undefined) {
+      const newSaved = toHomeForm(homeRow.data?.draft);
+      if (!prevHomeSavedRef.current) {
+        setHomeForm(newSaved);
+      } else {
+        const isDirty = changedKeys(homeForm, prevHomeSavedRef.current).length > 0;
+        if (!isDirty) {
+          setHomeForm(newSaved);
+        }
+      }
+      prevHomeSavedRef.current = newSaved;
+    }
+  }, [homeRow.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (siteRow.data !== undefined) {
+      const newSaved = toSiteForm(siteRow.data?.draft);
+      if (!prevSiteSavedRef.current) {
+        setSiteForm(newSaved);
+      } else {
+        const isDirty = changedKeys(siteForm, prevSiteSavedRef.current).length > 0;
+        if (!isDirty) {
+          setSiteForm(newSaved);
+        }
+      }
+      prevSiteSavedRef.current = newSaved;
+    }
+  }, [siteRow.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const unsavedHome = useMemo(() => changedKeys(homeForm, homeSaved).length, [homeForm, homeSaved]);
+  const unsavedSite = useMemo(() => changedKeys(siteForm, siteSaved).length, [siteForm, siteSaved]);
+  const unsavedTotal = unsavedHome + unsavedSite;
+
+  const homeDirtyIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const b of HOME_BLOCKS) {
+      if (b.toggle && homeForm.show[b.toggle] !== homeSaved.show[b.toggle]) {
+        ids.add(b.id);
+      }
+      for (const f of b.fields) {
+        if ((homeForm[f.key] ?? "").trim() !== (homeSaved[f.key] ?? "").trim()) {
+          ids.add(b.id);
+        }
+      }
+    }
+    return ids;
+  }, [homeForm, homeSaved]);
+
+  const siteDirtyIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const b of SITE_BLOCKS) {
+      for (const f of b.fields) {
+        if ((siteForm[f.key] ?? "").trim() !== (siteSaved[f.key] ?? "").trim()) {
+          ids.add(b.id);
+        }
+      }
+    }
+    return ids;
+  }, [siteForm, siteSaved]);
+
+  const homeErrors = useMemo(() => {
+    const errs: Record<string, string> = {};
+    for (const b of HOME_BLOCKS) {
+      for (const f of b.fields) {
+        const err = fieldError(f.kind, homeForm[f.key] ?? "");
+        if (err) errs[f.key] = err;
+      }
+    }
+    return errs;
+  }, [homeForm]);
+
+  const siteErrors = useMemo(() => {
+    const errs: Record<string, string> = {};
+    for (const b of SITE_BLOCKS) {
+      for (const f of b.fields) {
+        const err = fieldError(f.kind, siteForm[f.key] ?? "");
+        if (err) errs[f.key] = err;
+      }
+    }
+    return errs;
+  }, [siteForm]);
+
+  useBlocker({
+    shouldBlockFn: async () => {
+      if (unsavedTotal === 0) return false;
+      const ok = await confirm({
+        title: "Rời trang khi chưa lưu?",
+        description: "Các thay đổi chưa lưu sẽ bị mất.",
+        confirmLabel: "Rời trang",
+        destructive: true,
+      });
+      return !ok;
+    },
+    enableBeforeUnload: () => unsavedTotal > 0,
+  });
+
+  const save = async (targetKey: "home" | "site", publish: boolean): Promise<boolean> => {
+    const errs = targetKey === "home" ? homeErrors : siteErrors;
+    if (Object.keys(errs).length > 0) {
+      toast.error("Vui lòng sửa các ô bị lỗi trước khi lưu");
+      return false;
+    }
+
+    if (publish) {
+      const ok = await confirm({
+        title: "Xuất bản nội dung?",
+        description: "Nội dung mới sẽ hiện ngay cho mọi khách truy cập website.",
+        confirmLabel: "Xuất bản",
+      });
+      if (!ok) return false;
+    }
+
+    setBusy(true);
+    const form = targetKey === "home" ? homeForm : siteForm;
+    const row = targetKey === "home" ? homeRow : siteRow;
+    const payload = {
+      key: targetKey,
+      draft: form as never,
+      ...(publish ? { published: form as never, published_at: new Date().toISOString() } : {}),
+    };
+    const { error } = row.data
+      ? await supabase.from("site_content").update(payload).eq("key", targetKey)
+      : await supabase.from("site_content").insert(payload);
+    setBusy(false);
+
+    if (error) {
+      toast.error(
+        "Không lưu được (cần quyền Admin hoặc Trưởng/Phó Ban Truyền thông): " + error.message,
+      );
+      return false;
+    }
+
+    toast.success(publish ? "Đã xuất bản lên website" : "Đã lưu nháp");
+
+    if (targetKey === "home") {
+      prevHomeSavedRef.current = form as HomeContent;
+    } else {
+      prevSiteSavedRef.current = form as SiteSettings;
+    }
+
+    qc.setQueryData(["admin-content", targetKey], (old: unknown) => ({
+      ...((old as object) ?? {}),
+      draft: form,
+      ...(publish ? { published: form, published_at: payload.published_at } : {}),
+    }));
+    qc.invalidateQueries({ queryKey: ["admin-content", targetKey] });
+    qc.invalidateQueries({ queryKey: ["site-content", targetKey] });
+    qc.invalidateQueries({ queryKey: ["content-audit"] });
+    return true;
+  };
+
+  const handlePreview = async () => {
+    const currentErrors = tab === "home" ? homeErrors : siteErrors;
+    const currentUnsaved = tab === "home" ? unsavedHome : unsavedSite;
+
+    const w = window.open("about:blank", "_blank");
+
+    if (Object.keys(currentErrors).length > 0) {
+      w?.close();
+      toast.error("Sửa các ô bị lỗi trước khi xem trước");
+      return;
+    }
+
+    if (currentUnsaved > 0) {
+      const success = await save(tab as "home" | "site", false);
+      if (!success) {
+        w?.close();
+        return;
+      }
+    }
+
+    if (w) {
+      w.location.href = "/?preview=1";
+    } else {
+      window.open("/?preview=1", "_blank");
+    }
+  };
+
+  const currentRow = tab === "home" ? homeRow : siteRow;
+  const currentErrors = tab === "home" ? homeErrors : siteErrors;
+  const currentUnsaved = tab === "home" ? unsavedHome : unsavedSite;
+  const draftMatchesPublished =
+    changedKeys(
+      (currentRow.data?.draft as Record<string, unknown>) ?? {},
+      (currentRow.data?.published as Record<string, unknown>) ?? {},
+    ).length === 0;
+  const hasNothingToPublish = currentUnsaved === 0 && draftMatchesPublished;
+  const canPublish = !busy && Object.keys(currentErrors).length === 0 && !hasNothingToPublish;
+  const canSaveDraft = !busy && currentUnsaved > 0 && Object.keys(currentErrors).length === 0;
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
-      <AdminPageHeader
-        title="Trang & Nội dung"
-        description='Sửa câu chữ trên website mà không cần lập trình. "Lưu nháp" chỉ bạn thấy khi xem trước; "Xuất bản" mới hiện cho khách. Ô để trống sẽ dùng nội dung mặc định.'
-      />
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ["home", "Trang chủ"],
-            ["site", "Liên hệ & Chân trang"],
-            ["log", "Lịch sử thay đổi"],
-          ] as const
-        ).map(([k, l]) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`rounded-full border px-4 py-1.5 text-sm ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
-          >
-            {l}
-          </button>
-        ))}
+      {dialog}
+
+      <div className="space-y-4">
+        {/* Tabs with horizontal scrollbar on small screens */}
+        <div className="custom-scrollbar max-w-full overflow-x-auto">
+          <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
+            {(
+              [
+                ["home", "Trang chủ", unsavedHome > 0],
+                ["site", "Liên hệ & Chân trang", unsavedSite > 0],
+                ["log", "Lịch sử thay đổi", false],
+              ] as const
+            ).map(([k, label, isDirty]) => {
+              const active = tab === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setTab(k)}
+                  aria-pressed={active}
+                  className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-4 cursor-pointer ${
+                    active
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="content-tab-pill"
+                      className="absolute inset-0 rounded-lg bg-primary shadow-xs"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <span>{label}</span>
+                    {isDirty && (
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full bg-gold"
+                        aria-label="Có thay đổi chưa lưu"
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Status Line + Action Buttons */}
+        {tab !== "log" && (
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-1.5 text-sm">
+                {currentUnsaved > 0 ? (
+                  <span className="flex items-center gap-1.5 font-medium text-foreground">
+                    <span
+                      className="inline-block h-2 w-2 rounded-full bg-gold"
+                      aria-hidden="true"
+                    />
+                    <span>{currentUnsaved} thay đổi chưa lưu</span>
+                  </span>
+                ) : !draftMatchesPublished ? (
+                  <span className="font-medium text-gold">Đã lưu nháp · chưa xuất bản</span>
+                ) : (
+                  <span className="text-muted-foreground">Website đang hiển thị bản mới nhất</span>
+                )}
+
+                <span className="text-muted-foreground">
+                  {currentRow.data?.published_at
+                    ? `· Xuất bản lần cuối ${new Date(currentRow.data.published_at).toLocaleString("vi-VN")}`
+                    : "· Chưa xuất bản lần nào"}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ô để trống sẽ dùng chữ mặc định. Lưu nháp chỉ người quản trị xem được khi xem trước;
+                Xuất bản mới hiện cho khách.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePreview}
+                disabled={busy}
+              >
+                <ExternalLink className="h-4 w-4" /> Xem trước
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => save(tab as "home" | "site", false)}
+                disabled={!canSaveDraft}
+              >
+                <Save className="h-4 w-4" /> Lưu nháp
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => save(tab as "home" | "site", true)}
+                disabled={!canPublish}
+              >
+                <Send className="h-4 w-4" /> Xuất bản
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
-      {tab === "home" && (
-        <Editor<HomeContent>
-          k="home"
-          defaults={HOME_DEFAULTS}
-          render={(f, set) => <HomeFields f={f} set={set} />}
-        />
-      )}
-      {tab === "site" && (
-        <Editor<SiteSettings>
-          k="site"
-          defaults={SITE_DEFAULTS}
-          render={(f, set) => <SiteFields f={f} set={set} />}
-        />
-      )}
+
+      {/* Tab Panels */}
+      {tab === "home" &&
+        (homeRow.isLoading ? (
+          <p className="text-sm text-muted-foreground">Đang tải…</p>
+        ) : (
+          <BlockEditor<HomeTextKey>
+            blocks={HOME_BLOCKS}
+            activeId={activeHomeId}
+            onSelectId={setActiveHomeId}
+            title="Cấu trúc Trang chủ"
+            form={homeForm}
+            saved={homeSaved}
+            onFieldChange={(k, v) => setHomeForm((prev) => ({ ...prev, [k]: v }))}
+            show={homeForm.show}
+            onToggle={(k, v) =>
+              setHomeForm((prev) => ({
+                ...prev,
+                show: { ...prev.show, [k]: v },
+              }))
+            }
+            dirtyIds={homeDirtyIds}
+            errors={homeErrors}
+          />
+        ))}
+
+      {tab === "site" &&
+        (siteRow.isLoading ? (
+          <p className="text-sm text-muted-foreground">Đang tải…</p>
+        ) : (
+          <BlockEditor<SiteKey>
+            blocks={SITE_BLOCKS}
+            activeId={activeSiteId}
+            onSelectId={setActiveSiteId}
+            title="Liên hệ & Chân trang"
+            form={siteForm}
+            saved={siteSaved}
+            onFieldChange={(k, v) => setSiteForm((prev) => ({ ...prev, [k]: v }))}
+            dirtyIds={siteDirtyIds}
+            errors={siteErrors}
+          />
+        ))}
+
       {tab === "log" && <AuditLog />}
     </div>
   );
 }
 
-function Editor<T extends object>({
-  k,
-  defaults,
-  render,
+function BlockEditor<K extends string>({
+  blocks,
+  activeId,
+  onSelectId,
+  title,
+  form,
+  saved,
+  onFieldChange,
+  show,
+  onToggle,
+  dirtyIds,
+  errors,
 }: {
-  k: ContentKey;
-  defaults: T;
-  render: (f: T, set: (p: Partial<T>) => void) => React.ReactNode;
+  blocks: ContentBlock<K>[];
+  activeId: string;
+  onSelectId: (id: string) => void;
+  title: string;
+  form: Record<string, unknown>;
+  saved: Record<string, unknown>;
+  onFieldChange: (k: K, v: string) => void;
+  show?: Record<HomeSectionKey, boolean>;
+  onToggle?: (k: HomeSectionKey, v: boolean) => void;
+  dirtyIds: Set<string>;
+  errors: Record<string, string>;
 }) {
-  const qc = useQueryClient();
-  const row = useRow(k);
-  const { confirm, dialog } = useConfirm();
-  const [f, setF] = useState<T>(defaults);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    if (row.data !== undefined)
-      setF({
-        ...defaults,
-        ...((row.data?.draft as object) ?? {}),
-        ...(k === "home" ? { show: mergeContent("home", row.data?.draft).show } : {}),
-      } as T);
-  }, [row.data]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const save = async (publish: boolean) => {
-    if (
-      publish &&
-      !(await confirm({
-        title: "Xuất bản nội dung?",
-        description: "Nội dung mới sẽ hiện ngay cho mọi khách truy cập website.",
-        confirmLabel: "Xuất bản",
-      }))
-    )
-      return;
-    setBusy(true);
-    const payload = { key: k, draft: f as never, ...(publish ? { published: f as never } : {}) };
-    const { error } = row.data
-      ? await supabase.from("site_content").update(payload).eq("key", k)
-      : await supabase.from("site_content").insert(payload);
-    setBusy(false);
-    if (error)
-      return void toast.error(
-        "Không lưu được (cần quyền Admin hoặc Trưởng/Phó Ban Truyền thông): " + error.message,
-      );
-    toast.success(publish ? "Đã xuất bản lên website" : "Đã lưu nháp");
-    qc.invalidateQueries({ queryKey: ["admin-content"] });
-    qc.invalidateQueries({ queryKey: ["site-content"] });
-  };
-  const dirty = JSON.stringify(row.data?.draft ?? {}) !== JSON.stringify(row.data?.published ?? {});
+  const activeBlock = blocks.find((b) => b.id === activeId) ?? blocks[0]!;
+  const isOff = activeBlock.toggle && show ? show[activeBlock.toggle] === false : false;
+  const customizedCount = activeBlock.fields.filter(
+    (f) => ((form[f.key] as string | undefined) ?? "").trim().length > 0,
+  ).length;
 
   return (
-    <div className="space-y-4">
-      {dialog}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3 text-sm">
-        <span className="text-muted-foreground">
-          {row.data?.published_at
-            ? `Xuất bản lần cuối: ${new Date(row.data.published_at).toLocaleString("vi-VN")}`
-            : "Chưa xuất bản lần nào — website đang dùng nội dung mặc định."}
-          {dirty && row.data && <b className="ml-2 text-gold">· Có bản nháp chưa xuất bản</b>}
-        </span>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <a
-            href="/?preview=1"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-full border border-border px-4 py-2"
-          >
-            <ExternalLink className="h-4 w-4" /> Xem trước bản nháp
-          </a>
-          <button
-            disabled={busy}
-            onClick={() => save(false)}
-            className="inline-flex items-center gap-1 rounded-full border border-border px-4 py-2"
-          >
-            <Save className="h-4 w-4" /> Lưu nháp
-          </button>
-          <button
-            disabled={busy}
-            onClick={() => save(true)}
-            className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground"
-          >
-            <Send className="h-4 w-4" /> Xuất bản
-          </button>
-        </div>
+    <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
+      <div className="lg:w-72 lg:sticky lg:top-4 self-start">
+        <ContentOutline
+          blocks={blocks}
+          activeId={activeBlock.id}
+          onSelect={onSelectId}
+          show={show}
+          onToggle={onToggle}
+          dirtyIds={dirtyIds}
+          title={title}
+        />
       </div>
-      {row.isLoading ? (
-        <p className="text-sm text-muted-foreground">Đang tải…</p>
-      ) : (
-        render(f, (p) => setF({ ...f, ...p }))
-      )}
-    </div>
-  );
-}
 
-function Field({
-  label,
-  value,
-  onChange,
-  area,
-  hint,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  area?: boolean;
-  hint?: string;
-}) {
-  return (
-    <label className="text-xs text-muted-foreground">
-      {label}
-      {area ? (
-        <textarea
-          rows={3}
-          maxLength={1000}
-          className={`${inp} mt-1`}
-          value={value}
-          placeholder={hint}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      ) : (
-        <input
-          maxLength={300}
-          className={`${inp} mt-1`}
-          value={value}
-          placeholder={hint}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      )}
-    </label>
-  );
-}
+      <div className="flex-1 space-y-4 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-base font-bold text-primary-deep">{activeBlock.label}</h2>
+            {activeBlock.fields.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {customizedCount}/{activeBlock.fields.length} ô đã tùy chỉnh
+              </span>
+            )}
+          </div>
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-border bg-card p-5">
-      <h2 className="mb-3 font-bold text-primary-deep">{title}</h2>
-      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
-    </section>
-  );
-}
-
-function HomeFields({ f, set }: { f: HomeContent; set: (p: Partial<HomeContent>) => void }) {
-  const s = (k: keyof Omit<HomeContent, "show">) => ({
-    value: f[k],
-    onChange: (v: string) => set({ [k]: v } as Partial<HomeContent>),
-  });
-  return (
-    <div className="space-y-4">
-      <Card title="Ẩn / Hiện các khối trên Trang chủ">
-        {(Object.keys(HOME_SECTIONS) as HomeSectionKey[]).map((k) => (
-          <label
-            key={k}
-            className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
-          >
-            {HOME_SECTIONS[k]}
-            <input
-              type="checkbox"
-              className="h-4 w-4"
-              checked={f.show[k]}
-              onChange={(e) => set({ show: { ...f.show, [k]: e.target.checked } })}
-            />
-          </label>
-        ))}
-      </Card>
-      <Card title="Banner đầu trang">
-        <Field
-          label="Dòng nhỏ phía trên"
-          hint="Online Chinese Learning Community"
-          {...s("hero_badge")}
-        />
-        <Field label="Tiêu đề lớn" hint="The Mandarin League" {...s("hero_title")} />
-        <div className="sm:col-span-2">
-          <Field area label="Lời dẫn" hint="Để trống dùng lời dẫn mặc định" {...s("hero_lead")} />
+          {activeBlock.toggle && show && onToggle && (
+            <div className="flex lg:hidden items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Hiện trên trang chủ</span>
+              <Switch
+                checked={show[activeBlock.toggle] ?? true}
+                onCheckedChange={(v) => onToggle(activeBlock.toggle!, v)}
+                aria-label={`Hiện khối ${activeBlock.label}`}
+              />
+            </div>
+          )}
         </div>
-        <Field label="Nút 1 – chữ" hint="Tham gia TML" {...s("btn1_label")} />
-        <Field label="Nút 1 – liên kết" hint="/join" {...s("btn1_url")} />
-        <Field label="Nút 2 – chữ" hint="Khóa học HSK" {...s("btn2_label")} />
-        <Field label="Nút 2 – liên kết" hint="/courses/hsk" {...s("btn2_url")} />
-      </Card>
-      <Card title="Khối Giới thiệu">
-        <div className="sm:col-span-2">
-          <Field
-            label="Tiêu đề"
-            hint="Học tiếng Trung cùng một cộng đồng thực thụ"
-            {...s("about_title")}
-          />
-        </div>
-        <Field area label="Đoạn 1" {...s("about_p1")} />
-        <Field area label="Đoạn 2" {...s("about_p2")} />
-      </Card>
-      <Card title="Khối kêu gọi tham gia">
-        <Field label="Tiêu đề" hint="Sẵn sàng trở thành một phần của TML?" {...s("cta_title")} />
-        <Field area label="Lời dẫn" {...s("cta_body")} />
-      </Card>
-    </div>
-  );
-}
 
-function SiteFields({ f, set }: { f: SiteSettings; set: (p: Partial<SiteSettings>) => void }) {
-  const s = (k: keyof SiteSettings) => ({ value: f[k], onChange: (v: string) => set({ [k]: v }) });
-  return (
-    <div className="space-y-4">
-      <Card title="Liên hệ & Mạng xã hội">
-        <Field label="Email liên hệ" hint={SITE_DEFAULTS.email} {...s("email")} />
-        <Field label="Facebook" hint="https://facebook.com/..." {...s("facebook")} />
-        <Field label="Instagram" hint="https://instagram.com/..." {...s("instagram")} />
-        <Field label="Threads (để trống = ẩn)" hint="https://threads.net/@..." {...s("threads")} />
-        <Field label="TikTok (để trống = ẩn)" hint="https://tiktok.com/@..." {...s("tiktok")} />
-        <Field
-          label="LinkedIn (để trống = ẩn)"
-          hint="https://linkedin.com/..."
-          {...s("linkedin")}
-        />
-      </Card>
-      <Card title="Chân trang">
-        <Field
-          area
-          label="Mô tả ngắn về TML"
-          hint="Để trống dùng khẩu hiệu mặc định"
-          {...s("tagline")}
-        />
-        <Field label="Dòng bản quyền" hint="Để trống dùng dòng mặc định" {...s("footer_note")} />
-      </Card>
+        {isOff && (
+          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Khối này đang ẩn trên trang chủ.
+          </div>
+        )}
+
+        {activeBlock.fields.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-6 text-center space-y-4">
+            {activeBlock.note && (
+              <p className="text-sm text-muted-foreground">{activeBlock.note}</p>
+            )}
+            {activeBlock.manage && (
+              <div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={activeBlock.manage.to}>
+                    Mở trang {activeBlock.manage.label}
+                    <ArrowUpRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {activeBlock.fields.map((f) => (
+              <div key={f.key} className={f.kind === "area" ? "sm:col-span-2" : undefined}>
+                <ContentFieldInput
+                  field={f}
+                  value={(form[f.key] as string | undefined) ?? ""}
+                  onChange={(v) => onFieldChange(f.key, v)}
+                  changed={
+                    ((form[f.key] as string | undefined) ?? "").trim() !==
+                    ((saved[f.key] as string | undefined) ?? "").trim()
+                  }
+                  error={errors[f.key] ?? null}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
