@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { ClipboardCheck, Zap } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdjustmentModal } from "@/components/admin/contributions/AdjustmentModal";
@@ -18,6 +19,7 @@ import {
   type PointStatRow,
   type PointTxn,
 } from "@/components/admin/contributions/shared";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
 import { useAdminAccess } from "./admin";
@@ -125,27 +127,28 @@ function PointsPage() {
   const headerActions = useMemo(
     () => (
       <div className="flex items-center gap-2">
-        <button
+        <Button
           type="button"
+          size="admin"
+          variant="outline"
           onClick={() => setAttendanceOpen(true)}
           aria-label="Điểm danh cuộc họp"
           title="Điểm danh cuộc họp"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-2 text-sm font-semibold text-foreground transition-colors hover:border-emerald-400/60 hover:bg-emerald-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:px-3.5"
         >
-          <ClipboardCheck aria-hidden className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <ClipboardCheck aria-hidden />
           <span className="hidden sm:inline">Điểm danh cuộc họp</span>
-        </button>
+        </Button>
         {isAdmin && (
-          <button
+          <Button
             type="button"
+            size="admin"
             onClick={() => setAdjustOpen(true)}
             aria-label="Thưởng hoặc trừ điểm"
             title="Thưởng / Trừ điểm"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:px-3.5"
           >
-            <Zap aria-hidden className="h-4 w-4" />
+            <Zap aria-hidden />
             <span className="hidden sm:inline">Thưởng / Trừ điểm</span>
-          </button>
+          </Button>
         )}
       </div>
     ),
@@ -190,13 +193,15 @@ function PointsPage() {
         />
       )}
 
-      {adjustOpen && isAdmin && (
-        <AdjustmentModal
-          members={activeMembers}
-          onClose={() => setAdjustOpen(false)}
-          onDone={refresh}
-        />
-      )}
+      <AnimatePresence>
+        {adjustOpen && isAdmin && (
+          <AdjustmentModal
+            members={activeMembers}
+            onClose={() => setAdjustOpen(false)}
+            onDone={refresh}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

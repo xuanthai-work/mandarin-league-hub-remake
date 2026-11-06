@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crown, Medal, Search, Trophy, UserRound, X } from "lucide-react";
+import { Crown, Medal, Trophy, UserRound } from "lucide-react";
 
+import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { TierBadge } from "@/components/TierBadge";
 import {
   Select,
@@ -230,33 +231,13 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
       </header>
 
       <div className="flex flex-wrap items-center gap-2.5 px-3 py-2.5 sm:px-4">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-            }}
-            placeholder="Tìm tên hoặc mã thành viên…"
-            aria-label="Tìm thành viên trên bảng vinh danh"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => {
-                setQ("");
-              }}
-              aria-label="Xóa tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tên hoặc mã thành viên…"
+          label="Tìm thành viên trên bảng vinh danh"
+          className="min-w-[240px] flex-1 sm:max-w-xs"
+        />
         <Select
           value={dept || "all"}
           onValueChange={(value) => {

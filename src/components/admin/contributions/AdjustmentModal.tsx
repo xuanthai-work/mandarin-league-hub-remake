@@ -1,19 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Check,
-  FileText,
-  Loader2,
-  Minus,
-  Paperclip,
-  Plus,
-  Search,
-  UserPlus,
-  X,
-  Zap,
-} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Check, FileText, Loader2, Minus, Paperclip, Plus, UserPlus, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 
-import { Input } from "@/components/ui/input";
+import { AdminModal } from "@/components/admin/kit/AdminModal";
+import { AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { FormField } from "@/components/admin/kit/FormField";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -108,19 +101,6 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
     [pool, recorded],
   );
   const allSelected = selectable.length > 0 && selectable.every((m) => selected.includes(m.id));
-
-  useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previous;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [busy, onClose]);
 
   const switchMode = (next: AdjustMode) => {
     setMode(next);
@@ -285,336 +265,16 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
   const canSubmit = !busy && !uploading && pending.length > 0;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={busy ? undefined : onClose}
-        aria-hidden
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Thưởng hoặc trừ điểm"
-        className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
-      >
-        <header className="flex shrink-0 items-start gap-2 border-b border-border/70 px-4 py-3.5 sm:px-5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Zap aria-hidden className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-bold text-foreground">Thưởng / Trừ điểm</h2>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Điều chỉnh điểm có căn cứ rõ ràng. Mọi giao dịch đều được lưu vào sổ cái kèm người
-              thực hiện.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            aria-label="Đóng"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-          >
-            <X aria-hidden className="h-4 w-4" />
-          </button>
-        </header>
-
-        <div className="custom-scrollbar grid min-h-0 flex-1 gap-5 overflow-y-auto px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-          {/* Recipients */}
-          <section className="min-w-0 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className={labelClass}>
-                Đối tượng áp dụng *
-                {selected.length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary">
-                    Đã chọn {selected.length}
-                  </span>
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={toggleAll}
-                disabled={selectable.length === 0}
-                className="text-[10px] font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-50"
-              >
-                {allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả (${selectable.length})`}
-              </button>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-[1fr_150px]">
-              <div className="relative">
-                <Search
-                  aria-hidden
-                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Tìm tên hoặc mã thành viên…"
-                  aria-label="Tìm thành viên"
-                  className="h-9 w-full rounded-xl border-input bg-background pl-8 pr-3 text-xs shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
-                />
-              </div>
-              <Select
-                value={dept || "all"}
-                onValueChange={(value) => setDept(value === "all" ? "" : value)}
-              >
-                <SelectTrigger
-                  aria-label="Lọc thành viên theo Ban"
-                  className="h-9 rounded-xl border-input text-xs shadow-none"
-                >
-                  <SelectValue>{dept ? deptName(dept) : "Mọi Ban"}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="z-[95] rounded-xl">
-                  <SelectItem value="all" className="text-xs">
-                    Mọi Ban
-                  </SelectItem>
-                  {depts.map((d) => (
-                    <SelectItem key={d} value={d} className="text-xs">
-                      {deptName(d)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="custom-scrollbar max-h-64 overflow-y-auto rounded-xl border border-border">
-              {pool.length === 0 ? (
-                <p className="p-4 text-center text-xs text-muted-foreground">
-                  Không có thành viên phù hợp.
-                </p>
-              ) : (
-                pool.map((member) => {
-                  const checked = selected.includes(member.id);
-                  const isRecorded = recorded[member.id] !== undefined;
-                  return (
-                    <button
-                      key={member.id}
-                      type="button"
-                      onClick={() => toggle(member.id)}
-                      disabled={isRecorded}
-                      aria-pressed={checked}
-                      className={cn(
-                        "flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left text-xs transition-colors last:border-0 disabled:cursor-not-allowed disabled:opacity-60",
-                        checked ? "bg-primary/10" : "hover:bg-accent/60",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "grid h-4 w-4 shrink-0 place-items-center rounded border",
-                          checked
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border text-transparent",
-                        )}
-                      >
-                        <Check aria-hidden className="h-3 w-3" />
-                      </span>
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
-                        {initials(member.full_name)}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-                        {member.full_name}
-                      </span>
-                      <span className="hidden shrink-0 font-mono text-[10px] text-muted-foreground sm:inline">
-                        {member.member_code}
-                      </span>
-                      <span className="shrink-0 text-[10px] text-muted-foreground">
-                        {deptName(member.department)}
-                      </span>
-                      {isRecorded && (
-                        <span className="shrink-0 rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-semibold text-success">
-                          Đã ghi {recorded[member.id]! > 0 ? "+" : ""}
-                          {recorded[member.id]}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          {/* Adjustment */}
-          <aside className="min-w-0 space-y-3 lg:border-l lg:border-border/70 lg:pl-5">
-            <div className="space-y-1.5">
-              <span className={labelClass}>Loại điều chỉnh</span>
-              <div className="grid grid-cols-2 gap-1.5">
-                {(
-                  [
-                    {
-                      key: "bonus",
-                      label: "Cộng điểm",
-                      icon: Plus,
-                      tone: "bg-primary text-primary-foreground",
-                    },
-                    {
-                      key: "penalty",
-                      label: "Trừ điểm",
-                      icon: Minus,
-                      tone: "bg-rose-500 text-white",
-                    },
-                  ] as const
-                ).map((option) => {
-                  const active = mode === option.key;
-                  const Icon = option.icon;
-                  return (
-                    <button
-                      key={option.key}
-                      type="button"
-                      onClick={() => switchMode(option.key)}
-                      aria-pressed={active}
-                      className={cn(
-                        "inline-flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-semibold transition-colors",
-                        active
-                          ? cn("border-transparent", option.tone)
-                          : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
-                      )}
-                    >
-                      <Icon aria-hidden className="h-3.5 w-3.5" />
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className={labelClass}>
-                {mode === "bonus" ? "Điểm thưởng cống hiến" : "Điểm trừ cống hiến"}
-              </span>
-              <div
-                role="group"
-                aria-label="Mức điểm điều chỉnh"
-                className="grid grid-cols-3 gap-1.5"
-              >
-                {AMOUNT_OPTIONS.map((option) => {
-                  const active = amount === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setAmount(option.value)}
-                      aria-pressed={active}
-                      className={cn(
-                        "flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2 text-xs transition-colors",
-                        active
-                          ? mode === "bonus"
-                            ? "border-primary bg-primary font-semibold text-primary-foreground shadow-xs"
-                            : "border-rose-500 bg-rose-500 font-semibold text-white shadow-xs"
-                          : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
-                      )}
-                    >
-                      <span className="font-semibold">{option.label}</span>
-                      <span
-                        className={cn(
-                          "text-[10px]",
-                          active ? "opacity-80" : "text-muted-foreground",
-                        )}
-                      >
-                        {option.hint}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className={labelClass}>Minh chứng *</span>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={3}
-                maxLength={POINT_LIMITS.reasonMax}
-                placeholder={`Mô tả căn cứ tối thiểu ${POINT_LIMITS.adjustmentReasonMin} ký tự, vd: Hỗ trợ gian hàng sự kiện Trung Thu 2026`}
-                className="w-full resize-none rounded-xl border border-input bg-background px-3 py-2 text-xs leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              <input
-                ref={evidenceRef}
-                type="file"
-                multiple
-                accept={EVIDENCE_ACCEPT}
-                className="hidden"
-                onChange={(e) => {
-                  addEvidence(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => evidenceRef.current?.click()}
-                  disabled={uploading || evidence.length >= EVIDENCE_MAX_FILES}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-primary/50 px-2.5 py-1.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Paperclip aria-hidden className="h-3.5 w-3.5" />
-                  Thêm tệp minh chứng
-                </button>
-                <span className="text-[10px] tabular-nums text-muted-foreground">
-                  {reason.trim().length}/{POINT_LIMITS.reasonMax} ký tự
-                </span>
-              </div>
-
-              {evidence.length > 0 && (
-                <ul className="space-y-1 pt-0.5">
-                  {evidence.map((item) => (
-                    <li
-                      key={item.id}
-                      className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/30 px-2 py-1"
-                    >
-                      <FileText aria-hidden className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      <span className="min-w-0 flex-1 truncate text-[11px] text-foreground">
-                        {item.file.name}
-                      </span>
-                      <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
-                        {fmtSize(item.file.size)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeEvidence(item.id)}
-                        aria-label={`Gỡ tệp ${item.file.name}`}
-                        title="Gỡ tệp"
-                        className="grid h-5 w-5 shrink-0 place-items-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <X aria-hidden className="h-3 w-3" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-[10px] leading-relaxed text-muted-foreground">
-              <p className="flex items-start gap-1.5">
-                <UserPlus aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>
-                  Sẽ áp dụng{" "}
-                  <b
-                    className={
-                      mode === "bonus" ? "text-primary" : "text-rose-600 dark:text-rose-400"
-                    }
-                  >
-                    {mode === "bonus" ? "+" : "-"}
-                    {Math.abs(delta)}
-                  </b>{" "}
-                  điểm cho <b className="text-foreground">{pending.length}</b> thành viên
-                  {pending.length > 0
-                    ? ` · tổng ${mode === "bonus" ? "+" : "-"}${Math.abs(delta) * pending.length} điểm`
-                    : ""}
-                  {evidence.length > 0 ? ` · ${evidence.length} tệp minh chứng` : ""}.
-                </span>
-              </p>
-            </div>
-
-            {err && (
-              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-[11px] leading-relaxed text-destructive">
-                {err}
-              </p>
-            )}
-          </aside>
-        </div>
-
-        <footer className="shrink-0 border-t border-border/70 bg-card/95 px-4 py-3 backdrop-blur-xs sm:px-5">
+    <AdminModal
+      size="lg"
+      icon={Zap}
+      title="Thưởng / Trừ điểm"
+      description="Điều chỉnh điểm có căn cứ rõ ràng. Mọi giao dịch đều được lưu vào sổ cái kèm người thực hiện."
+      onClose={onClose}
+      dismissible={!busy}
+      bodyClassName="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
+      footer={
+        <>
           {uploading && (
             <p className="mb-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <Loader2 aria-hidden className="h-3 w-3 animate-spin" />
@@ -634,7 +294,7 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-300",
-                    mode === "bonus" ? "bg-primary" : "bg-rose-500",
+                    mode === "bonus" ? "bg-primary" : "bg-destructive",
                   )}
                   style={{
                     width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%`,
@@ -647,22 +307,15 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
             </div>
           )}
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
-            >
+            <Button type="button" variant="outline" size="admin" onClick={onClose} disabled={busy}>
               Hủy
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="admin"
+              variant={mode === "bonus" ? "default" : "destructive"}
               onClick={() => void submit()}
               disabled={!canSubmit}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
-                mode === "bonus" ? "bg-primary text-primary-foreground" : "bg-rose-600 text-white",
-              )}
             >
               {busy ? (
                 <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
@@ -674,10 +327,287 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
               {busy
                 ? "Đang ghi nhận…"
                 : `${mode === "bonus" ? "Xác nhận thưởng" : "Xác nhận trừ"} (${pending.length})`}
-            </button>
+            </Button>
           </div>
-        </footer>
-      </div>
-    </div>
+        </>
+      }
+    >
+      {/* Recipients */}
+      <section className="min-w-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className={labelClass}>
+            Đối tượng áp dụng *
+            {selected.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary">
+                Đã chọn {selected.length}
+              </span>
+            )}
+          </span>
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto p-0 text-[10px] font-semibold"
+            disabled={selectable.length === 0}
+            onClick={toggleAll}
+          >
+            {allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả (${selectable.length})`}
+          </Button>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-[1fr_150px]">
+          <SearchInput
+            className="w-full"
+            value={q}
+            onChange={setQ}
+            placeholder="Tìm tên hoặc mã thành viên…"
+            label="Tìm thành viên"
+          />
+          <Select
+            value={dept || "all"}
+            onValueChange={(value) => setDept(value === "all" ? "" : value)}
+          >
+            <SelectTrigger
+              aria-label="Lọc thành viên theo Ban"
+              className="h-9 rounded-xl border-input text-xs shadow-none"
+            >
+              <SelectValue>{dept ? deptName(dept) : "Mọi Ban"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="z-[95] rounded-xl">
+              <SelectItem value="all" className="text-xs">
+                Mọi Ban
+              </SelectItem>
+              {depts.map((d) => (
+                <SelectItem key={d} value={d} className="text-xs">
+                  {deptName(d)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="custom-scrollbar max-h-64 overflow-y-auto rounded-xl border border-border">
+          {pool.length === 0 ? (
+            <p className="p-4 text-center text-xs text-muted-foreground">
+              Không có thành viên phù hợp.
+            </p>
+          ) : (
+            pool.map((member) => {
+              const checked = selected.includes(member.id);
+              const isRecorded = recorded[member.id] !== undefined;
+              return (
+                <Button
+                  key={member.id}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => toggle(member.id)}
+                  disabled={isRecorded}
+                  aria-pressed={checked}
+                  className={cn(
+                    "h-auto w-full justify-start gap-2 rounded-none border-b border-border px-3 py-2 text-left text-xs font-normal transition-colors last:border-0 disabled:cursor-not-allowed disabled:opacity-60 [&_svg]:size-3",
+                    checked ? "bg-primary/10 hover:bg-primary/10" : "hover:bg-accent/60",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "grid h-4 w-4 shrink-0 place-items-center rounded border",
+                      checked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border text-transparent",
+                    )}
+                  >
+                    <Check aria-hidden className="h-3 w-3" />
+                  </span>
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                    {initials(member.full_name)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+                    {member.full_name}
+                  </span>
+                  <span className="hidden shrink-0 font-mono text-[10px] text-muted-foreground sm:inline">
+                    {member.member_code}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {deptName(member.department)}
+                  </span>
+                  {isRecorded && (
+                    <span className="shrink-0 rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-semibold text-success">
+                      Đã ghi {recorded[member.id]! > 0 ? "+" : ""}
+                      {recorded[member.id]}
+                    </span>
+                  )}
+                </Button>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {/* Adjustment */}
+      <aside className="min-w-0 space-y-3 lg:border-l lg:border-border/70 lg:pl-5">
+        <div className="space-y-1.5">
+          <span className={labelClass}>Loại điều chỉnh</span>
+          <div className="grid grid-cols-2 gap-1.5">
+            {(
+              [
+                {
+                  key: "bonus",
+                  label: "Cộng điểm",
+                  icon: Plus,
+                },
+                {
+                  key: "penalty",
+                  label: "Trừ điểm",
+                  icon: Minus,
+                },
+              ] as const
+            ).map((option) => {
+              const active = mode === option.key;
+              const Icon = option.icon;
+              return (
+                <Button
+                  key={option.key}
+                  type="button"
+                  size="admin"
+                  onClick={() => switchMode(option.key)}
+                  aria-pressed={active}
+                  variant={
+                    active ? (option.key === "bonus" ? "default" : "destructive") : "outline"
+                  }
+                  className="gap-1.5"
+                >
+                  <Icon aria-hidden className="h-3.5 w-3.5" />
+                  {option.label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <span className={labelClass}>
+            {mode === "bonus" ? "Điểm thưởng cống hiến" : "Điểm trừ cống hiến"}
+          </span>
+          <div role="group" aria-label="Mức điểm điều chỉnh" className="grid grid-cols-3 gap-1.5">
+            {AMOUNT_OPTIONS.map((option) => {
+              const active = amount === option.value;
+              return (
+                <Button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setAmount(option.value)}
+                  aria-pressed={active}
+                  variant={active ? (mode === "bonus" ? "default" : "destructive") : "outline"}
+                  className="h-auto flex-col gap-0.5 rounded-xl px-2 py-2 text-xs"
+                >
+                  <span className="font-semibold">{option.label}</span>
+                  <span
+                    className={cn("text-[10px]", active ? "opacity-80" : "text-muted-foreground")}
+                  >
+                    {option.hint}
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <FormField label="Minh chứng" required>
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                maxLength={POINT_LIMITS.reasonMax}
+                placeholder={`Mô tả căn cứ tối thiểu ${POINT_LIMITS.adjustmentReasonMin} ký tự, vd: Hỗ trợ gian hàng sự kiện Trung Thu 2026`}
+                className="resize-none text-xs leading-relaxed"
+              />
+            )}
+          </FormField>
+          <input
+            ref={evidenceRef}
+            type="file"
+            multiple
+            accept={EVIDENCE_ACCEPT}
+            className="hidden"
+            onChange={(e) => {
+              addEvidence(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              onClick={() => evidenceRef.current?.click()}
+              disabled={uploading || evidence.length >= EVIDENCE_MAX_FILES}
+              className="gap-1.5 border-dashed border-primary/50 text-[11px] text-primary hover:bg-primary/5"
+            >
+              <Paperclip aria-hidden className="h-3.5 w-3.5" />
+              Thêm tệp minh chứng
+            </Button>
+            <span className="text-[10px] tabular-nums text-muted-foreground">
+              {reason.trim().length}/{POINT_LIMITS.reasonMax} ký tự
+            </span>
+          </div>
+
+          {evidence.length > 0 && (
+            <ul className="space-y-1 pt-0.5">
+              {evidence.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/30 px-2 py-1"
+                >
+                  <FileText aria-hidden className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-foreground">
+                    {item.file.name}
+                  </span>
+                  <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
+                    {fmtSize(item.file.size)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="admin-icon"
+                    onClick={() => removeEvidence(item.id)}
+                    aria-label={`Gỡ tệp ${item.file.name}`}
+                    title="Gỡ tệp"
+                    className="h-5 w-5 rounded p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3"
+                  >
+                    <X aria-hidden />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-[10px] leading-relaxed text-muted-foreground">
+          <p className="flex items-start gap-1.5">
+            <UserPlus aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+            <span>
+              Sẽ áp dụng{" "}
+              <b className={mode === "bonus" ? "text-primary" : "text-destructive"}>
+                {mode === "bonus" ? "+" : "-"}
+                {Math.abs(delta)}
+              </b>{" "}
+              điểm cho <b className="text-foreground">{pending.length}</b> thành viên
+              {pending.length > 0
+                ? ` · tổng ${mode === "bonus" ? "+" : "-"}${Math.abs(delta) * pending.length} điểm`
+                : ""}
+              {evidence.length > 0 ? ` · ${evidence.length} tệp minh chứng` : ""}.
+            </span>
+          </p>
+        </div>
+
+        {err && (
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-[11px] leading-relaxed text-destructive">
+            {err}
+          </p>
+        )}
+      </aside>
+    </AdminModal>
   );
 }

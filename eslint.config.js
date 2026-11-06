@@ -23,6 +23,11 @@ const ADMIN_KIT_FILES = [
   "src/components/courses/ReviewDrawer.tsx",
   "src/routes/_authenticated/admin.certificates.tsx",
   "src/routes/_authenticated/admin.benefits.tsx",
+  "src/routes/_authenticated/admin.contributions.tsx",
+  "src/components/admin/contributions/ContributionsMetrics.tsx",
+  "src/components/admin/contributions/LeaderboardPanel.tsx",
+  "src/components/admin/contributions/TransactionLedger.tsx",
+  "src/components/admin/contributions/AdjustmentModal.tsx",
 ];
 
 export default tseslint.config(

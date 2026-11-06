@@ -115,7 +115,7 @@ export function ContributionsMetrics({
         value={`${attendanceRate}%`}
         hint={`${attendedMembers}/${totalMembers} thành viên · ${sessions} buổi ghi nhận`}
         icon={CalendarCheck2}
-        tone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        tone="bg-success/10 text-success"
         onClick={() => onFilterSelect?.({ period: "this", kind: "attendance" })}
       />
       <MetricCard
@@ -123,7 +123,7 @@ export function ContributionsMetrics({
         value={monthMinus > 0 ? `-${monthMinus.toLocaleString("vi-VN")}` : "0"}
         hint={`${penaltyCases} trường hợp trừ điểm trong tháng`}
         icon={ShieldAlert}
-        tone="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+        tone="bg-destructive/10 text-destructive"
         onClick={() => onFilterSelect?.({ period: "this", kind: "penalty" })}
       />
       <MetricCard
@@ -131,7 +131,7 @@ export function ContributionsMetrics({
         value={taskRows.length.toLocaleString("vi-VN")}
         hint={`+${taskPoints.toLocaleString("vi-VN")} điểm từ nhiệm vụ hoàn thành`}
         icon={ClipboardCheck}
-        tone="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+        tone="bg-gold/15 text-primary-deep"
         onClick={() => onFilterSelect?.({ period: "this", kind: "task" })}
       />
     </div>

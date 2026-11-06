@@ -47,30 +47,6 @@ export const EMPTY_LEDGER_FILTERS: LedgerFilters = {
   period: "all",
 };
 
-/** Badge tones for the four transaction kinds (also used by the ledger dots). */
-export const KIND_META: Record<string, { chip: string; dot: string; bar: string }> = {
-  task: {
-    chip: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-    bar: "bg-emerald-500",
-  },
-  attendance: {
-    chip: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-    dot: "bg-sky-500",
-    bar: "bg-sky-500",
-  },
-  bonus: {
-    chip: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
-    dot: "bg-violet-500",
-    bar: "bg-violet-500",
-  },
-  penalty: {
-    chip: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
-    dot: "bg-rose-500",
-    bar: "bg-rose-500",
-  },
-};
-
 export const kindLabel = (kind: string) => POINT_KIND[kind] ?? kind;
 
 /** Two-letter monogram from the first and last word of a Vietnamese name. */
