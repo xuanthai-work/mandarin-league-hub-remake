@@ -170,7 +170,7 @@ CREATE POLICY "Admins read permission logs" ON public.permission_audit_logs
 -- f) Functions --------------------------------------------------------------
 -- Active member bound to the current session (0 or 1 row).
 CREATE OR REPLACE FUNCTION public.my_active_member()
-RETURNS TABLE(id uuid, department text, position text)
+RETURNS TABLE(id uuid, department text, "position" text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT m.id, m.department, m.position
   FROM public.member_accounts a JOIN public.members m ON m.id = a.member_id
@@ -323,7 +323,7 @@ END $$;
 
 -- Pre-migration audit report (owner only; not granted to anyone).
 CREATE OR REPLACE FUNCTION public.permission_migration_report()
-RETURNS TABLE(member_code text, full_name text, department text, position text, roles text, issue text)
+RETURNS TABLE(member_code text, full_name text, department text, "position" text, roles text, issue text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   WITH acc AS (
     SELECT m.member_code, m.full_name, m.department, m.position, a.permissions,

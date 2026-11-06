@@ -2,7 +2,7 @@
 
 - **Dev**: OpenCode (DeepSeek)
 - **Ngày**: 2026-11-06
-- **Kết quả**: PASS (nghiệm thu lần 1)
+- **Kết quả**: PASS (nghiệm thu lần 2, sau lỗi khi chạy trên Supabase)
 - **Đợt**: task 1 của đợt làm lại phân quyền theo hướng B (ma trận Ban × Chức vụ). Bảng tham khảo: artifact "Ma trận phân quyền TML".
 - **Migration**: `drizzle/migrations/0050_permission_foundation.sql`. **User cần chạy lên Supabase**, sau đó chạy `select * from permission_migration_report();` trong SQL Editor.
 
@@ -82,3 +82,14 @@ Task này chỉ dựng nền tảng, **không đổi hành vi**. Không chính s
 - `outranks()` trả `true` cho Quản trị viên kể cả khi tác động lên chính mình. Đây là đúng SQL trong spec: Quản trị viên vốn đã toàn quyền.
 - `permission-catalog.ts` chưa được dùng ở đâu. Các task chuyển đổi sau sẽ dùng.
 - Việc kế tiếp sau khi chạy migration: chạy báo cáo rà soát, sửa những người có chức vụ lệch vai trò, rồi mới chuyển chính sách cũ sang `has_perm` theo từng nhóm module.
+
+## Lịch sử nghiệm thu
+
+- **Lần 1: PASS** (commit `8eb300b`). QA chỉ rà được bằng mắt, vì máy không có Postgres để chạy thử.
+- **Chạy trên Supabase: lỗi** `42601: syntax error at or near "position"` ở `RETURNS TABLE(... position text)`.
+  - Nguyên nhân do spec của BA: `position` là từ khóa SQL loại `col_name_keyword`. Nó dùng được làm tên cột bảng, nhưng không dùng được làm tên cột trả về của hàm.
+  - Supabase chạy cả file trong một giao dịch, nên chưa có gì được ghi vào database.
+- **Lần 2: PASS.**
+  - Bọc `"position"` ở 2 chỗ `RETURNS TABLE`: `my_active_member()` và `permission_migration_report()`. Không đổi gì khác. `types.ts` giữ nguyên, vì tên cột trả về không đổi.
+  - `pnpm run test`: 44 file, 350 test pass.
+
