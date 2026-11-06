@@ -12,6 +12,7 @@ const ADMIN_KIT_FILES = [
   "src/components/admin/partners/**/*.tsx",
   "src/routes/_authenticated/admin.news.tsx",
   "src/routes/_authenticated/admin.news_.$id.tsx",
+  "src/routes/_authenticated/admin.teachers.tsx",
 ];
 
 export default tseslint.config(
