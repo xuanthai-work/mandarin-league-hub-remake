@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "motion/react";
-import { X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,7 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { FormField } from "@/components/admin/kit/FormField";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { DangerZone } from "@/components/admin/kit/DangerZone";
 import {
   COURSE_BUCKET,
   slugify,
@@ -95,15 +95,6 @@ export function ProgramDrawer({
     setZalo(link);
     seeded.current = true;
   }, [link]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || busy) return;
-      onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [busy, onClose]);
 
   const preview = useMemo(
     () => (file ? URL.createObjectURL(file) : (init.thumb ?? "")),
@@ -238,329 +229,298 @@ export function ProgramDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={f.id ? `Sửa chương trình ${f.title}` : "Tạo chương trình học"}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-[640px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
-          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
-            <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-foreground">
-                {f.id ? "Sửa chương trình" : "Tạo chương trình học"}
-              </h2>
-              {f.id && f.title && (
-                <p className="truncate text-xs text-muted-foreground">{f.title}</p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Đóng"
-              title="Đóng (Esc)"
-              className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
-            <Section title="Thông tin">
-              <div className="space-y-1">
-                <Label htmlFor="program-title">Tên chương trình *</Label>
-                <Input
-                  id="program-title"
-                  required
-                  value={f.title ?? ""}
-                  onChange={(e) => setF({ ...f, title: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label htmlFor="program-slug">Đường dẫn (slug)</Label>
-                  <Input
-                    id="program-slug"
-                    placeholder="tự tạo từ tên"
-                    value={f.slug ?? ""}
-                    onChange={(e) => setF({ ...f, slug: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="program-type">Loại chương trình</Label>
-                  <Select
-                    value={f.course_type ?? "FREE_COMMUNITY"}
-                    onValueChange={(v) => setF({ ...f, course_type: v as CourseType })}
-                  >
-                    <SelectTrigger id="program-type" className={triggerClass}>
-                      <SelectValue>
-                        {TYPE_LABEL[f.course_type ?? "FREE_COMMUNITY"]?.label ?? "—"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {Object.entries(TYPE_LABEL).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-sm">
-                          {v.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1 sm:col-span-2">
-                  <Label htmlFor="program-level">Trình độ</Label>
-                  <Input
-                    id="program-level"
-                    placeholder="VD: HSK 1, Mọi trình độ"
-                    value={f.level ?? ""}
-                    onChange={(e) => setF({ ...f, level: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="program-description">Mô tả</Label>
-                <Textarea
-                  id="program-description"
-                  rows={5}
-                  placeholder="Mô tả nội dung chương trình học..."
-                  value={f.description ?? ""}
-                  onChange={(e) => setF({ ...f, description: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="program-thumb">Ảnh đại diện</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={fileRef}
-                    id="program-thumb"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="sr-only"
-                    onChange={(e) => {
-                      setFile(e.target.files?.[0] ?? null);
-                      e.target.value = "";
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileRef.current?.click()}
-                  >
-                    Chọn tệp
-                  </Button>
-                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                    {file?.name ??
-                      (f.thumbnail_path ? "Đã có ảnh — chọn tệp mới để thay" : "Chưa chọn tệp")}
-                  </span>
-                </div>
-                {preview && (
-                  <img src={preview} alt="Ảnh xem trước" className="h-20 rounded-lg object-cover" />
-                )}
-              </div>
-            </Section>
-
-            <Section title="Lịch & hình thức">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label htmlFor="program-status">Trạng thái</Label>
-                  <Select
-                    value={f.status ?? "upcoming"}
-                    onValueChange={(v) => setF({ ...f, status: v as ProgramStatus })}
-                  >
-                    <SelectTrigger id="program-status" className={triggerClass}>
-                      <SelectValue>{STATUS_LABEL[f.status ?? "upcoming"]}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-sm">
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="program-capacity">Sĩ số tối đa</Label>
-                  <Input
-                    id="program-capacity"
-                    type="number"
-                    min={1}
-                    value={f.capacity ?? 30}
-                    onChange={(e) => setF({ ...f, capacity: Number(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="program-format">Hình thức</Label>
-                  <Input
-                    id="program-format"
-                    value={f.format ?? ""}
-                    onChange={(e) => setF({ ...f, format: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="program-duration">Thời lượng</Label>
-                  <Input
-                    id="program-duration"
-                    placeholder="VD: 8 buổi"
-                    value={f.duration ?? ""}
-                    onChange={(e) => setF({ ...f, duration: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1 sm:col-span-2">
-                  <Label htmlFor="program-schedule">Lịch học</Label>
-                  <Input
-                    id="program-schedule"
-                    placeholder="VD: T3 & T5, 20:00"
-                    value={f.schedule ?? ""}
-                    onChange={(e) => setF({ ...f, schedule: e.target.value })}
-                  />
-                </div>
-              </div>
-            </Section>
-
-            <Section title="Giáo viên">
-              <TeacherPicker teachers={teachers} picks={picks} onChange={setPicks} />
-            </Section>
-
-            <Section title="Học phí & đăng ký">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {f.course_type !== "FREE_COMMUNITY" && (
-                  <div className="space-y-1">
-                    <Label htmlFor="program-price">Học phí (VNĐ, 0 = liên hệ)</Label>
-                    <Input
-                      id="program-price"
-                      type="number"
-                      min={0}
-                      step={10000}
-                      value={f.price ?? 0}
-                      onChange={(e) => setF({ ...f, price: Number(e.target.value) })}
-                    />
-                  </div>
-                )}
-                <div className="space-y-1 sm:col-span-2">
-                  <Label htmlFor="program-registration">Link đăng ký ngoài</Label>
-                  <Input
-                    id="program-registration"
-                    placeholder="https://forms.gle/..."
-                    value={f.registration_url ?? ""}
-                    onChange={(e) => setF({ ...f, registration_url: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Để trống = dùng form xét duyệt của TML.
-                  </p>
-                </div>
-                <div className="space-y-1 sm:col-span-2">
-                  <Label htmlFor="program-zalo">Link nhóm Zalo của chương trình</Label>
-                  <Input
-                    id="program-zalo"
-                    placeholder="https://zalo.me/g/..."
-                    value={zalo}
-                    onChange={(e) => setZalo(e.target.value)}
-                    aria-invalid={zaloBad}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Chỉ người quản lý thấy. Tự điền khi duyệt đơn vào chương trình này.
-                  </p>
-                  {zaloBad && (
-                    <p className="text-xs text-destructive">
-                      Link phải bắt đầu bằng https://zalo.me/ hoặc https://chat.zalo.me/
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Section>
-
-            <Section title="Liên kết">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label htmlFor="program-facebook">Link Facebook</Label>
-                  <Input
-                    id="program-facebook"
-                    placeholder="https://facebook.com/..."
-                    value={f.facebook_url ?? ""}
-                    onChange={(e) => setF({ ...f, facebook_url: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="program-website">Link website</Label>
-                  <Input
-                    id="program-website"
-                    placeholder="https://..."
-                    value={f.website_url ?? ""}
-                    onChange={(e) => setF({ ...f, website_url: e.target.value })}
-                  />
-                </div>
-              </div>
-            </Section>
-
-            <Section title="Hiển thị">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <Label htmlFor="program-published">Hiển thị trên website</Label>
-                  <Switch
-                    id="program-published"
-                    checked={!!f.is_published}
-                    onCheckedChange={(v) => setF({ ...f, is_published: v })}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <Label htmlFor="program-in-courses">Hiện trong Khóa học</Label>
-                  <Switch
-                    id="program-in-courses"
-                    checked={f.show_in_courses ?? true}
-                    onCheckedChange={(v) => setF({ ...f, show_in_courses: v })}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <Label htmlFor="program-in-activities">Hiện trong Hoạt động</Label>
-                  <Switch
-                    id="program-in-activities"
-                    checked={!!f.show_in_activities}
-                    onCheckedChange={(v) => setF({ ...f, show_in_activities: v })}
-                  />
-                </div>
-              </div>
-            </Section>
-
-            {f.id && onDelete && (
-              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-                <h3 className="text-sm font-semibold text-foreground">Xóa chương trình học</h3>
-                <p className="text-xs text-muted-foreground">
-                  Chương trình bị gỡ khỏi danh sách và website. Đơn đăng ký vẫn được giữ lại.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-3 border-destructive/40 text-destructive"
-                  onClick={onDelete}
-                >
-                  Xóa chương trình
-                </Button>
-              </div>
+    <AdminDrawer
+      width="lg"
+      title={f.id ? "Sửa chương trình" : "Tạo chương trình học"}
+      {...(f.id && f.title ? { subtitle: f.title } : {})}
+      onClose={onClose}
+      dismissible={!busy}
+      onSubmit={save}
+      footer={
+        <Button type="submit" size="admin-lg" className="w-full" disabled={busy}>
+          {busy ? "Đang lưu…" : "Lưu chương trình"}
+        </Button>
+      }
+    >
+      <Section title="Thông tin">
+        <FormField label="Tên chương trình" required>
+          {(field) => (
+            <AdminInput
+              {...field}
+              required
+              value={f.title ?? ""}
+              onChange={(e) => setF({ ...f, title: e.target.value })}
+            />
+          )}
+        </FormField>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label="Đường dẫn (slug)">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="tự tạo từ tên"
+                value={f.slug ?? ""}
+                onChange={(e) => setF({ ...f, slug: e.target.value })}
+              />
             )}
-          </div>
-
-          <div className="shrink-0 border-t border-border/70 px-6 py-4">
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Đang lưu…" : "Lưu chương trình"}
+          </FormField>
+          <FormField label="Loại chương trình">
+            {(field) => (
+              <Select
+                value={f.course_type ?? "FREE_COMMUNITY"}
+                onValueChange={(v) => setF({ ...f, course_type: v as CourseType })}
+              >
+                <SelectTrigger {...field} className={triggerClass}>
+                  <SelectValue>
+                    {TYPE_LABEL[f.course_type ?? "FREE_COMMUNITY"]?.label ?? "—"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {Object.entries(TYPE_LABEL).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-sm">
+                      {v.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+          <FormField label="Trình độ" className="sm:col-span-2">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="VD: HSK 1, Mọi trình độ"
+                value={f.level ?? ""}
+                onChange={(e) => setF({ ...f, level: e.target.value })}
+              />
+            )}
+          </FormField>
+        </div>
+        <FormField label="Mô tả">
+          {(field) => (
+            <AdminTextarea
+              {...field}
+              rows={5}
+              placeholder="Mô tả nội dung chương trình học..."
+              value={f.description ?? ""}
+              onChange={(e) => setF({ ...f, description: e.target.value })}
+            />
+          )}
+        </FormField>
+        <div className="space-y-1">
+          <Label htmlFor="program-thumb">Ảnh đại diện</Label>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileRef}
+              id="program-thumb"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(e) => {
+                setFile(e.target.files?.[0] ?? null);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              onClick={() => fileRef.current?.click()}
+            >
+              Chọn tệp
             </Button>
+            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+              {file?.name ??
+                (f.thumbnail_path ? "Đã có ảnh — chọn tệp mới để thay" : "Chưa chọn tệp")}
+            </span>
           </div>
-        </form>
-      </motion.div>
-    </div>
+          {preview && (
+            <img src={preview} alt="Ảnh xem trước" className="h-20 rounded-lg object-cover" />
+          )}
+        </div>
+      </Section>
+
+      <Section title="Lịch & hình thức">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label="Trạng thái">
+            {(field) => (
+              <Select
+                value={f.status ?? "upcoming"}
+                onValueChange={(v) => setF({ ...f, status: v as ProgramStatus })}
+              >
+                <SelectTrigger {...field} className={triggerClass}>
+                  <SelectValue>{STATUS_LABEL[f.status ?? "upcoming"]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-sm">
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+          <FormField label="Sĩ số tối đa">
+            {(field) => (
+              <AdminInput
+                {...field}
+                type="number"
+                min={1}
+                value={f.capacity ?? 30}
+                onChange={(e) => setF({ ...f, capacity: Number(e.target.value) })}
+              />
+            )}
+          </FormField>
+          <FormField label="Hình thức">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={f.format ?? ""}
+                onChange={(e) => setF({ ...f, format: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Thời lượng">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="VD: 8 buổi"
+                value={f.duration ?? ""}
+                onChange={(e) => setF({ ...f, duration: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Lịch học" className="sm:col-span-2">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="VD: T3 & T5, 20:00"
+                value={f.schedule ?? ""}
+                onChange={(e) => setF({ ...f, schedule: e.target.value })}
+              />
+            )}
+          </FormField>
+        </div>
+      </Section>
+
+      <Section title="Giáo viên">
+        <TeacherPicker teachers={teachers} picks={picks} onChange={setPicks} />
+      </Section>
+
+      <Section title="Học phí & đăng ký">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {f.course_type !== "FREE_COMMUNITY" && (
+            <FormField label="Học phí (VNĐ, 0 = liên hệ)">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  type="number"
+                  min={0}
+                  step={10000}
+                  value={f.price ?? 0}
+                  onChange={(e) => setF({ ...f, price: Number(e.target.value) })}
+                />
+              )}
+            </FormField>
+          )}
+          <FormField
+            label="Link đăng ký ngoài"
+            className="sm:col-span-2"
+            hint="Để trống = dùng form xét duyệt của TML."
+          >
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="https://forms.gle/..."
+                value={f.registration_url ?? ""}
+                onChange={(e) => setF({ ...f, registration_url: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField
+            label="Link nhóm Zalo của chương trình"
+            className="sm:col-span-2"
+            hint="Chỉ người quản lý thấy. Tự điền khi duyệt đơn vào chương trình này."
+            {...(zaloBad
+              ? { error: "Link phải bắt đầu bằng https://zalo.me/ hoặc https://chat.zalo.me/" }
+              : {})}
+          >
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="https://zalo.me/g/..."
+                value={zalo}
+                onChange={(e) => setZalo(e.target.value)}
+              />
+            )}
+          </FormField>
+        </div>
+      </Section>
+
+      <Section title="Liên kết">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label="Link Facebook">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="https://facebook.com/..."
+                value={f.facebook_url ?? ""}
+                onChange={(e) => setF({ ...f, facebook_url: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Link website">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="https://..."
+                value={f.website_url ?? ""}
+                onChange={(e) => setF({ ...f, website_url: e.target.value })}
+              />
+            )}
+          </FormField>
+        </div>
+      </Section>
+
+      <Section title="Hiển thị">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="program-published">Hiển thị trên website</Label>
+            <Switch
+              id="program-published"
+              checked={!!f.is_published}
+              onCheckedChange={(v) => setF({ ...f, is_published: v })}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="program-in-courses">Hiện trong Khóa học</Label>
+            <Switch
+              id="program-in-courses"
+              checked={f.show_in_courses ?? true}
+              onCheckedChange={(v) => setF({ ...f, show_in_courses: v })}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="program-in-activities">Hiện trong Hoạt động</Label>
+            <Switch
+              id="program-in-activities"
+              checked={!!f.show_in_activities}
+              onCheckedChange={(v) => setF({ ...f, show_in_activities: v })}
+            />
+          </div>
+        </div>
+      </Section>
+
+      {f.id && onDelete && (
+        <DangerZone
+          title="Xóa chương trình học"
+          description="Chương trình bị gỡ khỏi danh sách và website. Đơn đăng ký vẫn được giữ lại."
+          actionLabel="Xóa chương trình"
+          onConfirm={onDelete}
+          disabled={busy}
+        />
+      )}
+    </AdminDrawer>
   );
 }

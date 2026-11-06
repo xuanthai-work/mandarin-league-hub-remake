@@ -9,13 +9,11 @@ import {
   EyeOff,
   MoreHorizontal,
   Pencil,
-  Search,
   Trash2,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useConfirm } from "@/components/admin/Trash";
+import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { resolveTeacherPhotos, type CourseTeacherRole } from "@/lib/teachers";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,18 +31,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { StatusPill, type StatusTone } from "@/components/admin/kit/StatusPill";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
 import {
   filterPrograms,
   programFee,
   STATUS_LABEL,
   TYPE_LABEL,
   withThumbs,
+  type CourseType,
   type Program,
   type ProgramStatusFilter,
   type ProgramTypeFilter,
 } from "@/lib/programs";
 import { ProgramDrawer } from "./ProgramDrawer";
 import type { TeacherOpt } from "./TeacherPicker";
+
+const TYPE_TONE: Record<CourseType, StatusTone> = {
+  FREE_COMMUNITY: "success",
+  PAID: "info",
+  SPECIAL_PROGRAM: "gold",
+};
 
 const EMPTY: Partial<Program> = {
   title: "",
@@ -69,15 +79,15 @@ const EMPTY: Partial<Program> = {
   show_in_activities: false,
 };
 
-const PROGRAM_COLS = [
+const PROGRAM_COLS: AdminColumn[] = [
   { label: "Chương trình", className: "w-[30%]" },
   { label: "Loại", className: "w-[16%]" },
   { label: "Giáo viên", className: "w-[14%]" },
   { label: "Trạng thái", className: "w-[12%]" },
   { label: "Đăng ký", className: "w-[10%]" },
   { label: "Ngày tạo", className: "w-[12%]" },
-  { label: "", className: "w-[6%]" },
-] as const;
+  { label: "Thao tác", className: "w-[6%]", srOnly: true },
+];
 
 const STATUS_OPTIONS: { value: ProgramStatusFilter; label: string }[] = [
   { value: "open", label: "Đang mở (chưa kết thúc)" },
@@ -195,9 +205,10 @@ export function ProgramsAdmin({
     return true;
   };
 
-  const remove = async (p: Program) => {
+  const remove = async (p: Program, skipConfirm = false) => {
     const n = enrollCounts.get(p.id) ?? 0;
     if (
+      !skipConfirm &&
       !(await confirm({
         title: "Xóa chương trình học?",
         description: `"${p.title}" sẽ bị xóa khỏi danh sách và website.${n ? `\nChương trình có ${n} đơn đăng ký — đơn vẫn được giữ lại.` : ""}`,
@@ -216,7 +227,7 @@ export function ProgramsAdmin({
   const removeEditing = async () => {
     if (!edit?.id) return;
     const row = list?.find((p) => p.id === edit.id);
-    if (row && (await remove(row))) setEdit(null);
+    if (row && (await remove(row, true))) setEdit(null);
   };
 
   const duplicate = (p: Program) => {
@@ -231,57 +242,23 @@ export function ProgramsAdmin({
     <section className="space-y-4">
       {dialog}
       <div className="flex flex-wrap items-center gap-2.5">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm tên chương trình, trình độ, giáo viên…"
-            aria-label="Tìm kiếm chương trình"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tên chương trình, trình độ, giáo viên…"
+          label="Tìm kiếm chương trình"
+        />
 
-        <div className="custom-scrollbar flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-border/60 bg-muted/60 p-1">
-          {TYPE_OPTIONS.map((t) => {
-            const active = type === t.value;
-            const count = filterPrograms(programs, {
-              type: t.value,
-              status,
-              q,
-              teacherNames: namesFor,
-            }).length;
-            return (
-              <button
-                key={t.value}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setType(t.value)}
-                className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                  active
-                    ? "bg-card text-foreground shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label} ({count})
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          label="Lọc theo loại chương trình"
+          value={type}
+          onChange={setType}
+          className="custom-scrollbar max-w-full overflow-x-auto"
+          options={TYPE_OPTIONS.map((t) => ({
+            value: t.value,
+            label: `${t.label} (${filterPrograms(programs, { type: t.value, status, q, teacherNames: namesFor }).length})`,
+          }))}
+        />
 
         <Select value={status} onValueChange={(v) => setStatus(v as ProgramStatusFilter)}>
           <SelectTrigger
@@ -311,203 +288,174 @@ export function ProgramsAdmin({
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">Không tải được danh sách chương trình.</p>
-          <Button type="button" variant="outline" className="mt-3" onClick={() => refetch()}>
-            Thử lại
-          </Button>
-        </div>
+        <EmptyState
+          tone="error"
+          title="Không tải được danh sách chương trình."
+          action={
+            <Button type="button" variant="outline" size="admin" onClick={() => refetch()}>
+              Thử lại
+            </Button>
+          }
+        />
       ) : programs.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">Chưa có chương trình nào.</p>
-          <Button type="button" className="mt-3" onClick={() => setEdit({ ...EMPTY })}>
-            Tạo chương trình
-          </Button>
-        </div>
+        <EmptyState
+          title="Chưa có chương trình nào."
+          action={
+            <Button type="button" size="admin" onClick={() => setEdit({ ...EMPTY })}>
+              Tạo chương trình
+            </Button>
+          }
+        />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">Không có chương trình khớp bộ lọc.</p>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-3"
-            onClick={() => {
-              setType("all");
-              setStatus("open");
-              setQ("");
-            }}
-          >
-            Xóa bộ lọc
-          </Button>
-        </div>
+        <EmptyState
+          title="Không có chương trình khớp bộ lọc."
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="admin"
+              onClick={() => {
+                setType("all");
+                setStatus("open");
+                setQ("");
+              }}
+            >
+              Xóa bộ lọc
+            </Button>
+          }
+        />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full min-w-[820px] table-fixed text-sm">
-              <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-                <tr>
-                  {PROGRAM_COLS.map((col) => (
-                    <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
-                      {col.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr
-                    key={p.id}
-                    tabIndex={0}
-                    onClick={() => setEdit(p)}
-                    onKeyDown={(e) => {
-                      if (e.target !== e.currentTarget) return;
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setEdit(p);
-                      }
-                    }}
-                    className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none"
-                  >
-                    <td className="p-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        {p.thumb ? (
-                          <img
-                            src={p.thumb}
-                            alt=""
-                            className="h-9 w-14 shrink-0 rounded object-cover"
-                          />
-                        ) : (
-                          <span className="grid h-9 w-14 shrink-0 place-items-center rounded bg-muted">
-                            <BookOpen className="h-4 w-4 text-muted-foreground" />
-                          </span>
-                        )}
-                        <div className="min-w-0">
-                          <div className="truncate font-medium text-foreground" title={p.title}>
-                            {p.title}
-                          </div>
-                          <div className="truncate text-xs text-muted-foreground">
-                            {p.level || "—"} · {programFee(p)}
-                          </div>
-                          <div className="mt-0.5 flex flex-wrap gap-1">
-                            {!p.is_published && (
-                              <span className="inline-flex rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                Đang ẩn
-                              </span>
-                            )}
-                            {p.show_in_activities && (
-                              <span className="inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                                + Hoạt động
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${TYPE_LABEL[p.course_type].tone}`}
-                      >
-                        {TYPE_LABEL[p.course_type].label}
-                      </span>
-                    </td>
-                    <td className="truncate p-3 text-xs text-muted-foreground">
-                      {namesFor(p.id) || "—"}
-                    </td>
-                    <td className="p-3 text-xs font-medium text-foreground">
-                      {STATUS_LABEL[p.status]}
-                    </td>
-                    <td className="p-3">
-                      {p.registration_url ? (
-                        <span className="whitespace-nowrap text-xs text-muted-foreground">
-                          Link ngoài
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onFilter(p.id);
-                          }}
-                          className="whitespace-nowrap text-xs font-semibold text-primary hover:underline"
-                        >
-                          {enrollCounts.get(p.id) ?? 0} đơn
-                        </button>
+        <AdminTable columns={PROGRAM_COLS} minWidth="min-w-[820px]">
+          {filtered.map((p) => (
+            <AdminTableRow key={p.id} onOpen={() => setEdit(p)}>
+              <td className="p-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  {p.thumb ? (
+                    <img src={p.thumb} alt="" className="h-9 w-14 shrink-0 rounded object-cover" />
+                  ) : (
+                    <span className="grid h-9 w-14 shrink-0 place-items-center rounded bg-muted">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-foreground" title={p.title}>
+                      {p.title}
+                    </div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {p.level || "—"} · {programFee(p)}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap gap-1">
+                      {!p.is_published && (
+                        <StatusPill tone="neutral" dot={false}>
+                          Đang ẩn
+                        </StatusPill>
                       )}
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
-                      {new Date(p.created_at).toLocaleDateString("vi-VN")}
-                    </td>
-                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label={`Thao tác chương trình ${p.title}`}
-                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="rounded-xl"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <DropdownMenuItem onClick={() => setEdit(p)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              void patch(
-                                p,
-                                { is_published: !p.is_published },
-                                p.is_published ? "Đã ẩn" : "Đã hiển thị",
-                              )
-                            }
-                          >
-                            {p.is_published ? (
-                              <EyeOff className="mr-2 h-4 w-4" />
-                            ) : (
-                              <Eye className="mr-2 h-4 w-4" />
-                            )}
-                            {p.is_published ? "Ẩn khỏi website" : "Hiện trên website"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              void patch(
-                                p,
-                                { show_in_activities: !p.show_in_activities },
-                                p.show_in_activities
-                                  ? "Đã gỡ khỏi Hoạt động"
-                                  : "Đã hiển thị trong Hoạt động",
-                              )
-                            }
-                          >
-                            <CalendarCheck className="mr-2 h-4 w-4" />
-                            {p.show_in_activities ? "Gỡ khỏi Hoạt động" : "Hiện trong Hoạt động"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => duplicate(p)}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Nhân bản
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => void remove(p)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Xóa chương trình
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                      {p.show_in_activities && (
+                        <StatusPill tone="info" dot={false}>
+                          + Hoạt động
+                        </StatusPill>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td className="p-3">
+                <StatusPill tone={TYPE_TONE[p.course_type]} dot={false}>
+                  {TYPE_LABEL[p.course_type].label}
+                </StatusPill>
+              </td>
+              <td className="truncate p-3 text-xs text-muted-foreground">
+                {namesFor(p.id) || "—"}
+              </td>
+              <td className="p-3 text-xs font-medium text-foreground">{STATUS_LABEL[p.status]}</td>
+              <td className="p-3">
+                {p.registration_url ? (
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    Link ngoài
+                  </span>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-xs font-semibold"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFilter(p.id);
+                    }}
+                  >
+                    {enrollCounts.get(p.id) ?? 0} đơn
+                  </Button>
+                )}
+              </td>
+              <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
+                {new Date(p.created_at).toLocaleDateString("vi-VN")}
+              </td>
+              <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="admin-icon"
+                      aria-label={`Thao tác chương trình ${p.title}`}
+                    >
+                      <MoreHorizontal />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="rounded-xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenuItem onClick={() => setEdit(p)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Sửa
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        void patch(
+                          p,
+                          { is_published: !p.is_published },
+                          p.is_published ? "Đã ẩn" : "Đã hiển thị",
+                        )
+                      }
+                    >
+                      {p.is_published ? (
+                        <EyeOff className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Eye className="mr-2 h-4 w-4" />
+                      )}
+                      {p.is_published ? "Ẩn khỏi website" : "Hiện trên website"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        void patch(
+                          p,
+                          { show_in_activities: !p.show_in_activities },
+                          p.show_in_activities
+                            ? "Đã gỡ khỏi Hoạt động"
+                            : "Đã hiển thị trong Hoạt động",
+                        )
+                      }
+                    >
+                      <CalendarCheck className="mr-2 h-4 w-4" />
+                      {p.show_in_activities ? "Gỡ khỏi Hoạt động" : "Hiện trong Hoạt động"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => duplicate(p)}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Nhân bản
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive" onClick={() => void remove(p)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Xóa chương trình
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </td>
+            </AdminTableRow>
+          ))}
+        </AdminTable>
       )}
 
       <AnimatePresence>

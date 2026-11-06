@@ -198,6 +198,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-157-PHOTOS-USE-ADMIN-KIT`                                     | Trang Ảnh dùng bộ component admin + AdminDrawer dismissible                                            | 2026-11-06     | **PASS** | [task-ge-157-photos-use-admin-kit.md](tasks/task-ge-157-photos-use-admin-kit.md)                                                                         |
 | `TASK-OC-155-PERMISSIONS-MEMBERS-DEPARTMENTS`                          | Phân quyền: Thành viên + Ban chuyển sang has_perm, chặn sửa trái thứ bậc (mig 0051)                    | 2026-11-06     | **PASS** | [task-oc-155-permissions-members-departments.md](tasks/task-oc-155-permissions-members-departments.md)                                                   |
 | `TASK-GE-158-PROGRAMS-USE-ADMIN-KIT`                                   | Khóa học (1/3): Chương trình dùng bộ component admin                                                   | 2026-11-06     | **PASS** | [task-ge-158-programs-use-admin-kit.md](tasks/task-ge-158-programs-use-admin-kit.md)                                                                     |
+| `TASK-GE-158-PROGRAMS-USE-ADMIN-KIT`                                   | Khóa học (1/3): Chương trình dùng bộ component admin                                                   | 2026-11-06     | **PASS** | [task-ge-158-programs-use-admin-kit.md](tasks/task-ge-158-programs-use-admin-kit.md)                                                                     |
 
 ---
 

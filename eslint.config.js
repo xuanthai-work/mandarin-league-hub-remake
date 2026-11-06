@@ -14,6 +14,9 @@ const ADMIN_KIT_FILES = [
   "src/routes/_authenticated/admin.news_.$id.tsx",
   "src/routes/_authenticated/admin.teachers.tsx",
   "src/routes/_authenticated/admin.photos.tsx",
+  "src/components/courses/ProgramsAdmin.tsx",
+  "src/components/courses/ProgramDrawer.tsx",
+  "src/components/courses/TeacherPicker.tsx",
 ];
 
 export default tseslint.config(

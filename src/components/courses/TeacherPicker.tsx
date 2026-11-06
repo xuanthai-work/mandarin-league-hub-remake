@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { AdminInput } from "@/components/admin/kit/AdminInput";
 import {
   Select,
   SelectContent,
@@ -89,19 +90,21 @@ export function TeacherPicker({
                   ))}
                 </SelectContent>
               </Select>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="admin-icon"
                 onClick={() => onChange(picks.filter((_, k) => k !== i))}
-                className="rounded p-1 text-destructive hover:bg-muted"
+                className="text-destructive"
                 aria-label={`Gỡ ${t?.full_name ?? "giáo viên"}`}
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           );
         })}
       </div>
-      <Input
+      <AdminInput
         className="mt-2"
         placeholder="Tìm giáo viên để thêm…"
         aria-label="Tìm giáo viên để thêm"
@@ -111,8 +114,9 @@ export function TeacherPicker({
       {avail.length > 0 && (
         <div className="mt-1 max-h-36 overflow-y-auto rounded-lg border border-border">
           {avail.map((t) => (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               key={t.id}
               onClick={() => {
                 onChange([
@@ -121,7 +125,7 @@ export function TeacherPicker({
                 ]);
                 setQ("");
               }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-accent"
+              className="h-auto w-full justify-start gap-2 rounded-none px-3 py-1.5 text-sm font-normal"
             >
               {t.photo ? (
                 <img src={t.photo} alt="" className="h-6 w-6 rounded-full object-cover" />
@@ -130,7 +134,7 @@ export function TeacherPicker({
               )}
               {t.full_name}
               <Plus className="ml-auto h-3.5 w-3.5" />
-            </button>
+            </Button>
           ))}
         </div>
       )}

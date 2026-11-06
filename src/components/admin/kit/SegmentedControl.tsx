@@ -34,7 +34,7 @@ export function SegmentedControl<T extends string>({
         <ToggleGroupItem
           key={o.value}
           value={o.value}
-          className="h-auto min-w-0 rounded-md px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:font-semibold data-[state=on]:text-foreground data-[state=on]:shadow-2xs"
+          className="h-auto min-w-0 whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:font-semibold data-[state=on]:text-foreground data-[state=on]:shadow-2xs"
         >
           {o.label}
         </ToggleGroupItem>
