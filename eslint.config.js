@@ -5,46 +5,26 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
-// Refactor admin (roadmap.md): file đã chuyển sang src/components/admin/kit.
-// Mỗi task chuyển trang thêm file của mình vào đây; cuối lộ trình đổi sang cả admin.
+// Bộ component admin (src/components/admin/kit): mọi trang và component admin phải dùng kit,
+// không viết <button>/<input>/<textarea>/<select>/<table> thô (xem AGENTS.md).
 const ADMIN_KIT_FILES = [
-  "src/routes/_authenticated/admin.partners.tsx",
-  "src/components/admin/partners/**/*.tsx",
-  "src/routes/_authenticated/admin.news.tsx",
-  "src/routes/_authenticated/admin.news_.$id.tsx",
-  "src/routes/_authenticated/admin.teachers.tsx",
-  "src/routes/_authenticated/admin.photos.tsx",
+  "src/routes/_authenticated/admin*.tsx",
+  "src/components/admin/**/*.tsx",
+  // Các phần admin của Khóa học nằm ngoài components/admin.
   "src/components/courses/ProgramsAdmin.tsx",
   "src/components/courses/ProgramDrawer.tsx",
   "src/components/courses/TeacherPicker.tsx",
   "src/components/courses/HskClassesAdmin.tsx",
   "src/components/courses/ClassDrawer.tsx",
-  "src/routes/_authenticated/admin.courses.tsx",
   "src/components/courses/ReviewDrawer.tsx",
-  "src/routes/_authenticated/admin.certificates.tsx",
-  "src/routes/_authenticated/admin.benefits.tsx",
-  "src/routes/_authenticated/admin.contributions.tsx",
-  "src/components/admin/contributions/ContributionsMetrics.tsx",
-  "src/components/admin/contributions/LeaderboardPanel.tsx",
-  "src/components/admin/contributions/TransactionLedger.tsx",
-  "src/components/admin/contributions/AdjustmentModal.tsx",
-  "src/routes/_authenticated/admin.tasks.tsx",
-  "src/components/admin/tasks/**/*.tsx",
-  "src/routes/_authenticated/admin.candidates.tsx",
-  "src/components/admin/candidates/**/*.tsx",
-  "src/routes/_authenticated/admin.hsk.tsx",
-  "src/routes/_authenticated/admin.recruitment.tsx",
-  "src/components/admin/recruitment/**/*.tsx",
-  "src/routes/_authenticated/admin.members.tsx",
-  "src/routes/_authenticated/admin.activities.tsx",
-  "src/routes/_authenticated/admin.tsx",
-  "src/components/admin/Trash.tsx",
-  "src/routes/_authenticated/admin.departments.tsx",
-  "src/components/admin/departments/**/*.tsx",
-  "src/routes/_authenticated/admin.content.tsx",
-  "src/components/admin/content/**/*.tsx",
-  "src/routes/_authenticated/admin.settings.tsx",
-  "src/components/admin/settings/**/*.tsx",
+];
+
+// Không áp luật cho: chính bộ kit (được phép dựng từ thẻ thô), file test,
+// và modal Điểm danh (giữ nguyên, sẽ thay bằng điểm danh tự động).
+const ADMIN_KIT_IGNORES = [
+  "**/*.test.tsx",
+  "src/components/admin/kit/**",
+  "src/components/admin/contributions/AttendanceModal.tsx",
 ];
 
 export default tseslint.config(
@@ -82,7 +62,7 @@ export default tseslint.config(
   },
   {
     files: ADMIN_KIT_FILES,
-    ignores: ["**/*.test.tsx"],
+    ignores: ADMIN_KIT_IGNORES,
     rules: {
       "no-restricted-syntax": [
         "error",
