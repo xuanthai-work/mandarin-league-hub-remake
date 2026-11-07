@@ -42,6 +42,8 @@ import {
   periodStatusLabel,
   positionsFor,
 } from "@/lib/recruitment";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/recruitment")({
   staticData: { sitemap: false },
@@ -200,6 +202,10 @@ function TabLabel({ text, count }: { text: string; count: number }) {
 
 function RecruitmentAdmin() {
   const qc = useQueryClient();
+  const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
+  const canCreate = can(perms, "recruitment.create");
+  const canEdit = can(perms, "recruitment.edit");
+
   const { data } = useQuery({ queryKey: ["admin-recruitment"], queryFn: load });
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-recruitment"] });
@@ -229,7 +235,7 @@ function RecruitmentAdmin() {
       <AdminPageHeader
         title="Đợt tuyển & Câu hỏi"
         actions={
-          tab === "periods" ? (
+          tab === "periods" && canCreate ? (
             <Button type="button" size="admin" onClick={() => setCreating(true)}>
               <Plus /> Tạo đợt tuyển
             </Button>
@@ -276,6 +282,8 @@ function RecruitmentAdmin() {
           data={data}
           run={run}
           confirm={confirm}
+          canCreate={canCreate}
+          canEdit={canEdit}
           onCreate={() => setCreating(true)}
           onConfigure={setDrawerPeriodId}
         />
@@ -292,7 +300,9 @@ function RecruitmentAdmin() {
       {dialog}
 
       <AnimatePresence>
-        {creating && <CreatePeriodDrawer refresh={refresh} onClose={() => setCreating(false)} />}
+        {creating && canCreate && (
+          <CreatePeriodDrawer refresh={refresh} onClose={() => setCreating(false)} />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -302,6 +312,7 @@ function RecruitmentAdmin() {
             period={drawerPeriod}
             positions={data?.positions ?? []}
             run={run}
+            canEdit={canEdit}
             onClose={() => setDrawerPeriodId(null)}
           />
         )}
@@ -316,12 +327,16 @@ function Periods({
   data,
   run,
   confirm,
+  canCreate,
+  canEdit,
   onCreate,
   onConfigure,
 }: {
   data: Data;
   run: Run;
   confirm: Confirm;
+  canCreate: boolean;
+  canEdit: boolean;
   onCreate: () => void;
   onConfigure: (id: string) => void;
 }) {
@@ -333,6 +348,7 @@ function Periods({
   const canReopen = (p: Period) => !["ended", "cancelled"].includes(periodStatus(p.status));
 
   const openPeriod = (p: Period) => {
+    if (!canEdit) return;
     if (!canReopen(p)) {
       toast.error("Đợt tuyển đã kết thúc hoặc đã hủy nên không thể mở lại.");
       return;
@@ -358,6 +374,7 @@ function Periods({
   };
 
   const removePeriod = async (p: Period) => {
+    if (!canEdit) return;
     const ok = await confirm({
       title: "Xóa đợt tuyển?",
       description: `"${p.name}" cùng toàn bộ cấu hình vị trí và chủ đề câu hỏi của đợt này sẽ bị xóa. Thao tác không thể hoàn tác.`,
@@ -373,11 +390,17 @@ function Periods({
       <EmptyState
         className="mt-6"
         title="Chưa có đợt tuyển nào"
-        description="Tạo đợt tuyển đầu tiên để bắt đầu nhận hồ sơ ứng viên."
+        description={
+          canCreate
+            ? "Tạo đợt tuyển đầu tiên để bắt đầu nhận hồ sơ ứng viên."
+            : "Co-founder sẽ tạo đợt tuyển khi bắt đầu nhận hồ sơ."
+        }
         action={
-          <Button type="button" size="admin" onClick={onCreate}>
-            <Plus /> Tạo đợt tuyển
-          </Button>
+          canCreate ? (
+            <Button type="button" size="admin" onClick={onCreate}>
+              <Plus /> Tạo đợt tuyển
+            </Button>
+          ) : undefined
         }
       />
     );
@@ -392,6 +415,7 @@ function Periods({
           appCount={data.appCountByPeriod[activePeriod.id] ?? 0}
           run={run}
           confirm={confirm}
+          canEdit={canEdit}
           onConfigure={() => onConfigure(activePeriod.id)}
         />
       ) : (
@@ -451,39 +475,48 @@ function Periods({
                   <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                     {canReopen(p) && (
                       <>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="admin-sm"
-                          onClick={() => openPeriod(p)}
-                          title="Chuyển đợt sang trạng thái Đang mở"
-                          className="text-primary hover:text-primary [&_svg]:size-3.5"
-                        >
-                          <Play aria-hidden /> Mở đợt
-                        </Button>
+                        {canEdit && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="admin-sm"
+                            onClick={() => openPeriod(p)}
+                            title="Chuyển đợt sang trạng thái Đang mở"
+                            className="text-primary hover:text-primary [&_svg]:size-3.5"
+                          >
+                            <Play aria-hidden /> Mở đợt
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="outline"
                           size="admin-sm"
                           onClick={() => onConfigure(p.id)}
-                          title="Cấu hình thông tin, ban & vị trí tuyển"
+                          title={
+                            canEdit
+                              ? "Cấu hình thông tin, ban & vị trí tuyển"
+                              : "Xem thông tin, ban & vị trí tuyển"
+                          }
                           className="[&_svg]:size-3.5"
                         >
-                          <Settings2 aria-hidden /> Cấu hình
+                          {canEdit ? <Settings2 aria-hidden /> : <Eye aria-hidden />}
+                          {canEdit ? "Cấu hình" : "Xem"}
                         </Button>
                       </>
                     )}
-                    <Button
-                      type="button"
-                      variant="destructive-outline"
-                      size="admin-icon"
-                      onClick={() => removePeriod(p)}
-                      aria-label={`Xóa đợt ${p.name}`}
-                      title="Xóa đợt tuyển"
-                      className="[&_svg]:size-3.5"
-                    >
-                      <Trash2 aria-hidden />
-                    </Button>
+                    {canEdit && (
+                      <Button
+                        type="button"
+                        variant="destructive-outline"
+                        size="admin-icon"
+                        onClick={() => removePeriod(p)}
+                        aria-label={`Xóa đợt ${p.name}`}
+                        title="Xóa đợt tuyển"
+                        className="[&_svg]:size-3.5"
+                      >
+                        <Trash2 aria-hidden />
+                      </Button>
+                    )}
                   </div>
                 </td>
               </AdminTableRow>
@@ -501,6 +534,7 @@ function ActiveCampaignHero({
   appCount,
   run,
   confirm,
+  canEdit,
   onConfigure,
 }: {
   period: Period;
@@ -508,6 +542,7 @@ function ActiveCampaignHero({
   appCount: number;
   run: Run;
   confirm: Confirm;
+  canEdit: boolean;
   onConfigure: () => void;
 }) {
   const startMs = dateMs(period.starts_on);
@@ -521,6 +556,7 @@ function ActiveCampaignHero({
 
   /** Archiving is irreversible (ended/cancelled periods can never reopen), so ask first. */
   const changeStatus = async (next: string) => {
+    if (!canEdit) return;
     if (next === status) return;
     if (next === "ended" || next === "cancelled") {
       const ok = await confirm({
@@ -545,7 +581,7 @@ function ActiveCampaignHero({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
 
       <div className="flex items-center justify-between gap-2 border-b border-border/60 py-1.5 pl-6 pr-4">
-        <Select value={status} onValueChange={(v) => void changeStatus(v)}>
+        <Select value={status} onValueChange={(v) => void changeStatus(v)} disabled={!canEdit}>
           <SelectTrigger
             aria-label="Đổi trạng thái đợt tuyển"
             className="-ml-1 h-9 w-auto gap-1.5 rounded-lg border-0 bg-transparent px-2 text-[13px] font-semibold text-foreground shadow-none hover:bg-accent focus:ring-0 data-[state=open]:bg-accent [@media(pointer:coarse)]:h-11"
@@ -579,12 +615,16 @@ function ActiveCampaignHero({
           type="button"
           size="admin"
           onClick={onConfigure}
-          aria-label="Cấu hình đợt tuyển"
-          title="Sửa thông tin, bật/tắt ban & vị trí tuyển"
+          aria-label={canEdit ? "Cấu hình đợt tuyển" : "Xem đợt tuyển"}
+          title={
+            canEdit
+              ? "Sửa thông tin, bật/tắt ban & vị trí tuyển"
+              : "Xem thông tin, ban & vị trí tuyển"
+          }
           className="shrink-0 [@media(pointer:coarse)]:h-11"
         >
-          <Settings2 aria-hidden />
-          <span className="hidden @min-[560px]:inline">Cấu hình</span>
+          {canEdit ? <Settings2 aria-hidden /> : <Eye aria-hidden />}
+          <span className="hidden @min-[560px]:inline">{canEdit ? "Cấu hình" : "Xem"}</span>
         </Button>
       </div>
 
@@ -689,11 +729,13 @@ function PeriodInfoFields({
   onChange,
   descriptionRef,
   autoFocusName = false,
+  readOnly = false,
 }: {
   value: PeriodInfo;
   onChange: (patch: Partial<PeriodInfo>) => void;
   descriptionRef: RefObject<HTMLTextAreaElement | null>;
   autoFocusName?: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <section className="space-y-3">
@@ -702,6 +744,7 @@ function PeriodInfoFields({
           <AdminInput
             {...field}
             autoFocus={autoFocusName}
+            readOnly={readOnly}
             value={value.name}
             onChange={(e) => onChange({ name: e.target.value })}
             placeholder="VD: Tuyển thành viên Gen 5"
@@ -713,6 +756,7 @@ function PeriodInfoFields({
           {(field) => (
             <DatePicker
               id={field.id}
+              disabled={readOnly}
               value={value.starts_on}
               onChange={(val) => onChange({ starts_on: val })}
             />
@@ -722,6 +766,7 @@ function PeriodInfoFields({
           {(field) => (
             <DatePicker
               id={field.id}
+              disabled={readOnly}
               value={value.ends_on}
               {...(value.starts_on ? { min: value.starts_on } : {})}
               onChange={(val) => onChange({ ends_on: val })}
@@ -734,6 +779,7 @@ function PeriodInfoFields({
           <AdminTextarea
             {...field}
             ref={descriptionRef}
+            readOnly={readOnly}
             rows={2}
             placeholder="Thêm mô tả cho đợt tuyển…"
             value={value.description}
@@ -750,11 +796,13 @@ function PeriodDrawer({
   period,
   positions,
   run,
+  canEdit,
   onClose,
 }: {
   period: Period;
   positions: Position[];
   run: Run;
+  canEdit: boolean;
   onClose: () => void;
 }) {
   /** Editable period info; saved explicitly with the footer button. */
@@ -803,6 +851,7 @@ function PeriodDrawer({
   );
 
   const saveInfo = async () => {
+    if (!canEdit) return;
     if (!dirty || busy) return;
     if (f.name.trim().length < 3) return void toast.error("Tên đợt tuyển tối thiểu 3 ký tự.");
     if (!f.starts_on || !f.ends_on)
@@ -826,6 +875,7 @@ function PeriodDrawer({
   };
 
   const toggle = async (dept: string, position: string, next: boolean) => {
+    if (!canEdit) return;
     const key = keyOf(dept, position);
     setLocal((s) => ({ ...s, [key]: next }));
     setBusyKey(key);
@@ -849,11 +899,11 @@ function PeriodDrawer({
 
   return (
     <AdminDrawer
-      title="Cấu hình đợt tuyển"
+      title={canEdit ? "Cấu hình đợt tuyển" : "Thông tin đợt tuyển"}
       subtitle={
         <span className="flex items-center gap-1.5">
           <span className="truncate">{period.name}</span>
-          {dirty && (
+          {canEdit && dirty && (
             <StatusPill tone="gold" dot={false}>
               Chưa lưu
             </StatusPill>
@@ -864,7 +914,11 @@ function PeriodDrawer({
       dismissible={!busy}
       bodyClassName="space-y-5"
       footer={
-        discardAsk ? (
+        !canEdit ? (
+          <Button type="button" variant="outline" size="admin" onClick={onClose}>
+            Đóng
+          </Button>
+        ) : discardAsk ? (
           <>
             <p className="mr-auto text-xs font-medium text-destructive">Có thay đổi chưa lưu.</p>
             <Button
@@ -896,6 +950,7 @@ function PeriodDrawer({
         value={f}
         onChange={(patch) => setF({ ...f, ...patch })}
         descriptionRef={descriptionRef}
+        readOnly={!canEdit}
       />
       <section className="space-y-2">
         <div className="flex items-center justify-between gap-2">
@@ -908,6 +963,7 @@ function PeriodDrawer({
           enabledOf={enabledOf}
           onToggle={(dept, position, next) => void toggle(dept, position, next)}
           busyKey={busyKey}
+          readOnly={!canEdit}
         />
       </section>
     </AdminDrawer>
@@ -921,10 +977,12 @@ function PositionMatrix({
   enabledOf,
   onToggle,
   busyKey,
+  readOnly = false,
 }: {
   enabledOf: (dept: string, position: string) => boolean;
   onToggle: (dept: string, position: string, next: boolean) => void;
   busyKey?: string | null;
+  readOnly?: boolean;
 }) {
   return (
     <>
@@ -955,7 +1013,7 @@ function PositionMatrix({
                   </span>
                   <Switch
                     checked={enabledOf(d.id, position)}
-                    disabled={busyKey === `${d.id}|${position}`}
+                    disabled={readOnly || busyKey === `${d.id}|${position}`}
                     onCheckedChange={(v) => onToggle(d.id, position, v)}
                     aria-label={`${d.name} — ${position}`}
                     className="shrink-0"

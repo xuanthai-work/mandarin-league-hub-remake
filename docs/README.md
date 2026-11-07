@@ -243,6 +243,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-181-CONTRIBUTIONS-OPEN-TO-MEMBERS`                            | Bảng điểm đóng góp cho mọi thành viên, lịch sử theo quyền                                              | 2026-11-07     | **PASS** | [task-ge-181-contributions-open-to-members.md](tasks/task-ge-181-contributions-open-to-members.md)                                                       |
 | `TASK-GE-182-MERGE-ORIGIN-DEV-FOUNDER-TIER`                            | Gộp origin/dev (cấp Lãnh đạo cho Founder), đổi mig thành 0063                                          | 2026-11-08     | **PASS** | [task-ge-182-merge-origin-dev-founder-tier.md](tasks/task-ge-182-merge-origin-dev-founder-tier.md)                                                       |
 | `TASK-GE-183-RECRUITMENT-PERMS-VIEW-CREATE-EDIT`                       | Quyền Đợt tuyển & Câu hỏi: xem / tạo / sửa (thay recruitment.config)                                   | 2026-11-08     | **PASS** | [task-ge-183-recruitment-perms-view-create-edit.md](tasks/task-ge-183-recruitment-perms-view-create-edit.md)                                             |
+| `TASK-GE-184-RECRUITMENT-PERIODS-UI-BY-PERMISSION`                     | Tab Đợt tuyển ẩn nút theo quyền, drawer chỉ đọc cho người xem                                          | 2026-11-08     | **PASS** | [task-ge-184-recruitment-periods-ui-by-permission.md](tasks/task-ge-184-recruitment-periods-ui-by-permission.md)                                         |
 
 ---
 
