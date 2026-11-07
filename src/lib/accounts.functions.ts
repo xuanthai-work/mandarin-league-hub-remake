@@ -80,8 +80,9 @@ export const getAdminMemberAccounts = createServerFn({ method: "GET" })
       rolesOf.set(r.user_id, [...(rolesOf.get(r.user_id) ?? []), r.role]);
     }
 
-    /** Scope "own" is filtered to the caller's department; admins always resolve to "all". */
-    const restrictDept = !(await isAdmin(context)) && scope === "own";
+    /** Only admins learn who holds the admin flag; everyone else just sees which accounts are locked. */
+    const callerIsAdmin = await isAdmin(context);
+    const restrictDept = !callerIsAdmin && scope === "own";
     let myDept: string | null = null;
     if (restrictDept) {
       const { data: me } = await context.supabase.rpc("my_active_member");
@@ -94,14 +95,19 @@ export const getAdminMemberAccounts = createServerFn({ method: "GET" })
         const member = a.members as { department: string } | null;
         return myDept !== null && member?.department === myDept;
       })
-      .map((a) => ({
-        userId: a.user_id as string,
-        memberId: a.member_id as string,
-        email: a.login_email as string,
-        status: a.account_status as string,
-        mustChange: a.must_change_password as boolean,
-        isAdmin: (rolesOf.get(a.user_id) ?? []).includes("admin"),
-      }));
+      .map((a) => {
+        const targetIsAdmin = (rolesOf.get(a.user_id) ?? []).includes("admin");
+        return {
+          userId: a.user_id as string,
+          memberId: a.member_id as string,
+          email: a.login_email as string,
+          status: a.account_status as string,
+          mustChange: a.must_change_password as boolean,
+          isAdmin: callerIsAdmin && targetIsAdmin,
+          /** The caller can never act on this account (an admin account seen by a non-admin). */
+          locked: !callerIsAdmin && targetIsAdmin,
+        };
+      });
   });
 
 /**

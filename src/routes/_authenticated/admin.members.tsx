@@ -90,6 +90,7 @@ type AccountInfo = {
   status: string;
   mustChange: boolean;
   isAdmin: boolean;
+  locked: boolean;
 };
 type Row = {
   id: string;
@@ -436,6 +437,7 @@ function MembersPage() {
           status: a.status,
           mustChange: a.mustChange,
           isAdmin: a.isAdmin,
+          locked: a.locked,
         });
       }
       return (m.data ?? []).map((x) => ({
@@ -476,7 +478,7 @@ function MembersPage() {
   const target = selected && {
     department: selected.department,
     position: selected.position,
-    isAdmin: selected.account?.isAdmin ?? false,
+    isAdmin: !!(selected.account?.isAdmin || selected.account?.locked),
   };
 
   const exportCsv = () => {
