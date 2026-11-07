@@ -7,9 +7,9 @@ const METAL: Record<string, string> = {
   bronze: "bronze",
   official: "emerald",
   silver: "azure",
-  gold: "sapphire",
-  excellent: "purple",
-  platinum: "lavender",
+  gold: "purple",
+  excellent: "pink",
+  platinum: "carnelian",
   honor: "wine",
   leader: "obsidian",
 };
@@ -60,10 +60,10 @@ const ENAMEL: Record<string, string> = {
   bronze: "var(--enamel-amber)",
   official: "var(--enamel-emerald)",
   silver: "var(--enamel-azure)",
-  gold: "var(--pass-sapphire)",
-  excellent: "var(--metal-purple-lo)",
+  gold: "var(--metal-purple-lo)",
+  excellent: "var(--enamel-pink)",
   leader: "var(--enamel-obsidian)",
-  platinum: "var(--pass-lavender)",
+  platinum: "var(--enamel-carnelian)",
   honor: "var(--pass-wine)",
 };
 const GLYPH: Record<string, string> = {
@@ -119,8 +119,8 @@ function Outer({ k, fill }: { k: string; fill: string }) {
   if (k === "bronze") return <path d={SHIELD} fill={fill} />;
   if (k === "official") return <polygon points={star(8, 49, 36)} fill={fill} />;
   if (k === "silver") return <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill={fill} />;
-  if (k === "gold") return <polygon points={CROSS12} fill={fill} />;
-  if (k === "excellent") return <path d={LOTUS} fill={fill} />;
+  if (k === "gold") return <path d={LOTUS} fill={fill} />;
+  if (k === "excellent") return <polygon points={CROSS12} fill={fill} />;
   if (k === "platinum") return <polygon points={star(16, 50, 40)} fill={fill} />;
   if (k === "honor") return <polygon points={SUN} fill={fill} />;
   return <path d={OBSIDIAN} fill={fill} />;

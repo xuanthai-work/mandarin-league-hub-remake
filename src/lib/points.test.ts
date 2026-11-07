@@ -91,9 +91,9 @@ describe("tier palette", () => {
     const palette = Object.fromEntries(TIERS.map((t) => [t.key, [t.className, t.tone]]));
     expect(palette).toEqual({
       honor: ["tier-wine", "wine"],
-      platinum: ["tier-lavender", "lavender"],
-      excellent: ["tier-purple", "purple"],
-      gold: ["tier-sapphire", "sapphire"],
+      platinum: ["tier-carnelian", "carnelian"],
+      excellent: ["tier-pink", "pink"],
+      gold: ["tier-purple", "purple"],
       silver: ["tier-blue", "blue"],
       official: ["tier-green", "green"],
       bronze: ["tier-bronze", "bronze"],

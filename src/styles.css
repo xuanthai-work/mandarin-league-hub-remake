@@ -583,18 +583,23 @@
   --metal-emerald-hi: oklch(0.88 0.08 165);
   --metal-emerald: oklch(0.6 0.12 165);
   --metal-emerald-lo: oklch(0.38 0.09 165);
-  /* Lam Bảo Thạch (Nòng cốt) */
+  /* Lam Bảo Thạch */
   --metal-sapphire-hi: #3b82f6; /* Lam hoàng gia sáng, tạo vệt sáng đá quý */
   --metal-sapphire: #1d4ed8; /* Sắc lam ngọc đậm đà */
   --metal-sapphire-lo: #0f2b5c; /* Đổ bóng sâu */
-  /* Tử La Lan (Ưu tú) */
+  /* Tử La Lan */
   --metal-lavender-hi: #4a3358;
   --metal-lavender: #2c1c38;
   --metal-lavender-lo: #170d1e;
-  /* Đỏ vang (Danh dự) */
+  /* Đỏ vang */
   --metal-wine-hi: #a03a4f;
   --metal-wine: #7d263a;
   --metal-wine-lo: #4b1420;
+  /* Cam Đỏ Mã Não (Ưu tú) */
+  --metal-carnelian-hi: #e06844;
+  --metal-carnelian: #c84824;
+  --metal-carnelian-lo: #8c2e14;
+  --enamel-carnelian: #9e3416;
   --metal-amber-hi: oklch(0.9 0.1 75);
   --metal-amber: oklch(0.7 0.15 60);
   --metal-amber-lo: oklch(0.45 0.12 50);
@@ -650,6 +655,11 @@
   background: linear-gradient(135deg, var(--metal-purple), var(--metal-purple-lo));
   color: var(--metal-gold-hi);
   border-color: var(--metal-gold);
+}
+.tier-carnelian {
+  background: var(--pass-carnelian);
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
 }
 .tier-sapphire {
   background: var(--pass-sapphire);
@@ -851,8 +861,9 @@
   --pass-wine: #7d263a;
   --pass-purple: #514080;
   --pass-black: #242832;
-  --pass-sapphire: #1e40af; /* Lam Bảo Thạch (Royal Sapphire) — Nòng cốt */
-  --pass-lavender: #2c1c38; /* Tử La Lan Sẫm — Phó Ban */
+  --pass-sapphire: #1e40af; /* Lam Bảo Thạch (Royal Sapphire) */
+  --pass-lavender: #2c1c38; /* Tử La Lan Sẫm */
+  --pass-carnelian: #c84824; /* Cam Đỏ Mã Não — Ưu tú */
 }
 .tml-pass {
   --pass-c: var(--pass-blue);
@@ -1027,6 +1038,10 @@
   border-color: var(--metal-gold) !important;
 }
 .tml-pass .tier-sapphire {
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
+}
+.tml-pass .tier-carnelian {
   color: var(--metal-gold-hi) !important;
   border-color: var(--metal-gold) !important;
 }
