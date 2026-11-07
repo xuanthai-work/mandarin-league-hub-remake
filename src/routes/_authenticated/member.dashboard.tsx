@@ -592,7 +592,9 @@ function MemberDashboard() {
               <div
                 ref={cardRef}
                 data-tone={tone}
-                style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
+                style={
+                  { "--pass-c": `var(--pass-${tone}, var(--pass-blue))` } as React.CSSProperties
+                }
                 className={`flip-face tml-pass relative flex flex-col overflow-hidden rounded-[18px] text-primary-deep ${layout === "v" ? "aspect-[54/85.6]" : "aspect-[85.6/54] md:aspect-auto"}`}
               >
                 <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
@@ -890,7 +892,9 @@ function MemberDashboard() {
               {/* ---------- BACK (luxury security face) ---------- */}
               <div
                 data-tone={tone}
-                style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
+                style={
+                  { "--pass-c": `var(--pass-${tone}, var(--pass-blue))` } as React.CSSProperties
+                }
                 aria-hidden={!isFlipped}
                 className="flip-face back tml-pass tml-pass-back flex flex-col overflow-hidden rounded-[18px] text-primary-deep"
               >
