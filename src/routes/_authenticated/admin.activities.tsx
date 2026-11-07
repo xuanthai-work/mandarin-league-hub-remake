@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import {
   CalendarClock,
   CalendarDays,
@@ -14,7 +14,6 @@ import {
   Inbox,
   Phone,
   Plus,
-  Search,
   Ticket,
   Trash2,
   Upload,
@@ -52,8 +51,12 @@ import {
 } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
+import { DangerZone } from "@/components/admin/kit/DangerZone";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { FormField } from "@/components/admin/kit/FormField";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
 import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
@@ -156,11 +159,6 @@ const ACT_COLS: AdminColumn[] = [
 ];
 
 const SECTION_TITLE = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
-const FIELD =
-  "h-9 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-primary/20";
-const LABEL = "mb-1 block font-medium text-foreground";
-const SELECT_TRIGGER =
-  "h-9 w-full rounded-xl border-input bg-background text-xs font-normal shadow-xs";
 
 /** Single status label per activity: the group already conveys the time lifecycle. */
 function StatusPill({ status }: { status: ManualStatus }) {
@@ -424,7 +422,7 @@ type ActivityDrawerProps = {
   onChange: (patch: Partial<Form>) => void;
   onExtMode: (ext: boolean) => void;
   onUpload: (file: File) => void;
-  onSave: (e: React.FormEvent) => void;
+  onSave: (e: React.FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
   onDuplicate?: () => void;
   onTrash?: () => void;
@@ -457,478 +455,51 @@ function ActivityDrawer({
   onTrash,
   onOpenRegs,
 }: ActivityDrawerProps) {
-  const [confirmTrash, setConfirmTrash] = useState(false);
   const isEditing = !!value.id;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/20 backdrop-blur-xs"
-        onClick={onClose}
-      />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEditing ? "Sửa hoạt động" : "Tạo hoạt động mới"}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="relative z-10 flex h-full w-full max-w-[620px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-6">
-          <div className="flex min-w-0 items-start gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
-              <CalendarDays className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-foreground">
-                {isEditing ? "Sửa hoạt động" : "Tạo hoạt động mới"}
-              </h2>
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <StatusPill status={value.manual_status} />
-                {isEditing && value.manual_status === "published" && (
-                  <Link
-                    to="/activities/$activityId"
-                    params={{ activityId: value.slug }}
-                    target="_blank"
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Xem trang công khai
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {onDuplicate && (
-              <button
-                type="button"
-                onClick={onDuplicate}
-                title="Sao chép thành hoạt động mới"
-                aria-label="Sao chép thành hoạt động mới"
-                className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <Copy className="h-4 w-4" />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Đóng"
-              title="Đóng (Esc)"
-              className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    <AdminDrawer
+      width="lg"
+      title={isEditing ? "Sửa hoạt động" : "Tạo hoạt động mới"}
+      leading={
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
+          <CalendarDays aria-hidden className="h-5 w-5" />
+        </span>
+      }
+      subtitle={
+        <span className="flex flex-wrap items-center gap-2">
+          <StatusPill status={value.manual_status} />
+          {isEditing && value.manual_status === "published" && (
+            <Link
+              to="/activities/$activityId"
+              params={{ activityId: value.slug }}
+              target="_blank"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
             >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        <form
-          id="activity-form"
-          onSubmit={onSave}
-          className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto p-4 text-xs sm:p-6"
-        >
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Thông tin chung</h3>
-            <div>
-              <label htmlFor="act-title" className={LABEL}>
-                Tên hoạt động *
-              </label>
-              <input
-                id="act-title"
-                required
-                minLength={3}
-                maxLength={200}
-                className={FIELD}
-                value={value.title}
-                onChange={(e) =>
-                  onChange({
-                    title: e.target.value,
-                    ...(value.id ? {} : { slug: slugify(e.target.value) }),
-                  })
-                }
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <div>
-                <label htmlFor="act-slug" className={LABEL}>
-                  Slug (đường dẫn)
-                </label>
-                <input
-                  id="act-slug"
-                  className={FIELD}
-                  value={value.slug}
-                  onChange={(e) => onChange({ slug: e.target.value })}
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Đường dẫn: /activities/{value.slug || "…"}
-                </p>
-              </div>
-              <div>
-                <span className={LABEL}>Loại hoạt động</span>
-                <Select
-                  value={value.category}
-                  onValueChange={(v) => onChange({ category: v as ActivityCategory })}
-                >
-                  <SelectTrigger aria-label="Loại hoạt động" className={SELECT_TRIGGER}>
-                    <SelectValue>{CATEGORY_LABEL[value.category]}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="z-[95] rounded-xl">
-                    {CATS.map((k) => (
-                      <SelectItem key={k} value={k} className="text-xs">
-                        {CATEGORY_LABEL[k]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Ảnh banner</h3>
-            <label
-              className="group relative block aspect-video w-full max-w-[320px] cursor-pointer overflow-hidden rounded-xl border border-dashed border-input bg-muted/30 transition-colors hover:bg-secondary/40"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files[0];
-                if (file) onUpload(file);
-              }}
-            >
-              {bannerUrl ? (
-                <>
-                  <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
-                  <span className="absolute inset-x-0 bottom-0 bg-black/50 py-1.5 text-center text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    Bấm hoặc kéo thả để đổi ảnh
-                  </span>
-                </>
-              ) : (
-                <span className="flex h-full flex-col items-center justify-center gap-1.5 px-4 text-center text-muted-foreground">
-                  <Upload className="h-5 w-5" />
-                  <span className="font-medium text-foreground">
-                    {value.banner_path ? "Đã có ảnh, bấm để đổi" : "Kéo thả hoặc bấm để tải ảnh"}
-                  </span>
-                  <span className="text-[11px]">JPG/PNG/WebP ≤ 5MB, nên dùng tỉ lệ 16:9</span>
-                </span>
-              )}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) onUpload(file);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            {value.banner_path && (
-              <button
-                type="button"
-                onClick={() => onChange({ banner_path: "" })}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-destructive hover:underline"
-              >
-                <X className="h-3.5 w-3.5" />
-                Gỡ ảnh
-              </button>
-            )}
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Mô tả</h3>
-            <div>
-              <label htmlFor="act-short" className={LABEL}>
-                Mô tả ngắn
-              </label>
-              <input
-                id="act-short"
-                maxLength={300}
-                className={FIELD}
-                value={value.short_description}
-                onChange={(e) => onChange({ short_description: e.target.value })}
-              />
-              <p className="mt-1 text-right text-[11px] text-muted-foreground">
-                {value.short_description.length}/300
-              </p>
-            </div>
-            <div>
-              <label htmlFor="act-desc" className={LABEL}>
-                Mô tả chi tiết
-              </label>
-              <textarea
-                id="act-desc"
-                rows={6}
-                maxLength={10000}
-                className="w-full rounded-xl border border-input bg-background p-3 text-xs text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
-                value={value.description}
-                onChange={(e) => onChange({ description: e.target.value })}
-              />
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Thời gian & địa điểm</h3>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <div>
-                <label htmlFor="act-start" className={LABEL}>
-                  Bắt đầu
-                </label>
-                <DateTimePicker
-                  id="act-start"
-                  value={isoToLocal(value.start_time)}
-                  onChange={(v) => onChange({ start_time: localToIso(v) })}
-                  placeholder="Chọn ngày giờ bắt đầu"
-                  clearable
-                />
-              </div>
-              <div>
-                <label htmlFor="act-end" className={LABEL}>
-                  Kết thúc
-                </label>
-                <DateTimePicker
-                  id="act-end"
-                  value={isoToLocal(value.end_time)}
-                  onChange={(v) => onChange({ end_time: localToIso(v) })}
-                  {...(value.start_time ? { min: isoToLocal(value.start_time) } : {})}
-                  placeholder="Chọn ngày giờ kết thúc"
-                  clearable
-                />
-              </div>
-              <div>
-                <span className={LABEL}>Hình thức</span>
-                <Select
-                  value={value.location_type}
-                  onValueChange={(v) => onChange({ location_type: v as LocationType })}
-                >
-                  <SelectTrigger aria-label="Hình thức" className={SELECT_TRIGGER}>
-                    <SelectValue>{LOCATION_LABEL[value.location_type]}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="z-[95] rounded-xl">
-                    {Object.entries(LOCATION_LABEL).map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-xs">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="act-location" className={LABEL}>
-                  Địa điểm / nền tảng
-                </label>
-                <input
-                  id="act-location"
-                  maxLength={300}
-                  className={FIELD}
-                  placeholder="vd: Google Meet hoặc địa chỉ"
-                  value={value.location_detail}
-                  onChange={(e) => onChange({ location_detail: e.target.value })}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Đăng ký</h3>
-            {onOpenRegs && (
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
-                <span className="flex items-center gap-2 text-xs text-foreground">
-                  <Ticket className="h-4 w-4 text-primary" />
-                  Đã có <strong className="font-semibold">{regCount}</strong> đơn đăng ký
-                </span>
-                <button
-                  type="button"
-                  onClick={onOpenRegs}
-                  className="shrink-0 cursor-pointer text-xs font-semibold text-primary hover:underline"
-                >
-                  Xem đơn →
-                </button>
-              </div>
-            )}
-            <div className="grid gap-2 sm:grid-cols-2">
-              {REG_MODES.map(([k, l, d]) => {
-                const on = k === "ext" ? extMode : !extMode;
-                return (
-                  <button
-                    type="button"
-                    key={k}
-                    onClick={() => onExtMode(k === "ext")}
-                    className={`cursor-pointer rounded-xl border p-3 text-left transition-colors ${on ? "border-primary bg-primary/5" : "border-border hover:bg-accent/40"}`}
-                  >
-                    <span className="text-xs font-semibold text-foreground">{l}</span>
-                    <span className="mt-0.5 block text-[11px] text-muted-foreground">{d}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {extMode && (
-              <div>
-                <label htmlFor="act-reg-url" className={LABEL}>
-                  Link đăng ký ngoài (không bắt buộc)
-                </label>
-                <input
-                  id="act-reg-url"
-                  className={FIELD}
-                  placeholder="forms.gle/…"
-                  value={value.registration_url}
-                  onChange={(e) => onChange({ registration_url: e.target.value })}
-                />
-              </div>
-            )}
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <div>
-                <label htmlFor="act-deadline" className={LABEL}>
-                  Hạn đăng ký (không bắt buộc)
-                </label>
-                <DateTimePicker
-                  id="act-deadline"
-                  value={isoToLocal(value.registration_deadline)}
-                  onChange={(v) => onChange({ registration_deadline: localToIso(v) })}
-                  placeholder="Không đặt hạn"
-                  clearable
-                  clearLabel="Bỏ hạn đăng ký"
-                />
-              </div>
-              <div>
-                <label htmlFor="act-max" className={LABEL}>
-                  Số người tối đa
-                </label>
-                <input
-                  id="act-max"
-                  type="number"
-                  min={0}
-                  className={FIELD}
-                  value={value.max_participants}
-                  onChange={(e) =>
-                    onChange({ max_participants: Math.max(0, Number(e.target.value)) })
-                  }
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">0 = không giới hạn</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Liên kết</h3>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <div>
-                <label htmlFor="act-fb" className={LABEL}>
-                  Link Facebook
-                </label>
-                <input
-                  id="act-fb"
-                  className={FIELD}
-                  value={value.facebook_url}
-                  onChange={(e) => onChange({ facebook_url: e.target.value })}
-                />
-              </div>
-              <div>
-                <label htmlFor="act-web" className={LABEL}>
-                  Link Website
-                </label>
-                <input
-                  id="act-web"
-                  className={FIELD}
-                  value={value.website_url}
-                  onChange={(e) => onChange({ website_url: e.target.value })}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Xuất bản</h3>
-            {canPublish ? (
-              <>
-                <div>
-                  <span className={LABEL}>Trạng thái hiển thị</span>
-                  <Select
-                    value={value.manual_status}
-                    onValueChange={(v) => onChange({ manual_status: v as ManualStatus })}
-                  >
-                    <SelectTrigger aria-label="Trạng thái hiển thị" className={SELECT_TRIGGER}>
-                      <SelectValue>{MANUAL_LABEL[value.manual_status]}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="z-[95] rounded-xl">
-                      {Object.entries(MANUAL_LABEL).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-xs">
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Khi Đã đăng, trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời
-                  gian.
-                </p>
-              </>
-            ) : (
-              <p className="text-[11px] text-muted-foreground">
-                Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.
-              </p>
-            )}
-          </section>
-
-          {onTrash && (
-            <section className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-              <div className="flex items-center gap-2 text-destructive">
-                <Trash2 className="h-4 w-4" />
-                <span className="text-xs font-semibold uppercase tracking-wide">
-                  Chuyển vào Thùng rác
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Hoạt động sẽ bị ẩn khỏi website. Toàn bộ đơn đăng ký vẫn được giữ và có thể khôi
-                phục trong tab Thùng rác.
-              </p>
-              {confirmTrash ? (
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={onTrash}
-                    className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-destructive px-4 text-xs font-semibold text-white transition-colors hover:bg-destructive/90"
-                  >
-                    Xác nhận chuyển vào Thùng rác
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmTrash(false)}
-                    className="h-9 cursor-pointer rounded-xl border border-border px-4 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-                  >
-                    Thôi
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmTrash(true)}
-                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-destructive/40 px-4 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Chuyển vào Thùng rác
-                </button>
-              )}
-            </section>
+              <ExternalLink className="h-3 w-3" />
+              Xem trang công khai
+            </Link>
           )}
-        </form>
-
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/70 bg-card px-4 py-4 sm:px-6">
+          {onDuplicate && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="admin-sm"
+              onClick={onDuplicate}
+              title="Sao chép thành hoạt động mới"
+              className="h-6 px-1.5 text-[11px] [&_svg]:size-3"
+            >
+              <Copy aria-hidden /> Sao chép
+            </Button>
+          )}
+        </span>
+      }
+      onClose={onClose}
+      dismissible={!busy}
+      onSubmit={onSave}
+      bodyClassName="space-y-6 text-xs"
+      footer={
+        <>
           <div className="min-w-0 flex-1">
             {err && (
               <p className="truncate text-xs text-destructive" title={err}>
@@ -936,17 +507,360 @@ function ActivityDrawer({
               </p>
             )}
           </div>
-          <button
-            type="submit"
-            form="activity-form"
-            disabled={busy}
-            className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
-          >
+          <Button type="submit" size="admin-lg" disabled={busy} className="shrink-0">
             {busy ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Tạo hoạt động"}
-          </button>
+          </Button>
+        </>
+      }
+    >
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Thông tin chung</h3>
+        <FormField label="Tên hoạt động" required>
+          {(field) => (
+            <AdminInput
+              {...field}
+              required
+              minLength={3}
+              maxLength={200}
+              value={value.title}
+              onChange={(e) =>
+                onChange({
+                  title: e.target.value,
+                  ...(value.id ? {} : { slug: slugify(e.target.value) }),
+                })
+              }
+            />
+          )}
+        </FormField>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <FormField label="Slug (đường dẫn)" hint={`Đường dẫn: /activities/${value.slug || "…"}`}>
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.slug}
+                onChange={(e) => onChange({ slug: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Loại hoạt động">
+            {(field) => (
+              <Select
+                value={value.category}
+                onValueChange={(v) => onChange({ category: v as ActivityCategory })}
+              >
+                <SelectTrigger
+                  {...field}
+                  aria-label="Loại hoạt động"
+                  className="h-9 w-full rounded-lg text-sm"
+                >
+                  <SelectValue>{CATEGORY_LABEL[value.category]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="z-[95] rounded-xl">
+                  {CATS.map((k) => (
+                    <SelectItem key={k} value={k} className="text-xs">
+                      {CATEGORY_LABEL[k]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
         </div>
-      </motion.div>
-    </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Ảnh banner</h3>
+        <label
+          className="group relative block aspect-video w-full max-w-[320px] cursor-pointer overflow-hidden rounded-xl border border-dashed border-input bg-muted/30 transition-colors hover:bg-secondary/40"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) onUpload(file);
+          }}
+        >
+          {bannerUrl ? (
+            <>
+              <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
+              <span className="absolute inset-x-0 bottom-0 bg-black/50 py-1.5 text-center text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                Bấm hoặc kéo thả để đổi ảnh
+              </span>
+            </>
+          ) : (
+            <span className="flex h-full flex-col items-center justify-center gap-1.5 px-4 text-center text-muted-foreground">
+              <Upload className="h-5 w-5" />
+              <span className="font-medium text-foreground">
+                {value.banner_path ? "Đã có ảnh, bấm để đổi" : "Kéo thả hoặc bấm để tải ảnh"}
+              </span>
+              <span className="text-[11px]">JPG/PNG/WebP ≤ 5MB, nên dùng tỉ lệ 16:9</span>
+            </span>
+          )}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUpload(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {value.banner_path && (
+          <Button
+            type="button"
+            variant="link"
+            size="admin-sm"
+            onClick={() => onChange({ banner_path: "" })}
+            className="h-auto px-0 font-normal text-destructive [&_svg]:size-3.5"
+          >
+            <X aria-hidden /> Gỡ ảnh
+          </Button>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Mô tả</h3>
+        <FormField label="Mô tả ngắn" hint={`${value.short_description.length}/300`}>
+          {(field) => (
+            <AdminInput
+              {...field}
+              maxLength={300}
+              value={value.short_description}
+              onChange={(e) => onChange({ short_description: e.target.value })}
+            />
+          )}
+        </FormField>
+        <FormField label="Mô tả chi tiết">
+          {(field) => (
+            <AdminTextarea
+              {...field}
+              rows={6}
+              maxLength={10000}
+              value={value.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+            />
+          )}
+        </FormField>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Thời gian & địa điểm</h3>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <FormField label="Bắt đầu">
+            {(field) => (
+              <DateTimePicker
+                id={field.id}
+                value={isoToLocal(value.start_time)}
+                onChange={(v) => onChange({ start_time: localToIso(v) })}
+                placeholder="Chọn ngày giờ bắt đầu"
+                clearable
+              />
+            )}
+          </FormField>
+          <FormField label="Kết thúc">
+            {(field) => (
+              <DateTimePicker
+                id={field.id}
+                value={isoToLocal(value.end_time)}
+                onChange={(v) => onChange({ end_time: localToIso(v) })}
+                {...(value.start_time ? { min: isoToLocal(value.start_time) } : {})}
+                placeholder="Chọn ngày giờ kết thúc"
+                clearable
+              />
+            )}
+          </FormField>
+          <FormField label="Hình thức">
+            {(field) => (
+              <Select
+                value={value.location_type}
+                onValueChange={(v) => onChange({ location_type: v as LocationType })}
+              >
+                <SelectTrigger
+                  {...field}
+                  aria-label="Hình thức"
+                  className="h-9 w-full rounded-lg text-sm"
+                >
+                  <SelectValue>{LOCATION_LABEL[value.location_type]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="z-[95] rounded-xl">
+                  {Object.entries(LOCATION_LABEL).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-xs">
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+          <FormField label="Địa điểm / nền tảng">
+            {(field) => (
+              <AdminInput
+                {...field}
+                maxLength={300}
+                placeholder="vd: Google Meet hoặc địa chỉ"
+                value={value.location_detail}
+                onChange={(e) => onChange({ location_detail: e.target.value })}
+              />
+            )}
+          </FormField>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Đăng ký</h3>
+        {onOpenRegs && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+            <span className="flex items-center gap-2 text-xs text-foreground">
+              <Ticket className="h-4 w-4 text-primary" />
+              Đã có <strong className="font-semibold">{regCount}</strong> đơn đăng ký
+            </span>
+            <Button
+              type="button"
+              variant="link"
+              size="admin-sm"
+              onClick={onOpenRegs}
+              className="h-auto shrink-0 px-0 font-semibold text-primary"
+            >
+              Xem đơn →
+            </Button>
+          </div>
+        )}
+        <div className="grid gap-2 sm:grid-cols-2">
+          {REG_MODES.map(([k, l, d]) => {
+            const on = k === "ext" ? extMode : !extMode;
+            return (
+              <Button
+                type="button"
+                key={k}
+                variant="outline"
+                aria-pressed={on}
+                onClick={() => onExtMode(k === "ext")}
+                className={`h-auto flex-col items-start gap-0.5 whitespace-normal rounded-xl p-3 text-left font-normal shadow-none ${
+                  on ? "border-primary bg-primary/5 hover:bg-primary/5" : ""
+                }`}
+              >
+                <span className="text-xs font-semibold text-foreground">{l}</span>
+                <span className="block text-[11px] text-muted-foreground">{d}</span>
+              </Button>
+            );
+          })}
+        </div>
+        {extMode && (
+          <FormField label="Link đăng ký ngoài (không bắt buộc)">
+            {(field) => (
+              <AdminInput
+                {...field}
+                placeholder="forms.gle/…"
+                value={value.registration_url}
+                onChange={(e) => onChange({ registration_url: e.target.value })}
+              />
+            )}
+          </FormField>
+        )}
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <FormField label="Hạn đăng ký (không bắt buộc)">
+            {(field) => (
+              <DateTimePicker
+                id={field.id}
+                value={isoToLocal(value.registration_deadline)}
+                onChange={(v) => onChange({ registration_deadline: localToIso(v) })}
+                placeholder="Không đặt hạn"
+                clearable
+                clearLabel="Bỏ hạn đăng ký"
+              />
+            )}
+          </FormField>
+          <FormField label="Số người tối đa" hint="0 = không giới hạn">
+            {(field) => (
+              <AdminInput
+                {...field}
+                type="number"
+                min={0}
+                value={value.max_participants}
+                onChange={(e) =>
+                  onChange({ max_participants: Math.max(0, Number(e.target.value)) })
+                }
+              />
+            )}
+          </FormField>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Liên kết</h3>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <FormField label="Link Facebook">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.facebook_url}
+                onChange={(e) => onChange({ facebook_url: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Link Website">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.website_url}
+                onChange={(e) => onChange({ website_url: e.target.value })}
+              />
+            )}
+          </FormField>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Xuất bản</h3>
+        {canPublish ? (
+          <>
+            <FormField label="Trạng thái hiển thị">
+              {(field) => (
+                <Select
+                  value={value.manual_status}
+                  onValueChange={(v) => onChange({ manual_status: v as ManualStatus })}
+                >
+                  <SelectTrigger
+                    {...field}
+                    aria-label="Trạng thái hiển thị"
+                    className="h-9 w-full rounded-lg text-sm"
+                  >
+                    <SelectValue>{MANUAL_LABEL[value.manual_status]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="z-[95] rounded-xl">
+                    {Object.entries(MANUAL_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+            <p className="text-[11px] text-muted-foreground">
+              Khi Đã đăng, trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời
+              gian.
+            </p>
+          </>
+        ) : (
+          <p className="text-[11px] text-muted-foreground">
+            Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.
+          </p>
+        )}
+      </section>
+
+      {onTrash && (
+        <DangerZone
+          title="Chuyển vào Thùng rác"
+          description="Hoạt động sẽ bị ẩn khỏi website. Toàn bộ đơn đăng ký vẫn được giữ và có thể khôi phục trong tab Thùng rác."
+          confirmDescription="Bấm “Xác nhận” để chuyển. Có thể khôi phục trong tab Thùng rác."
+          actionLabel="Chuyển vào Thùng rác"
+          confirmLabel="Xác nhận"
+          onConfirm={onTrash}
+        />
+      )}
+    </AdminDrawer>
   );
 }
 
@@ -1470,6 +1384,24 @@ type Reg = {
   created_at: string;
 };
 
+const REG_COLS: AdminColumn[] = [
+  { key: "code", label: "Mã", className: "w-[120px]" },
+  { key: "person", label: "Người đăng ký" },
+  { key: "activity", label: "Hoạt động", className: "w-[180px]" },
+  { key: "contact", label: "Liên hệ", className: "w-[200px]" },
+  { key: "time", label: "Thời gian", className: "w-[140px]" },
+  { key: "status", label: "Trạng thái", className: "w-[150px]" },
+  { key: "actions", label: "Thao tác", srOnly: true, className: "w-[170px]" },
+];
+
+const REG_STATUS_TONE: Record<string, StatusTone> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "danger",
+  CANCELLED: "neutral",
+  COMPLETED: "info",
+};
+
 /** Per-row quick action: pick a status, apply it, then reset so the prompt stays visible. */
 function RegStatusPicker({
   options,
@@ -1581,117 +1513,91 @@ function RegsTab({
             ))}
           </SelectContent>
         </Select>
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm tên, email, mã, SĐT…"
-            aria-label="Tìm kiếm đơn đăng ký"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tên, email, mã, SĐT…"
+          label="Tìm kiếm đơn đăng ký"
+        />
         <span className="self-center text-xs text-muted-foreground">{rows.length} đơn</span>
       </div>
       {err && <p className="text-sm text-destructive">{err}</p>}
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[900px] text-sm">
-          <thead className="bg-secondary text-left text-xs text-muted-foreground">
-            <tr>
-              {[
-                "Mã",
-                "Người đăng ký",
-                "Hoạt động",
-                "Liên hệ",
-                "Thời gian",
-                "Trạng thái",
-                "Thao tác",
-              ].map((h) => (
-                <th key={h} className="p-3">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-border align-top">
-                <td className="p-3 font-mono text-xs">{r.code}</td>
-                <td className="p-3">
-                  <p className="font-medium">{r.full_name}</p>
-                  <p className="text-xs text-muted-foreground">{r.organization}</p>
-                  {r.message && (
-                    <p className="mt-1 max-w-xs text-xs italic text-muted-foreground">
-                      “{r.message}”
-                    </p>
-                  )}
-                </td>
-                <td className="p-3 text-xs">{title(r.activity_id)}</td>
-                <td className="p-3 text-xs">
-                  <p>{r.email}</p>
-                  <p>{r.phone}</p>
-                  <div className="mt-1 flex gap-1">
-                    <a
-                      href={`https://zalo.me/${digits(r.phone)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded border border-border px-2 py-0.5 text-primary"
-                    >
-                      Mở Zalo
-                    </a>
-                    <a
-                      href={`tel:${digits(r.phone)}`}
-                      className="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5"
-                    >
-                      <Phone className="h-3 w-3" />
-                      Gọi
-                    </a>
-                  </div>
-                </td>
-                <td className="p-3 text-xs">{fmtDateTime(r.created_at)}</td>
-                <td className="p-3 text-xs">
-                  <span className="rounded-full bg-secondary px-2 py-0.5">
-                    {REG_STATUS[r.status] ?? r.status}
-                  </span>
-                  {r.admin_note && <p className="mt-1 text-muted-foreground">{r.admin_note}</p>}
-                </td>
-                <td className="p-3">
-                  <RegStatusPicker
-                    options={Object.fromEntries(
-                      Object.entries(REG_STATUS).filter(([k]) => k !== r.status),
-                    )}
-                    onPick={(s) => setStatus(r, s)}
-                  />
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="p-6 text-center text-muted-foreground">
-                  Chưa có đơn đăng ký.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable
+        columns={REG_COLS}
+        minWidth="min-w-[1060px]"
+        isEmpty={rows.length === 0}
+        emptyMessage="Chưa có đơn đăng ký."
+      >
+        {rows.map((r) => (
+          <AdminTableRow key={r.id} className="align-top">
+            <td className="p-3 font-mono text-xs">{r.code}</td>
+            <td className="p-3">
+              <p className="font-medium">{r.full_name}</p>
+              <p className="text-xs text-muted-foreground">{r.organization}</p>
+              {r.message && (
+                <p className="mt-1 max-w-xs text-xs italic text-muted-foreground">“{r.message}”</p>
+              )}
+            </td>
+            <td className="p-3 text-xs">
+              <p className="truncate" title={title(r.activity_id)}>
+                {title(r.activity_id)}
+              </p>
+            </td>
+            <td className="p-3 text-xs">
+              <p>{r.email}</p>
+              <p>{r.phone}</p>
+              <div className="mt-1 flex gap-1">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="admin-sm"
+                  className="h-6 px-2 text-[11px] font-medium text-primary [&_svg]:size-3"
+                >
+                  <a href={`https://zalo.me/${digits(r.phone)}`} target="_blank" rel="noreferrer">
+                    Mở Zalo
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="admin-sm"
+                  className="h-6 px-2 text-[11px] font-medium [&_svg]:size-3"
+                >
+                  <a href={`tel:${digits(r.phone)}`}>
+                    <Phone aria-hidden /> Gọi
+                  </a>
+                </Button>
+              </div>
+            </td>
+            <td className="p-3 text-xs">{fmtDateTime(r.created_at)}</td>
+            <td className="p-3 text-xs">
+              <KitStatusPill tone={REG_STATUS_TONE[r.status] ?? "neutral"}>
+                {REG_STATUS[r.status] ?? r.status}
+              </KitStatusPill>
+              {r.admin_note && <p className="mt-1 text-muted-foreground">{r.admin_note}</p>}
+            </td>
+            <td className="p-3">
+              <RegStatusPicker
+                options={Object.fromEntries(
+                  Object.entries(REG_STATUS).filter(([k]) => k !== r.status),
+                )}
+                onPick={(s) => setStatus(r, s)}
+              />
+            </td>
+          </AdminTableRow>
+        ))}
+      </AdminTable>
     </div>
   );
 }
+
+const AUDIT_COLS: AdminColumn[] = [
+  { key: "time", label: "Thời gian", className: "w-[150px]" },
+  { key: "actor", label: "Người thực hiện", className: "w-[170px]" },
+  { key: "action", label: "Hành động", className: "w-[150px]" },
+  { key: "activity", label: "Hoạt động", className: "w-[200px]" },
+  { key: "detail", label: "Chi tiết" },
+];
 
 const ACTION_LABEL: Record<string, string> = {
   create: "Tạo hoạt động",
@@ -1746,36 +1652,25 @@ function AuditTab() {
     return "";
   };
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card">
-      <table className="w-full min-w-[760px] text-sm">
-        <thead className="bg-secondary text-left text-xs text-muted-foreground">
-          <tr>
-            {["Thời gian", "Người thực hiện", "Hành động", "Hoạt động", "Chi tiết"].map((h) => (
-              <th key={h} className="p-3">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {(logs.data ?? []).map((l) => (
-            <tr key={l.id} className="border-t border-border">
-              <td className="p-3 text-xs">{fmtDateTime(l.created_at)}</td>
-              <td className="p-3 text-xs">{l.actor_name || "—"}</td>
-              <td className="p-3 text-xs">{ACTION_LABEL[l.action] ?? l.action}</td>
-              <td className="p-3 text-xs">{title(l.activity_id)}</td>
-              <td className="p-3 text-xs text-muted-foreground">{summary(l)}</td>
-            </tr>
-          ))}
-          {logs.data?.length === 0 && (
-            <tr>
-              <td colSpan={5} className="p-6 text-center text-muted-foreground">
-                Chưa có nhật ký.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+    <AdminTable
+      columns={AUDIT_COLS}
+      minWidth="min-w-[860px]"
+      isEmpty={logs.data?.length === 0}
+      emptyMessage="Chưa có nhật ký."
+    >
+      {(logs.data ?? []).map((l) => (
+        <AdminTableRow key={l.id}>
+          <td className="p-3 text-xs">{fmtDateTime(l.created_at)}</td>
+          <td className="p-3 text-xs">{l.actor_name || "—"}</td>
+          <td className="p-3 text-xs">{ACTION_LABEL[l.action] ?? l.action}</td>
+          <td className="p-3 text-xs">
+            <p className="truncate" title={title(l.activity_id)}>
+              {title(l.activity_id)}
+            </p>
+          </td>
+          <td className="p-3 text-xs text-muted-foreground">{summary(l)}</td>
+        </AdminTableRow>
+      ))}
+    </AdminTable>
   );
 }
