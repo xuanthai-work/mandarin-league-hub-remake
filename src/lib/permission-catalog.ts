@@ -96,7 +96,12 @@ export const PERMISSION_ACTIONS = [
     label: "Sửa, duyệt / yêu cầu làm lại và xóa nhiệm vụ do mình giao",
     scoped: true,
   },
-  { code: "points.view", module: "points", label: "Xem lịch sử điểm", scoped: true },
+  {
+    code: "points.view",
+    module: "points",
+    label: "Xem lịch sử điểm của cả Ban",
+    scoped: true,
+  },
   {
     code: "points.attendance",
     module: "points",
@@ -106,7 +111,7 @@ export const PERMISSION_ACTIONS = [
   {
     code: "points.adjust",
     module: "points",
-    label: "Thưởng hoặc trừ 5, 10 hoặc 20 điểm kèm minh chứng",
+    label: "Thưởng hoặc trừ 5, 10 hoặc 20 điểm kèm minh chứng (người chức thấp hơn)",
     scoped: true,
   },
   {

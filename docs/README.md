@@ -249,6 +249,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-187-CANDIDATES-UI-BY-PERMISSION`                              | Trang Ứng viên theo quyền: chỉ xem qua candidate_profiles, ẩn AI / xử lý / kết nạp                     | 2026-11-08     | **PASS** | [task-ge-187-candidates-ui-by-permission.md](tasks/task-ge-187-candidates-ui-by-permission.md)                                                           |
 | `TASK-GE-188-MEMBERS-PERMS-VIEW-EDIT`                                  | Quyền Thành viên: xem mọi Ban / sửa (gộp 6 quyền vào members.edit)                                     | 2026-11-08     | **PASS** | [task-ge-188-members-perms-view-edit.md](tasks/task-ge-188-members-perms-view-edit.md)                                                                   |
 | `TASK-GE-189-TASKS-PERMS-VIEW-CREATE-EDIT`                             | Quyền Nhiệm vụ: xem / giao / sửa (gộp review, delete vào tasks.edit)                                   | 2026-11-08     | **PASS** | [task-ge-189-tasks-perms-view-create-edit.md](tasks/task-ge-189-tasks-perms-view-create-edit.md)                                                         |
+| `TASK-GE-190-CONTRIBUTIONS-PERMS`                                      | Quyền Đóng góp: Phó Ban được thưởng/trừ điểm, đặt lại ma trận points                                   | 2026-11-08     | **PASS** | [task-ge-190-contributions-perms.md](tasks/task-ge-190-contributions-perms.md)                                                                           |
 
 ---
 

@@ -192,6 +192,12 @@ describe("canAdjustMember", () => {
     expect(
       canAdjustMember(deputy, me("Phó Ban"), { department: "hr", position: "Trưởng Ban" }),
     ).toBe(false);
+    expect(canAdjustMember(deputy, me("Phó Ban"), { department: "hr", position: "Phó Ban" })).toBe(
+      false,
+    );
+    expect(
+      canAdjustMember(deputy, me("Phó Ban"), { department: "comms", position: "Thành viên" }),
+    ).toBe(false);
   });
 
   it("lets an all-scope co-founder adjust a lower head but not another co-founder", () => {
