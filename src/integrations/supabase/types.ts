@@ -202,24 +202,6 @@ export type Database = {
           },
         ];
       };
-      admin_invites: {
-        Row: {
-          created_at: string;
-          email: string;
-          role: Database["public"]["Enums"]["app_role"];
-        };
-        Insert: {
-          created_at?: string;
-          email: string;
-          role: Database["public"]["Enums"]["app_role"];
-        };
-        Update: {
-          created_at?: string;
-          email?: string;
-          role?: Database["public"]["Enums"]["app_role"];
-        };
-        Relationships: [];
-      };
       application_status_history: {
         Row: {
           application_id: string;
@@ -2178,7 +2160,6 @@ export type Database = {
         Args: { _action: string; _app: string };
         Returns: boolean;
       };
-      claim_invited_role: { Args: never; Returns: undefined };
       create_task: {
         Args: {
           _assignee: string;

@@ -233,6 +233,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-172-GRANT-CARD-LABEL-ONCE`                                    | Quyền riêng hiện tên 1 lần, bỏ migration 0050 điểm                                                     | 2026-11-07     | **PASS** | [task-oc-172-grant-card-label-once.md](tasks/task-oc-172-grant-card-label-once.md)                                                                       |
 | `TASK-GE-175-ADMIN-LEFTOVERS-USE-ADMIN-KIT`                            | Dọn khung admin, Thùng rác, Ban, Nội dung, Cài đặt sang bộ component admin                             | 2026-11-07     | **PASS** | [task-ge-175-admin-leftovers-use-admin-kit.md](tasks/task-ge-175-admin-leftovers-use-admin-kit.md)                                                       |
 | `TASK-GE-176-ADMIN-KIT-LINT-ADMIN-WIDE`                                | Bật luật bộ component admin cho toàn admin (glob, trừ kit và Điểm danh)                                | 2026-11-07     | **PASS** | [task-ge-176-admin-kit-lint-admin-wide.md](tasks/task-ge-176-admin-kit-lint-admin-wide.md)                                                               |
+| `TASK-OC-173-DROP-ADMIN-INVITES`                                       | Xóa lời mời vai trò cũ (admin_invites)                                                                 | 2026-11-07     | **PASS** | [task-oc-173-drop-admin-invites.md](tasks/task-oc-173-drop-admin-invites.md)                                                                             |
 
 ---
 
