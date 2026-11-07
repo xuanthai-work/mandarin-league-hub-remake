@@ -34,21 +34,9 @@ export const LEADER_TIER: Tier = {
 
 export const LEADER_TONE = { key: "black", label: "Nhà sáng lập" } as const;
 
-/**
- * Card colour: only founders/co-founders keep the obsidian leader card. Every other
- * position (department heads, deputies, advisors included) follows the member's own
- * contribution tier tone.
- */
-export const getMemberCardTone = (
-  m: { department?: string; position: string | null },
-  roles: string[] = [],
-  isAdvisor = false,
-  defaultTierTone = "blue",
-): string => {
-  const pos = m.position ?? "";
-  if (isFounder(pos)) return "black";
-  return defaultTierTone;
-};
+/** Card colour: founders and co-founders keep the obsidian card, everyone else shows their tier. */
+export const getMemberCardTone = (position: string | null, tierTone: string): string =>
+  isFounder(position ?? "") ? "black" : tierTone;
 
 export const tierOf = (points: number) =>
   TIERS.find((t) => points >= t.min) ?? TIERS[TIERS.length - 1]!;

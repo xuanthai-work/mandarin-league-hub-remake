@@ -319,9 +319,8 @@ function MemberDashboard() {
   const effectivePoints = m.contribution_points ?? 0;
   const realTier = tierOf(effectivePoints);
   const isCoFounder = isFounder(m.position);
-  const isAdvisorMember = (advisor.data ?? []).length > 0;
   // Founders keep obsidian; every other position follows the real contribution tier.
-  const defaultTone = getMemberCardTone(m, me.data?.roles ?? [], isAdvisorMember, realTier.tone);
+  const defaultTone = getMemberCardTone(m.position, realTier.tone);
   const tone = previewTone ?? defaultTone;
   const previewTier =
     previewTone === "black"

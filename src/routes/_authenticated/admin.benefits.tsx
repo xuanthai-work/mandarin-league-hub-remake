@@ -28,6 +28,7 @@ import {
 import { ACCOUNT_DEPTS } from "@/lib/accounts";
 import { matchesSearch } from "@/lib/search";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { useConfirm } from "@/components/admin/Trash";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
 import { StatusPill } from "@/components/admin/kit/StatusPill";
@@ -851,6 +852,7 @@ function GrantMemberRow({
 }
 
 function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }) {
+  const { confirm, dialog } = useConfirm();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("");
   const [busyAll, setBusyAll] = useState(false);
@@ -953,10 +955,17 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
 
   const revokeAll = async () => {
     if (granted.length === 0) return;
+    const ok = await confirm({
+      title: "Bỏ cấp quyền lợi?",
+      description: `${granted.length} thành viên trong danh sách đang lọc sẽ mất quyền lợi “${benefit.name}”.`,
+      confirmLabel: "Bỏ cấp tất cả",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusyAll(true);
     const ruleMembers = granted.filter(ruleAccess);
     const nonRuleMembers = granted.filter((m) => !ruleAccess(m));
-    const promises: PromiseLike<unknown>[] = [];
+    const promises: PromiseLike<{ error: { message: string } | null }>[] = [];
     if (ruleMembers.length > 0) {
       promises.push(
         supabase.from("member_benefits").upsert(
@@ -981,8 +990,14 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
           ),
       );
     }
-    await Promise.all(promises);
+    const results = await Promise.all(promises);
     setBusyAll(false);
+    const failed = results.find((r) => (r as { error: { message: string } | null }).error);
+    if (failed) {
+      toast.error((failed as { error: { message: string } }).error.message);
+      await data.refetch();
+      return;
+    }
     toast.success(`Đã thu hồi quyền lợi của ${granted.length} thành viên`);
     await data.refetch();
   };
@@ -994,6 +1009,7 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
       onClose={onClose}
       bodyClassName="space-y-5"
     >
+      {dialog}
       <div className="flex flex-wrap items-center gap-2.5">
         <SearchInput
           value={q}

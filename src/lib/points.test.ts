@@ -70,19 +70,15 @@ t2("tiers follow the real stored points, founders included", () => {
 
 describe("getMemberCardTone", () => {
   it("only founders and co-founders keep the obsidian card", () => {
-    expect(getMemberCardTone({ position: "Co-founder" }, [], false)).toBe("black");
-    expect(getMemberCardTone({ position: "Founder" }, [], false)).toBe("black");
+    expect(getMemberCardTone("Co-founder", "green")).toBe("black");
+    expect(getMemberCardTone("Founder", "green")).toBe("black");
   });
 
-  it("gives heads, advisors and deputies their real tier tone", () => {
-    expect(getMemberCardTone({ position: "Trưởng Ban" }, [], false, "sapphire")).toBe("sapphire");
-    expect(getMemberCardTone({ position: "Cố vấn chuyên môn" }, [], false, "green")).toBe("green");
-    expect(getMemberCardTone({ position: "Thành viên" }, [], true, "purple")).toBe("purple");
-    expect(getMemberCardTone({ position: "Phó Ban" }, [], false, "lavender")).toBe("lavender");
-  });
-
-  it("assigns tier tone to regular members", () => {
-    expect(getMemberCardTone({ position: "Thành viên" }, [], false, "green")).toBe("green");
+  it("gives every other position its tier tone", () => {
+    expect(getMemberCardTone("Trưởng Ban", "purple")).toBe("purple");
+    expect(getMemberCardTone("Phó Ban", "wine")).toBe("wine");
+    expect(getMemberCardTone("Cố vấn chuyên môn", "green")).toBe("green");
+    expect(getMemberCardTone(null, "bronze")).toBe("bronze");
   });
 });
 
