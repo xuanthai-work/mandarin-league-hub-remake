@@ -382,6 +382,39 @@ export function myActionLabel(task: Task, action: MyTaskAction): string {
   return task.status === "revision" ? "Nhận làm lại" : "Tiếp nhận";
 }
 
+/** Board column key ("todo" | "in_progress" | "review" | "done") that shows a status. */
+export function columnOf(status: string): string | null {
+  return BOARD_COLUMNS.find((c) => c.statuses.includes(status))?.key ?? null;
+}
+
+export type DropAction = "start" | "submit" | "approve" | "revise";
+
+/**
+ * What dropping a card on `targetColumn` means for this viewer. Only the moves the board already
+ * offers as buttons are allowed; everything else returns null and the card snaps back.
+ */
+export function dropAction(
+  group: GroupedTask,
+  targetColumn: string,
+  viewer: TaskViewer | null,
+): DropAction | null {
+  const task = group.rawTasks[0];
+  if (!task || columnOf(task.status) === targetColumn) return null;
+  const mine = myTaskAction(task, viewer);
+  if (mine === "start" && targetColumn === "in_progress") return "start";
+  if (mine === "submit" && targetColumn === "review") return "submit";
+  if (taskRights(task, viewer).review) {
+    if (targetColumn === "done") return "approve";
+    if (targetColumn === "todo") return "revise";
+  }
+  return null;
+}
+
+/** A card is draggable only when at least one column accepts it. */
+export function canDragTask(group: GroupedTask, viewer: TaskViewer | null): boolean {
+  return BOARD_COLUMNS.some((c) => dropAction(group, c.key, viewer) !== null);
+}
+
 export type EvidenceInput = {
   mode: "zalo" | "link";
   link: string;

@@ -17,11 +17,13 @@ import { TaskReviewDialog } from "@/components/admin/tasks/TaskReviewDialog";
 import { TaskSubmitDialog } from "@/components/admin/tasks/TaskSubmitDialog";
 import {
   EMPTY_TASK_FILTERS,
+  dropAction,
   groupRights,
   groupTasks,
   myTaskAction,
   submittedTasks,
   taskRights,
+  type DropAction,
   type GroupedTask,
   type MyTaskAction,
   type Task,
@@ -161,13 +163,20 @@ function TasksPage() {
   const groups = useMemo(() => groupTasks(scoped, people), [scoped, people]);
 
   const startTask = async (task: Task) => {
+    qc.setQueryData<Task[]>(["admin-tasks"], (old) =>
+      old?.map((t) => (t.id === task.id ? { ...t, status: "in_progress" } : t)),
+    );
     const { error } = await supabase.rpc("member_update_task", {
       _task: task.id,
       _action: "start",
       _evidence: "",
       _note: "",
     });
-    if (error) return void toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      refresh();
+      return;
+    }
     toast.success("Đã tiếp nhận nhiệm vụ");
     refresh();
   };
@@ -197,6 +206,12 @@ function TasksPage() {
   const myActionFromModal = (group: GroupedTask, action: MyTaskAction) => {
     setSelectedGroup(null);
     runMyAction(group, action);
+  };
+
+  const handleDropAction = (group: GroupedTask, action: DropAction) => {
+    if (action === "start" || action === "submit") runMyAction(group, action);
+    else if (action === "approve") void approveGroup(group);
+    else reviseGroup(group);
   };
 
   const reviewTasks = async (targets: Task[], approve: boolean, note = "") => {
@@ -335,6 +350,11 @@ function TasksPage() {
 
       <TaskFilterToolbar filters={filters} depts={depts} givers={givers} onChange={setFilters} />
 
+      <p className="hidden text-[11px] text-muted-foreground sm:block">
+        Mẹo: kéo thẻ sang cột kế tiếp để tiếp nhận, nộp báo cáo hoặc duyệt. Click vào thẻ để xem chi
+        tiết.
+      </p>
+
       {person && (
         <p className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">
           Đang xem nhiệm vụ của <b>{memberById.get(person)?.full_name ?? "thành viên"}</b> ·{" "}
@@ -362,6 +382,8 @@ function TasksPage() {
           groups={groups}
           rightsOf={(g) => groupRights(g, viewer)}
           actionOf={(g) => (g.rawTasks[0] ? myTaskAction(g.rawTasks[0], viewer) : null)}
+          dropActionOf={(g, col) => dropAction(g, col, viewer)}
+          onDropAction={handleDropAction}
           onSelectGroup={(group) => setSelectedGroup(group)}
           onApprove={approveGroup}
           onRequestRevision={reviseGroup}

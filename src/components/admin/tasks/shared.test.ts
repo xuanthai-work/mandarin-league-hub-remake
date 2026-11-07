@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   NO_TASK_RIGHTS,
   buildEvidence,
+  canDragTask,
+  columnOf,
+  dropAction,
   groupTasks,
   myActionLabel,
   myTaskAction,
@@ -405,5 +408,177 @@ describe("buildEvidence", () => {
     });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toContain("2.000");
+  });
+});
+
+describe("columnOf", () => {
+  it("resolves column keys correctly and returns null for unknown statuses", () => {
+    expect(columnOf("assigned")).toBe("todo");
+    expect(columnOf("revision")).toBe("todo");
+    expect(columnOf("in_progress")).toBe("in_progress");
+    expect(columnOf("submitted")).toBe("review");
+    expect(columnOf("done")).toBe("done");
+    expect(columnOf("unknown_status")).toBeNull();
+  });
+});
+
+describe("dropAction and canDragTask", () => {
+  const staffMember = member("m-staff", "Nguyễn Văn Staff", "comms");
+  const headMember = member("m-head", "Trần Trưởng Ban", "comms");
+
+  const staffViewer: TaskViewer = {
+    userId: "u-staff",
+    memberId: "m-staff",
+    department: "comms",
+    perms: { isAdmin: false, actions: {} },
+  };
+
+  const headViewer: TaskViewer = {
+    userId: "u-head",
+    memberId: "m-head",
+    department: "comms",
+    perms: {
+      isAdmin: false,
+      actions: {
+        "tasks.review": "own",
+        "tasks.edit": "own",
+        "tasks.delete": "own",
+      },
+    },
+  };
+
+  const adminViewer: TaskViewer = {
+    userId: "u-admin",
+    memberId: "m-admin",
+    department: "executive",
+    perms: { isAdmin: true, actions: {} },
+  };
+
+  it("handles assignee dragging assigned task: only to in_progress", () => {
+    const [card] = groupTasks(
+      [
+        task({
+          id: "t1",
+          assignee_id: "m-staff",
+          status: "assigned",
+          created_at: "2026-01-01T00:00:00Z",
+        }),
+      ],
+      [staffMember],
+    );
+    expect(dropAction(card!, "in_progress", staffViewer)).toBe("start");
+    expect(dropAction(card!, "todo", staffViewer)).toBeNull();
+    expect(dropAction(card!, "review", staffViewer)).toBeNull();
+    expect(dropAction(card!, "done", staffViewer)).toBeNull();
+    expect(canDragTask(card!, staffViewer)).toBe(true);
+  });
+
+  it("handles assignee dragging revision task: only to in_progress", () => {
+    const [card] = groupTasks(
+      [
+        task({
+          id: "t2",
+          assignee_id: "m-staff",
+          status: "revision",
+          created_at: "2026-01-01T00:00:00Z",
+        }),
+      ],
+      [staffMember],
+    );
+    expect(dropAction(card!, "in_progress", staffViewer)).toBe("start");
+    expect(canDragTask(card!, staffViewer)).toBe(true);
+  });
+
+  it("handles assignee dragging in_progress task: only to review", () => {
+    const [card] = groupTasks(
+      [
+        task({
+          id: "t3",
+          assignee_id: "m-staff",
+          status: "in_progress",
+          created_at: "2026-01-01T00:00:00Z",
+        }),
+      ],
+      [staffMember],
+    );
+    expect(dropAction(card!, "review", staffViewer)).toBe("submit");
+    expect(dropAction(card!, "todo", staffViewer)).toBeNull();
+    expect(dropAction(card!, "done", staffViewer)).toBeNull();
+    expect(canDragTask(card!, staffViewer)).toBe(true);
+  });
+
+  it("handles assigner with review right dragging submitted task of another member", () => {
+    const [card] = groupTasks(
+      [
+        task({
+          id: "t4",
+          assignee_id: "m-staff",
+          created_by: "u-head",
+          department: "comms",
+          status: "submitted",
+          created_at: "2026-01-01T00:00:00Z",
+        }),
+      ],
+      [staffMember, headMember],
+    );
+    expect(dropAction(card!, "done", headViewer)).toBe("approve");
+    expect(dropAction(card!, "todo", headViewer)).toBe("revise");
+    expect(dropAction(card!, "in_progress", headViewer)).toBeNull();
+    expect(dropAction(card!, "review", headViewer)).toBeNull();
+    expect(canDragTask(card!, headViewer)).toBe(true);
+  });
+
+  it("disallows non-assigner head from dragging submitted task", () => {
+    const [card] = groupTasks(
+      [
+        task({
+          id: "t5",
+          assignee_id: "m-staff",
+          created_by: "u-cofounder",
+          department: "comms",
+          status: "submitted",
+          created_at: "2026-01-01T00:00:00Z",
+        }),
+      ],
+      [staffMember],
+    );
+    expect(dropAction(card!, "done", headViewer)).toBeNull();
+    expect(dropAction(card!, "todo", headViewer)).toBeNull();
+    expect(dropAction(card!, "in_progress", headViewer)).toBeNull();
+    expect(canDragTask(card!, headViewer)).toBe(false);
+  });
+
+  it("disallows dragging completed task even for admin", () => {
+    const [card] = groupTasks(
+      [
+        task({
+          id: "t6",
+          assignee_id: "m-staff",
+          status: "done",
+          created_at: "2026-01-01T00:00:00Z",
+        }),
+      ],
+      [staffMember],
+    );
+    expect(dropAction(card!, "todo", adminViewer)).toBeNull();
+    expect(dropAction(card!, "in_progress", adminViewer)).toBeNull();
+    expect(dropAction(card!, "review", adminViewer)).toBeNull();
+    expect(canDragTask(card!, adminViewer)).toBe(false);
+  });
+
+  it("returns false for canDragTask when viewer is null", () => {
+    const [card] = groupTasks(
+      [
+        task({
+          id: "t7",
+          assignee_id: "m-staff",
+          status: "assigned",
+          created_at: "2026-01-01T00:00:00Z",
+        }),
+      ],
+      [staffMember],
+    );
+    expect(canDragTask(card!, null)).toBe(false);
+    expect(dropAction(card!, "in_progress", null)).toBeNull();
   });
 });
