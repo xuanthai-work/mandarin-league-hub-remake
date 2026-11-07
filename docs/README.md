@@ -262,6 +262,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-194-DEPARTMENTS-PERMS-VIEW-EDIT`                              | Quyền trang Ban: mọi thành viên xem, TB/PB sửa Ban mình                                                | 2026-11-08     | **PASS** | [task-ge-194-departments-perms-view-edit.md](tasks/task-ge-194-departments-perms-view-edit.md)                                                           |
 | `TASK-OC-181-CONTENT-PERMS-MATRIX`                                     | Quyền Trang & Nội dung: sửa cho Truyền thông, Biên dịch; xuất bản Co-founder                           | 2026-11-08     | **PASS** | [task-oc-181-content-perms-matrix.md](tasks/task-oc-181-content-perms-matrix.md)                                                                         |
 | `TASK-GE-195-HIDE-ADMIN-FLAG`                                          | Ẩn cờ admin với người không phải admin (cờ locked trung tính)                                          | 2026-11-08     | **PASS** | [task-ge-195-hide-admin-flag.md](tasks/task-ge-195-hide-admin-flag.md)                                                                                   |
+| `TASK-OC-182-NAME-CHANGE-VIA-MEMBERS-PAGE`                             | Họ tên chỉ đổi ở trang Thành viên, Cài đặt chỉ đổi ảnh                                                 | 2026-11-08     | **PASS** | [task-oc-182-name-change-via-members-page.md](tasks/task-oc-182-name-change-via-members-page.md)                                                         |
 
 ---
 

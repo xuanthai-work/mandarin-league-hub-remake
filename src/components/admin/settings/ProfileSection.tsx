@@ -4,7 +4,6 @@ import { Camera, Copy, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { accessLabel } from "@/lib/admin-nav";
 import { getDepartment } from "@/lib/data/departments";
 import { SettingsRow, SettingsSection, type MyAccount } from "./shared";
@@ -14,8 +13,6 @@ import { AvatarLightbox } from "@/components/portal/AvatarLightbox";
 export function ProfileSection({ me }: { me: MyAccount }) {
   const qc = useQueryClient();
   const member = me.member;
-  const [name, setName] = useState(member?.full_name ?? "");
-  const [saving, setSaving] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [zoomAvatar, setZoomAvatar] = useState(false);
@@ -31,9 +28,6 @@ export function ProfileSection({ me }: { me: MyAccount }) {
 
   const roleLabel = accessLabel(me.roles.includes("admin"), member?.position);
   const department = member?.department ? getDepartment(member.department) : undefined;
-  const trimmed = name.trim();
-  const unchanged = !member || trimmed === member.full_name;
-  const invalid = trimmed.length < 2 || trimmed.length > 120;
 
   const copyCode = async () => {
     if (!member) return;
@@ -43,19 +37,6 @@ export function ProfileSection({ me }: { me: MyAccount }) {
     } catch {
       toast.error("Không sao chép được mã thành viên");
     }
-  };
-
-  const saveName = async () => {
-    setSaving(true);
-    const { error } = await supabase.rpc("update_my_profile", {
-      _full_name: trimmed,
-      _avatar_path: null as unknown as string,
-    });
-    setSaving(false);
-    if (error) return void toast.error(error.message);
-    setName(trimmed);
-    toast.success("Đã cập nhật họ tên");
-    qc.invalidateQueries({ queryKey: ["my-account"] });
   };
 
   const pickAvatar = (file: File) => {
@@ -174,18 +155,11 @@ export function ProfileSection({ me }: { me: MyAccount }) {
 
       {member ? (
         <>
-          <SettingsRow label="Họ tên" hint="Tên hiển thị trên hồ sơ và sơ đồ tổ chức.">
-            <div className="flex items-center gap-2">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="sm:w-72"
-                aria-label="Họ tên"
-              />
-              <Button type="button" onClick={saveName} disabled={saving || unchanged || invalid}>
-                Lưu
-              </Button>
-            </div>
+          <SettingsRow
+            label="Họ tên"
+            hint="Muốn đổi họ tên, hãy liên hệ Ban Nhân sự để cập nhật trong trang Thành viên."
+          >
+            <p className="text-sm font-medium text-foreground sm:w-72">{member.full_name}</p>
           </SettingsRow>
         </>
       ) : (
