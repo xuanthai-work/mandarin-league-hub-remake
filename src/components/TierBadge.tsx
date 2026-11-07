@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { createPortal } from "react-dom";
 import { Lock, X } from "lucide-react";
 import { TIERS, tierOf } from "@/lib/points";
 
@@ -387,97 +388,117 @@ export function TierProgress({ points }: { points: number }) {
     ? Math.min(100, Math.round(((points - cur.min) / (next.min - cur.min)) * 100))
     : 100;
   return (
-    <div className="portal-glass mt-3 rounded-2xl p-5">
+    <div className="mt-3 rounded-2xl border border-gold/25 bg-white/5 p-5 text-white backdrop-blur-md">
       <div className="flex items-center gap-4">
         <TierBadge tierKey={cur.key} size={84} />
         <div className="min-w-0 flex-1">
-          <p className="text-xs portal-ink-muted">Danh hiệu hiện tại</p>
-          <p className="text-xl font-bold text-gold">
+          <p className="text-xs uppercase tracking-wider text-gold/80">Danh hiệu hiện tại</p>
+          <p className="text-2xl font-bold text-gold">
             {cur.label}{" "}
-            <span className="font-serif text-base portal-ink-muted">{TIER_INFO[cur.key]?.zh}</span>
+            <span className="font-serif text-lg text-white/70">{TIER_INFO[cur.key]?.zh}</span>
           </p>
-          <p className="text-xs portal-ink-muted">{TIER_INFO[cur.key]?.motto}</p>
+          <p className="mt-1 text-xs text-white/70">{TIER_INFO[cur.key]?.motto}</p>
         </div>
       </div>
-      <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-primary/20">
+      <div className="mt-4 h-2.5 overflow-hidden rounded-full border border-gold/20 bg-white/10">
         <div
-          className="h-full rounded-full bg-gold transition-all duration-700"
+          className="h-full rounded-full bg-gradient-to-r from-amber-400 via-gold to-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.5)] transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="mt-2 text-xs portal-ink-muted">
+      <p className="mt-2.5 text-xs text-white/80">
         {next ? (
           <>
-            {points}/{next.min} điểm ({pct}%) · Còn{" "}
-            <b className="text-gold">{next.min - points} điểm</b> để mở khóa{" "}
-            <b className="text-gold">{next.label.toUpperCase()}</b>
+            <span className="font-mono">
+              {points}/{next.min} điểm
+            </span>{" "}
+            ({pct}%) · Còn <b className="font-bold text-gold">{next.min - points} điểm</b> để mở
+            khóa <b className="font-bold text-gold">{next.label.toUpperCase()}</b>
           </>
         ) : (
           "Bạn đã đạt danh hiệu cao nhất của TML!"
         )}
       </p>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="mt-3 text-sm font-semibold text-gold underline-offset-4 hover:underline"
+        className="mt-3.5 inline-flex items-center gap-1 text-sm font-semibold text-gold underline-offset-4 transition hover:text-yellow-300 hover:underline"
       >
         Xem bảng danh hiệu & đặc quyền →
       </button>
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4"
-          onClick={() => setOpen(false)}
-        >
+      {open &&
+        createPortal(
           <div
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-background p-6 text-foreground"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
+            onClick={() => setOpen(false)}
           >
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-primary-deep">Thang 7 bậc cống hiến TML</h3>
-              <button onClick={() => setOpen(false)} aria-label="Đóng">
-                <X className="h-5 w-5" />
-              </button>
+            <div
+              className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-gold/30 bg-[color:var(--portal-bg,#0d1527)]/98 p-6 text-white shadow-2xl shadow-black/90 backdrop-blur-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h3 className="text-xl font-bold text-gold">Thang 7 bậc cống hiến TML</h3>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Đóng"
+                  className="rounded-full border border-gold/20 p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {asc.map((t, i) => {
+                  const info = TIER_INFO[t.key]!;
+                  const reached = points >= t.min;
+                  const isCur = t.key === cur.key;
+                  const rangeLabel =
+                    t.key === "honor"
+                      ? "401–450 điểm"
+                      : asc[i + 1]
+                        ? `${t.min}–${asc[i + 1]!.min - 1} điểm`
+                        : `${t.min}+ điểm`;
+                  return (
+                    <div
+                      key={t.key}
+                      className={`relative flex flex-col items-center rounded-xl p-4 text-center transition ${
+                        isCur
+                          ? "border-2 border-gold bg-gradient-to-b from-amber-500/20 via-gold/10 to-transparent shadow-[0_0_20px_rgba(234,179,8,0.25)] ring-1 ring-gold/50"
+                          : "border border-white/15 bg-white/5 hover:border-gold/40 hover:bg-white/10"
+                      }`}
+                    >
+                      <TierBadge tierKey={t.key} size={88} locked={!reached} />
+                      <p className="mt-2.5 text-base font-bold text-white">
+                        {t.label} <span className="font-serif text-sm text-gold/80">{info.zh}</span>
+                      </p>
+                      <p className="font-mono text-xs font-semibold text-gold">{rangeLabel}</p>
+                      {isCur && (
+                        <span className="mt-1.5 rounded-full bg-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-950 shadow-xs">
+                          Bạn đang ở đây
+                        </span>
+                      )}
+                      <p className="mt-2.5 text-xs text-white/70">{info.motto}</p>
+                      <ul className="mt-3 space-y-1.5 text-left text-xs text-white/80">
+                        {info.perks.map((p) => (
+                          <li key={p} className="flex items-start gap-1.5">
+                            <span className="shrink-0 text-gold">✦</span>
+                            <span>{p}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/60">
+                Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Ban Quản trị,
+                Trưởng/Phó Ban và Cố vấn chuyên môn dùng thẻ màu Đen than chì riêng. Quyền lợi cụ
+                thể do Ban Điều Hành cấu hình.
+              </p>
             </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {asc.map((t, i) => {
-                const info = TIER_INFO[t.key]!;
-                const reached = points >= t.min;
-                const isCur = t.key === cur.key;
-                return (
-                  <div
-                    key={t.key}
-                    className={`flex flex-col items-center rounded-xl border p-4 text-center ${isCur ? "border-gold bg-gold-soft" : "border-border"}`}
-                  >
-                    <TierBadge tierKey={t.key} size={88} locked={!reached} />
-                    <p className="mt-2 font-bold text-primary-deep">
-                      {t.label}{" "}
-                      <span className="font-serif text-sm text-muted-foreground">{info.zh}</span>
-                    </p>
-                    <p className="text-xs font-semibold text-gold">
-                      {asc[i + 1] ? `${t.min}–${asc[i + 1]!.min - 1} điểm` : `${t.min}+ điểm`}
-                    </p>
-                    {isCur && (
-                      <span className="mt-1 rounded-full bg-primary-deep px-2 text-[10px] font-semibold text-primary-foreground">
-                        Bạn đang ở đây
-                      </span>
-                    )}
-                    <p className="mt-2 text-xs text-muted-foreground">{info.motto}</p>
-                    <ul className="mt-2 space-y-1 text-left text-xs">
-                      {info.perks.map((p) => (
-                        <li key={p}>✦ {p}</li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Ban Quản trị,
-              Trưởng/Phó Ban và Cố vấn chuyên môn dùng thẻ màu Đen than chì riêng. Quyền lợi cụ thể
-              do Ban Điều Hành cấu hình.
-            </p>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

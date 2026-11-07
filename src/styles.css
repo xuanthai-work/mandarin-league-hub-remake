@@ -818,7 +818,7 @@
   --pass-bronze: #8a5a2b;
   --pass-amber: #a8641c;
   --pass-pink: #db2777;
-  --pass-honor: #9c7a1e;
+  --pass-honor: oklch(0.74 0.14 80); /* Danh dự — theme gold */
   --pass-blue: #245a91;
   --pass-green: #23765a;
   --pass-wine: #7d263a;

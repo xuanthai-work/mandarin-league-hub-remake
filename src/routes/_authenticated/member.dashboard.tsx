@@ -2,14 +2,34 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type React from "react";
-import { Check, Copy, Download, LayoutGrid, LogOut, Nfc, RotateCcw, RotateCw } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  LayoutGrid,
+  LogOut,
+  Nfc,
+  RotateCcw,
+  RotateCw,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
-import { TIERS, isLeader, tierOf } from "@/lib/points";
-import { TierBadge } from "@/components/TierBadge";
+import {
+  LEADER_DEFAULT_POINTS,
+  LEADER_TONE,
+  POINT_KIND,
+  TIERS,
+  isLeader,
+  tierOf,
+} from "@/lib/points";
+import { TierBadge, TierProgress } from "@/components/TierBadge";
+import { AvatarCropDialog } from "@/components/portal/AvatarCropDialog";
+import { AvatarLightbox } from "@/components/portal/AvatarLightbox";
 import { mainHomeUrl } from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/member/dashboard")({
@@ -44,6 +64,14 @@ type Me = {
   roles?: string[];
   account: { account_status: string; must_change_password: boolean } | null;
   member: Member | null;
+};
+type PointTx = {
+  id: string;
+  reason: string;
+  kind: string;
+  delta: number;
+  balance_after: number;
+  created_at: string;
 };
 
 const nextFrame = () =>
@@ -96,6 +124,12 @@ function MemberDashboard() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [flatten, setFlatten] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [tierOpen, setTierOpen] = useState(false);
+  const [previewTone, setPreviewTone] = useState<string | null>(null);
+  const [zoomAvatar, setZoomAvatar] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [qr, setQr] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -140,6 +174,19 @@ function MemberDashboard() {
     queryKey: ["my-pass", memberId],
     enabled: !!memberId,
     queryFn: async () => ((await supabase.rpc("my_pass")).data ?? [])[0] ?? null,
+  });
+  /** Only fetched when the tier popup opens, so the card stays lightweight. */
+  const history = useQuery({
+    queryKey: ["my-points", memberId],
+    enabled: !!memberId && tierOpen,
+    queryFn: async () =>
+      ((
+        await supabase
+          .from("point_transactions")
+          .select("*")
+          .eq("member_id", memberId!)
+          .order("created_at", { ascending: false })
+      ).data ?? []) as PointTx[],
   });
 
   useEffect(() => {
@@ -225,11 +272,61 @@ function MemberDashboard() {
     }
   };
 
-  const tier = tierOf(m.contribution_points);
+  /** Lightbox "Đổi ảnh": validate, then open the shared 3:4 cropper. */
+  const pickAvatar = (file: File) => {
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      return void toast.error("Chỉ chấp nhận ảnh PNG, JPG hoặc WebP.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return void toast.error("Kích thước ảnh tối đa là 5 MB.");
+    }
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const saveAvatar = async (blob: Blob) => {
+    setSavingAvatar(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Chưa đăng nhập");
+      const path = `${u.user.id}/${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from("avatars").upload(path, blob, {
+        upsert: true,
+        contentType: "image/jpeg",
+      });
+      if (error) throw error;
+      const { error: e2 } = await supabase.rpc("update_my_profile", {
+        _full_name: m.full_name,
+        _avatar_path: path,
+      });
+      if (e2) throw e2;
+      toast.success("Đã cập nhật ảnh đại diện");
+      setCropSrc(null);
+      setZoomAvatar(false);
+      qc.invalidateQueries({ queryKey: ["my-account"] });
+      qc.invalidateQueries({ queryKey: ["my-avatar"] });
+    } catch (e) {
+      toast.error("Không lưu được ảnh: " + (e instanceof Error ? e.message : "Lỗi không xác định"));
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
+
+  const realTier = tierOf(m.contribution_points);
   const special =
     isLeader(m, me.data?.roles ?? [], (advisor.data ?? []).length > 0) &&
     m.position !== "Thành viên";
-  const tone = special ? "black" : tier.tone;
+  const previewTier =
+    previewTone && previewTone !== "black" ? TIERS.find((t) => t.tone === previewTone) : undefined;
+  const tier = previewTier ?? realTier;
+  const tone = previewTone ?? (special ? "black" : realTier.tone);
+  /** Co-founders / current advisors never display below the 400-point floor. */
+  const effectivePoints =
+    /co-founder|cố vấn/i.test(m.position ?? "") || (advisor.data ?? []).length > 0
+      ? Math.max(m.contribution_points ?? 0, LEADER_DEFAULT_POINTS)
+      : m.contribution_points;
+  const displayTier = tierOf(effectivePoints);
   const advNames = (advisor.data ?? []).map(
     (a) =>
       deptName(a.dept)
@@ -254,10 +351,16 @@ function MemberDashboard() {
   );
   const joined = new Date(m.joined_on).toLocaleDateString("vi-VN");
   const tierEl = (
-    <>
+    <button
+      type="button"
+      onClick={() => setTierOpen(true)}
+      title="Xem cấp bậc, điểm & quyền lợi"
+      aria-label={`Xem cấp bậc ${tier.label}, điểm và quyền lợi`}
+      className="group/tier inline-flex items-center gap-1 md:gap-1.5"
+    >
       <span
         key={tier.key}
-        className="tml-pass-pop inline-flex [&_svg]:h-[22px] [&_svg]:w-[22px] md:[&_svg]:h-8 md:[&_svg]:w-8"
+        className="tml-pass-pop inline-flex transition group-hover/tier:scale-110 group-active/tier:scale-95 [&_svg]:h-[22px] [&_svg]:w-[22px] md:[&_svg]:h-8 md:[&_svg]:w-8"
       >
         <TierBadge tierKey={tone === "black" ? "leader" : tier.key} size={22} />
       </span>
@@ -266,11 +369,15 @@ function MemberDashboard() {
       >
         {tier.label}
       </span>
-    </>
+    </button>
   );
   const avatarEl = (size: string) => (
-    <div
-      className={`relative block ${size} shrink-0 overflow-hidden rounded-lg border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60`}
+    <button
+      type="button"
+      onClick={() => setZoomAvatar(true)}
+      title={avatar.data ? "Nhấp để xem hoặc đổi ảnh đại diện" : "Thêm ảnh đại diện"}
+      aria-label={avatar.data ? "Xem hoặc đổi ảnh đại diện" : "Thêm ảnh đại diện"}
+      className={`relative block ${size} shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-2 border-background bg-secondary shadow-md ring-1 ring-gold/60 transition hover:brightness-105`}
     >
       {avatar.data ? (
         <img src={avatar.data} alt={m.full_name} className="h-full w-full object-cover" />
@@ -279,7 +386,7 @@ function MemberDashboard() {
           {m.full_name.charAt(0)}
         </span>
       )}
-    </div>
+    </button>
   );
   /**
    * Đông Sơn drum watermark: a transparent gold vector, blended into the porcelain.
@@ -911,6 +1018,154 @@ function MemberDashboard() {
           </Link>
           .
         </p>
+
+        {/* ===== Tier & points popup (opened from the rank badge or label) ===== */}
+        {tierOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cấp bậc, điểm và quyền lợi"
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+            onClick={() => setTierOpen(false)}
+          >
+            <div
+              className="relative my-6 max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gold/30 bg-[color:var(--portal-bg,#0d1527)]/95 p-6 text-white shadow-2xl shadow-black/80 backdrop-blur-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <h2 className="text-xl font-bold text-gold">Cấp bậc, Điểm &amp; Quyền lợi</h2>
+                <button
+                  type="button"
+                  onClick={() => setTierOpen(false)}
+                  aria-label="Đóng"
+                  className="rounded-full border border-gold/20 p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="mt-4">
+                <TierProgress points={effectivePoints} />
+                <div className="mt-6">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-semibold text-white/90">Lịch sử điểm</h3>
+                    <span className="rounded-full border border-gold/40 bg-gold/10 px-3 py-0.5 text-xs font-semibold text-gold">
+                      {displayTier.label} · {effectivePoints}
+                    </span>
+                  </div>
+                  <ol className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                    {history.isLoading && (
+                      <li className="p-6 text-center text-sm text-white/60">Đang tải…</li>
+                    )}
+                    {!history.isLoading && (history.data ?? []).length === 0 && (
+                      <li className="p-6 text-center text-sm text-white/60">
+                        Chưa có lịch sử điểm.
+                      </li>
+                    )}
+                    {(history.data ?? []).map((h) => (
+                      <li
+                        key={h.id}
+                        className="flex items-center gap-3 p-3.5 text-sm transition hover:bg-white/5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-white">{h.reason}</p>
+                          <p className="text-xs text-white/60">
+                            {new Date(h.created_at).toLocaleString("vi-VN")} ·{" "}
+                            {POINT_KIND[h.kind] ?? h.kind} · Số dư {h.balance_after}
+                          </p>
+                        </div>
+                        <span
+                          className={`font-mono font-bold ${h.delta >= 0 ? "text-emerald-400" : "text-rose-400"}`}
+                        >
+                          {h.delta > 0 ? `+${h.delta}` : h.delta}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                {me.data?.roles?.includes("admin") && (
+                  <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p className="text-xs font-semibold text-gold">
+                      Xem trước màu thẻ (chỉ Admin thấy, không đổi điểm thật)
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {[
+                        ...[...TIERS].reverse().map((t) => [t.tone, t.label] as const),
+                        [LEADER_TONE.key, LEADER_TONE.label] as const,
+                      ].map(([k, l]) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => {
+                            setPreviewTone(k);
+                            setTierOpen(false);
+                          }}
+                          style={{ background: `var(--pass-${k})` }}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold text-primary-foreground ring-2 ${previewTone === k ? "ring-gold" : "ring-transparent"}`}
+                        >
+                          {l}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewTone(null);
+                          setTierOpen(false);
+                        }}
+                        className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 transition hover:bg-white/10"
+                      >
+                        Mặc định
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCongrats(tier.label);
+                          setTierOpen(false);
+                        }}
+                        className="rounded-full bg-gold px-3 py-1 text-xs font-semibold text-slate-950"
+                      >
+                        Thử hiệu ứng lên bậc
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {zoomAvatar && (
+          <>
+            <input
+              ref={avatarFileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) pickAvatar(file);
+              }}
+            />
+            <AvatarLightbox
+              src={avatar.data ?? null}
+              name={m.full_name}
+              initial={m.full_name.charAt(0)}
+              onChange={() => avatarFileRef.current?.click()}
+              onClose={() => setZoomAvatar(false)}
+            />
+          </>
+        )}
+
+        {cropSrc && (
+          <AvatarCropDialog
+            src={cropSrc}
+            saving={savingAvatar}
+            onCancel={() => {
+              if (!savingAvatar) setCropSrc(null);
+            }}
+            onConfirm={saveAvatar}
+          />
+        )}
 
         {savedImg && (
           <div
