@@ -18,8 +18,9 @@ const updateTaskSchema = z.object({
 });
 
 /**
- * Edit a task in place: only someone with `tasks.edit` for the task's own department may change
- * it, and completed tasks stay immutable so the points ledger and evidence remain auditable.
+ * Edit a task in place: only its assigner (`tasks.created_by`) or an admin with `tasks.edit` for
+ * the task's own department may change it, and completed tasks stay immutable so the points
+ * ledger and evidence remain auditable.
  */
 export const updateTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -29,7 +30,7 @@ export const updateTask = createServerFn({ method: "POST" })
 
     const { data: task, error } = await supabaseAdmin
       .from("tasks")
-      .select("id, department, status, assignee_id, points")
+      .select("id, department, status, assignee_id, points, created_by")
       .eq("id", data.taskId)
       .single();
     if (error || !task) throw new Error("Nhiệm vụ không tồn tại.");
@@ -39,6 +40,12 @@ export const updateTask = createServerFn({ method: "POST" })
       _dept: task.department,
     });
     if (!canEdit) throw new Error("Bạn không có quyền chỉnh sửa nhiệm vụ này.");
+
+    const { data: isAdmin } = await context.supabase.rpc("is_admin");
+    if (!isAdmin && task.created_by !== context.userId) {
+      throw new Error("Chỉ người giao việc mới được chỉnh sửa nhiệm vụ này.");
+    }
+
     if (task.status === "done") {
       throw new Error("Không thể chỉnh sửa nhiệm vụ đã hoàn thành.");
     }

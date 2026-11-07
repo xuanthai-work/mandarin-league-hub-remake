@@ -33,11 +33,13 @@ import {
   type GroupedTask,
   type TaskAttachment,
   type TaskMember,
+  type TaskRights,
 } from "./shared";
 
 interface TaskDetailModalProps {
   group: GroupedTask;
   members: TaskMember[];
+  rights: TaskRights;
   onClose: () => void;
   onUpdated: () => void;
   onApprove: (group: GroupedTask) => void;
@@ -48,6 +50,7 @@ interface TaskDetailModalProps {
 export function TaskDetailModal({
   group,
   members,
+  rights,
   onClose,
   onUpdated,
   onApprove,
@@ -83,6 +86,7 @@ export function TaskDetailModal({
   const assigneeId = primary.assignee_id;
 
   const save = async () => {
+    if (!rights.edit) return;
     setErr("");
     if (title.trim().length < 3) return setErr("Tên nhiệm vụ tối thiểu 3 ký tự.");
     if (!assigneeId) return setErr("Vui lòng chọn người phụ trách.");
@@ -149,8 +153,15 @@ export function TaskDetailModal({
           {err && (
             <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{err}</p>
           )}
+          {!rights.edit && (
+            <p className="text-xs text-muted-foreground">
+              {group.status === "done"
+                ? "Nhiệm vụ đã hoàn thành nên không chỉnh sửa được."
+                : `Chỉ người giao việc (${group.assigned_by_name || "không rõ"}) hoặc Quản trị viên mới sửa, xóa hay duyệt được nhiệm vụ này.`}
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-2">
-            {group.status !== "done" && (
+            {rights.remove && (
               <Button
                 type="button"
                 variant="ghost"
@@ -163,7 +174,7 @@ export function TaskDetailModal({
             )}
 
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              {pending.length > 0 && (
+              {pending.length > 0 && rights.review && (
                 <>
                   <Button
                     type="button"
@@ -184,10 +195,12 @@ export function TaskDetailModal({
                   </Button>
                 </>
               )}
-              <Button type="button" size="admin-lg" onClick={() => void save()} disabled={busy}>
-                {busy ? <Loader2 aria-hidden className="animate-spin" /> : <Save aria-hidden />}
-                {busy ? "Đang lưu…" : "Lưu thay đổi"}
-              </Button>
+              {rights.edit && (
+                <Button type="button" size="admin-lg" onClick={() => void save()} disabled={busy}>
+                  {busy ? <Loader2 aria-hidden className="animate-spin" /> : <Save aria-hidden />}
+                  {busy ? "Đang lưu…" : "Lưu thay đổi"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -201,6 +214,7 @@ export function TaskDetailModal({
               {...f}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              readOnly={!rights.edit}
               maxLength={200}
               className="h-auto border-transparent bg-transparent px-2.5 py-1.5 text-sm font-semibold shadow-none placeholder:font-normal hover:border-border focus-visible:border-input"
             />
@@ -215,6 +229,7 @@ export function TaskDetailModal({
                 ref={textRef}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                readOnly={!rights.edit}
                 maxLength={3000}
                 rows={3}
                 placeholder="Mô tả kết quả cần đạt, minh chứng cần nộp…"
@@ -222,7 +237,11 @@ export function TaskDetailModal({
               />
             )}
           </FormField>
-          <TaskAttachmentsEditor attachments={attachments} onChange={setAttachments} />
+          <TaskAttachmentsEditor
+            attachments={attachments}
+            onChange={setAttachments}
+            readOnly={!rights.edit}
+          />
         </div>
 
         {reported.length > 0 && (
@@ -303,11 +322,26 @@ export function TaskDetailModal({
 
         <div className="grid grid-cols-2 gap-3">
           <FormField label="Mức độ ưu tiên">
-            {(f) => <TaskPrioritySelect id={f.id} value={priority} onChange={setPriority} />}
+            {(f) => (
+              <TaskPrioritySelect
+                id={f.id}
+                value={priority}
+                onChange={setPriority}
+                disabled={!rights.edit}
+              />
+            )}
           </FormField>
 
           <FormField label="Hạn chót">
-            {(f) => <DatePicker id={f.id} value={due} onChange={setDue} placeholder="Chọn hạn" />}
+            {(f) => (
+              <DatePicker
+                id={f.id}
+                value={due}
+                onChange={setDue}
+                disabled={!rights.edit}
+                placeholder="Chọn hạn"
+              />
+            )}
           </FormField>
         </div>
 
@@ -320,7 +354,7 @@ export function TaskDetailModal({
               </span>
             )}
           </div>
-          <TaskPointPicker value={points} onChange={setPoints} />
+          <TaskPointPicker value={points} onChange={setPoints} disabled={!rights.edit} />
         </div>
 
         <div className="space-y-1.5">
@@ -329,6 +363,7 @@ export function TaskDetailModal({
           <AdminInput
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            readOnly={!rights.edit}
             maxLength={200}
             aria-label="Ghi chú người giao"
             placeholder="Ghi chú người giao (tùy chọn)"

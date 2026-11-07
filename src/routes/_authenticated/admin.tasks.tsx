@@ -16,16 +16,21 @@ import { TaskKanbanBoard } from "@/components/admin/tasks/TaskKanbanBoard";
 import { TaskReviewDialog } from "@/components/admin/tasks/TaskReviewDialog";
 import {
   EMPTY_TASK_FILTERS,
+  groupRights,
   groupTasks,
   submittedTasks,
+  taskRights,
   type GroupedTask,
   type Task,
   type TaskFilters,
   type TaskMember,
+  type TaskViewer,
 } from "@/components/admin/tasks/shared";
 import { supabase } from "@/integrations/supabase/client";
+import { can } from "@/lib/permission-catalog";
 import { getAssignableMembers } from "@/lib/tasks.functions";
 import { matchesSearch } from "@/lib/search";
+import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/tasks")({
   staticData: { sitemap: false },
@@ -57,14 +62,33 @@ function TasksPage() {
         []) as Task[],
   });
   const me = useQuery({
-    queryKey: ["me-label"],
+    queryKey: ["task-viewer-me"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("my_account");
-      const m = (data as { member?: { full_name?: string; position?: string } | null } | null)
-        ?.member;
-      return m?.full_name ? `${m.full_name}${m.position ? ` · ${m.position}` : ""}` : "";
+      const [{ data }, { data: session }] = await Promise.all([
+        supabase.rpc("my_account"),
+        supabase.auth.getSession(),
+      ]);
+      const m = (
+        data as { member?: { id?: string; full_name?: string; position?: string } | null } | null
+      )?.member;
+      return {
+        label: m?.full_name ? `${m.full_name}${m.position ? ` · ${m.position}` : ""}` : "",
+        memberId: m?.id ?? null,
+        userId: session.session?.user.id ?? "",
+      };
     },
   });
+  const access = useAdminAccess().data;
+  const viewer: TaskViewer | null =
+    access && me.data?.userId
+      ? {
+          userId: me.data.userId,
+          memberId: me.data.memberId,
+          department: access.department,
+          perms: access.perms,
+        }
+      : null;
+  const canCreate = !!(access && can(access.perms, "tasks.create"));
 
   const [filters, setFilters] = useState<TaskFilters>(EMPTY_TASK_FILTERS);
   const [person, setPerson] = useState("");
@@ -178,7 +202,7 @@ function TasksPage() {
   };
 
   const approveGroup = async (group: GroupedTask) => {
-    const targets = submittedTasks(group);
+    const targets = submittedTasks(group).filter((t) => taskRights(t, viewer).review);
     if (targets.length === 0) return;
     const points = targets.reduce((sum, task) => sum + (task.points || 0), 0);
     const ok = await confirm({
@@ -192,12 +216,23 @@ function TasksPage() {
     if (!ok) return;
     if (await reviewTasks(targets, true)) toast.success(`Đã duyệt và cộng ${points} điểm`);
   };
-  const reviseGroup = (group: GroupedTask) => openRevision(group.title, submittedTasks(group));
-  const removeGroup = (group: GroupedTask) =>
-    void removeTasks(
+  const reviseGroup = (group: GroupedTask) =>
+    openRevision(
       group.title,
-      group.rawTasks.filter((task) => task.status !== "done"),
+      submittedTasks(group).filter((t) => taskRights(t, viewer).review),
     );
+  const removeGroup = (group: GroupedTask) => {
+    const targets = group.rawTasks.filter((task) => taskRights(task, viewer).remove);
+    if (targets.length === 0) {
+      if (group.rawTasks.every((t) => t.status === "done")) {
+        toast.info("Nhiệm vụ đã hoàn thành nên không xóa được");
+      } else {
+        toast.error("Chỉ người giao việc mới được xóa nhiệm vụ này");
+      }
+      return;
+    }
+    void removeTasks(group.title, targets);
+  };
 
   /** Modal actions close the detail view first so the board reflects the new state. */
   const approveFromModal = (group: GroupedTask) => {
@@ -218,18 +253,20 @@ function TasksPage() {
       {dialog}
       <AdminPageHeader
         title="Nhiệm vụ"
-        description="Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Trưởng Ban chỉ quản lý Ban mình."
+        description="Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Chỉ người giao việc mới sửa, xóa hoặc duyệt được nhiệm vụ của mình."
         actions={
-          <Button
-            type="button"
-            size="admin"
-            onClick={() => setCreating(true)}
-            aria-label="Giao nhiệm vụ"
-            title="Giao nhiệm vụ"
-          >
-            <Plus aria-hidden />
-            <span className="hidden sm:inline">Giao nhiệm vụ</span>
-          </Button>
+          canCreate ? (
+            <Button
+              type="button"
+              size="admin"
+              onClick={() => setCreating(true)}
+              aria-label="Giao nhiệm vụ"
+              title="Giao nhiệm vụ"
+            >
+              <Plus aria-hidden />
+              <span className="hidden sm:inline">Giao nhiệm vụ</span>
+            </Button>
+          ) : undefined
         }
       />
 
@@ -260,6 +297,7 @@ function TasksPage() {
       ) : (
         <TaskKanbanBoard
           groups={groups}
+          rightsOf={(g) => groupRights(g, viewer)}
           onSelectGroup={(group) => setSelectedGroup(group)}
           onApprove={approveGroup}
           onRequestRevision={reviseGroup}
@@ -269,11 +307,11 @@ function TasksPage() {
       )}
 
       <AnimatePresence>
-        {creating && (
+        {creating && canCreate && (
           <TaskCreateModal
             key="create-task"
             members={memberList}
-            meLabel={me.data ?? ""}
+            meLabel={me.data?.label ?? ""}
             onClose={() => setCreating(false)}
             onCreated={refresh}
           />
@@ -283,6 +321,7 @@ function TasksPage() {
             key={`detail-${selectedGroup.key}`}
             group={selectedGroup}
             members={memberList}
+            rights={groupRights(selectedGroup, viewer)}
             onClose={() => setSelectedGroup(null)}
             onUpdated={refresh}
             onApprove={approveFromModal}

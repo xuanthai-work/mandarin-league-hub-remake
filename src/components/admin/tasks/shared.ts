@@ -1,5 +1,6 @@
 import { PRIORITY } from "@/lib/points";
 import { deptName } from "@/lib/recruitment";
+import { can, type MyPermissions } from "@/lib/permission-catalog";
 
 export type Task = {
   id: string;
@@ -16,6 +17,7 @@ export type Task = {
   review_note: string;
   assigned_by_name: string;
   assigned_by_note: string;
+  created_by: string | null;
   created_at: string;
 };
 
@@ -321,6 +323,48 @@ export function groupTasks(tasks: Task[], members: TaskMember[]): GroupedTask[] 
 /** Cards still awaiting review inside a task. */
 export const submittedTasks = (group: GroupedTask) =>
   group.rawTasks.filter((task) => task.status === "submitted");
+
+/** Who is looking at the board: auth user id (matches tasks.created_by), member id and permissions. */
+export type TaskViewer = {
+  userId: string;
+  memberId: string | null;
+  department: string | null;
+  perms: MyPermissions;
+};
+
+export type TaskRights = { edit: boolean; remove: boolean; review: boolean };
+
+export const NO_TASK_RIGHTS: TaskRights = { edit: false, remove: false, review: false };
+
+/**
+ * Client mirror of updateTask / delete_task / review_task: only the assigner (tasks.created_by)
+ * or an admin, who also holds the matching action for the task's department. The server re-checks.
+ */
+export function taskRights(task: Task, viewer: TaskViewer | null): TaskRights {
+  if (!viewer) return NO_TASK_RIGHTS;
+  const { perms, userId, memberId, department } = viewer;
+  const owner = perms.isAdmin || (!!task.created_by && task.created_by === userId);
+  if (!owner) return NO_TASK_RIGHTS;
+  const open = task.status !== "done";
+  return {
+    edit: open && can(perms, "tasks.edit", task.department, department),
+    remove: open && can(perms, "tasks.delete", task.department, department),
+    review:
+      task.status === "submitted" &&
+      can(perms, "tasks.review", task.department, department) &&
+      (perms.isAdmin || task.assignee_id !== memberId),
+  };
+}
+
+/** Rights for a board card: every raw row must allow the action (cards hold one row today). */
+export function groupRights(group: GroupedTask, viewer: TaskViewer | null): TaskRights {
+  const all = group.rawTasks.map((t) => taskRights(t, viewer));
+  return {
+    edit: all.length > 0 && all.every((r) => r.edit),
+    remove: all.some((r) => r.remove),
+    review: all.some((r) => r.review),
+  };
+}
 
 /* ------------------------------------------------------------------------- *
  * Visual tones

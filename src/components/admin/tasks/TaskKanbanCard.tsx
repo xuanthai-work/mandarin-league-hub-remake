@@ -12,12 +12,14 @@ import {
   priorityLabel,
   submittedTasks,
   type GroupedTask,
+  type TaskRights,
 } from "./shared";
 
 interface TaskKanbanCardProps {
   group: GroupedTask;
   /** True inside the "Chờ duyệt báo cáo" column: evidence + fast review actions. */
   inReview: boolean;
+  rights: TaskRights;
   onOpen: () => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
@@ -31,6 +33,7 @@ const MAX_AVATARS = 3;
 export function TaskKanbanCard({
   group,
   inReview,
+  rights,
   onOpen,
   onApprove,
   onRequestRevision,
@@ -118,25 +121,27 @@ export function TaskKanbanCard({
             <p className="text-[11px] text-muted-foreground">Chưa đính kèm minh chứng.</p>
           )}
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Button
-              type="button"
-              size="admin-sm"
-              onClick={() => onApprove(group)}
-              className="h-7 gap-1 bg-success px-2.5 text-[11px] text-success-foreground hover:bg-success/90 [&_svg]:size-3.5"
-            >
-              <Check aria-hidden /> Duyệt (+{pendingPoints}đ)
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="admin-sm"
-              onClick={() => onRequestRevision(group)}
-              className="h-7 gap-1 px-2.5 text-[11px] [&_svg]:size-3.5"
-            >
-              <RotateCcw aria-hidden /> Làm lại
-            </Button>
-          </div>
+          {rights.review && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Button
+                type="button"
+                size="admin-sm"
+                onClick={() => onApprove(group)}
+                className="h-7 gap-1 bg-success px-2.5 text-[11px] text-success-foreground hover:bg-success/90 [&_svg]:size-3.5"
+              >
+                <Check aria-hidden /> Duyệt (+{pendingPoints}đ)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="admin-sm"
+                onClick={() => onRequestRevision(group)}
+                className="h-7 gap-1 px-2.5 text-[11px] [&_svg]:size-3.5"
+              >
+                <RotateCcw aria-hidden /> Làm lại
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

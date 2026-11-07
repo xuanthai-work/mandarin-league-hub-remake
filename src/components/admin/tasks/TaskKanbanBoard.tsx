@@ -3,10 +3,11 @@ import type { ComponentType } from "react";
 
 import { cn } from "@/lib/utils";
 import { TaskKanbanCard } from "./TaskKanbanCard";
-import { BOARD_COLUMNS, dueDiff, type GroupedTask } from "./shared";
+import { BOARD_COLUMNS, dueDiff, type GroupedTask, type TaskRights } from "./shared";
 
 interface TaskKanbanBoardProps {
   groups: GroupedTask[];
+  rightsOf: (group: GroupedTask) => TaskRights;
   onSelectGroup: (group: GroupedTask) => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
@@ -33,6 +34,7 @@ function byDeadline(a: GroupedTask, b: GroupedTask) {
 
 export function TaskKanbanBoard({
   groups,
+  rightsOf,
   onSelectGroup,
   onApprove,
   onRequestRevision,
@@ -94,6 +96,7 @@ export function TaskKanbanBoard({
                     key={group.key}
                     group={group}
                     inReview={column.key === "review"}
+                    rights={rightsOf(group)}
                     onOpen={() => onSelectGroup(group)}
                     onApprove={onApprove}
                     onRequestRevision={onRequestRevision}

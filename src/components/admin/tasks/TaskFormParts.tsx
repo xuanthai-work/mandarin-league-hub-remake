@@ -46,13 +46,15 @@ export function TaskPrioritySelect({
   id,
   value,
   onChange,
+  disabled,
 }: {
   id?: string;
   value: TaskPriority;
   onChange: (value: TaskPriority) => void;
+  disabled?: boolean;
 }) {
   return (
-    <Select value={value} onValueChange={(v) => onChange(toTaskPriority(v))}>
+    <Select value={value} onValueChange={(v) => onChange(toTaskPriority(v))} disabled={disabled}>
       <SelectTrigger
         {...(id ? { id } : {})}
         className="h-9 rounded-xl border-input text-xs font-normal"
@@ -76,9 +78,11 @@ export function TaskPrioritySelect({
 export function TaskPointPicker({
   value,
   onChange,
+  disabled,
 }: {
   value: number;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }) {
   return (
     <div role="group" aria-label="Điểm thưởng cống hiến" className="grid grid-cols-3 gap-1.5">
@@ -91,6 +95,7 @@ export function TaskPointPicker({
             size="admin"
             variant={active ? "default" : "outline"}
             aria-pressed={active}
+            disabled={disabled}
             onClick={() => onChange(opt.value)}
             className="gap-1.5 px-2"
           >
@@ -119,9 +124,11 @@ const newDocId = () =>
 export function TaskAttachmentsEditor({
   attachments,
   onChange,
+  readOnly,
 }: {
   attachments: TaskAttachment[];
   onChange: (next: TaskAttachment[]) => void;
+  readOnly?: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [docTitle, setDocTitle] = useState("");
@@ -152,6 +159,8 @@ export function TaskAttachmentsEditor({
     }
   };
 
+  if (readOnly && attachments.length === 0) return null;
+
   return (
     <section className="space-y-2">
       {attachments.length > 0 && (
@@ -178,66 +187,69 @@ export function TaskAttachmentsEditor({
               >
                 <ExternalLink aria-hidden className="h-3.5 w-3.5" />
               </a>
-              <Button
-                type="button"
-                variant="ghost"
-                size="admin-icon"
-                onClick={() => onChange(attachments.filter((item) => item.id !== doc.id))}
-                aria-label={`Gỡ tài liệu ${doc.title}`}
-                title="Gỡ tài liệu"
-                className="h-7 w-7 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3.5"
-              >
-                <X aria-hidden />
-              </Button>
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="admin-icon"
+                  onClick={() => onChange(attachments.filter((item) => item.id !== doc.id))}
+                  aria-label={`Gỡ tài liệu ${doc.title}`}
+                  title="Gỡ tài liệu"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3.5"
+                >
+                  <X aria-hidden />
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       )}
-      {adding ? (
-        <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-2.5">
-          <AdminInput
-            autoFocus
-            value={docUrl}
-            onChange={(e) => setDocUrl(e.target.value)}
-            onKeyDown={addOnEnter}
-            aria-label="URL tài liệu"
-            placeholder="https://drive.google.com/…, https://docs.google.com/…"
-            className="text-xs"
-          />
-          <AdminInput
-            value={docTitle}
-            onChange={(e) => setDocTitle(e.target.value)}
-            onKeyDown={addOnEnter}
-            aria-label="Tên tài liệu"
-            maxLength={120}
-            placeholder="Tên tài liệu (tùy chọn): Brief chiến dịch, File mẫu thiết kế…"
-            className="text-xs"
-          />
-          {docErr && (
-            <p role="alert" className="text-[11px] text-destructive">
-              {docErr}
-            </p>
-          )}
-          <div className="flex items-center gap-1.5">
-            <Button type="button" size="admin-sm" onClick={add}>
-              Thêm
-            </Button>
-            <Button type="button" variant="outline" size="admin-sm" onClick={reset}>
-              Hủy
-            </Button>
+      {!readOnly &&
+        (adding ? (
+          <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-2.5">
+            <AdminInput
+              autoFocus
+              value={docUrl}
+              onChange={(e) => setDocUrl(e.target.value)}
+              onKeyDown={addOnEnter}
+              aria-label="URL tài liệu"
+              placeholder="https://drive.google.com/…, https://docs.google.com/…"
+              className="text-xs"
+            />
+            <AdminInput
+              value={docTitle}
+              onChange={(e) => setDocTitle(e.target.value)}
+              onKeyDown={addOnEnter}
+              aria-label="Tên tài liệu"
+              maxLength={120}
+              placeholder="Tên tài liệu (tùy chọn): Brief chiến dịch, File mẫu thiết kế…"
+              className="text-xs"
+            />
+            {docErr && (
+              <p role="alert" className="text-[11px] text-destructive">
+                {docErr}
+              </p>
+            )}
+            <div className="flex items-center gap-1.5">
+              <Button type="button" size="admin-sm" onClick={add}>
+                Thêm
+              </Button>
+              <Button type="button" variant="outline" size="admin-sm" onClick={reset}>
+                Hủy
+              </Button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <Button
-          type="button"
-          variant="link"
-          onClick={() => setAdding(true)}
-          className="h-auto gap-1 p-0 text-xs font-normal text-muted-foreground underline underline-offset-2 hover:text-foreground [&_svg]:size-3.5"
-        >
-          <Paperclip aria-hidden />
-          Thêm tài liệu liên quan
-        </Button>
-      )}
+        ) : (
+          <Button
+            type="button"
+            variant="link"
+            onClick={() => setAdding(true)}
+            className="h-auto gap-1 p-0 text-xs font-normal text-muted-foreground underline underline-offset-2 hover:text-foreground [&_svg]:size-3.5"
+          >
+            <Paperclip aria-hidden />
+            Thêm tài liệu liên quan
+          </Button>
+        ))}
     </section>
   );
 }
