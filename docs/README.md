@@ -250,6 +250,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-188-MEMBERS-PERMS-VIEW-EDIT`                                  | Quyền Thành viên: xem mọi Ban / sửa (gộp 6 quyền vào members.edit)                                     | 2026-11-08     | **PASS** | [task-ge-188-members-perms-view-edit.md](tasks/task-ge-188-members-perms-view-edit.md)                                                                   |
 | `TASK-GE-189-TASKS-PERMS-VIEW-CREATE-EDIT`                             | Quyền Nhiệm vụ: xem / giao / sửa (gộp review, delete vào tasks.edit)                                   | 2026-11-08     | **PASS** | [task-ge-189-tasks-perms-view-create-edit.md](tasks/task-ge-189-tasks-perms-view-create-edit.md)                                                         |
 | `TASK-GE-190-CONTRIBUTIONS-PERMS`                                      | Quyền Đóng góp: Phó Ban được thưởng/trừ điểm, đặt lại ma trận points                                   | 2026-11-08     | **PASS** | [task-ge-190-contributions-perms.md](tasks/task-ge-190-contributions-perms.md)                                                                           |
+| `TASK-OC-175-ACADEMIC-PERMS-VIEW-EDIT`                                 | Quyền Học thuật: xem / sửa cho Khóa học, Giáo viên, HSK, Chứng nhận                                    | 2026-11-08     | **PASS** | [task-oc-175-academic-perms-view-edit.md](tasks/task-oc-175-academic-perms-view-edit.md)                                                                 |
 
 ---
 

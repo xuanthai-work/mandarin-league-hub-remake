@@ -40,7 +40,7 @@ export const extractCertificate = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { data: allowed, error: permError } = await context.supabase.rpc("has_perm", {
-      _action: "certificates.ai",
+      _action: "certificates.edit",
     });
     if (permError) throw new Error(permError.message);
     if (allowed !== true) throw new Error("Bạn không có quyền dùng AI đọc chứng nhận.");

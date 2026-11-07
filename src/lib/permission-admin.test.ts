@@ -33,7 +33,7 @@ describe("actionGroups", () => {
     const groups = actionGroups();
     const total = groups.reduce((n, g) => n + g.actions.length, 0);
     expect(total).toBe(PERMISSION_ACTIONS.length);
-    expect(total).toBe(40);
+    expect(total).toBe(38);
     expect(groups[0]?.module).toBe("recruitment");
   });
 });

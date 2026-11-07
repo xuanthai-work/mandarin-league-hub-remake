@@ -45,10 +45,10 @@ describe("allowedSections", () => {
   it("opens academic sections for an academic head but not certificates", () => {
     const allowed = allowedSections(
       perms({
-        "courses.manage": "all",
-        "teachers.manage": "all",
+        "courses.edit": "all",
+        "teachers.edit": "all",
         "hsk.view": "all",
-        "hsk.manage": "all",
+        "hsk.edit": "all",
       }),
     );
     expect(allowed).toContain("courses");
@@ -57,12 +57,19 @@ describe("allowedSections", () => {
     expect(allowed).not.toContain("certificates");
   });
 
-  it("opens hsk from hsk.delete alone", () => {
-    expect(allowedSections(perms({ "hsk.delete": "all" }))).toEqual(["hsk"]);
+  it("opens hsk from hsk.edit alone", () => {
+    expect(allowedSections(perms({ "hsk.edit": "all" }))).toEqual(["hsk"]);
   });
 
-  it("opens courses from enrollments.view alone", () => {
-    expect(allowedSections(perms({ "enrollments.view": "all" }))).toEqual(["courses"]);
+  it("opens courses from courses.view alone", () => {
+    expect(allowedSections(perms({ "courses.view": "all" }))).toEqual(["courses"]);
+  });
+
+  it("opens certificates and teachers from their view actions", () => {
+    expect(allowedSections(perms({ "certificates.view": "all", "teachers.view": "all" }))).toEqual([
+      "teachers",
+      "certificates",
+    ]);
   });
 
   it("opens recruitment from questions.edit alone", () => {
