@@ -21,18 +21,6 @@ import {
   Gift,
 } from "lucide-react";
 
-export type AdminRole = "admin" | "department_head" | "deputy_head" | "member";
-
-export const ROLE_LABELS: Record<AdminRole, string> = {
-  admin: "Quản trị viên",
-  department_head: "Trưởng Ban",
-  deputy_head: "Phó Ban",
-  member: "Thành viên",
-};
-
-/** Highest role first. */
-export const ROLE_PRIORITY: AdminRole[] = ["admin", "department_head", "deputy_head", "member"];
-
 /** Badge text for the signed-in user: the admin flag first, then the real position from `members`. */
 export function accessLabel(isAdmin: boolean, position: string | null | undefined): string {
   if (isAdmin) return "Quản trị viên";

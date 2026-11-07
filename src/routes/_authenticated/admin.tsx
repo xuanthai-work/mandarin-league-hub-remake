@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ADMIN_SECTIONS,
   OVERVIEW_ICON,
-  ROLE_PRIORITY,
   accessLabel,
   navGroupsFor,
   type AdminNavGroup,
@@ -138,7 +137,7 @@ export function useAdminAccess() {
         member: { department: string; full_name: string; position: string | null } | null;
       };
       const blocked = !!me.account && me.account.account_status !== "active";
-      const roles = blocked ? [] : ROLE_PRIORITY.filter((r) => me.roles.includes(r));
+      const roles = blocked ? [] : me.roles.filter((r) => r === "admin");
       const department = blocked ? null : (me.member?.department ?? null);
       const perms = blocked ? NO_PERMISSIONS : parseMyPermissions(permsData);
       const base = allowedSections(perms);

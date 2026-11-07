@@ -41,7 +41,6 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deptName } from "@/lib/recruitment";
 import { csvCell } from "@/lib/csv";
 import { matchesSearch } from "@/lib/search";
-import { type AdminRole } from "@/lib/admin-nav";
 import {
   createAccount,
   deleteAccount,
@@ -50,15 +49,7 @@ import {
   resetAccountPassword,
   updateAccount,
 } from "@/lib/accounts.functions";
-import {
-  ACCOUNT_DEPTS,
-  ACCESS_LABELS,
-  PERMISSION_TEMPLATES,
-  PERMISSIONS,
-  positionsFor,
-  type AccessLevel,
-  type AccountStatus,
-} from "@/lib/accounts";
+import { ACCOUNT_DEPTS, positionsFor, type AccountStatus } from "@/lib/accounts";
 import { useAdminAccess } from "./admin";
 import { can } from "@/lib/permission-catalog";
 
@@ -95,8 +86,7 @@ type AccountInfo = {
   email: string;
   status: string;
   mustChange: boolean;
-  permissions: string[];
-  access: AdminRole;
+  isAdmin: boolean;
 };
 type Row = {
   id: string;
@@ -219,46 +209,24 @@ function MemberStatusPill({ m }: { m: MemberRow }) {
   return <StatusPill tone={UNIFIED_STATUS_TONE[s]}>{UNIFIED_STATUS_MAP[s].label}</StatusPill>;
 }
 
-/** 14 permission toggles rendered as compact switch rows; click anywhere on a row to toggle. */
-function PermissionSwitches({
-  selected,
-  onToggle,
+/** The only account-level role left: the admin flag (everything else follows the permission matrix). */
+function AdminFlagRow({
+  checked,
+  onChange,
 }: {
-  selected: string[];
-  onToggle: (key: string) => void;
+  checked: boolean;
+  onChange: (on: boolean) => void;
 }) {
   return (
-    <div className="space-y-1.5">
-      <div>
-        <h4 className="text-xs font-semibold text-foreground">Quyền chi tiết</h4>
-        <p className="text-[11px] text-muted-foreground">
-          Mặc định theo vai trò đã chọn — có thể bật hoặc tắt từng quyền.
-        </p>
-      </div>
-      <div className="grid gap-x-4 sm:grid-cols-2">
-        {PERMISSIONS.map(([k, l]) => {
-          const on = selected.includes(k);
-          return (
-            <label
-              key={k}
-              className="flex cursor-pointer select-none items-center justify-between gap-2 rounded px-1 py-0.5 transition-colors hover:bg-muted/50"
-            >
-              <span
-                className={cn(
-                  "truncate text-xs",
-                  on ? "font-medium text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {l}
-              </span>
-              <span className="shrink-0">
-                <Switch checked={on} onCheckedChange={() => onToggle(k)} className="scale-75" />
-              </span>
-            </label>
-          );
-        })}
-      </div>
-    </div>
+    <label className="flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-border p-3">
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-foreground">Quản trị viên</span>
+        <span className="block text-[11px] text-muted-foreground">
+          Có mọi quyền, kể cả sửa ma trận phân quyền. Quyền khác đi theo Ban và Chức vụ.
+        </span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} aria-label="Quản trị viên" />
+    </label>
   );
 }
 
@@ -358,7 +326,7 @@ function DepartmentSection({
             <td className="p-3 pl-1.5">
               <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 font-medium text-foreground">
                 <span className="truncate">{m.position}</span>
-                {m.account?.access === "admin" && (
+                {m.account?.isAdmin && (
                   <span className="shrink-0 rounded bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[color:var(--metal-gold-lo)] dark:text-gold">
                     Admin
                   </span>
@@ -439,8 +407,7 @@ function MembersPage() {
           email: a.email,
           status: a.status,
           mustChange: a.mustChange,
-          permissions: a.permissions,
-          access: a.access as AdminRole,
+          isAdmin: a.isAdmin,
         });
       }
       return (m.data ?? []).map((x) => ({
@@ -699,8 +666,7 @@ function MemberDrawer({
   const [leaveFrom, setLeaveFrom] = useState(m.leave_from ?? today);
   const [leaveUntil, setLeaveUntil] = useState(m.leave_until ?? "");
   const [note, setNote] = useState(m.status_note ?? "");
-  const [access, setAccess] = useState<AccessLevel>(m.account?.access ?? "member");
-  const [permissions, setPermissions] = useState<string[]>(m.account?.permissions ?? []);
+  const [adminFlag, setAdminFlag] = useState(m.account?.isAdmin ?? false);
   const [pw, setPw] = useState(randomPassword());
   const [confirmText, setConfirmText] = useState("");
   const [grantOpen, setGrantOpen] = useState(false);
@@ -764,14 +730,12 @@ function MemberDrawer({
             userId: m.account.userId,
             department,
             position,
-            access,
-            permissions,
+            isAdmin: adminFlag,
             status: UNIFIED_ACCOUNT_STATUS[status],
           },
         });
         // Keep the drawer's account snapshot in sync until the refetch lands.
-        m.account.access = access;
-        m.account.permissions = permissions;
+        m.account.isAdmin = adminFlag;
       }
       setMsg("Đã lưu thay đổi.");
       toast.success("Đã lưu thay đổi");
@@ -1070,39 +1034,7 @@ function MemberDrawer({
                   )}
                 </Button>
               </div>
-              <FormField label="Vai trò hệ thống">
-                {(field) => (
-                  <Select
-                    value={access}
-                    onValueChange={(val) => {
-                      const a = val as AccessLevel;
-                      setAccess(a);
-                      setPermissions(PERMISSION_TEMPLATES[a]);
-                    }}
-                  >
-                    <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
-                      <SelectValue placeholder="Chọn vai trò" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {Object.entries(ACCESS_LABELS).map(([k, l]) => (
-                        <SelectItem key={k} value={k} className="text-xs">
-                          {l}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
-              <PermissionSwitches
-                selected={permissions}
-                onToggle={(k) =>
-                  setPermissions(
-                    permissions.includes(k)
-                      ? permissions.filter((x) => x !== k)
-                      : [...permissions, k],
-                  )
-                }
-              />
+              <AdminFlagRow checked={adminFlag} onChange={setAdminFlag} />
               <div className="rounded-xl border border-border/70 p-3">
                 <h4 className="flex items-center gap-2 text-sm font-semibold">
                   <KeyRound className="h-4 w-4" />
@@ -1285,8 +1217,7 @@ function GrantAccount({
   const [v, setV] = useState({
     email: m.email ?? "",
     password: randomPassword(),
-    access: "member" as AccessLevel,
-    permissions: PERMISSION_TEMPLATES.member as string[],
+    isAdmin: false,
     status: "active" as AccountStatus,
     mustChange: true,
   });
@@ -1317,8 +1248,7 @@ function GrantAccount({
           password: v.password,
           department: m.department,
           position: m.position,
-          access: v.access,
-          permissions: v.permissions,
+          isAdmin: v.isAdmin,
           status: v.status,
           mustChange: v.mustChange,
         },
@@ -1404,28 +1334,6 @@ function GrantAccount({
         )}
       </FormField>
       <div className="grid gap-2 sm:grid-cols-2">
-        <FormField label="Vai trò hệ thống">
-          {(field) => (
-            <Select
-              value={v.access}
-              onValueChange={(val) => {
-                const a = val as AccessLevel;
-                set({ access: a, permissions: PERMISSION_TEMPLATES[a] });
-              }}
-            >
-              <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
-                <SelectValue placeholder="Chọn vai trò" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {Object.entries(ACCESS_LABELS).map(([k, l]) => (
-                  <SelectItem key={k} value={k} className="text-xs">
-                    {l}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FormField>
         <FormField label="Trạng thái tài khoản">
           {(field) => (
             <Select value={v.status} onValueChange={(val) => set({ status: val as AccountStatus })}>
@@ -1443,16 +1351,7 @@ function GrantAccount({
           )}
         </FormField>
       </div>
-      <PermissionSwitches
-        selected={v.permissions}
-        onToggle={(k) =>
-          set({
-            permissions: v.permissions.includes(k)
-              ? v.permissions.filter((x) => x !== k)
-              : [...v.permissions, k],
-          })
-        }
-      />
+      <AdminFlagRow checked={v.isAdmin} onChange={(on) => set({ isAdmin: on })} />
       <label className="flex items-center gap-2 text-sm">
         <Checkbox checked={v.mustChange} onCheckedChange={(c) => set({ mustChange: c === true })} />
         Yêu cầu đổi mật khẩu khi đăng nhập lần đầu
@@ -1488,8 +1387,7 @@ function NewMemberDrawer({
     position: positionsFor("executive")[0]!,
     withAccount: false,
     password: randomPassword(),
-    access: "member" as AccessLevel,
-    permissions: PERMISSION_TEMPLATES.member as string[],
+    isAdmin: false,
     mustChange: true,
   });
   const [err, setErr] = useState("");
@@ -1513,8 +1411,7 @@ function NewMemberDrawer({
             password: v.password,
             department: v.department,
             position: v.position,
-            access: v.access,
-            permissions: v.permissions,
+            isAdmin: v.isAdmin,
             status: UNIFIED_ACCOUNT_STATUS.active,
             mustChange: v.mustChange,
           },
@@ -1723,38 +1620,10 @@ function NewMemberDrawer({
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Quyền quản trị
           </h3>
-          <FormField label="Vai trò hệ thống">
-            {(field) => (
-              <Select
-                value={v.access}
-                onValueChange={(val) => {
-                  const a = val as AccessLevel;
-                  set({ access: a, permissions: PERMISSION_TEMPLATES[a] });
-                }}
-              >
-                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
-                  <SelectValue placeholder="Chọn vai trò" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {Object.entries(ACCESS_LABELS).map(([k, l]) => (
-                    <SelectItem key={k} value={k} className="text-xs">
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-          <PermissionSwitches
-            selected={v.permissions}
-            onToggle={(k) =>
-              set({
-                permissions: v.permissions.includes(k)
-                  ? v.permissions.filter((x) => x !== k)
-                  : [...v.permissions, k],
-              })
-            }
-          />
+          <p className="text-[11px] text-muted-foreground">
+            Quyền quản trị của thành viên đi theo Ban và Chức vụ (xem trang Phân quyền).
+          </p>
+          <AdminFlagRow checked={v.isAdmin} onChange={(on) => set({ isAdmin: on })} />
         </section>
       )}
 

@@ -1140,7 +1140,6 @@ export type Database = {
           login_email: string;
           member_id: string;
           must_change_password: boolean;
-          permissions: string[];
           user_id: string;
         };
         Insert: {
@@ -1150,7 +1149,6 @@ export type Database = {
           login_email: string;
           member_id: string;
           must_change_password?: boolean;
-          permissions?: string[];
           user_id: string;
         };
         Update: {
@@ -1160,7 +1158,6 @@ export type Database = {
           login_email?: string;
           member_id?: string;
           must_change_password?: boolean;
-          permissions?: string[];
           user_id?: string;
         };
         Relationships: [

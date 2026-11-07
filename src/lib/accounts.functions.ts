@@ -2,12 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { currentAccessOf, legacyAccessChangeError } from "@/lib/account-rules";
 import type { PermissionCode } from "@/lib/permission-catalog";
 
-const access = z.enum(["admin", "department_head", "deputy_head", "member"]);
 const status = z.enum(["inactive", "active", "suspended", "disabled"]);
-const perms = z.array(z.string().max(40)).max(30);
 
 type Ctx = { supabase: SupabaseClient; userId: string };
 
@@ -32,10 +29,24 @@ async function must(ok: Promise<boolean>, message: string) {
 
 const ban = (s: string) => (s === "active" ? "none" : "876000h");
 
-async function setAccess(db: SupabaseClient, userId: string, level: string) {
-  await db.from("user_roles").delete().eq("user_id", userId);
-  const { error } = await db.from("user_roles").insert({ user_id: userId, role: level });
-  if (error) throw new Error(error.message);
+/** The admin flag is the only role kept in user_roles. */
+async function setAdminFlag(db: SupabaseClient, userId: string, on: boolean) {
+  if (on) {
+    const { error } = await db
+      .from("user_roles")
+      .upsert(
+        { user_id: userId, role: "admin" },
+        { onConflict: "user_id,role", ignoreDuplicates: true },
+      );
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await db
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .eq("role", "admin");
+    if (error) throw new Error(error.message);
+  }
 }
 
 async function adminCount(db: SupabaseClient) {
@@ -45,36 +56,6 @@ async function adminCount(db: SupabaseClient) {
     .eq("role", "admin");
   return count ?? 0;
 }
-
-export const listAccounts = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await must(isAdmin(context), "Chỉ Quản trị viên được xem toàn bộ tài khoản.");
-    const db = await serviceDb();
-    const [{ data: accts }, { data: roles }, { data: users }] = await Promise.all([
-      db.from("member_accounts").select("*, members(*)").order("created_at", { ascending: false }),
-      db.from("user_roles").select("user_id, role"),
-      db.auth.admin.listUsers({ perPage: 1000 }),
-    ]);
-    const lastSeen = new Map((users?.users ?? []).map((u) => [u.id, u.last_sign_in_at ?? null]));
-    return (accts ?? []).map((a) => ({
-      user_id: a.user_id as string,
-      login_email: a.login_email as string,
-      account_status: a.account_status as string,
-      must_change_password: a.must_change_password as boolean,
-      permissions: a.permissions as string[],
-      created_at: a.created_at as string,
-      last_login_at: (a.last_login_at ?? lastSeen.get(a.user_id) ?? null) as string | null,
-      access: ((roles ?? []).find((r) => r.user_id === a.user_id)?.role ?? "member") as string,
-      member: a.members as {
-        id: string;
-        member_code: string;
-        full_name: string;
-        department: string;
-        position: string;
-      },
-    }));
-  });
 
 export const getAdminMemberAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -88,7 +69,7 @@ export const getAdminMemberAccounts = createServerFn({ method: "GET" })
       db
         .from("member_accounts")
         .select(
-          "user_id, member_id, login_email, account_status, must_change_password, permissions, members(department)",
+          "user_id, member_id, login_email, account_status, must_change_password, members(department)",
         ),
       db.from("user_roles").select("user_id, role"),
     ]);
@@ -118,8 +99,7 @@ export const getAdminMemberAccounts = createServerFn({ method: "GET" })
         email: a.login_email as string,
         status: a.account_status as string,
         mustChange: a.must_change_password as boolean,
-        permissions: (a.permissions ?? []) as string[],
-        access: currentAccessOf(rolesOf.get(a.user_id) ?? []),
+        isAdmin: (rolesOf.get(a.user_id) ?? []).includes("admin"),
       }));
   });
 
@@ -167,8 +147,7 @@ export const createAccount = createServerFn({ method: "POST" })
         password: z.string().min(8).max(72),
         department: z.string().min(2).max(40),
         position: z.string().min(2).max(40),
-        access,
-        permissions: perms,
+        isAdmin: z.boolean().default(false),
         status,
         mustChange: z.boolean(),
       })
@@ -182,12 +161,7 @@ export const createAccount = createServerFn({ method: "POST" })
       "Bạn không có quyền tạo tài khoản cho Ban này.",
     );
     await must(canAssign(context, data.position), "Chỉ được gán chức vụ thấp hơn chức vụ của bạn.");
-    const legacyError = legacyAccessChangeError(admin, null, {
-      access: data.access,
-      permissions: data.permissions,
-    });
-    if (legacyError) throw new Error(legacyError);
-    const permissions = admin ? data.permissions : [];
+    if (data.isAdmin && !admin) throw new Error("Chỉ Quản trị viên được cấp cờ Quản trị viên.");
 
     let memberId = data.memberId;
     if (memberId) {
@@ -266,13 +240,12 @@ export const createAccount = createServerFn({ method: "POST" })
       login_email: data.email,
       account_status: data.status,
       must_change_password: data.mustChange,
-      permissions,
     });
     if (aErr) {
       await db.auth.admin.deleteUser(uid);
       throw new Error(aErr.message);
     }
-    await setAccess(db, uid, data.access);
+    if (data.isAdmin) await setAdminFlag(db, uid, true);
     return { ok: true };
   });
 
@@ -284,8 +257,7 @@ export const updateAccount = createServerFn({ method: "POST" })
         userId: z.string().uuid(),
         department: z.string().min(2).max(40),
         position: z.string().min(2).max(40),
-        access,
-        permissions: perms,
+        isAdmin: z.boolean(),
         status,
       })
       .parse(d),
@@ -296,7 +268,7 @@ export const updateAccount = createServerFn({ method: "POST" })
     const [{ data: acct }, { data: cur }] = await Promise.all([
       db
         .from("member_accounts")
-        .select("member_id, permissions, members(department, position)")
+        .select("member_id, members(department, position)")
         .eq("user_id", data.userId)
         .maybeSingle(),
       db.from("user_roles").select("role").eq("user_id", data.userId),
@@ -305,7 +277,7 @@ export const updateAccount = createServerFn({ method: "POST" })
     const member = acct.members as { department: string; position: string } | null;
     if (!member) throw new Error("Không tìm thấy hồ sơ thành viên.");
     const roles = (cur ?? []).map((r: { role: string }) => r.role);
-    const currentPermissions = (acct.permissions ?? []) as string[];
+    const wasAdmin = roles.includes("admin");
 
     await must(
       hasPerm(context, "accounts.manage", member.department),
@@ -330,16 +302,10 @@ export const updateAccount = createServerFn({ method: "POST" })
       );
     }
 
-    const currentAccess = currentAccessOf(roles);
-    const legacyError = legacyAccessChangeError(
-      admin,
-      { access: currentAccess, permissions: currentPermissions },
-      { access: data.access, permissions: data.permissions },
-    );
-    if (legacyError) throw new Error(legacyError);
+    if (data.isAdmin !== wasAdmin && !admin)
+      throw new Error("Chỉ Quản trị viên được đổi cờ Quản trị viên.");
 
-    const wasAdmin = roles.includes("admin");
-    const losesAdmin = wasAdmin && (data.access !== "admin" || data.status !== "active");
+    const losesAdmin = wasAdmin && (!data.isAdmin || data.status !== "active");
     if (losesAdmin && data.userId === context.userId)
       throw new Error(
         "Bạn không thể tự hạ quyền hoặc khóa tài khoản Quản trị viên của chính mình.",
@@ -353,13 +319,10 @@ export const updateAccount = createServerFn({ method: "POST" })
       .eq("id", acct.member_id);
     await db
       .from("member_accounts")
-      .update({
-        account_status: data.status,
-        permissions: admin ? data.permissions : currentPermissions,
-      })
+      .update({ account_status: data.status })
       .eq("user_id", data.userId);
     await db.auth.admin.updateUserById(data.userId, { ban_duration: ban(data.status) });
-    if (data.access !== currentAccess) await setAccess(db, data.userId, data.access);
+    if (data.isAdmin !== wasAdmin) await setAdminFlag(db, data.userId, data.isAdmin);
     return { ok: true };
   });
 
