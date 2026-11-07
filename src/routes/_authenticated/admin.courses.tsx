@@ -25,6 +25,8 @@ import {
   type ProgramRef,
 } from "@/lib/enrollments";
 import { matchesSearch } from "@/lib/search";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   Select,
@@ -50,6 +52,8 @@ export const Route = createFileRoute("/_authenticated/admin/courses")({
 
 function CoursesAdmin() {
   const qc = useQueryClient();
+  const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
+  const canEdit = can(perms, "courses.edit");
   const review = useServerFn(reviewEnrollment);
   const { confirm, dialog } = useConfirm();
   const [lv, setLv] = useState(0);
@@ -121,6 +125,7 @@ function CoursesAdmin() {
   };
 
   const bulkApprove = async () => {
+    if (!canEdit) return;
     const { data: links, error } = await supabase
       .from("course_group_links")
       .select("hsk_class_id, course_id, zalo_url");
@@ -191,24 +196,25 @@ function CoursesAdmin() {
     URL.revokeObjectURL(url);
   };
 
+  const SELECT_COL: AdminColumn = {
+    key: "select",
+    className: "w-10",
+    label:
+      pendingVisible.length > 0 ? (
+        <Checkbox
+          aria-label="Chọn mọi đơn đang chờ"
+          checked={allPicked ? true : somePicked ? "indeterminate" : false}
+          onCheckedChange={(v) =>
+            setPicked(v === true ? new Set(pendingVisible.map((r) => r.id)) : new Set())
+          }
+          disabled={bulkBusy}
+        />
+      ) : (
+        <span className="sr-only">Chọn đơn</span>
+      ),
+  };
   const ENROLL_COLS: AdminColumn[] = [
-    {
-      key: "select",
-      className: "w-10",
-      label:
-        pendingVisible.length > 0 ? (
-          <Checkbox
-            aria-label="Chọn mọi đơn đang chờ"
-            checked={allPicked ? true : somePicked ? "indeterminate" : false}
-            onCheckedChange={(v) =>
-              setPicked(v === true ? new Set(pendingVisible.map((r) => r.id)) : new Set())
-            }
-            disabled={bulkBusy}
-          />
-        ) : (
-          <span className="sr-only">Chọn đơn</span>
-        ),
-    },
+    ...(canEdit ? [SELECT_COL] : []),
     { label: "Mã", className: "w-[13%]" },
     { label: "Họ tên", className: "w-[15%]" },
     { label: "Liên hệ", className: "w-[20%]" },
@@ -258,15 +264,19 @@ function CoursesAdmin() {
         description="Lớp HSK theo cấp độ, Chương trình học và xét duyệt học viên."
         actions={
           tab === "hsk" ? (
-            <Button type="button" size="admin" onClick={() => setCreateHskOpen(true)}>
-              <Plus />
-              Tạo lớp HSK
-            </Button>
+            canEdit ? (
+              <Button type="button" size="admin" onClick={() => setCreateHskOpen(true)}>
+                <Plus />
+                Tạo lớp HSK
+              </Button>
+            ) : undefined
           ) : tab === "programs" ? (
-            <Button type="button" size="admin" onClick={() => setCreateProgramOpen(true)}>
-              <Plus />
-              Tạo chương trình
-            </Button>
+            canEdit ? (
+              <Button type="button" size="admin" onClick={() => setCreateProgramOpen(true)}>
+                <Plus />
+                Tạo chương trình
+              </Button>
+            ) : undefined
           ) : (
             <Button
               type="button"
@@ -308,6 +318,7 @@ function CoursesAdmin() {
 
       {tab === "hsk" && (
         <HskClassesAdmin
+          canEdit={canEdit}
           createOpen={createHskOpen}
           onClearCreate={() => setCreateHskOpen(false)}
           seatCounts={countApprovedByClass(rows ?? [])}
@@ -434,7 +445,7 @@ function CoursesAdmin() {
             </span>
           </div>
 
-          {pickedRows.length > 0 && (
+          {canEdit && pickedRows.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-accent/40 px-4 py-2.5 text-xs">
               <span className="font-semibold text-foreground">Đã chọn {pickedRows.length} đơn</span>
               <Button
@@ -467,23 +478,25 @@ function CoursesAdmin() {
           >
             {list.map((r) => (
               <AdminTableRow key={r.id} onOpen={() => setSel(r)}>
-                <td className="w-10 p-3" onClick={(e) => e.stopPropagation()}>
-                  {r.status === "pending" && (
-                    <Checkbox
-                      aria-label={`Chọn đơn ${r.code}`}
-                      checked={picked.has(r.id)}
-                      disabled={bulkBusy}
-                      onCheckedChange={(v) =>
-                        setPicked((prev) => {
-                          const next = new Set(prev);
-                          if (v === true) next.add(r.id);
-                          else next.delete(r.id);
-                          return next;
-                        })
-                      }
-                    />
-                  )}
-                </td>
+                {canEdit && (
+                  <td className="w-10 p-3" onClick={(e) => e.stopPropagation()}>
+                    {r.status === "pending" && (
+                      <Checkbox
+                        aria-label={`Chọn đơn ${r.code}`}
+                        checked={picked.has(r.id)}
+                        disabled={bulkBusy}
+                        onCheckedChange={(v) =>
+                          setPicked((prev) => {
+                            const next = new Set(prev);
+                            if (v === true) next.add(r.id);
+                            else next.delete(r.id);
+                            return next;
+                          })
+                        }
+                      />
+                    )}
+                  </td>
+                )}
                 <td className="truncate p-3 font-mono text-xs font-medium text-primary">
                   {r.code}
                 </td>
@@ -521,6 +534,7 @@ function CoursesAdmin() {
             key={sel.id}
             r={sel}
             target={targetOf(sel)}
+            readOnly={!canEdit}
             onClose={() => setSel(null)}
             onDone={() => {
               setSel(null);

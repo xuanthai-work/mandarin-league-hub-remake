@@ -29,11 +29,13 @@ const zaloOf = (p: string) => {
 export function ReviewDrawer({
   r,
   target,
+  readOnly,
   onClose,
   onDone,
 }: {
   r: Enrollment;
   target: EnrollmentTarget;
+  readOnly: boolean;
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -50,7 +52,7 @@ export function ReviewDrawer({
     queryKey: r.hsk_class_id
       ? ["class-group-link", r.hsk_class_id]
       : ["program-group-link", r.course_id],
-    enabled: !!(r.hsk_class_id || r.course_id),
+    enabled: !readOnly && !!(r.hsk_class_id || r.course_id),
     queryFn: async () => {
       const q = supabase.from("course_group_links").select("zalo_url");
       const { data, error } = await (
@@ -69,6 +71,7 @@ export function ReviewDrawer({
   }, [groupLink]);
 
   const go = async () => {
+    if (readOnly) return;
     setBusy(true);
     try {
       const res = await review({
@@ -120,15 +123,17 @@ export function ReviewDrawer({
       onClose={onClose}
       dismissible={!busy}
       footer={
-        <Button
-          type="button"
-          size="admin-lg"
-          className="w-full sm:w-auto"
-          disabled={busy}
-          onClick={go}
-        >
-          {busy ? "Đang xử lý…" : status === "approved" ? "Duyệt và gửi thư mời" : "Lưu kết quả"}
-        </Button>
+        readOnly ? undefined : (
+          <Button
+            type="button"
+            size="admin-lg"
+            className="w-full sm:w-auto"
+            disabled={busy}
+            onClick={go}
+          >
+            {busy ? "Đang xử lý…" : status === "approved" ? "Duyệt và gửi thư mời" : "Lưu kết quả"}
+          </Button>
+        )
       }
     >
       <section className="space-y-3">
@@ -189,73 +194,98 @@ export function ReviewDrawer({
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Xét duyệt
-        </h3>
-        <FormField label="Kết quả">
-          {(field) => (
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger
-                {...field}
-                className="h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
-              >
-                <SelectValue>{ENROLL_STATUS[status]?.label ?? status}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {Object.entries(ENROLL_STATUS).map(([k, v]) => (
-                  <SelectItem key={k} value={k} className="text-sm">
-                    {v.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FormField>
-        {status === "approved" && (
-          <>
-            <FormField
-              label="Link nhóm Zalo lớp học"
-              required
-              {...(zaloHint ? { hint: zaloHint } : {})}
-            >
-              {(field) => (
-                <AdminInput
+      {readOnly ? (
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Xét duyệt
+          </h3>
+          <dl className="grid grid-cols-1 gap-y-3 rounded-xl border border-border/70 bg-background/50 p-3">
+            <div className="min-w-0">
+              <dt className="text-[11px] text-muted-foreground">Kết quả</dt>
+              <dd className="mt-1">
+                <StatusPill tone={ENROLL_STATUS_TONE[r.status] ?? "neutral"}>
+                  {ENROLL_STATUS[r.status]?.label ?? r.status}
+                </StatusPill>
+              </dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-[11px] text-muted-foreground">Ghi chú nội bộ</dt>
+              <dd className="whitespace-pre-line break-words text-sm text-foreground">
+                {r.admin_note || "—"}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : (
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Xét duyệt
+          </h3>
+          <FormField label="Kết quả">
+            {(field) => (
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger
                   {...field}
-                  placeholder="https://zalo.me/g/..."
-                  value={zalo}
-                  onChange={(e) => setZalo(e.target.value)}
-                />
-              )}
-            </FormField>
-            {target.fee?.fee_type === "paid" && (
-              <FormField label={`Hướng dẫn đóng học phí (${classFee(target.fee)})`}>
+                  className="h-9 w-full rounded-lg border-input bg-background text-sm shadow-none"
+                >
+                  <SelectValue>{ENROLL_STATUS[status]?.label ?? status}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {Object.entries(ENROLL_STATUS).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-sm">
+                      {v.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+          {status === "approved" && (
+            <>
+              <FormField
+                label="Link nhóm Zalo lớp học"
+                required
+                {...(zaloHint ? { hint: zaloHint } : {})}
+              >
                 {(field) => (
-                  <AdminTextarea
+                  <AdminInput
                     {...field}
-                    rows={3}
-                    value={feeNote}
-                    onChange={(e) => setFeeNote(e.target.value)}
+                    placeholder="https://zalo.me/g/..."
+                    value={zalo}
+                    onChange={(e) => setZalo(e.target.value)}
                   />
                 )}
               </FormField>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Bấm xác nhận sẽ tự động gửi thư mời trúng tuyển kèm link nhóm Zalo tới email học viên.
-            </p>
-          </>
-        )}
-        <FormField label="Ghi chú nội bộ (không bắt buộc)">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={2}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
+              {target.fee?.fee_type === "paid" && (
+                <FormField label={`Hướng dẫn đóng học phí (${classFee(target.fee)})`}>
+                  {(field) => (
+                    <AdminTextarea
+                      {...field}
+                      rows={3}
+                      value={feeNote}
+                      onChange={(e) => setFeeNote(e.target.value)}
+                    />
+                  )}
+                </FormField>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Bấm xác nhận sẽ tự động gửi thư mời trúng tuyển kèm link nhóm Zalo tới email học
+                viên.
+              </p>
+            </>
           )}
-        </FormField>
-      </section>
+          <FormField label="Ghi chú nội bộ (không bắt buộc)">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={2}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            )}
+          </FormField>
+        </section>
+      )}
     </AdminDrawer>
   );
 }

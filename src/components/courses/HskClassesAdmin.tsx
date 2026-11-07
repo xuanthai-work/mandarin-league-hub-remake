@@ -78,12 +78,14 @@ const STATUS_OPTIONS: { value: ClassStatusFilter; label: string }[] = [
 
 /** Admin: fixed HSK 1–6 levels, concrete classes created underneath. */
 export function HskClassesAdmin({
+  canEdit,
   seatCounts,
   pendingCounts,
   onFilter,
   createOpen,
   onClearCreate,
 }: {
+  canEdit: boolean;
   seatCounts: Map<string, number>;
   pendingCounts: Map<string, number>;
   onFilter: (id: string) => void;
@@ -140,6 +142,7 @@ export function HskClassesAdmin({
     v: { is_published?: boolean; deleted_at?: string },
     msg: string,
   ) => {
+    if (!canEdit) return false;
     const { error } = await supabase
       .from("hsk_classes")
       .update({ ...v, updated_at: new Date().toISOString() })
@@ -154,6 +157,7 @@ export function HskClassesAdmin({
   };
 
   const remove = async (c: HskClass, skipConfirm = false) => {
+    if (!canEdit) return false;
     const n = pendingCounts.get(c.id) ?? 0;
     if (
       !skipConfirm &&
@@ -173,12 +177,14 @@ export function HskClassesAdmin({
   };
 
   const removeEditing = async () => {
+    if (!canEdit) return;
     if (!edit?.id) return;
     const row = list?.find((c) => c.id === edit.id);
     if (row && (await remove(row, true))) setEdit(null);
   };
 
   const duplicate = (c: HskClass) => {
+    if (!canEdit) return;
     const { id: _id, ...rest } = c;
     setEdit({ ...rest, name: `${c.name} (bản sao)`, is_published: false });
   };
@@ -249,15 +255,17 @@ export function HskClassesAdmin({
         <EmptyState
           title="Chưa có lớp HSK nào."
           action={
-            <Button
-              type="button"
-              size="admin"
-              onClick={() =>
-                setEdit({ ...EMPTY, level: level || 1, name: `HSK ${level || 1} – Lớp ` })
-              }
-            >
-              Tạo lớp HSK
-            </Button>
+            canEdit ? (
+              <Button
+                type="button"
+                size="admin"
+                onClick={() =>
+                  setEdit({ ...EMPTY, level: level || 1, name: `HSK ${level || 1} – Lớp ` })
+                }
+              >
+                Tạo lớp HSK
+              </Button>
+            ) : undefined
           }
         />
       ) : filtered.length === 0 ? (
@@ -366,53 +374,58 @@ export function HskClassesAdmin({
                   )}
                 </td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="admin-icon"
-                        aria-label={`Thao tác lớp ${c.name}`}
+                  {canEdit && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="admin-icon"
+                          aria-label={`Thao tác lớp ${c.name}`}
+                        >
+                          <MoreHorizontal />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="rounded-xl"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="rounded-xl"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <DropdownMenuItem onClick={() => setEdit(c)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Sửa
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          void patch(
-                            c,
-                            { is_published: !c.is_published },
-                            c.is_published ? "Đã ẩn" : "Đã hiển thị",
-                          )
-                        }
-                      >
-                        {c.is_published ? (
-                          <EyeOff className="mr-2 h-4 w-4" />
-                        ) : (
-                          <Eye className="mr-2 h-4 w-4" />
-                        )}
-                        {c.is_published ? "Ẩn khỏi website" : "Hiện trên website"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => duplicate(c)}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Nhân bản
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive" onClick={() => void remove(c)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Xóa lớp
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <DropdownMenuItem onClick={() => setEdit(c)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            void patch(
+                              c,
+                              { is_published: !c.is_published },
+                              c.is_published ? "Đã ẩn" : "Đã hiển thị",
+                            )
+                          }
+                        >
+                          {c.is_published ? (
+                            <EyeOff className="mr-2 h-4 w-4" />
+                          ) : (
+                            <Eye className="mr-2 h-4 w-4" />
+                          )}
+                          {c.is_published ? "Ẩn khỏi website" : "Hiện trên website"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicate(c)}>
+                          <Copy className="mr-2 h-4 w-4" />
+                          Nhân bản
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => void remove(c)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Xóa lớp
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </td>
               </AdminTableRow>
             );
@@ -426,12 +439,13 @@ export function HskClassesAdmin({
             key={edit.id ?? "new"}
             init={edit}
             teachers={teachers ?? []}
+            readOnly={!canEdit}
             onClose={() => setEdit(null)}
             onSaved={() => {
               setEdit(null);
               refresh();
             }}
-            {...(edit.id ? { onDelete: removeEditing } : {})}
+            {...(canEdit && edit.id ? { onDelete: removeEditing } : {})}
           />
         )}
       </AnimatePresence>

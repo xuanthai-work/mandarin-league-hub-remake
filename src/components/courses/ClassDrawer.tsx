@@ -37,12 +37,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function ClassDrawer({
   init,
   teachers,
+  readOnly,
   onClose,
   onSaved,
   onDelete,
 }: {
   init: Partial<HskClass>;
   teachers: { id: string; full_name: string }[];
+  readOnly: boolean;
   onClose: () => void;
   onSaved: () => void;
   onDelete?: () => void;
@@ -89,6 +91,7 @@ export function ClassDrawer({
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     if ((f.name ?? "").trim().length < 3) {
       toast.error("Vui lòng nhập tên lớp");
       return;
@@ -182,285 +185,295 @@ export function ClassDrawer({
   return (
     <AdminDrawer
       width="lg"
-      title={f.id ? "Sửa lớp" : "Tạo lớp HSK"}
+      title={readOnly ? "Chi tiết lớp HSK" : f.id ? "Sửa lớp" : "Tạo lớp HSK"}
       {...(f.id && f.name ? { subtitle: f.name } : {})}
       onClose={onClose}
       dismissible={!busy}
       onSubmit={save}
       footer={
-        <Button type="submit" size="admin-lg" className="w-full" disabled={busy}>
-          {busy ? "Đang lưu…" : "Lưu lớp học"}
-        </Button>
+        readOnly ? undefined : (
+          <Button type="submit" size="admin-lg" className="w-full" disabled={busy}>
+            {busy ? "Đang lưu…" : "Lưu lớp học"}
+          </Button>
+        )
       }
     >
-      <Section title="Thông tin lớp">
-        <FormField label="Tên lớp" required>
-          {(field) => (
-            <AdminInput
-              {...field}
-              required
-              value={f.name ?? ""}
-              onChange={(e) => setF({ ...f, name: e.target.value })}
-            />
-          )}
-        </FormField>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Cấp độ">
+      <fieldset disabled={readOnly} className="m-0 min-w-0 space-y-6 border-0 p-0">
+        <Section title="Thông tin lớp">
+          <FormField label="Tên lớp" required>
             {(field) => (
-              <Select
-                value={String(f.level ?? 1)}
-                onValueChange={(v) => setF({ ...f, level: Number(v) })}
-              >
-                <SelectTrigger {...field} className={triggerClass}>
-                  <SelectValue>HSK {f.level ?? 1}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {HSK_LEVELS.map((l) => (
-                    <SelectItem key={l} value={String(l)} className="text-sm">
-                      HSK {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AdminInput
+                {...field}
+                required
+                value={f.name ?? ""}
+                onChange={(e) => setF({ ...f, name: e.target.value })}
+              />
             )}
           </FormField>
-          <FormField label="Giáo viên">
-            {(field) => (
-              <Select
-                value={f.teacher_id ?? "none"}
-                onValueChange={(v) => setF({ ...f, teacher_id: v === "none" ? null : v })}
-              >
-                <SelectTrigger {...field} className={triggerClass}>
-                  <SelectValue>
-                    {teachers.find((t) => t.id === f.teacher_id)?.full_name ?? (
-                      <span className="text-muted-foreground">— Đang cập nhật —</span>
-                    )}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="none" className="text-sm text-muted-foreground">
-                    — Đang cập nhật —
-                  </SelectItem>
-                  {teachers.map((t) => (
-                    <SelectItem key={t.id} value={t.id} className="text-sm">
-                      {t.full_name}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Cấp độ">
+              {(field) => (
+                <Select
+                  value={String(f.level ?? 1)}
+                  onValueChange={(v) => setF({ ...f, level: Number(v) })}
+                >
+                  <SelectTrigger {...field} className={triggerClass}>
+                    <SelectValue>HSK {f.level ?? 1}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {HSK_LEVELS.map((l) => (
+                      <SelectItem key={l} value={String(l)} className="text-sm">
+                        HSK {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+            <FormField label="Giáo viên">
+              {(field) => (
+                <Select
+                  value={f.teacher_id ?? "none"}
+                  onValueChange={(v) => setF({ ...f, teacher_id: v === "none" ? null : v })}
+                >
+                  <SelectTrigger {...field} className={triggerClass}>
+                    <SelectValue>
+                      {teachers.find((t) => t.id === f.teacher_id)?.full_name ?? (
+                        <span className="text-muted-foreground">— Đang cập nhật —</span>
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="none" className="text-sm text-muted-foreground">
+                      — Đang cập nhật —
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-        </div>
-        <FormField label="Mô tả">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={3}
-              value={f.description ?? ""}
-              onChange={(e) => setF({ ...f, description: e.target.value })}
-            />
-          )}
-        </FormField>
-        <div className="space-y-1">
-          <Label htmlFor="class-thumb">Ảnh đại diện</Label>
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileRef}
-              id="class-thumb"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="sr-only"
-              onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
-                e.target.value = "";
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="admin-sm"
-              onClick={() => fileRef.current?.click()}
-            >
-              Chọn tệp
-            </Button>
-            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-              {file?.name ??
-                (f.thumbnail_path ? "Đã có ảnh — chọn tệp mới để thay" : "Chưa chọn tệp")}
-            </span>
+                    {teachers.map((t) => (
+                      <SelectItem key={t.id} value={t.id} className="text-sm">
+                        {t.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
           </div>
-          {preview && (
-            <img src={preview} alt="Ảnh xem trước" className="h-20 rounded-lg object-cover" />
-          )}
-        </div>
-      </Section>
+          <FormField label="Mô tả">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={3}
+                value={f.description ?? ""}
+                onChange={(e) => setF({ ...f, description: e.target.value })}
+              />
+            )}
+          </FormField>
+          <div className="space-y-1">
+            <Label htmlFor="class-thumb">Ảnh đại diện</Label>
+            {readOnly ? (
+              preview ? null : (
+                <span className="text-xs text-muted-foreground">Chưa có ảnh</span>
+              )
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileRef}
+                  id="class-thumb"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={(e) => {
+                    setFile(e.target.files?.[0] ?? null);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="admin-sm"
+                  onClick={() => fileRef.current?.click()}
+                >
+                  Chọn tệp
+                </Button>
+                <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                  {file?.name ??
+                    (f.thumbnail_path ? "Đã có ảnh — chọn tệp mới để thay" : "Chưa chọn tệp")}
+                </span>
+              </div>
+            )}
+            {preview && (
+              <img src={preview} alt="Ảnh xem trước" className="h-20 rounded-lg object-cover" />
+            )}
+          </div>
+        </Section>
 
-      <Section title="Lịch học">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Ngày bắt đầu">
-            {(field) => (
-              <DatePicker
-                id={field.id}
-                value={f.start_date ?? ""}
-                onChange={(v) => setF({ ...f, start_date: v || null })}
-                clearable
-              />
-            )}
-          </FormField>
-          <FormField label="Ngày kết thúc">
-            {(field) => (
-              <DatePicker
-                id={field.id}
-                value={f.end_date ?? ""}
-                onChange={(v) => setF({ ...f, end_date: v || null })}
-                clearable
-                {...(f.start_date ? { min: f.start_date } : {})}
-              />
-            )}
-          </FormField>
-          <FormField label="Lịch học">
-            {(field) => (
-              <AdminInput
-                {...field}
-                placeholder="VD: T3 & T5, 20:00–21:30"
-                value={f.schedule ?? ""}
-                onChange={(e) => setF({ ...f, schedule: e.target.value })}
-              />
-            )}
-          </FormField>
-          <FormField label="Thời lượng">
-            {(field) => (
-              <AdminInput
-                {...field}
-                placeholder="VD: 16 buổi"
-                value={f.duration ?? ""}
-                onChange={(e) => setF({ ...f, duration: e.target.value })}
-              />
-            )}
-          </FormField>
-          <FormField label="Hình thức" className="sm:col-span-2">
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={f.format ?? ""}
-                onChange={(e) => setF({ ...f, format: e.target.value })}
-              />
-            )}
-          </FormField>
-        </div>
-      </Section>
+        <Section title="Lịch học">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Ngày bắt đầu">
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={f.start_date ?? ""}
+                  onChange={(v) => setF({ ...f, start_date: v || null })}
+                  clearable
+                />
+              )}
+            </FormField>
+            <FormField label="Ngày kết thúc">
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={f.end_date ?? ""}
+                  onChange={(v) => setF({ ...f, end_date: v || null })}
+                  clearable
+                  {...(f.start_date ? { min: f.start_date } : {})}
+                />
+              )}
+            </FormField>
+            <FormField label="Lịch học">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  placeholder="VD: T3 & T5, 20:00–21:30"
+                  value={f.schedule ?? ""}
+                  onChange={(e) => setF({ ...f, schedule: e.target.value })}
+                />
+              )}
+            </FormField>
+            <FormField label="Thời lượng">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  placeholder="VD: 16 buổi"
+                  value={f.duration ?? ""}
+                  onChange={(e) => setF({ ...f, duration: e.target.value })}
+                />
+              )}
+            </FormField>
+            <FormField label="Hình thức" className="sm:col-span-2">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  value={f.format ?? ""}
+                  onChange={(e) => setF({ ...f, format: e.target.value })}
+                />
+              )}
+            </FormField>
+          </div>
+        </Section>
 
-      <Section title="Tuyển sinh & học phí">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Trạng thái tuyển sinh">
-            {(field) => (
-              <Select
-                value={f.status ?? "upcoming"}
-                onValueChange={(v) => setF({ ...f, status: v as ProgramStatus })}
-              >
-                <SelectTrigger {...field} className={triggerClass}>
-                  <SelectValue>{STATUS_LABEL[f.status ?? "upcoming"]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                    <SelectItem key={k} value={k} className="text-sm">
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-          <FormField label="Sĩ số tối đa">
-            {(field) => (
-              <AdminInput
-                {...field}
-                type="number"
-                min={1}
-                value={f.max_students ?? 20}
-                onChange={(e) => setF({ ...f, max_students: Number(e.target.value) })}
-              />
-            )}
-          </FormField>
-          <FormField label="Học phí">
-            {(field) => (
-              <Select
-                value={f.fee_type ?? "free"}
-                onValueChange={(v) => setF({ ...f, fee_type: v as "free" | "paid" })}
-              >
-                <SelectTrigger {...field} className={triggerClass}>
-                  <SelectValue>{f.fee_type === "paid" ? "Có phí" : "Miễn phí"}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="free" className="text-sm">
-                    Miễn phí
-                  </SelectItem>
-                  <SelectItem value="paid" className="text-sm">
-                    Có phí
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-          {f.fee_type === "paid" && (
-            <FormField label="Số tiền (VNĐ, 0 = liên hệ)">
+        <Section title="Tuyển sinh & học phí">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Trạng thái tuyển sinh">
+              {(field) => (
+                <Select
+                  value={f.status ?? "upcoming"}
+                  onValueChange={(v) => setF({ ...f, status: v as ProgramStatus })}
+                >
+                  <SelectTrigger {...field} className={triggerClass}>
+                    <SelectValue>{STATUS_LABEL[f.status ?? "upcoming"]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-sm">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+            <FormField label="Sĩ số tối đa">
               {(field) => (
                 <AdminInput
                   {...field}
                   type="number"
-                  min={0}
-                  step={10000}
-                  value={f.fee_amount ?? 0}
-                  onChange={(e) => setF({ ...f, fee_amount: Number(e.target.value) })}
+                  min={1}
+                  value={f.max_students ?? 20}
+                  onChange={(e) => setF({ ...f, max_students: Number(e.target.value) })}
                 />
               )}
             </FormField>
-          )}
-          <FormField
-            label="Link đăng ký ngoài"
-            className="sm:col-span-2"
-            hint="Để trống = dùng form xét duyệt của TML."
-          >
-            {(field) => (
-              <AdminInput
-                {...field}
-                placeholder="https://..."
-                value={f.registration_url ?? ""}
-                onChange={(e) => setF({ ...f, registration_url: e.target.value })}
-              />
+            <FormField label="Học phí">
+              {(field) => (
+                <Select
+                  value={f.fee_type ?? "free"}
+                  onValueChange={(v) => setF({ ...f, fee_type: v as "free" | "paid" })}
+                >
+                  <SelectTrigger {...field} className={triggerClass}>
+                    <SelectValue>{f.fee_type === "paid" ? "Có phí" : "Miễn phí"}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="free" className="text-sm">
+                      Miễn phí
+                    </SelectItem>
+                    <SelectItem value="paid" className="text-sm">
+                      Có phí
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+            {f.fee_type === "paid" && (
+              <FormField label="Số tiền (VNĐ, 0 = liên hệ)">
+                {(field) => (
+                  <AdminInput
+                    {...field}
+                    type="number"
+                    min={0}
+                    step={10000}
+                    value={f.fee_amount ?? 0}
+                    onChange={(e) => setF({ ...f, fee_amount: Number(e.target.value) })}
+                  />
+                )}
+              </FormField>
             )}
-          </FormField>
-          <FormField
-            label="Link nhóm Zalo của lớp"
-            className="sm:col-span-2"
-            hint="Chỉ người quản lý thấy. Tự điền khi duyệt đơn vào lớp này."
-            {...(zaloBad
-              ? { error: "Link phải bắt đầu bằng https://zalo.me/ hoặc https://chat.zalo.me/" }
-              : {})}
-          >
-            {(field) => (
-              <AdminInput
-                {...field}
-                placeholder="https://zalo.me/g/..."
-                value={zalo}
-                onChange={(e) => setZalo(e.target.value)}
-              />
-            )}
-          </FormField>
-        </div>
-      </Section>
+            <FormField
+              label="Link đăng ký ngoài"
+              className="sm:col-span-2"
+              hint="Để trống = dùng form xét duyệt của TML."
+            >
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  placeholder="https://..."
+                  value={f.registration_url ?? ""}
+                  onChange={(e) => setF({ ...f, registration_url: e.target.value })}
+                />
+              )}
+            </FormField>
+            <FormField
+              label="Link nhóm Zalo của lớp"
+              className="sm:col-span-2"
+              hint="Chỉ người quản lý thấy. Tự điền khi duyệt đơn vào lớp này."
+              {...(zaloBad
+                ? { error: "Link phải bắt đầu bằng https://zalo.me/ hoặc https://chat.zalo.me/" }
+                : {})}
+            >
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  placeholder="https://zalo.me/g/..."
+                  value={zalo}
+                  onChange={(e) => setZalo(e.target.value)}
+                />
+              )}
+            </FormField>
+          </div>
+        </Section>
 
-      <Section title="Hiển thị">
-        <div className="flex items-center justify-between gap-3">
-          <Label htmlFor="class-published">Hiển thị trên website</Label>
-          <Switch
-            id="class-published"
-            checked={!!f.is_published}
-            onCheckedChange={(v) => setF({ ...f, is_published: v })}
-          />
-        </div>
-      </Section>
+        <Section title="Hiển thị">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="class-published">Hiển thị trên website</Label>
+            <Switch
+              id="class-published"
+              checked={!!f.is_published}
+              onCheckedChange={(v) => setF({ ...f, is_published: v })}
+            />
+          </div>
+        </Section>
+      </fieldset>
 
-      {f.id && onDelete && (
+      {f.id && onDelete && !readOnly && (
         <DangerZone
           title="Xóa lớp học"
           description="Lớp bị gỡ khỏi danh sách và website. Đơn đăng ký vẫn được giữ lại."
