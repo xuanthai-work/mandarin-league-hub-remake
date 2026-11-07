@@ -3,9 +3,13 @@ import { PERMISSION_ACTIONS } from "./permission-catalog";
 import {
   ALL_DEPARTMENTS_KEY,
   MODULE_LABELS,
+  ORDINARY_DEPARTMENTS,
   actionGroups,
+  actionHolders,
+  actionMatches,
   auditSummary,
-  cellState,
+  cellScope,
+  countGranted,
   expiryFromDate,
   grantStatus,
   positionsFor,
@@ -40,29 +44,106 @@ describe("positionsFor", () => {
   });
 });
 
-describe("cellState", () => {
+describe("cellScope", () => {
   const rows: MatrixRow[] = [
     { department: "hr", position: "Trưởng Ban", action: "members.view", scope: "own" },
-    { department: "*", position: "Phó Ban", action: "members.view", scope: "all" },
+    { department: "comms", position: "Phó Ban", action: "members.view", scope: "all" },
   ];
 
-  it("reads the row of the exact department", () => {
-    expect(cellState(rows, "hr", "Trưởng Ban", "members.view")).toEqual({
-      own: "own",
-      inherited: null,
-    });
+  it("reads the row of the exact cell", () => {
+    expect(cellScope(rows, "hr", "Trưởng Ban", "members.view")).toBe("own");
   });
 
-  it("surfaces the all-departments row as inherited", () => {
-    expect(cellState(rows, "hr", "Phó Ban", "members.view")).toEqual({
-      own: null,
-      inherited: "all",
-    });
+  it("returns null when the cell has no row", () => {
+    expect(cellScope(rows, "hr", "Thành viên", "members.view")).toBeNull();
   });
 
-  it("does not inherit into the executive board or the all-departments tab", () => {
-    expect(cellState(rows, "executive", "Phó Ban", "members.view").inherited).toBeNull();
-    expect(cellState(rows, ALL_DEPARTMENTS_KEY, "Phó Ban", "members.view").inherited).toBeNull();
+  it("does not pick a row of another department or position", () => {
+    expect(cellScope(rows, "comms", "Trưởng Ban", "members.view")).toBeNull();
+    expect(cellScope(rows, "hr", "Phó Ban", "members.view")).toBeNull();
+  });
+});
+
+describe("countGranted", () => {
+  const rows: MatrixRow[] = [
+    { department: "hr", position: "Trưởng Ban", action: "members.view", scope: "own" },
+    { department: "hr", position: "Trưởng Ban", action: "members.edit", scope: "all" },
+    { department: "hr", position: "Phó Ban", action: "members.view", scope: "own" },
+    { department: "comms", position: "Trưởng Ban", action: "members.view", scope: "own" },
+  ];
+
+  it("counts only the requested department and position", () => {
+    expect(countGranted(rows, "hr", "Trưởng Ban")).toBe(2);
+    expect(countGranted(rows, "hr", "Phó Ban")).toBe(1);
+    expect(countGranted(rows, "hr", "Thành viên")).toBe(0);
+  });
+});
+
+describe("actionMatches", () => {
+  const recruitment = PERMISSION_ACTIONS.find((a) => a.module === "recruitment")!;
+  const candidatesView = PERMISSION_ACTIONS.find((a) => a.code === "candidates.view")!;
+
+  it("matches by module name without Vietnamese tones", () => {
+    expect(actionMatches(recruitment, "tuyen dung")).toBe(true);
+  });
+
+  it("matches by action code", () => {
+    expect(actionMatches(candidatesView, "candidates.view")).toBe(true);
+  });
+
+  it("matches everything on an empty keyword and nothing on an unknown one", () => {
+    expect(actionMatches(candidatesView, "")).toBe(true);
+    expect(actionMatches(candidatesView, "khong ton tai xyz")).toBe(false);
+  });
+});
+
+describe("ORDINARY_DEPARTMENTS", () => {
+  it("is the 8 departments other than the executive board", () => {
+    expect(ORDINARY_DEPARTMENTS).toHaveLength(8);
+    expect(ORDINARY_DEPARTMENTS).not.toContain("executive");
+  });
+});
+
+describe("actionHolders", () => {
+  const ownAll = (departments: readonly string[], scope: "own" | "all" = "own"): MatrixRow[] =>
+    departments.map((department) => ({
+      department,
+      position: "Trưởng Ban",
+      action: "members.view",
+      scope,
+    }));
+
+  it("collapses a position granted in all 8 departments with the same scope", () => {
+    expect(actionHolders(ownAll(ORDINARY_DEPARTMENTS), "members.view")).toEqual([
+      { label: "Trưởng Ban · mọi ban", scope: "own" },
+    ]);
+  });
+
+  it("lists each department when only 7 have the permission", () => {
+    const holders = actionHolders(ownAll(ORDINARY_DEPARTMENTS.slice(0, 7)), "members.view");
+    expect(holders).toHaveLength(7);
+    expect(holders.every((h) => h.label.startsWith("Trưởng Ban · "))).toBe(true);
+  });
+
+  it("lists each department when the scopes differ", () => {
+    const rows = [
+      ...ownAll(ORDINARY_DEPARTMENTS.slice(0, 7), "own"),
+      ...ownAll(ORDINARY_DEPARTMENTS.slice(7), "all"),
+    ];
+    expect(actionHolders(rows, "members.view")).toHaveLength(8);
+  });
+
+  it("names the executive board seat explicitly", () => {
+    const rows: MatrixRow[] = [
+      { department: "executive", position: "Co-founder", action: "members.view", scope: "all" },
+    ];
+    expect(actionHolders(rows, "members.view")).toEqual([
+      { label: "Co-founder · Ban Điều hành", scope: "all" },
+    ]);
+  });
+
+  it("returns nothing when no one holds the action", () => {
+    expect(actionHolders([], "members.view")).toEqual([]);
   });
 });
 
@@ -70,7 +151,7 @@ describe("scopeLabel", () => {
   it("names each scope", () => {
     expect(scopeLabel(null, true)).toBe("Không");
     expect(scopeLabel("own", true)).toBe("Ban mình");
-    expect(scopeLabel("all", true)).toBe("Toàn bộ");
+    expect(scopeLabel("all", true)).toBe("Toàn tổ chức");
     expect(scopeLabel("all", false)).toBe("Có");
   });
 });
@@ -111,7 +192,7 @@ describe("auditSummary", () => {
   it("describes adding and changing a matrix cell", () => {
     expect(auditSummary(base, "Ngọc")).toContain("thêm");
     expect(auditSummary({ ...base, scope_before: "own", scope_after: "all" }, "Ngọc")).toContain(
-      "từ Ban mình thành Toàn bộ",
+      "từ Ban mình thành Toàn tổ chức",
     );
   });
 

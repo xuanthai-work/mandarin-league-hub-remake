@@ -1,9 +1,11 @@
 import {
+  DEPARTMENT_IDS,
   PERMISSION_ACTIONS,
   type PermissionCode,
   type PermissionScope,
 } from "./permission-catalog";
 import { deptName } from "./recruitment";
+import { matchesSearch } from "./search";
 
 /** Module headings of the matrix, in catalog order. Every module in PERMISSION_ACTIONS must be here. */
 export const MODULE_LABELS: Record<string, string> = {
@@ -63,7 +65,7 @@ export function departmentLabel(department: string): string {
 export function scopeLabel(scope: PermissionScope | null, scoped: boolean): string {
   if (!scope) return "Không";
   if (!scoped) return "Có";
-  return scope === "own" ? "Ban mình" : "Toàn bộ";
+  return scope === "own" ? "Ban mình" : "Toàn tổ chức";
 }
 
 export type MatrixRow = {
@@ -73,27 +75,67 @@ export type MatrixRow = {
   scope: PermissionScope;
 };
 
-/**
- * Scope stored for this exact department/position/action, plus what the "*" tab already gives
- * (only for ordinary departments). The effective permission is the wider of the two.
- */
-export function cellState(
+/** 8 ban thường (mọi ban trừ Ban Điều hành), theo thứ tự DEPARTMENT_IDS. */
+export const ORDINARY_DEPARTMENTS = DEPARTMENT_IDS.filter((d) => d !== "executive");
+
+/** Phạm vi đang lưu của đúng ô ban × chức vụ × hành động; null là không có quyền. */
+export function cellScope(
   rows: MatrixRow[],
   department: string,
   position: string,
   action: PermissionCode,
-): { own: PermissionScope | null; inherited: PermissionScope | null } {
-  const own =
+): PermissionScope | null {
+  return (
     rows.find((r) => r.department === department && r.position === position && r.action === action)
-      ?.scope ?? null;
-  const inherited =
-    department === ALL_DEPARTMENTS_KEY || department === "executive"
-      ? null
-      : (rows.find(
-          (r) =>
-            r.department === ALL_DEPARTMENTS_KEY && r.position === position && r.action === action,
-        )?.scope ?? null);
-  return { own, inherited };
+      ?.scope ?? null
+  );
+}
+
+/** Số hành động một chức vụ của một ban đang có (cho dòng tổng "x/47"). */
+export function countGranted(rows: MatrixRow[], department: string, position: string): number {
+  return rows.filter((r) => r.department === department && r.position === position).length;
+}
+
+/** Tìm hành động theo tên, mã hoặc tên nhóm, không phân biệt dấu. Từ khóa rỗng: khớp hết. */
+export function actionMatches(action: ActionMeta, q: string): boolean {
+  if (!q.trim()) return true;
+  return matchesSearch(`${action.label} ${action.code} ${MODULE_LABELS[action.module] ?? ""}`, q);
+}
+
+export type ActionHolder = { label: string; scope: PermissionScope };
+
+/**
+ * Ai có một hành động theo ma trận (chưa tính Quản trị viên và quyền riêng), cho cách xem "Theo hành động".
+ * - Một chức vụ thường có quyền ở đủ 8 ban thường với cùng phạm vi: gộp thành "<chức vụ> · mọi ban".
+ * - Ngược lại: mỗi ban một mục "<chức vụ> · <tên ban>".
+ * - Chức vụ Ban Điều hành: "<chức vụ> · Ban Điều hành".
+ * Thứ tự: ORDINARY_POSITIONS rồi EXECUTIVE_POSITIONS; trong một chức vụ theo thứ tự DEPARTMENT_IDS.
+ */
+export function actionHolders(rows: MatrixRow[], action: PermissionCode): ActionHolder[] {
+  const out: ActionHolder[] = [];
+  for (const position of ORDINARY_POSITIONS) {
+    const hits = ORDINARY_DEPARTMENTS.map((d) => ({
+      d,
+      s: cellScope(rows, d, position, action),
+    })).filter(
+      (x): x is { d: (typeof ORDINARY_DEPARTMENTS)[number]; s: PermissionScope } => x.s !== null,
+    );
+    const first = hits[0];
+    if (
+      first &&
+      hits.length === ORDINARY_DEPARTMENTS.length &&
+      hits.every((h) => h.s === first.s)
+    ) {
+      out.push({ label: `${position} · mọi ban`, scope: first.s });
+    } else {
+      for (const h of hits) out.push({ label: `${position} · ${deptName(h.d)}`, scope: h.s });
+    }
+  }
+  for (const position of EXECUTIVE_POSITIONS) {
+    const s = cellScope(rows, "executive", position, action);
+    if (s) out.push({ label: `${position} · ${deptName("executive")}`, scope: s });
+  }
+  return out;
 }
 
 export type GrantRow = { revoked_at: string | null; expires_at: string | null };

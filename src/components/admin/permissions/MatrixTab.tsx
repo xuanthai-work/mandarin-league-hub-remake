@@ -4,6 +4,9 @@ import { toast } from "sonner";
 
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
 import {
   Select,
   SelectContent,
@@ -12,23 +15,65 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { DEPARTMENT_IDS } from "@/lib/permission-catalog";
+import { DEPARTMENT_IDS, PERMISSION_ACTIONS } from "@/lib/permission-catalog";
 import {
-  ALL_DEPARTMENTS_KEY,
   actionGroups,
-  cellState,
-  departmentLabel,
+  actionHolders,
+  actionMatches,
+  cellScope,
+  countGranted,
   positionsFor,
   scopeLabel,
+  type ActionMeta,
   type MatrixRow,
 } from "@/lib/permission-admin";
+import { deptName } from "@/lib/recruitment";
 
 const cellKey = (department: string, position: string, action: string) =>
   `${department}|${position}|${action}`;
 
+/** Pill colours of the read-only permission label in a matrix cell. */
+function scopeTone(value: string): string {
+  if (value === "own") return "bg-warning-soft text-warning-foreground";
+  if (value === "all") return "bg-primary/10 text-primary";
+  return "bg-transparent text-muted-foreground/60";
+}
+
+/** Read-only "Ai có" cell of the per-action view. */
+function HoldersCell({ action, rows }: { action: ActionMeta; rows: MatrixRow[] }) {
+  const holders = actionHolders(rows, action.code);
+  if (holders.length === 0)
+    return (
+      <td className="p-3">
+        <StatusPill tone="neutral" dot={false}>
+          Chỉ Quản trị viên
+        </StatusPill>
+      </td>
+    );
+  return (
+    <td className="p-3">
+      <div className="flex flex-wrap gap-1.5">
+        {holders.map((holder) => (
+          <StatusPill
+            key={holder.label}
+            dot={false}
+            tone={action.scoped ? (holder.scope === "all" ? "info" : "warning") : "info"}
+          >
+            {action.scoped
+              ? `${holder.label} · ${holder.scope === "all" ? "toàn tổ chức" : "ban mình"}`
+              : holder.label}
+          </StatusPill>
+        ))}
+      </div>
+    </td>
+  );
+}
+
 export function MatrixTab() {
   const qc = useQueryClient();
-  const [department, setDepartment] = useState<string>(ALL_DEPARTMENTS_KEY);
+  const [view, setView] = useState<"dept" | "action">("dept");
+  const [department, setDepartment] = useState<string>("hr");
+  const [q, setQ] = useState("");
   const [saving, setSaving] = useState<Record<string, boolean>>({});
 
   const matrix = useQuery({
@@ -44,6 +89,12 @@ export function MatrixTab() {
 
   const rows = matrix.data ?? [];
   const positions = positionsFor(department);
+  const groups = actionGroups()
+    .map((group) => ({
+      ...group,
+      actions: group.actions.filter((action) => actionMatches(action, q)),
+    }))
+    .filter((group) => group.actions.length > 0);
 
   const save = async (position: string, action: string, value: string) => {
     const key = cellKey(department, position, action);
@@ -81,96 +132,150 @@ export function MatrixTab() {
 
   if (matrix.isLoading) return <EmptyState title="Đang tải ma trận quyền…" />;
 
-  const columns: AdminColumn[] = [
+  const deptColumns: AdminColumn[] = [
     { key: "action", label: "Hành động", className: "w-[34%]" },
-    ...positions.map((position) => ({ key: position, label: position })),
+    ...positions.map((position) => ({ key: position, label: position, className: "text-center" })),
   ];
+  const actionColumns: AdminColumn[] = [
+    { key: "action", label: "Hành động", className: "w-[34%]" },
+    { key: "who", label: "Ai có (ngoài Quản trị viên)" },
+  ];
+  const columns = view === "dept" ? deptColumns : actionColumns;
 
   return (
     <div className="space-y-3">
-      <div className="max-w-xs space-y-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Ban
-        </span>
-        <Select value={department} onValueChange={setDepartment}>
-          <SelectTrigger aria-label="Chọn ban" className="h-9 rounded-xl text-xs shadow-xs">
-            <SelectValue>{departmentLabel(department)}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_DEPARTMENTS_KEY}>
-              {departmentLabel(ALL_DEPARTMENTS_KEY)}
-            </SelectItem>
-            {DEPARTMENT_IDS.map((id) => (
-              <SelectItem key={id} value={id}>
-                {departmentLabel(id)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {department === ALL_DEPARTMENTS_KEY && (
-          <p className="text-xs text-muted-foreground">
-            Áp cho cùng chức vụ ở mọi ban, trừ Ban Điều hành. Từng ban có thể cấp thêm.
-          </p>
-        )}
+      <div className="flex flex-wrap items-center gap-2">
+        <SegmentedControl
+          label="Cách xem"
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "dept", label: "Theo ban" },
+            { value: "action", label: "Theo hành động" },
+          ]}
+        />
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm hành động hoặc mã…"
+          label="Tìm hành động"
+        />
       </div>
 
-      <AdminTable columns={columns} minWidth="min-w-[760px]">
-        {actionGroups().map((group) => (
-          <Fragment key={group.module}>
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="bg-secondary/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-              >
-                {group.label}
-              </td>
-            </tr>
-            {group.actions.map((action) => (
-              <AdminTableRow key={action.code}>
-                <td className="p-3">
-                  <p className="font-medium text-foreground">{action.label}</p>
-                  <p className="font-mono text-[11px] text-muted-foreground">{action.code}</p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <StatusPill tone="info" dot={false}>
+            Toàn tổ chức
+          </StatusPill>
+          dữ liệu mọi ban
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <StatusPill tone="warning" dot={false}>
+            Ban mình
+          </StatusPill>
+          chỉ dữ liệu của ban mình
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <StatusPill tone="info" dot={false}>
+            Có
+          </StatusPill>
+          hành động không chia theo ban
+        </span>
+        <span>Quản trị viên luôn có mọi quyền.</span>
+      </div>
+
+      {view === "dept" && (
+        <SegmentedControl
+          label="Chọn ban"
+          className="flex-wrap"
+          value={department}
+          onChange={setDepartment}
+          options={DEPARTMENT_IDS.map((id) => ({ value: id, label: deptName(id) }))}
+        />
+      )}
+
+      {groups.length === 0 ? (
+        <EmptyState title="Không có hành động khớp từ khóa." />
+      ) : (
+        <AdminTable columns={columns} minWidth="min-w-[760px]">
+          {groups.map((group) => (
+            <Fragment key={group.module}>
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="bg-secondary/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {group.label}
                 </td>
-                {positions.map((position) => {
-                  const { own, inherited } = cellState(rows, department, position, action.code);
-                  return (
-                    <td key={position} className="p-3 align-top">
-                      <Select
-                        value={own ?? "none"}
-                        onValueChange={(value) => void save(position, action.code, value)}
-                        disabled={!!saving[cellKey(department, position, action.code)]}
-                      >
-                        <SelectTrigger
-                          aria-label={`${action.label}: ${position}`}
-                          className="h-8 text-xs"
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Không</SelectItem>
-                          {action.scoped ? (
-                            <>
-                              <SelectItem value="own">Ban mình</SelectItem>
-                              <SelectItem value="all">Toàn bộ</SelectItem>
-                            </>
-                          ) : (
-                            <SelectItem value="all">Có</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {inherited !== null && own === null && (
-                        <p className="mt-1 text-[10px] text-muted-foreground">
-                          Từ Tất cả các ban: {scopeLabel(inherited, action.scoped)}
-                        </p>
+              </tr>
+              {group.actions.map((action) => (
+                <AdminTableRow key={action.code}>
+                  <td className="p-3">
+                    <p className="font-medium text-foreground">
+                      {action.label}
+                      {action.scoped && (
+                        <span className="ml-1.5 text-[11px] font-semibold text-warning-foreground">
+                          theo ban
+                        </span>
                       )}
-                    </td>
-                  );
-                })}
-              </AdminTableRow>
-            ))}
-          </Fragment>
-        ))}
-      </AdminTable>
+                    </p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{action.code}</p>
+                  </td>
+
+                  {view === "dept" ? (
+                    positions.map((position) => {
+                      const scope = cellScope(rows, department, position, action.code);
+                      const value = scope ?? "none";
+                      return (
+                        <td key={position} className="p-3 text-center">
+                          <Select
+                            value={value}
+                            onValueChange={(next) => void save(position, action.code, next)}
+                            disabled={!!saving[cellKey(department, position, action.code)]}
+                          >
+                            <SelectTrigger
+                              aria-label={`${action.label}: ${position}`}
+                              className={`mx-auto h-7 w-auto min-w-[7.5rem] justify-center gap-1 rounded-full border-transparent px-3 text-[11px] font-semibold shadow-none ${scopeTone(value)}`}
+                            >
+                              <SelectValue>
+                                {value === "none" ? "—" : scopeLabel(scope, action.scoped)}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Không</SelectItem>
+                              {action.scoped ? (
+                                <>
+                                  <SelectItem value="own">Ban mình</SelectItem>
+                                  <SelectItem value="all">Toàn tổ chức</SelectItem>
+                                </>
+                              ) : (
+                                <SelectItem value="all">Có</SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                      );
+                    })
+                  ) : (
+                    <HoldersCell action={action} rows={rows} />
+                  )}
+                </AdminTableRow>
+              ))}
+            </Fragment>
+          ))}
+
+          {view === "dept" && (
+            <AdminTableRow className="bg-secondary/30 font-semibold">
+              <td className="p-3">Số hành động có quyền</td>
+              {positions.map((position) => (
+                <td key={position} className="p-3 text-center tabular-nums">
+                  {countGranted(rows, department, position)}/{PERMISSION_ACTIONS.length}
+                </td>
+              ))}
+            </AdminTableRow>
+          )}
+        </AdminTable>
+      )}
     </div>
   );
 }
