@@ -11,7 +11,15 @@ import type { DeptChannel } from "@/lib/department-summary";
 
 const isLink = (v: string) => !v || /^https?:\/\//i.test(v);
 
-export function ChannelForm({ dept, channel }: { dept: string; channel: DeptChannel | null }) {
+export function ChannelForm({
+  dept,
+  channel,
+  readOnly = false,
+}: {
+  dept: string;
+  channel: DeptChannel | null;
+  readOnly?: boolean;
+}) {
   const qc = useQueryClient();
   const [zalo, setZalo] = useState(channel?.zalo_url ?? "");
   const [resources, setResources] = useState(channel?.resources_url ?? "");
@@ -27,6 +35,7 @@ export function ChannelForm({ dept, channel }: { dept: string; channel: DeptChan
   const resourcesOk = isLink(next.resources_url);
 
   const save = async () => {
+    if (readOnly) return;
     setBusy(true);
     const { error } = await supabase
       .from("department_channels")
@@ -52,6 +61,7 @@ export function ChannelForm({ dept, channel }: { dept: string; channel: DeptChan
             id="dept-zalo"
             placeholder="https://zalo.me/g/..."
             value={zalo}
+            readOnly={readOnly}
             onChange={(e) => setZalo(e.target.value)}
           />
           {zalo.trim() && (
@@ -79,6 +89,7 @@ export function ChannelForm({ dept, channel }: { dept: string; channel: DeptChan
             id="dept-resources"
             placeholder="https://drive.google.com/..."
             value={resources}
+            readOnly={readOnly}
             onChange={(e) => setResources(e.target.value)}
           />
           {resources.trim() && (
@@ -107,6 +118,7 @@ export function ChannelForm({ dept, channel }: { dept: string; channel: DeptChan
           maxLength={500}
           className="mt-1"
           value={note}
+          readOnly={readOnly}
           onChange={(e) => setNote(e.target.value)}
         />
       </div>
@@ -115,9 +127,11 @@ export function ChannelForm({ dept, channel }: { dept: string; channel: DeptChan
         <p className="text-[11px] text-muted-foreground">
           {updatedLabel && `Cập nhật lần cuối ${updatedLabel}`}
         </p>
-        <Button type="button" disabled={!dirty || busy || !zaloOk || !resourcesOk} onClick={save}>
-          Lưu
-        </Button>
+        {!readOnly && (
+          <Button type="button" disabled={!dirty || busy || !zaloOk || !resourcesOk} onClick={save}>
+            Lưu
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowRight,
+  Eye,
   FolderOpen,
   GraduationCap,
   MessageCircle,
@@ -47,9 +48,11 @@ function StatusCell({
 
 export function DepartmentCard({
   summary,
+  canEdit,
   onConfigure,
 }: {
   summary: DeptSummary;
+  canEdit: boolean;
   onConfigure: () => void;
 }) {
   const hasZalo = !!summary.channel?.zalo_url.trim();
@@ -120,8 +123,17 @@ export function DepartmentCard({
           Xem thành viên <ArrowRight className="h-3.5 w-3.5" />
         </Link>
         <Button type="button" variant="outline" size="sm" onClick={onConfigure}>
-          <Settings2 className="h-3.5 w-3.5" />
-          Cấu hình
+          {canEdit ? (
+            <>
+              <Settings2 className="h-3.5 w-3.5" />
+              Cấu hình
+            </>
+          ) : (
+            <>
+              <Eye className="h-3.5 w-3.5" />
+              Xem
+            </>
+          )}
         </Button>
       </div>
     </article>

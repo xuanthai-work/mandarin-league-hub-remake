@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { MyPermissions } from "./permission-catalog";
+import { can, type MyPermissions } from "./permission-catalog";
 import {
   assignablePositions,
   canActOnMember,
@@ -91,8 +91,8 @@ describe("allowedSections", () => {
     expect(allowedSections(perms({ "candidates.edit": "all" }))).toEqual(["candidates"]);
   });
 
-  it("does not open departments from departments.channels", () => {
-    expect(allowedSections(perms({ "departments.channels": "own" }))).toEqual([]);
+  it("opens departments from departments.view", () => {
+    expect(allowedSections(perms({ "departments.view": "all" }))).toEqual(["departments"]);
   });
 
   it("keeps SECTION_ACTIONS key order", () => {
@@ -107,6 +107,8 @@ describe("landsOnAdmin", () => {
   it("sends admins to the admin portal", () => expect(landsOnAdmin("all")).toBe(true));
   it("keeps member-only users on the dashboard", () =>
     expect(landsOnAdmin(["members", "settings"])).toBe(false));
+  it("keeps users who only read members and departments on the dashboard", () =>
+    expect(landsOnAdmin(["members", "departments", "settings"])).toBe(false));
   it("sends users with tasks to admin", () => expect(landsOnAdmin(["tasks"])).toBe(true));
   it("sends users with contributions to admin", () =>
     expect(landsOnAdmin(["contributions"])).toBe(true));
@@ -320,5 +322,16 @@ describe("assignablePositions", () => {
 
   it("gives an admin every position", () => {
     expect(assignablePositions(perms({}, true), me("Thành viên"), positions)).toEqual(positions);
+  });
+});
+
+describe("departments.edit scope", () => {
+  it("allows editing own department and rejects other departments", () => {
+    expect(can(perms({ "departments.edit": "own" }), "departments.edit", "comms", "comms")).toBe(
+      true,
+    );
+    expect(can(perms({ "departments.edit": "own" }), "departments.edit", "hr", "comms")).toBe(
+      false,
+    );
   });
 });

@@ -21,7 +21,7 @@ export const SECTION_ACTIONS: Record<string, readonly PermissionCode[]> = {
   news: ["news.view", "news.edit"],
   photos: ["photos.view", "photos.edit"],
   partners: ["partners.view", "partners.edit"],
-  departments: ["departments.advisors"],
+  departments: ["departments.view", "departments.edit"],
   content: ["content.edit", "content.publish"],
 };
 
@@ -104,8 +104,8 @@ export function assignablePositions(
   return positions.filter((x) => outranksPosition(me.position ?? "Thành viên", x));
 }
 
-/** Lands on /admin only when the user has real work there, not just the member list or settings. */
+/** Lands on /admin only when the user has real work there, not just pages every member can read. */
 export function landsOnAdmin(allowed: string[] | "all"): boolean {
   if (allowed === "all") return true;
-  return allowed.some((s) => s !== "members" && s !== "settings");
+  return allowed.some((s) => s !== "members" && s !== "departments" && s !== "settings");
 }

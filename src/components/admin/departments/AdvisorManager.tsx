@@ -16,11 +16,13 @@ export function AdvisorManager({
   enabled,
   advisors,
   members,
+  readOnly = false,
 }: {
   dept: string;
   enabled: boolean;
   advisors: DeptAdvisor[];
   members: DeptMember[];
+  readOnly?: boolean;
 }) {
   const qc = useQueryClient();
   const { confirm, dialog } = useConfirm();
@@ -33,6 +35,7 @@ export function AdvisorManager({
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-departments"] });
 
   const toggle = async (v: boolean) => {
+    if (readOnly) return;
     setOn(v);
     setBusy(true);
     const { error } = await supabase
@@ -47,6 +50,7 @@ export function AdvisorManager({
   };
 
   const move = async (i: number, dir: -1 | 1) => {
+    if (readOnly) return;
     const a = advisors[i],
       b = advisors[i + dir];
     if (!a || !b) return;
@@ -64,6 +68,7 @@ export function AdvisorManager({
   };
 
   const remove = async (r: DeptAdvisor) => {
+    if (readOnly) return;
     const ok = await confirm({
       title: "Gỡ cố vấn?",
       description: `${member(r.member_id)?.full_name ?? "Thành viên"} sẽ không còn là cố vấn của Ban này. Hồ sơ thành viên không bị ảnh hưởng.`,
@@ -80,7 +85,7 @@ export function AdvisorManager({
   };
 
   const add = async () => {
-    if (!pick) return;
+    if (readOnly || !pick) return;
     setBusy(true);
     const { error } = await supabase.from("department_advisors").insert({
       department: dept,
@@ -112,7 +117,7 @@ export function AdvisorManager({
         </div>
         <Switch
           checked={on}
-          disabled={busy}
+          disabled={busy || readOnly}
           onCheckedChange={(v) => void toggle(v)}
           aria-label="Bật cố vấn cho Ban"
         />
@@ -142,70 +147,76 @@ export function AdvisorManager({
                       {m && ` · ${deptName(m.department)}`}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="admin-icon"
-                    aria-label="Lên"
-                    title="Đưa lên"
-                    disabled={i === 0 || busy}
-                    onClick={() => void move(i, -1)}
-                    className="h-7 w-7 text-muted-foreground"
-                  >
-                    <ArrowUp aria-hidden />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="admin-icon"
-                    aria-label="Xuống"
-                    title="Đưa xuống"
-                    disabled={i === advisors.length - 1 || busy}
-                    onClick={() => void move(i, 1)}
-                    className="h-7 w-7 text-muted-foreground"
-                  >
-                    <ArrowDown aria-hidden />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="admin-icon"
-                    aria-label="Gỡ cố vấn"
-                    title="Gỡ cố vấn"
-                    disabled={busy}
-                    onClick={() => void remove(r)}
-                    className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 aria-hidden />
-                  </Button>
+                  {!readOnly && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="admin-icon"
+                        aria-label="Lên"
+                        title="Đưa lên"
+                        disabled={i === 0 || busy}
+                        onClick={() => void move(i, -1)}
+                        className="h-7 w-7 text-muted-foreground"
+                      >
+                        <ArrowUp aria-hidden />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="admin-icon"
+                        aria-label="Xuống"
+                        title="Đưa xuống"
+                        disabled={i === advisors.length - 1 || busy}
+                        onClick={() => void move(i, 1)}
+                        className="h-7 w-7 text-muted-foreground"
+                      >
+                        <ArrowDown aria-hidden />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="admin-icon"
+                        aria-label="Gỡ cố vấn"
+                        title="Gỡ cố vấn"
+                        disabled={busy}
+                        onClick={() => void remove(r)}
+                        className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 aria-hidden />
+                      </Button>
+                    </>
+                  )}
                 </li>
               );
             })}
           </ul>
 
-          <div className="space-y-2 rounded-xl border border-dashed border-border p-3">
-            <MemberCombobox
-              members={candidates}
-              value={pick}
-              onChange={setPick}
-              noneLabel="— Chọn thành viên —"
-            />
-            <Input
-              placeholder="Lĩnh vực chuyên môn (vd: Khảo thí HSK)"
-              maxLength={120}
-              aria-label="Lĩnh vực chuyên môn"
-              value={spec}
-              onChange={(e) => setSpec(e.target.value)}
-            />
-            <Button
-              type="button"
-              className="w-full"
-              disabled={!pick || busy}
-              onClick={() => void add()}
-            >
-              Bổ nhiệm cố vấn
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="space-y-2 rounded-xl border border-dashed border-border p-3">
+              <MemberCombobox
+                members={candidates}
+                value={pick}
+                onChange={setPick}
+                noneLabel="— Chọn thành viên —"
+              />
+              <Input
+                placeholder="Lĩnh vực chuyên môn (vd: Khảo thí HSK)"
+                maxLength={120}
+                aria-label="Lĩnh vực chuyên môn"
+                value={spec}
+                onChange={(e) => setSpec(e.target.value)}
+              />
+              <Button
+                type="button"
+                className="w-full"
+                disabled={!pick || busy}
+                onClick={() => void add()}
+              >
+                Bổ nhiệm cố vấn
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>

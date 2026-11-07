@@ -121,15 +121,15 @@ export const PERMISSION_ACTIONS = [
     scoped: false,
   },
   {
-    code: "departments.channels",
+    code: "departments.view",
     module: "departments",
-    label: "Sửa Kênh làm việc của Ban",
-    scoped: true,
+    label: "Xem các Ban: lãnh đạo, kênh làm việc và cố vấn",
+    scoped: false,
   },
   {
-    code: "departments.advisors",
+    code: "departments.edit",
     module: "departments",
-    label: "Quản lý Cố vấn của Ban",
+    label: "Sửa kênh làm việc và cố vấn của Ban",
     scoped: true,
   },
   {

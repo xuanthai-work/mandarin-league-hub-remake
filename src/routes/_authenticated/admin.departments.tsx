@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DepartmentCard } from "@/components/admin/departments/DepartmentCard";
 import { DepartmentDrawer } from "@/components/admin/departments/DepartmentDrawer";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 import {
   summarizeDepartments,
   type DeptAdvisor,
@@ -52,6 +54,11 @@ async function load() {
 }
 
 function DepartmentsPage() {
+  const access = useAdminAccess().data;
+  const perms = access?.perms ?? NO_PERMISSIONS;
+  const canEditDept = (id: string) =>
+    can(perms, "departments.edit", id, access?.department ?? null);
+
   const q = useQuery({ queryKey: ["admin-departments"], queryFn: load });
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -89,7 +96,12 @@ function DepartmentsPage() {
 
           <div className={GRID}>
             {summaries.map((s) => (
-              <DepartmentCard key={s.id} summary={s} onConfigure={() => setOpenId(s.id)} />
+              <DepartmentCard
+                key={s.id}
+                summary={s}
+                canEdit={canEditDept(s.id)}
+                onConfigure={() => setOpenId(s.id)}
+              />
             ))}
           </div>
         </>
@@ -100,6 +112,7 @@ function DepartmentsPage() {
           <DepartmentDrawer
             key={open.id}
             summary={open}
+            readOnly={!canEditDept(open.id)}
             allMembers={q.data.members}
             advisors={q.data.advisors
               .filter((a) => a.department === open.id)

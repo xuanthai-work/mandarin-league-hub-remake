@@ -6,11 +6,13 @@ import { AdvisorManager } from "./AdvisorManager";
 
 export function DepartmentDrawer({
   summary,
+  readOnly,
   allMembers,
   advisors,
   onClose,
 }: {
   summary: DeptSummary;
+  readOnly: boolean;
   allMembers: DeptMember[];
   advisors: DeptAdvisor[];
   onClose: () => void;
@@ -69,11 +71,12 @@ export function DepartmentDrawer({
       <section>
         <h3 className="text-sm font-semibold text-foreground">Kênh làm việc</h3>
         <p className="text-xs text-muted-foreground">
-          Link nhóm Zalo, kho tài liệu và mục tiêu của Ban. Chỉ lưu đường link, không tải tệp lên hệ
-          thống.
+          {readOnly
+            ? "Link nhóm Zalo, kho tài liệu và mục tiêu của Ban. Trưởng/Phó Ban của Ban này cập nhật."
+            : "Link nhóm Zalo, kho tài liệu và mục tiêu của Ban. Chỉ lưu đường link, không tải tệp lên hệ thống."}
         </p>
         <div className="mt-3">
-          <ChannelForm dept={summary.id} channel={summary.channel} />
+          <ChannelForm dept={summary.id} channel={summary.channel} readOnly={readOnly} />
         </div>
       </section>
 
@@ -88,6 +91,7 @@ export function DepartmentDrawer({
             enabled={summary.advisorsEnabled}
             advisors={advisors}
             members={allMembers}
+            readOnly={readOnly}
           />
         </div>
       </section>
