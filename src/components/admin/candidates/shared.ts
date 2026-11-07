@@ -56,16 +56,6 @@ export const APP_STATUS_TONE: Record<string, StatusTone> = {
   withdrawn: "neutral",
 };
 
-export const STATUS_TONE: Record<string, string> = {
-  submitted: "bg-warning-soft text-warning-foreground",
-  needs_info: "bg-warning-soft text-warning-foreground",
-  reviewing: "bg-primary/10 text-primary",
-  interview: "bg-gold-soft text-warning-foreground",
-  approved: "bg-success/15 text-success",
-  rejected: "bg-destructive/10 text-destructive",
-  withdrawn: "bg-muted text-muted-foreground",
-};
-
 export const STATUS_DOT: Record<string, string> = {
   submitted: "bg-warning-foreground",
   needs_info: "bg-warning-foreground",

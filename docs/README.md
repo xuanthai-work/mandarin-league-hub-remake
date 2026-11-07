@@ -215,6 +215,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-165-TASKS-MODALS-USE-ADMIN-KIT`                               | Nhiệm vụ (2/2): 2 modal Giao / Chi tiết dùng bộ component admin                                        | 2026-11-07     | **PASS** | [task-ge-165-tasks-modals-use-admin-kit.md](tasks/task-ge-165-tasks-modals-use-admin-kit.md)                                                             |
 | `TASK-OC-164-PERMISSIONS-ADMIN-SCREEN`                                 | Phân quyền: màn /admin/permissions (ma trận, quyền riêng, nhật ký)                                     | 2026-11-07     | **PASS** | [task-oc-164-permissions-admin-screen.md](tasks/task-oc-164-permissions-admin-screen.md)                                                                 |
 | `TASK-GE-166-CANDIDATES-LIST-USE-ADMIN-KIT`                            | Ứng viên (1/2): danh sách hồ sơ dùng bộ component admin                                                | 2026-11-07     | **PASS** | [task-ge-166-candidates-list-use-admin-kit.md](tasks/task-ge-166-candidates-list-use-admin-kit.md)                                                       |
+| `TASK-GE-167-CANDIDATE-DOSSIER-DRAWER-USE-ADMIN-KIT`                   | Ứng viên (2/2): drawer hồ sơ dùng bộ component admin                                                   | 2026-11-07     | **PASS** | [task-ge-167-candidate-dossier-drawer-use-admin-kit.md](tasks/task-ge-167-candidate-dossier-drawer-use-admin-kit.md)                                     |
 
 ---
 

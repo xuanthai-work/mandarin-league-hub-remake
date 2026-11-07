@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import {
   Check,
   Copy,
@@ -15,9 +15,15 @@ import {
   Sparkles,
   Target,
   UserRound,
-  X,
 } from "lucide-react";
 
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminModal } from "@/components/admin/kit/AdminModal";
+import { AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { FormField } from "@/components/admin/kit/FormField";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -40,8 +46,8 @@ import {
 } from "@/lib/recruitment";
 import { cn } from "@/lib/utils";
 import {
+  APP_STATUS_TONE,
   STATUS_DOT,
-  STATUS_TONE,
   answersOf,
   choicesOf,
   formatDate,
@@ -60,26 +66,18 @@ interface CandidateDossierDrawerProps {
   onClose: () => void;
 }
 
-const fieldInp =
-  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20";
 const label = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
 /** Upload paths written by the public application form (`pending/<id>.<ext>`), same check as the server. */
 const isUploadPath = (v: unknown): v is string =>
   typeof v === "string" && /^pending\/[\w-]+\.\w+$/.test(v);
 
+const contactBtn = "max-w-full font-medium [&_svg]:size-3.5";
+
 export function CandidateDossierDrawer({ app, questions, onClose }: CandidateDossierDrawerProps) {
   const [tab, setTab] = useState("profile");
   const [copied, setCopied] = useState(false);
   const qc = useQueryClient();
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   const history = useQuery({
     queryKey: ["candidate-history", app.id],
@@ -100,161 +98,112 @@ export function CandidateDossierDrawer({ app, questions, onClose }: CandidateDos
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Hồ sơ ứng viên ${app.full_name}`}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-[700px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <header className="shrink-0 border-b border-border/70 px-5 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                {initials(app.full_name)}
-              </span>
-              <div className="min-w-0">
-                <h2 className="truncate text-lg font-bold text-foreground">{app.full_name}</h2>
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="font-mono text-[11px] font-semibold text-primary">
-                    {app.code}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={copyCode}
-                    aria-label="Sao chép mã hồ sơ"
-                    title="Sao chép mã hồ sơ"
-                    className="rounded p-0.5 text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
-                  >
-                    {copied ? (
-                      <Check className="h-3.5 w-3.5 text-success" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      STATUS_TONE[app.status] ?? "bg-secondary text-secondary-foreground",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "h-1.5 w-1.5 rounded-full",
-                        STATUS_DOT[app.status] ?? "bg-muted-foreground/50",
-                      )}
-                    />
-                    {statusLabel(app.status)}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Đóng hồ sơ"
-              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <a
-              href={`mailto:${app.email}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-            >
-              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-              {app.email}
+    <AdminDrawer
+      width="lg"
+      title={app.full_name}
+      leading={
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+          {initials(app.full_name)}
+        </span>
+      }
+      subtitle={
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span className="font-mono text-[11px] font-semibold text-primary">{app.code}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="admin-icon"
+            onClick={copyCode}
+            aria-label="Sao chép mã hồ sơ"
+            title="Sao chép mã hồ sơ"
+            className="h-6 w-6 text-primary/70 hover:bg-primary/10 hover:text-primary [&_svg]:size-3.5"
+          >
+            {copied ? <Check aria-hidden className="text-success" /> : <Copy aria-hidden />}
+          </Button>
+          <StatusPill tone={APP_STATUS_TONE[app.status] ?? "neutral"}>
+            {statusLabel(app.status)}
+          </StatusPill>
+        </span>
+      }
+      onClose={onClose}
+      bodyClassName="space-y-4"
+    >
+      <div className="flex flex-wrap gap-1.5">
+        <Button asChild variant="outline" size="admin-sm" className={contactBtn}>
+          <a href={`mailto:${app.email}`}>
+            <Mail aria-hidden className="text-muted-foreground" />
+            <span className="truncate">{app.email}</span>
+          </a>
+        </Button>
+        <Button asChild variant="outline" size="admin-sm" className={contactBtn}>
+          <a href={`tel:${app.phone.replace(/\s+/g, "")}`}>
+            <Phone aria-hidden className="text-muted-foreground" />
+            <span className="truncate">{app.phone}</span>
+          </a>
+        </Button>
+        {app.facebook_url && /^https?:\/\//i.test(app.facebook_url) && (
+          <Button asChild variant="outline" size="admin-sm" className={contactBtn}>
+            <a href={app.facebook_url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink aria-hidden className="text-muted-foreground" />
+              Facebook
             </a>
-            <a
-              href={`tel:${app.phone.replace(/\s+/g, "")}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-            >
-              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-              {app.phone}
-            </a>
-            {app.facebook_url && /^https?:\/\//i.test(app.facebook_url) && (
-              <a
-                href={app.facebook_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                Facebook
-              </a>
-            )}
-            {app.cv_path && (
-              <button
-                type="button"
-                onClick={() => openStorageFile(app.cv_path ?? "")}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                Xem CV
-              </button>
-            )}
-          </div>
-        </header>
+          </Button>
+        )}
+        {app.cv_path && (
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-sm"
+            className={cn(contactBtn, "text-primary hover:bg-primary/5 hover:text-primary")}
+            onClick={() => openStorageFile(app.cv_path ?? "")}
+          >
+            <FileText aria-hidden />
+            Xem CV
+          </Button>
+        )}
+      </div>
 
-        <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 px-5 pt-3">
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
-              <TabsTrigger value="profile" className="text-xs">
-                Hồ sơ & Trả lời
-              </TabsTrigger>
-              <TabsTrigger value="ai" className="text-xs">
-                Trợ lý AI
-              </TabsTrigger>
-              <TabsTrigger value="decision" className="text-xs">
-                Xử lý & Kết nạp
-              </TabsTrigger>
-              <TabsTrigger value="history" className="text-xs">
-                Lịch sử
-              </TabsTrigger>
-            </TabsList>
-          </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <div className="sticky top-0 z-10 -mx-4 bg-card px-4 pb-3 sm:-mx-6 sm:px-6">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
+            <TabsTrigger value="profile" className="text-xs">
+              Hồ sơ & Trả lời
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="text-xs">
+              Trợ lý AI
+            </TabsTrigger>
+            <TabsTrigger value="decision" className="text-xs">
+              Xử lý & Kết nạp
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs">
+              Lịch sử
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-            <TabsContent value="profile" forceMount className="mt-0 data-[state=inactive]:hidden">
-              <ProfileTab app={app} questions={questions} />
-            </TabsContent>
-            <TabsContent value="ai" forceMount className="mt-0 data-[state=inactive]:hidden">
-              <AiTab
-                app={app}
-                onUpdated={() => qc.invalidateQueries({ queryKey: ["admin-candidates"] })}
-              />
-            </TabsContent>
-            <TabsContent value="decision" forceMount className="mt-0 data-[state=inactive]:hidden">
-              <DecisionTab
-                app={app}
-                onSaved={() => {
-                  qc.invalidateQueries({ queryKey: ["admin-candidates"] });
-                  qc.invalidateQueries({ queryKey: ["candidate-history", app.id] });
-                }}
-              />
-            </TabsContent>
-            <TabsContent value="history" forceMount className="mt-0 data-[state=inactive]:hidden">
-              <HistoryTab items={history.data ?? []} loading={history.isLoading} />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </motion.div>
-    </div>
+        <TabsContent value="profile" forceMount className="mt-0 data-[state=inactive]:hidden">
+          <ProfileTab app={app} questions={questions} />
+        </TabsContent>
+        <TabsContent value="ai" forceMount className="mt-0 data-[state=inactive]:hidden">
+          <AiTab
+            app={app}
+            onUpdated={() => qc.invalidateQueries({ queryKey: ["admin-candidates"] })}
+          />
+        </TabsContent>
+        <TabsContent value="decision" forceMount className="mt-0 data-[state=inactive]:hidden">
+          <DecisionTab
+            app={app}
+            onSaved={() => {
+              qc.invalidateQueries({ queryKey: ["admin-candidates"] });
+              qc.invalidateQueries({ queryKey: ["candidate-history", app.id] });
+            }}
+          />
+        </TabsContent>
+        <TabsContent value="history" forceMount className="mt-0 data-[state=inactive]:hidden">
+          <HistoryTab items={history.data ?? []} loading={history.isLoading} />
+        </TabsContent>
+      </Tabs>
+    </AdminDrawer>
   );
 }
 
@@ -334,14 +283,16 @@ function ProfileTab({ app, questions }: { app: CandidateApp; questions: Candidat
                 </p>
                 {(q?.kind === "file" && typeof value === "string") ||
                 (!q && isUploadPath(value)) ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
+                    size="admin-sm"
                     onClick={() => openStorageFile(value)}
-                    className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline"
+                    className="mt-1 h-auto px-0 underline [&_svg]:size-3.5"
                   >
-                    <FileText className="h-3.5 w-3.5" />
+                    <FileText aria-hidden />
                     Mở tệp đính kèm
-                  </button>
+                  </Button>
                 ) : (
                   <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
                     {[value].flat().filter(Boolean).join(", ") || "—"}
@@ -392,19 +343,21 @@ function AiTab({ app, onUpdated }: { app: CandidateApp; onUpdated: () => void })
                 : "Không có CV — AI phân tích theo thông tin trong form."}
             </p>
           </div>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="admin-sm"
             onClick={run}
             disabled={busy}
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gold px-3 py-1.5 text-xs font-semibold text-primary-deep transition-colors hover:bg-gold-soft/40 disabled:opacity-60"
+            className="shrink-0 border-gold text-primary-deep hover:bg-gold-soft/40 hover:text-primary-deep [&_svg]:size-3.5"
           >
             {busy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 aria-hidden className="animate-spin" />
             ) : (
-              <Sparkles className="h-3.5 w-3.5 text-gold" />
+              <Sparkles aria-hidden className="text-gold" />
             )}
             {app.ai_summary ? "Phân tích lại" : "Phân tích hồ sơ"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -415,14 +368,11 @@ function AiTab({ app, onUpdated }: { app: CandidateApp; onUpdated: () => void })
       {app.ai_summary ? (
         <AiSummary summary={app.ai_summary} />
       ) : (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-10 text-center">
-          <Sparkles aria-hidden className="h-6 w-6 text-gold" />
-          <p className="text-sm font-medium text-foreground">Chưa có phân tích AI</p>
-          <p className="max-w-[380px] text-xs text-muted-foreground">
-            Bấm “Phân tích hồ sơ” để AI tóm tắt kinh nghiệm, mức độ phù hợp với Ban ứng tuyển và gợi
-            ý câu hỏi phỏng vấn. Quyết định cuối cùng vẫn thuộc về Ban Nhân sự.
-          </p>
-        </div>
+        <EmptyState
+          icon={Sparkles}
+          title="Chưa có phân tích AI"
+          description="Bấm “Phân tích hồ sơ” để AI tóm tắt kinh nghiệm, mức độ phù hợp với Ban ứng tuyển và gợi ý câu hỏi phỏng vấn. Quyết định cuối cùng vẫn thuộc về Ban Nhân sự."
+        />
       )}
     </div>
   );
@@ -544,61 +494,62 @@ function DecisionTab({ app, onSaved }: { app: CandidateApp; onSaved: () => void 
             </SelectContent>
           </Select>
 
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <label className="text-[11px] font-semibold text-primary">
-              Lời nhắn gửi ứng viên (hiển thị khi tra cứu)
-            </label>
-            {STATUS_MESSAGE_TEMPLATES[status] && (
-              <button
+          <FormField label="Lời nhắn gửi ứng viên (hiển thị khi tra cứu)">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={3}
+                maxLength={1500}
+                className="border-gold/50"
+                placeholder="VD: Bạn vui lòng mở quyền xem Google Drive của CV và phản hồi về hr@themandarinleague.bond"
+                value={msg}
+                onChange={(e) => setMsg(e.target.value)}
+              />
+            )}
+          </FormField>
+          {STATUS_MESSAGE_TEMPLATES[status] && (
+            <div className="flex justify-end">
+              <Button
                 type="button"
+                variant="link"
+                size="admin-sm"
+                className="h-auto px-0 text-[11px] underline"
                 onClick={() => setMsg(STATUS_MESSAGE_TEMPLATES[status] ?? "")}
-                className="text-[11px] font-medium text-primary underline"
               >
                 Điền mẫu câu chuẩn
-              </button>
+              </Button>
+            </div>
+          )}
+
+          <FormField label="Lý do chuyển trạng thái (chỉ nội bộ)">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={2}
+                placeholder="Lý do / ghi chú cho lần xử lý này (không bắt buộc)"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
             )}
-          </div>
-          <textarea
-            rows={3}
-            maxLength={1500}
-            className={cn(fieldInp, "border-gold/50")}
-            placeholder="VD: Bạn vui lòng mở quyền xem Google Drive của CV và phản hồi về hr@themandarinleague.bond"
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-          />
+          </FormField>
 
-          <label className="block pt-1 text-[11px] font-semibold text-muted-foreground">
-            Lý do chuyển trạng thái (chỉ nội bộ)
-          </label>
-          <textarea
-            rows={2}
-            className={fieldInp}
-            placeholder="Lý do / ghi chú cho lần xử lý này (không bắt buộc)"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-
-          <label className="block pt-1 text-[11px] font-semibold text-muted-foreground">
-            Ghi chú nội bộ chung
-          </label>
-          <textarea
-            rows={2}
-            className={fieldInp}
-            placeholder="Ghi chú nội bộ chung của hồ sơ"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
+          <FormField label="Ghi chú nội bộ chung">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={2}
+                placeholder="Ghi chú nội bộ chung của hồ sơ"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            )}
+          </FormField>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={save}
-              disabled={!!busy}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {busy === "save" && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="button" size="admin" onClick={save} disabled={!!busy}>
+              {busy === "save" && <Loader2 aria-hidden className="animate-spin" />}
               Lưu cập nhật
-            </button>
+            </Button>
             {saved && <span className="text-xs font-medium text-success">Đã lưu thay đổi</span>}
           </div>
         </div>
@@ -619,7 +570,7 @@ function DecisionTab({ app, onSaved }: { app: CandidateApp; onSaved: () => void 
       />
 
       {app.status === "approved" && (
-        <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
+        <p className="rounded-lg bg-success/10 px-3 py-2 text-xs text-success">
           Hồ sơ đã ở trạng thái “{statusLabel("approved")}”.
         </p>
       )}
@@ -702,17 +653,19 @@ function AdmissionBlock({ app, onApproved }: { app: CandidateApp; onApproved: ()
             Ban: <b className="text-foreground">{deptName(member.department)}</b> · Chức vụ:{" "}
             <b className="text-foreground">{member.position}</b>
             {!editing && (
-              <button
+              <Button
                 type="button"
+                variant="link"
+                size="admin-sm"
+                className="ml-2 h-auto px-0 text-xs underline"
                 onClick={() => {
                   setEDept(member.department);
                   setEPos(defaultPosition(member.department, member.position));
                   setEditing(true);
                 }}
-                className="ml-2 font-medium text-primary underline"
               >
                 Sửa Ban / Chức vụ
-              </button>
+              </Button>
             )}
           </p>
 
@@ -757,21 +710,17 @@ function AdmissionBlock({ app, onApproved }: { app: CandidateApp; onApproved: ()
                 </Select>
               </div>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={saveEdit}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-60"
-                >
+                <Button type="button" size="admin-sm" disabled={busy} onClick={saveEdit}>
                   {busy ? "Đang lưu…" : "Lưu thay đổi"}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="admin-sm"
                   onClick={() => setEditing(false)}
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs"
                 >
                   Hủy
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -827,14 +776,9 @@ function AdmissionBlock({ app, onApproved }: { app: CandidateApp; onApproved: ()
             Kiểm tra lại: sẽ kết nạp vào <b className="text-foreground">{deptName(dept)}</b> với
             chức vụ <b className="text-foreground">{pos}</b>.
           </p>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={run}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-          >
+          <Button type="button" size="admin" disabled={busy} onClick={run}>
             {busy ? "Đang xử lý…" : "Chấp thuận & cấp mã TML-MBR"}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -891,35 +835,60 @@ function WelcomeQr({
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="admin-sm"
         onClick={show}
-        className="mt-3 inline-flex items-center gap-2 rounded-lg border border-primary px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-accent"
+        className="mt-3 border-primary text-primary hover:text-primary [&_svg]:size-3.5"
       >
-        <QrCode className="h-3.5 w-3.5" />
+        <QrCode aria-hidden />
         Mã QR & Link thiệp chào mừng
-      </button>
+      </Button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {open && (
+          <AdminModal
+            size="sm"
+            icon={QrCode}
+            title="Thiệp chào mừng"
+            description={`${name} · ${deptName(dept)} · ${role}${code ? ` · ${code}` : ""}`}
+            onClose={() => setOpen(false)}
+            footer={
+              <div className="grid grid-cols-3 gap-2">
+                <Button asChild size="admin-sm" className="[&_svg]:size-3.5">
+                  <a
+                    href={png || undefined}
+                    download={`thiep-tml-${(code || name).replace(/\s+/g, "-")}.png`}
+                  >
+                    <Download aria-hidden />
+                    Tải PNG
+                  </a>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="admin-sm"
+                  className="[&_svg]:size-3.5"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                >
+                  <Copy aria-hidden />
+                  {copied ? "Đã chép" : "Chép link"}
+                </Button>
+                <Button asChild variant="outline" size="admin-sm" className="[&_svg]:size-3.5">
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink aria-hidden />
+                    Xem thử
+                  </a>
+                </Button>
+              </div>
+            }
           >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-primary-deep">Thiệp chào mừng</h3>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Đóng">
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {name} · {deptName(dept)} · {role}
-              {code ? ` · ${code}` : ""}
-            </p>
-            <div className="mt-3 flex aspect-square items-center justify-center rounded-xl border border-border bg-card">
+            <div className="flex aspect-square items-center justify-center rounded-xl border border-border bg-card">
               {png ? (
                 <img src={png} alt="Mã QR thiệp chào mừng" className="h-full w-full rounded-xl" />
               ) : (
@@ -928,40 +897,9 @@ function WelcomeQr({
                 />
               )}
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
-              <a
-                href={png || undefined}
-                download={`thiep-tml-${(code || name).replace(/\s+/g, "-")}.png`}
-                className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-2 py-2 font-semibold text-primary-foreground"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Tải PNG
-              </a>
-              <button
-                type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(url);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                }}
-                className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                {copied ? "Đã chép" : "Chép link"}
-              </button>
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Xem thử
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+          </AdminModal>
+        )}
+      </AnimatePresence>
     </>
   );
 }
@@ -979,11 +917,7 @@ function HistoryTab({ items, loading }: { items: CandidateHistory[]; loading: bo
   }
 
   if (items.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-        Chưa có lần xử lý nào được ghi nhận.
-      </div>
-    );
+    return <EmptyState title="Chưa có lần xử lý nào được ghi nhận." />;
   }
 
   return (
@@ -992,14 +926,9 @@ function HistoryTab({ items, loading }: { items: CandidateHistory[]; loading: bo
         <li key={h.id} className="relative">
           <span className="absolute -left-[23px] top-1 h-3 w-3 rounded-full border-2 border-background bg-primary" />
           <div className="flex flex-wrap items-center gap-1.5">
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                STATUS_TONE[h.new_status] ?? "bg-secondary text-secondary-foreground",
-              )}
-            >
+            <StatusPill tone={APP_STATUS_TONE[h.new_status] ?? "neutral"}>
               {statusLabel(h.new_status)}
-            </span>
+            </StatusPill>
             {h.old_status && (
               <span className="text-[11px] text-muted-foreground">
                 từ “{statusLabel(h.old_status)}”
