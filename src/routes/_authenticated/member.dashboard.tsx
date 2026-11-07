@@ -323,7 +323,7 @@ function MemberDashboard() {
   const previewTier =
     previewTone && previewTone !== "black" ? TIERS.find((t) => t.tone === previewTone) : undefined;
   const tier = isCoFounder ? LEADER_TIER : (previewTier ?? realTier);
-  // Founders keep obsidian, heads/advisors peacock, deputies lavender, members their tier.
+  // Founders keep obsidian, heads/advisors sapphire, deputies lavender, members their tier.
   const defaultTone = getMemberCardTone(m, me.data?.roles ?? [], isAdvisorMember, realTier.tone);
   const tone = previewTone ?? defaultTone;
   const advNames = (advisor.data ?? []).map(
@@ -1093,7 +1093,7 @@ function MemberDashboard() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {[
                         ...[...TIERS].reverse().map((t) => [t.tone, t.label] as const),
-                        ["peacock", "Trưởng Ban / Cố vấn (Khổng Tước)"] as const,
+                        ["sapphire", "Trưởng Ban / Cố vấn (Lam Bảo Thạch)"] as const,
                         ["lavender", "Phó Ban (Tử La Lan)"] as const,
                         [LEADER_TONE.key, "Nhà sáng lập (Obsidian)"] as const,
                       ].map(([k, l]) => (

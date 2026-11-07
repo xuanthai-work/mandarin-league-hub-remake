@@ -36,7 +36,7 @@ export const LEADER_TONE = { key: "black", label: "Lãnh đạo / Cố vấn" } 
 
 /**
  * Card colour by position: founders keep the obsidian leader card, department heads and
- * advisors get peacock blue, deputies get lavender, everyone else follows their tier.
+ * advisors get sapphire blue, deputies get lavender, everyone else follows their tier.
  */
 export const getMemberCardTone = (
   m: { department?: string; position: string | null },
@@ -47,9 +47,9 @@ export const getMemberCardTone = (
   const pos = m.position ?? "";
   // 1. Founder / Co-founder luôn dùng thẻ Đen Obsidian
   if (isFounder(pos)) return "black";
-  // 2. Trưởng Ban & Cố vấn dùng màu Lam Thủy Khổng Tước
+  // 2. Trưởng Ban & Cố vấn dùng màu Lam Bảo Thạch
   if (/trưởng/i.test(pos) || isAdvisor || /cố vấn/i.test(pos)) {
-    return "peacock";
+    return "sapphire";
   }
   // 3. Phó Ban dùng màu Tử La Lan
   if (/phó/i.test(pos)) {
