@@ -26,7 +26,7 @@ t2("professional advisors are left off the leaderboard", () => {
   e2(isLeader2({ department: "media", position: "Thành viên" }, [], false)).toBe(false);
 });
 
-import { effectiveMemberPoints, isFounder, tierOf } from "./points";
+import { isFounder, tierOf } from "./points";
 
 describe("isFounder", () => {
   it("recognises co-founders and founders", () => {
@@ -63,20 +63,7 @@ t2("tier thresholds 0/51/101/151/201/351/401", () => {
   for (const [p, l] of cases) e2(tierOf(p).label).toBe(l);
 });
 
-describe("effectiveMemberPoints", () => {
-  it("defaults co-founder to at least 400 points", () => {
-    expect(effectiveMemberPoints(0, "Co-founder")).toBe(400);
-    expect(effectiveMemberPoints(50, "Co-founder")).toBe(400);
-    expect(effectiveMemberPoints(420, "Co-founder")).toBe(420);
-  });
-
-  it("leaves advisors at their real points", () => {
-    expect(effectiveMemberPoints(0, "Cố vấn chuyên môn")).toBe(0);
-    expect(effectiveMemberPoints(120, "Cố vấn chuyên môn")).toBe(120);
-  });
-
-  it("leaves regular members unchanged", () => {
-    expect(effectiveMemberPoints(0, "Thành viên")).toBe(0);
-    expect(effectiveMemberPoints(150, "Thành viên")).toBe(150);
-  });
+t2("tiers follow the real stored points, founders included", () => {
+  e2(tierOf(0).key).toBe("bronze");
+  e2(tierOf(400).key).toBe("platinum");
 });

@@ -32,14 +32,6 @@ export const LEADER_TIER: Tier = {
   tone: "black",
 };
 
-/** Display/creation floor: only founders/co-founders get the 400-point floor. */
-export const effectiveMemberPoints = (
-  points: number,
-  position: string | null | undefined,
-): number => {
-  return isFounder(position) ? Math.max(points, LEADER_DEFAULT_POINTS) : points;
-};
-
 export const LEADER_TONE = { key: "black", label: "Lãnh đạo / Cố vấn" } as const;
 
 export const tierOf = (points: number) =>

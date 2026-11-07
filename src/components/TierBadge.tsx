@@ -469,7 +469,8 @@ export function TierProgress({
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {asc.map((t, i) => {
                   const info = TIER_INFO[t.key]!;
-                  const reached = isFounder || points >= t.min;
+                  // Founders hold the leader card itself; the 7 contribution tiers stay tied to real points.
+                  const reached = t.key === "leader" || points >= t.min;
                   const isCur = t.key === cur.key;
                   const rangeLabel =
                     t.key === "leader"

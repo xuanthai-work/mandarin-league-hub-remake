@@ -24,7 +24,6 @@ import {
   LEADER_TONE,
   POINT_KIND,
   TIERS,
-  effectiveMemberPoints,
   isFounder,
   isLeader,
   tierOf,
@@ -316,8 +315,8 @@ function MemberDashboard() {
     }
   };
 
-  /** Only founders / co-founders never display below the 400-point floor. */
-  const effectivePoints = effectiveMemberPoints(m.contribution_points ?? 0, m.position);
+  /** Points shown are always the real stored value; founders get the tier, not a floor. */
+  const effectivePoints = m.contribution_points ?? 0;
   const realTier = tierOf(effectivePoints);
   const isCoFounder = isFounder(m.position);
   const special =
