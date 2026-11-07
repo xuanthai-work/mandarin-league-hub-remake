@@ -74,7 +74,7 @@ const logoDownloadUrl = (p: PartnerRow) => {
 function PartnersAdmin() {
   const qc = useQueryClient();
   const access = useAdminAccess().data;
-  const manager = !!access && can(access.perms, "partners.manage");
+  const manager = !!access && can(access.perms, "partners.edit");
   const viewer = manager || (!!access && can(access.perms, "partners.view"));
   const [f, setF] = useState<PartnerForm | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);

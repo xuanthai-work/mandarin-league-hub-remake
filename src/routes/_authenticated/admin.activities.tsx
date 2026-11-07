@@ -94,7 +94,7 @@ const EMPTY: Form = {
 };
 function useCanPublish() {
   const a = useAdminAccess().data;
-  return !!a && can(a.perms, "activities.publish");
+  return !!a && can(a.perms, "activities.edit");
 }
 
 type Group = "ongoing" | "upcoming" | "unscheduled" | "ended" | "cancelled";
@@ -877,7 +877,7 @@ function ActivitiesAdmin() {
   const [regsActivity, setRegsActivity] = useState("");
   const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
   const canPublish = useCanPublish();
-  const canRegs = can(perms, "activities.registrations");
+  const canRegs = canPublish || can(perms, "activities.view");
   const canPurge = can(perms, "trash.purge");
   const acts = useAllActivities();
   const regs = useAllRegs(canRegs);

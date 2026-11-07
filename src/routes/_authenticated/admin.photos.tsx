@@ -82,7 +82,7 @@ function AdminPhotos() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const access = useAdminAccess();
-  const canManage = !!access.data && can(access.data.perms, "photos.manage");
+  const canManage = !!access.data && can(access.data.perms, "photos.edit");
 
   const photos = useQuery({
     queryKey: ["activity-photos", "all"],

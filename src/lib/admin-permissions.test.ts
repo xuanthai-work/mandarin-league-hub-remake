@@ -28,7 +28,7 @@ describe("allowedSections", () => {
 
   it("opens sections for a communications member", () => {
     const p = perms({
-      "activities.draft": "all",
+      "activities.view": "all",
       "news.write": "all",
       "partners.view": "all",
       "members.view": "own",
@@ -40,6 +40,13 @@ describe("allowedSections", () => {
     expect(allowed).toContain("partners");
     expect(allowed).not.toContain("content");
     expect(allowed).not.toContain("photos");
+  });
+
+  it("opens photos and partners from their view actions", () => {
+    expect(allowedSections(perms({ "photos.view": "all", "partners.view": "all" }))).toEqual([
+      "photos",
+      "partners",
+    ]);
   });
 
   it("opens academic sections for an academic head but not certificates", () => {

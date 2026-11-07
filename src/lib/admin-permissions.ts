@@ -17,10 +17,10 @@ export const SECTION_ACTIONS: Record<string, readonly PermissionCode[]> = {
   teachers: ["teachers.view", "teachers.edit"],
   hsk: ["hsk.view", "hsk.edit"],
   certificates: ["certificates.view", "certificates.edit"],
-  activities: ["activities.draft", "activities.publish", "activities.registrations"],
+  activities: ["activities.view", "activities.edit"],
   news: ["news.write", "news.review"],
-  photos: ["photos.manage"],
-  partners: ["partners.view", "partners.manage"],
+  photos: ["photos.view", "photos.edit"],
+  partners: ["partners.view", "partners.edit"],
   departments: ["departments.advisors"],
   content: ["content.edit", "content.publish"],
 };

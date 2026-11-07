@@ -252,6 +252,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-190-CONTRIBUTIONS-PERMS`                                      | Quyền Đóng góp: Phó Ban được thưởng/trừ điểm, đặt lại ma trận points                                   | 2026-11-08     | **PASS** | [task-ge-190-contributions-perms.md](tasks/task-ge-190-contributions-perms.md)                                                                           |
 | `TASK-OC-175-ACADEMIC-PERMS-VIEW-EDIT`                                 | Quyền Học thuật: xem / sửa cho Khóa học, Giáo viên, HSK, Chứng nhận                                    | 2026-11-08     | **PASS** | [task-oc-175-academic-perms-view-edit.md](tasks/task-oc-175-academic-perms-view-edit.md)                                                                 |
 | `TASK-OC-176-TEACHERS-READ-ONLY`                                       | Trang Giáo viên chỉ đọc khi không có teachers.edit                                                     | 2026-11-08     | **PASS** | [task-oc-176-teachers-read-only.md](tasks/task-oc-176-teachers-read-only.md)                                                                             |
+| `TASK-GE-191-MEDIA-PERMS-VIEW-EDIT`                                    | Quyền Hoạt động, Hình ảnh, Đối tác: xem / sửa (5 Ban)                                                  | 2026-11-08     | **PASS** | [task-ge-191-media-perms-view-edit.md](tasks/task-ge-191-media-perms-view-edit.md)                                                                       |
 
 ---
 
