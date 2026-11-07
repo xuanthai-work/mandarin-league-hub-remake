@@ -26,7 +26,7 @@ t2("professional advisors are left off the leaderboard", () => {
   e2(isLeader2({ department: "media", position: "Thành viên" }, [], false)).toBe(false);
 });
 
-import { isFounder, tierOf } from "./points";
+import { getMemberCardTone, isFounder, tierOf } from "./points";
 
 describe("isFounder", () => {
   it("recognises co-founders and founders", () => {
@@ -66,4 +66,25 @@ t2("tier thresholds 0/51/101/151/201/351/401", () => {
 t2("tiers follow the real stored points, founders included", () => {
   e2(tierOf(0).key).toBe("bronze");
   e2(tierOf(400).key).toBe("platinum");
+});
+
+describe("getMemberCardTone", () => {
+  it("assigns glacier (#112638) to department heads and advisors", () => {
+    expect(getMemberCardTone({ position: "Trưởng Ban" }, [], false)).toBe("glacier");
+    expect(getMemberCardTone({ position: "Cố vấn chuyên môn" }, [], false)).toBe("glacier");
+    expect(getMemberCardTone({ position: "Thành viên" }, [], true)).toBe("glacier");
+  });
+
+  it("assigns lavender (#2c1c38) to deputy heads", () => {
+    expect(getMemberCardTone({ position: "Phó Ban" }, [], false)).toBe("lavender");
+  });
+
+  it("assigns black to founders and co-founders", () => {
+    expect(getMemberCardTone({ position: "Co-founder" }, [], false)).toBe("black");
+    expect(getMemberCardTone({ position: "Founder" }, [], false)).toBe("black");
+  });
+
+  it("assigns tier tone to regular members", () => {
+    expect(getMemberCardTone({ position: "Thành viên" }, [], false, "green")).toBe("green");
+  });
 });

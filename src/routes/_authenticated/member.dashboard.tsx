@@ -24,8 +24,8 @@ import {
   LEADER_TONE,
   POINT_KIND,
   TIERS,
+  getMemberCardTone,
   isFounder,
-  isLeader,
   tierOf,
 } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
@@ -319,13 +319,13 @@ function MemberDashboard() {
   const effectivePoints = m.contribution_points ?? 0;
   const realTier = tierOf(effectivePoints);
   const isCoFounder = isFounder(m.position);
-  const special =
-    isLeader(m, me.data?.roles ?? [], (advisor.data ?? []).length > 0) &&
-    m.position !== "Thành viên";
+  const isAdvisorMember = (advisor.data ?? []).length > 0;
   const previewTier =
     previewTone && previewTone !== "black" ? TIERS.find((t) => t.tone === previewTone) : undefined;
   const tier = isCoFounder ? LEADER_TIER : (previewTier ?? realTier);
-  const tone = isCoFounder ? "black" : (previewTone ?? (special ? "black" : realTier.tone));
+  // Founders keep obsidian, heads/advisors glacier, deputies lavender, members their tier.
+  const defaultTone = getMemberCardTone(m, me.data?.roles ?? [], isAdvisorMember, realTier.tone);
+  const tone = previewTone ?? defaultTone;
   const advNames = (advisor.data ?? []).map(
     (a) =>
       deptName(a.dept)
@@ -1089,7 +1089,9 @@ function MemberDashboard() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {[
                         ...[...TIERS].reverse().map((t) => [t.tone, t.label] as const),
-                        [LEADER_TONE.key, LEADER_TONE.label] as const,
+                        ["glacier", "Trưởng Ban / Cố vấn (Băng Thủy)"] as const,
+                        ["lavender", "Phó Ban (Tử La Lan)"] as const,
+                        [LEADER_TONE.key, "Nhà sáng lập (Obsidian)"] as const,
                       ].map(([k, l]) => (
                         <button
                           key={k}
