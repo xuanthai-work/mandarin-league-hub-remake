@@ -33,6 +33,8 @@ export type MemberRow = {
 
 type GrantModalProps = {
   members: MemberRow[];
+  /** Preselect one member and hide the "Đổi" button (member drawer flow). */
+  fixedMemberId?: string;
   onClose: () => void;
   onDone: () => void;
 };
@@ -46,8 +48,8 @@ function tomorrowISO(): string {
   ).padStart(2, "0")}`;
 }
 
-export function GrantModal({ members, onClose, onDone }: GrantModalProps) {
-  const [memberId, setMemberId] = useState("");
+export function GrantModal({ members, fixedMemberId, onClose, onDone }: GrantModalProps) {
+  const [memberId, setMemberId] = useState(fixedMemberId ?? "");
   const [q, setQ] = useState("");
   const [action, setAction] = useState("");
   const [scope, setScope] = useState<"own" | "all">("own");
@@ -126,15 +128,17 @@ export function GrantModal({ members, onClose, onDone }: GrantModalProps) {
               </p>
               <p className="truncate text-xs text-muted-foreground">{selectedMember.member_code}</p>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin"
-              onClick={() => setMemberId("")}
-              disabled={busy}
-            >
-              Đổi
-            </Button>
+            {!fixedMemberId && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin"
+                onClick={() => setMemberId("")}
+                disabled={busy}
+              >
+                Đổi
+              </Button>
+            )}
           </div>
         ) : (
           <>

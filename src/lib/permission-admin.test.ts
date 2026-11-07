@@ -12,10 +12,12 @@ import {
   countGranted,
   expiryFromDate,
   grantStatus,
+  groupMemberPermissions,
   positionsFor,
   scopeLabel,
   type AuditRow,
   type MatrixRow,
+  type MemberPermissionRow,
 } from "./permission-admin";
 
 describe("MODULE_LABELS", () => {
@@ -212,5 +214,53 @@ describe("auditSummary", () => {
   it("describes a revoke with the member name", () => {
     expect(auditSummary({ ...base, kind: "revoke" }, "Ngọc")).toContain("Thu hồi");
     expect(auditSummary({ ...base, kind: "revoke" }, "Ngọc")).toContain("Ngọc");
+  });
+});
+
+describe("groupMemberPermissions", () => {
+  const row = (
+    action: string,
+    source: "matrix" | "grant",
+    overrides: Partial<MemberPermissionRow> = {},
+  ): MemberPermissionRow => ({
+    action,
+    scope: "own",
+    source,
+    grant_id: source === "grant" ? `grant-${action}` : null,
+    expires_at: null,
+    note: "",
+    granted_by_label: "",
+    ...overrides,
+  });
+
+  it("keeps only the requested source", () => {
+    const rows = [row("members.view", "matrix"), row("members.edit", "grant")];
+    const groups = groupMemberPermissions(rows, "matrix");
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.items.map((i) => i.meta.code)).toEqual(["members.view"]);
+  });
+
+  it("orders groups like the catalog", () => {
+    const groups = groupMemberPermissions(
+      [row("members.view", "matrix"), row("candidates.view", "matrix")],
+      "matrix",
+    );
+    expect(groups.map((g) => g.module)).toEqual(["recruitment", "members"]);
+  });
+
+  it("skips unknown action codes", () => {
+    expect(groupMemberPermissions([row("does.not.exist", "matrix")], "matrix")).toEqual([]);
+  });
+
+  it("keeps two grants of the same action as two items", () => {
+    const groups = groupMemberPermissions(
+      [row("members.view", "grant"), row("members.view", "grant")],
+      "grant",
+    );
+    expect(groups[0]?.items).toHaveLength(2);
+  });
+
+  it("returns nothing for an empty list", () => {
+    expect(groupMemberPermissions([], "grant")).toEqual([]);
   });
 });

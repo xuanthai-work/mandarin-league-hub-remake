@@ -38,6 +38,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { MemberPermissionsSection } from "@/components/admin/members/MemberPermissionsSection";
 import { deptName } from "@/lib/recruitment";
 import { csvCell } from "@/lib/csv";
 import { matchesSearch } from "@/lib/search";
@@ -661,6 +662,9 @@ function MembersPage() {
             canEditPosition={canActOnMember(perms, "members.position", me, target)}
             canManageAccount={canActOnMember(perms, "accounts.manage", me, target)}
             canDeleteProfile={canActOnMember(perms, "members.delete", me, target)}
+            canViewPermissions={
+              isAdmin || can(perms, "accounts.manage", target.department, me.department)
+            }
             deptOptions={departmentsFor(
               perms,
               "members.position",
@@ -698,6 +702,7 @@ function MemberDrawer({
   canEditPosition,
   canManageAccount,
   canDeleteProfile,
+  canViewPermissions,
   deptOptions,
   assignable,
   onRotate,
@@ -711,6 +716,7 @@ function MemberDrawer({
   canEditPosition: boolean;
   canManageAccount: boolean;
   canDeleteProfile: boolean;
+  canViewPermissions: boolean;
   deptOptions: string[];
   assignable: (positions: readonly string[]) => string[];
   onRotate: (m: MemberRow) => void;
@@ -1199,6 +1205,14 @@ function MemberDrawer({
             </div>
           )}
         </section>
+      )}
+
+      {canViewPermissions && (
+        <MemberPermissionsSection
+          member={m}
+          targetIsAdmin={m.account?.isAdmin ?? false}
+          canGrant={isAdmin}
+        />
       )}
 
       {(m.account ? canManageAccount : canDeleteProfile) && (

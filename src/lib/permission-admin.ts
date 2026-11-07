@@ -194,3 +194,40 @@ export function auditSummary(log: AuditRow, memberName: string): string {
       return `Thu hồi quyền riêng “${label}” của ${memberName}`;
   }
 }
+
+export type MemberPermissionRow = {
+  action: string;
+  scope: string;
+  source: string; // "matrix" | "grant"
+  grant_id: string | null;
+  expires_at: string | null;
+  note: string;
+  granted_by_label: string;
+};
+
+export type MemberPermissionGroup = {
+  module: string;
+  label: string;
+  items: { meta: ActionMeta; row: MemberPermissionRow }[];
+};
+
+/**
+ * Rows of member_permissions() for one source, grouped by module in catalog order
+ * (same order as the matrix). Unknown action codes are skipped.
+ */
+export function groupMemberPermissions(
+  rows: MemberPermissionRow[],
+  source: "matrix" | "grant",
+): MemberPermissionGroup[] {
+  return actionGroups()
+    .map((g) => ({
+      module: g.module,
+      label: g.label,
+      items: g.actions.flatMap((meta) =>
+        rows
+          .filter((r) => r.source === source && r.action === meta.code)
+          .map((row) => ({ meta, row })),
+      ),
+    }))
+    .filter((g) => g.items.length > 0);
+}
