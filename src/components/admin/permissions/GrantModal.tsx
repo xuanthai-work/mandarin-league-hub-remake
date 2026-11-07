@@ -148,7 +148,7 @@ export function GrantModal({ members, onClose, onDone }: GrantModalProps) {
             <div className="custom-scrollbar max-h-56 overflow-y-auto rounded-lg border border-border">
               {options.length === 0 ? (
                 <p className="p-3 text-center text-xs text-muted-foreground">
-                  Không tìm thấy thành viên có tài khoản đang hoạt động.
+                  Không tìm thấy thành viên đang hoạt động.
                 </p>
               ) : (
                 options.map((m) => (

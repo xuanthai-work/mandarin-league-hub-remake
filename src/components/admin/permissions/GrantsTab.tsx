@@ -36,13 +36,13 @@ const STATUS_META: Record<GrantStatus, { tone: "success" | "neutral" | "danger";
   };
 
 const COLUMNS: AdminColumn[] = [
-  { key: "member", label: "Thành viên", className: "w-[26%]" },
+  { key: "member", label: "Thành viên", className: "w-[22%]" },
   { key: "action", label: "Quyền", className: "w-[22%]" },
-  { key: "scope", label: "Phạm vi", className: "w-[10%]" },
-  { key: "expires", label: "Hết hạn", className: "w-[12%]" },
-  { key: "status", label: "Trạng thái", className: "w-[12%]" },
-  { key: "note", label: "Ghi chú", className: "w-[12%]" },
-  { key: "actions", label: "Thao tác", srOnly: true, className: "w-[6%] text-right" },
+  { key: "scope", label: "Phạm vi", className: "w-24" },
+  { key: "expires", label: "Hết hạn", className: "w-32" },
+  { key: "status", label: "Trạng thái", className: "w-40" },
+  { key: "note", label: "Ghi chú" },
+  { key: "actions", label: "Thao tác", srOnly: true, className: "w-32 text-right" },
 ];
 
 export function GrantsTab() {
@@ -157,14 +157,16 @@ export function GrantsTab() {
         </Button>
       </div>
 
-      {rows.length === 0 ? (
+      {grants.isLoading ? (
+        <EmptyState title="Đang tải quyền riêng…" />
+      ) : rows.length === 0 ? (
         <EmptyState
           title={
             q.trim() || filter !== "active" ? "Không có kết quả phù hợp" : "Chưa có quyền riêng nào"
           }
         />
       ) : (
-        <AdminTable columns={COLUMNS} minWidth="min-w-[900px]">
+        <AdminTable columns={COLUMNS} minWidth="min-w-[1080px]">
           {rows.map((grant) => {
             const member = memberById.get(grant.member_id);
             const meta = PERMISSION_ACTIONS.find((a) => a.code === grant.action);
@@ -189,7 +191,9 @@ export function GrantsTab() {
                 <td className="p-3">
                   <StatusPill tone={status.tone}>{status.label}</StatusPill>
                 </td>
-                <td className="p-3 text-xs text-muted-foreground">{grant.note || "—"}</td>
+                <td className="p-3 text-xs break-words text-muted-foreground">
+                  {grant.note || "—"}
+                </td>
                 <td className="p-3 text-right">
                   {grantStatus(grant) === "active" && (
                     <Button

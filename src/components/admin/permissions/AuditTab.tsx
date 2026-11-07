@@ -61,6 +61,8 @@ export function AuditTab() {
       />
     );
 
+  if (logs.isLoading) return <EmptyState title="Đang tải nhật ký phân quyền…" />;
+
   const rows = logs.data ?? [];
 
   if (rows.length === 0) return <EmptyState title="Chưa có thay đổi phân quyền nào" />;
