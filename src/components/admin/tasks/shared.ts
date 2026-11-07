@@ -338,21 +338,18 @@ export const NO_TASK_RIGHTS: TaskRights = { edit: false, remove: false, review: 
 
 /**
  * Client mirror of updateTask / delete_task / review_task: only the assigner (tasks.created_by)
- * or an admin, who also holds the matching action for the task's department. The server re-checks.
+ * or an admin, who also holds tasks.edit for the task's department. The server re-checks.
  */
 export function taskRights(task: Task, viewer: TaskViewer | null): TaskRights {
   if (!viewer) return NO_TASK_RIGHTS;
   const { perms, userId, memberId, department } = viewer;
   const owner = perms.isAdmin || (!!task.created_by && task.created_by === userId);
-  if (!owner) return NO_TASK_RIGHTS;
+  if (!owner || !can(perms, "tasks.edit", task.department, department)) return NO_TASK_RIGHTS;
   const open = task.status !== "done";
   return {
-    edit: open && can(perms, "tasks.edit", task.department, department),
-    remove: open && can(perms, "tasks.delete", task.department, department),
-    review:
-      task.status === "submitted" &&
-      can(perms, "tasks.review", task.department, department) &&
-      (perms.isAdmin || task.assignee_id !== memberId),
+    edit: open,
+    remove: open,
+    review: task.status === "submitted" && (perms.isAdmin || task.assignee_id !== memberId),
   };
 }
 

@@ -401,7 +401,7 @@ function Overview() {
     ? null
     : perms.isAdmin
       ? "all"
-      : hasPerm(perms, "tasks.review")
+      : hasPerm(perms, "tasks.edit")
         ? "mine"
         : null;
 

@@ -18,9 +18,9 @@ const updateTaskSchema = z.object({
 });
 
 /**
- * Edit a task in place: only its assigner (`tasks.created_by`) or an admin with `tasks.edit` for
- * the task's own department may change it, and completed tasks stay immutable so the points
- * ledger and evidence remain auditable.
+ * Edit a task in place: only its assigner (`tasks.created_by`) or an admin, holding `tasks.edit`
+ * for the task's department, may change it (the same action also covers approving and deleting),
+ * and completed tasks stay immutable so the points ledger and evidence remain auditable.
  */
 export const updateTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

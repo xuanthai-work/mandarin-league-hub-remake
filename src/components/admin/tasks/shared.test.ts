@@ -134,8 +134,6 @@ describe("taskRights", () => {
       isAdmin: false,
       actions: {
         "tasks.edit": "own",
-        "tasks.delete": "own",
-        "tasks.review": "own",
       },
     },
   };
@@ -244,6 +242,27 @@ describe("taskRights", () => {
       created_at: "2026-01-01T10:00:00Z",
     });
     expect(taskRights(t, null)).toEqual(NO_TASK_RIGHTS);
+  });
+
+  it("returns NO_TASK_RIGHTS when creator holds only tasks.view without tasks.edit", () => {
+    const viewOnlyViewer: TaskViewer = {
+      userId: "user-head",
+      memberId: "mbr-head",
+      department: "comms",
+      perms: {
+        isAdmin: false,
+        actions: { "tasks.view": "own" },
+      },
+    };
+    const t = task({
+      id: "t8",
+      assignee_id: "mbr-staff",
+      department: "comms",
+      created_by: "user-head",
+      status: "submitted",
+      created_at: "2026-01-01T10:00:00Z",
+    });
+    expect(taskRights(t, viewOnlyViewer)).toEqual(NO_TASK_RIGHTS);
   });
 });
 
@@ -440,9 +459,7 @@ describe("dropAction and canDragTask", () => {
     perms: {
       isAdmin: false,
       actions: {
-        "tasks.review": "own",
         "tasks.edit": "own",
-        "tasks.delete": "own",
       },
     },
   };
