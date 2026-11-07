@@ -23,6 +23,8 @@ import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { HSK_LEVELS, HSK_PREFIXES, hskRule, hskSkills } from "@/lib/hsk";
 import { matchesSearch } from "@/lib/search";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -158,6 +160,8 @@ function initials(name: string) {
 
 function HskAdminPage() {
   const qc = useQueryClient();
+  const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
+  const canEdit = can(perms, "hsk.edit");
   const [q, setQ] = useState("");
   const [level, setLevel] = useState("");
   const [status, setStatus] = useState("");
@@ -229,6 +233,7 @@ function HskAdminPage() {
   const genCode = async (p: string) =>
     ((await supabase.rpc("suggest_hsk_code_v2", { _prefix: p })).data as string) ?? "";
   const openNew = async () => {
+    if (!canEdit) return;
     setEditing(null);
     setEdit({ ...EMPTY, exam_date: today(), candidate_code: await genCode(prefix) });
   };
@@ -310,6 +315,7 @@ function HskAdminPage() {
   };
 
   const save = async (): Promise<void> => {
+    if (!canEdit) return;
     if (!edit) return;
     const code = edit.candidate_code.replace(/\s+/g, "").toUpperCase();
     if (!/^[A-Z0-9_-]{3,50}$/.test(code)) {
@@ -353,6 +359,7 @@ function HskAdminPage() {
   };
 
   const revokeResult = async (reason: string) => {
+    if (!canEdit) return;
     if (!edit?.id) return;
     const note = reason.trim();
     if (!note) {
@@ -373,6 +380,7 @@ function HskAdminPage() {
   };
 
   const restoreResult = async () => {
+    if (!canEdit) return;
     if (!edit?.id) return;
     const { error } = await supabase
       .from("hsk_results")
@@ -388,6 +396,7 @@ function HskAdminPage() {
   };
 
   const deleteResult = async () => {
+    if (!canEdit) return;
     if (!editing?.id) return;
     const { data, error } = await supabase
       .from("hsk_results")
@@ -399,7 +408,7 @@ function HskAdminPage() {
       return;
     }
     if (!data?.length) {
-      toast.error("Không xóa được: chỉ admin mới xóa được kết quả đã bị hủy.");
+      toast.error("Không xóa được: chỉ xóa được kết quả đã bị hủy.");
       return;
     }
     toast.success("Đã xóa kết quả vĩnh viễn");
@@ -470,6 +479,7 @@ function HskAdminPage() {
   };
 
   const importCsv = async (f: File | undefined) => {
+    if (!canEdit) return;
     if (!f) return;
     const lines = (await f.text())
       .replace(/^\ufeff/, "")
@@ -525,20 +535,24 @@ function HskAdminPage() {
         description="Ghi nhận kết quả thi thử / đánh giá do TML tổ chức hoặc liên kết. Tổng điểm và Đạt/Chưa đạt do hệ thống tự tính."
         actions={
           <>
-            <Button
-              type="button"
-              size="admin"
-              variant="outline"
-              onClick={() => setCsvModalOpen(true)}
-            >
-              <UploadCloud /> Nhập CSV
-            </Button>
+            {canEdit && (
+              <Button
+                type="button"
+                size="admin"
+                variant="outline"
+                onClick={() => setCsvModalOpen(true)}
+              >
+                <UploadCloud /> Nhập CSV
+              </Button>
+            )}
             <Button type="button" size="admin" variant="outline" onClick={exportCsv}>
               <Download /> Xuất CSV
             </Button>
-            <Button type="button" size="admin" onClick={openNew}>
-              <Plus /> Nhập kết quả
-            </Button>
+            {canEdit && (
+              <Button type="button" size="admin" onClick={openNew}>
+                <Plus /> Nhập kết quả
+              </Button>
+            )}
           </>
         }
       />
@@ -731,12 +745,14 @@ function HskAdminPage() {
         </AdminTable>
       )}
 
-      <CsvImportDialog
-        open={csvModalOpen}
-        onOpenChange={setCsvModalOpen}
-        onDownloadTemplate={downloadTemplateCsv}
-        onImport={importCsv}
-      />
+      {canEdit && (
+        <CsvImportDialog
+          open={csvModalOpen}
+          onOpenChange={setCsvModalOpen}
+          onDownloadTemplate={downloadTemplateCsv}
+          onImport={importCsv}
+        />
+      )}
 
       <AnimatePresence>
         {edit && (
@@ -751,6 +767,7 @@ function HskAdminPage() {
             onPrefixChange={(p) => void changePrefix(p)}
             onPickClass={pickClass}
             onSave={() => void save()}
+            readOnly={!canEdit}
             onRevoke={revokeResult}
             onRestore={restoreResult}
             onDelete={deleteResult}
@@ -937,6 +954,7 @@ function HskResultDrawer({
   onPrefixChange,
   onPickClass,
   onSave,
+  readOnly,
   onRevoke,
   onRestore,
   onDelete,
@@ -952,6 +970,7 @@ function HskResultDrawer({
   onPrefixChange: (p: string) => void;
   onPickClass: (id: string) => void;
   onSave: () => void;
+  readOnly: boolean;
   onRevoke: (reason: string) => Promise<void>;
   onRestore: () => Promise<void>;
   onDelete: () => Promise<void>;
@@ -1032,301 +1051,306 @@ function HskResultDrawer({
       dismissible={!saving}
       bodyClassName="space-y-5"
       footer={
-        <Button
-          type="button"
-          size="admin-lg"
-          onClick={onSave}
-          disabled={saving}
-          className="w-full sm:w-auto"
-        >
-          {saving ? "Đang lưu…" : "Lưu kết quả"}
-        </Button>
+        readOnly ? undefined : (
+          <Button
+            type="button"
+            size="admin-lg"
+            onClick={onSave}
+            disabled={saving}
+            className="w-full sm:w-auto"
+          >
+            {saving ? "Đang lưu…" : "Lưu kết quả"}
+          </Button>
+        )
       }
     >
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Thí sinh & Mã định danh</h3>
-        <FormField
-          label="Mã kết quả"
-          {...(!value.id
-            ? { hint: "Hệ thống tự động sinh mã định danh duy nhất theo tiền tố." }
-            : {})}
-        >
-          {(field) => (
-            <div className="flex items-center gap-2">
-              {!value.id && (
-                <Select value={prefix} onValueChange={onPrefixChange}>
+      <fieldset disabled={readOnly} className="m-0 min-w-0 space-y-5 border-0 p-0">
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Thí sinh & Mã định danh</h3>
+          <FormField
+            label="Mã kết quả"
+            {...(!value.id
+              ? { hint: "Hệ thống tự động sinh mã định danh duy nhất theo tiền tố." }
+              : {})}
+          >
+            {(field) => (
+              <div className="flex items-center gap-2">
+                {!value.id && (
+                  <Select value={prefix} onValueChange={onPrefixChange}>
+                    <SelectTrigger
+                      aria-label="Tiền tố mã"
+                      className="h-9 w-[110px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                    >
+                      <SelectValue>{prefix}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {HSK_PREFIXES.map((p) => (
+                        <SelectItem key={p} value={p} className="text-xs">
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <AdminInput
+                  {...field}
+                  readOnly
+                  className="flex-1 cursor-not-allowed bg-muted/60 font-mono uppercase text-muted-foreground"
+                  value={value.candidate_code}
+                />
+              </div>
+            )}
+          </FormField>
+
+          <FormField label="Họ và tên thí sinh" required>
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.candidate_name}
+                onChange={(e) => onChange({ candidate_name: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Tên chữ Hán (tuỳ chọn)">
+            {(field) => (
+              <AdminInput
+                {...field}
+                className="font-han"
+                value={value.candidate_name_zh}
+                onChange={(e) => onChange({ candidate_name_zh: e.target.value })}
+              />
+            )}
+          </FormField>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Cấp độ HSK & Lớp học liên kết</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label={prefix === "TMLHSKK" ? "Cấp độ HSKK" : "Cấp độ HSK"}>
+              {(field) => (
+                <Select value={value.level} onValueChange={handleLevelChange}>
                   <SelectTrigger
-                    aria-label="Tiền tố mã"
-                    className="h-9 w-[110px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                    {...field}
+                    className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
                   >
-                    <SelectValue>{prefix}</SelectValue>
+                    <SelectValue>{HSK_LEVELS[value.level] ?? value.level}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {HSK_PREFIXES.map((p) => (
-                      <SelectItem key={p} value={p} className="text-xs">
-                        {p}
+                    {availableLevels.map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {v}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
-              <AdminInput
-                {...field}
-                readOnly
-                className="flex-1 cursor-not-allowed bg-muted/60 font-mono uppercase text-muted-foreground"
-                value={value.candidate_code}
-              />
-            </div>
-          )}
-        </FormField>
-
-        <FormField label="Họ và tên thí sinh" required>
-          {(field) => (
-            <AdminInput
-              {...field}
-              value={value.candidate_name}
-              onChange={(e) => onChange({ candidate_name: e.target.value })}
-            />
-          )}
-        </FormField>
-        <FormField label="Tên chữ Hán (tuỳ chọn)">
-          {(field) => (
-            <AdminInput
-              {...field}
-              className="font-han"
-              value={value.candidate_name_zh}
-              onChange={(e) => onChange({ candidate_name_zh: e.target.value })}
-            />
-          )}
-        </FormField>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Cấp độ HSK & Lớp học liên kết</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label={prefix === "TMLHSKK" ? "Cấp độ HSKK" : "Cấp độ HSK"}>
-            {(field) => (
-              <Select value={value.level} onValueChange={handleLevelChange}>
-                <SelectTrigger
-                  {...field}
-                  className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+            </FormField>
+            <FormField label="Giáo viên giảng dạy">
+              {(field) => (
+                <Select
+                  value={value.teacher_id ?? "none"}
+                  onValueChange={(v) => onChange({ teacher_id: v === "none" ? null : v })}
                 >
-                  <SelectValue>{HSK_LEVELS[value.level] ?? value.level}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {availableLevels.map(([k, v]) => (
-                    <SelectItem key={k} value={k} className="text-xs">
-                      {v}
+                  <SelectTrigger
+                    {...field}
+                    className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                  >
+                    <SelectValue>
+                      {teachers.find((t) => t.id === value.teacher_id)?.full_name ??
+                        "— Chưa chọn —"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="none" className="text-xs">
+                      — Chưa chọn —
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-          <FormField label="Giáo viên giảng dạy">
+                    {teachers.map((t) => (
+                      <SelectItem key={t.id} value={t.id} className="text-xs">
+                        {t.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+          </div>
+          <FormField label="Lớp học (tự điền giáo viên, thời gian)">
             {(field) => (
               <Select
-                value={value.teacher_id ?? "none"}
-                onValueChange={(v) => onChange({ teacher_id: v === "none" ? null : v })}
+                value={value.hsk_class_id ?? "none"}
+                onValueChange={(v) => onPickClass(v === "none" ? "" : v)}
               >
                 <SelectTrigger
                   {...field}
                   className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
                 >
                   <SelectValue>
-                    {teachers.find((t) => t.id === value.teacher_id)?.full_name ?? "— Chưa chọn —"}
+                    {classes.find((c) => c.id === value.hsk_class_id)?.name ?? "— Không gắn lớp —"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   <SelectItem value="none" className="text-xs">
-                    — Chưa chọn —
+                    — Không gắn lớp —
                   </SelectItem>
-                  {teachers.map((t) => (
-                    <SelectItem key={t.id} value={t.id} className="text-xs">
-                      {t.full_name}
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                      HSK {c.level} · {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
           </FormField>
-        </div>
-        <FormField label="Lớp học (tự điền giáo viên, thời gian)">
-          {(field) => (
-            <Select
-              value={value.hsk_class_id ?? "none"}
-              onValueChange={(v) => onPickClass(v === "none" ? "" : v)}
-            >
-              <SelectTrigger
-                {...field}
-                className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
-              >
-                <SelectValue>
-                  {classes.find((c) => c.id === value.hsk_class_id)?.name ?? "— Không gắn lớp —"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="none" className="text-xs">
-                  — Không gắn lớp —
-                </SelectItem>
-                {classes.map((c) => (
-                  <SelectItem key={c.id} value={c.id} className="text-xs">
-                    HSK {c.level} · {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FormField>
-      </section>
+        </section>
 
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Điểm số kỹ năng</h3>
-        <div
-          className={`grid gap-3 ${
-            skills.length === 1 ? "max-w-xs sm:grid-cols-1" : "sm:grid-cols-2"
-          }`}
-        >
-          {skills.map((s) => (
-            <FormField key={s} label={`${SKILL_LABEL[s]} (0–100)`}>
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Điểm số kỹ năng</h3>
+          <div
+            className={`grid gap-3 ${
+              skills.length === 1 ? "max-w-xs sm:grid-cols-1" : "sm:grid-cols-2"
+            }`}
+          >
+            {skills.map((s) => (
+              <FormField key={s} label={`${SKILL_LABEL[s]} (0–100)`}>
+                {(field) => (
+                  <AdminInput
+                    {...field}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={100}
+                    value={value[scoreKey(s)] ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        onChange({ [scoreKey(s)]: null });
+                        return;
+                      }
+                      const parsed = parseInt(raw, 10);
+                      if (Number.isNaN(parsed)) return;
+                      onChange({ [scoreKey(s)]: Math.max(0, Math.min(100, parsed)) });
+                    }}
+                  />
+                )}
+              </FormField>
+            ))}
+          </div>
+          <div
+            role="meter"
+            aria-label="Tổng điểm tạm tính"
+            aria-valuemin={0}
+            aria-valuemax={rule.max}
+            aria-valuenow={total}
+            aria-valuetext={`${total}/${rule.max} điểm, ${passed ? "đạt" : "chưa đạt"} (ngưỡng ${rule.pass})`}
+            title="Hệ thống sẽ tính lại tổng điểm và trạng thái khi lưu."
+            className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2"
+          >
+            <p className="shrink-0 text-xs text-muted-foreground">
+              Tổng <span className="text-sm font-bold tabular-nums text-foreground">{total}</span>
+              <span className="tabular-nums">/{rule.max}</span>
+            </p>
+
+            <div className="relative h-1.5 min-w-16 flex-1 rounded-full bg-muted">
+              <div
+                className={`h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none ${
+                  passed ? "bg-success" : "bg-warning-foreground"
+                }`}
+                style={{ width: `${totalPct}%` }}
+              />
+              <span
+                aria-hidden="true"
+                className="absolute top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-foreground/40"
+                style={{ left: `${passPct}%` }}
+              />
+            </div>
+
+            <span className="hidden shrink-0 text-[11px] tabular-nums text-muted-foreground sm:inline">
+              Đạt từ {rule.pass}
+            </span>
+
+            <StatusPill tone={passed ? "success" : "warning"}>
+              {passed ? "Đạt" : "Chưa đạt"}
+            </StatusPill>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Đợt đánh giá & Thời gian học</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Khóa học">
               {(field) => (
                 <AdminInput
                   {...field}
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={100}
-                  value={value[scoreKey(s)] ?? ""}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (raw === "") {
-                      onChange({ [scoreKey(s)]: null });
-                      return;
-                    }
-                    const parsed = parseInt(raw, 10);
-                    if (Number.isNaN(parsed)) return;
-                    onChange({ [scoreKey(s)]: Math.max(0, Math.min(100, parsed)) });
-                  }}
+                  value={value.course_name}
+                  onChange={(e) => onChange({ course_name: e.target.value })}
+                  placeholder="VD: HSK 4"
                 />
               )}
             </FormField>
-          ))}
-        </div>
-        <div
-          role="meter"
-          aria-label="Tổng điểm tạm tính"
-          aria-valuemin={0}
-          aria-valuemax={rule.max}
-          aria-valuenow={total}
-          aria-valuetext={`${total}/${rule.max} điểm, ${passed ? "đạt" : "chưa đạt"} (ngưỡng ${rule.pass})`}
-          title="Hệ thống sẽ tính lại tổng điểm và trạng thái khi lưu."
-          className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2"
-        >
-          <p className="shrink-0 text-xs text-muted-foreground">
-            Tổng <span className="text-sm font-bold tabular-nums text-foreground">{total}</span>
-            <span className="tabular-nums">/{rule.max}</span>
-          </p>
-
-          <div className="relative h-1.5 min-w-16 flex-1 rounded-full bg-muted">
-            <div
-              className={`h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none ${
-                passed ? "bg-success" : "bg-warning-foreground"
-              }`}
-              style={{ width: `${totalPct}%` }}
-            />
-            <span
-              aria-hidden="true"
-              className="absolute top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-foreground/40"
-              style={{ left: `${passPct}%` }}
-            />
+            <FormField label="Đợt đánh giá">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  value={value.exam_session}
+                  onChange={(e) => onChange({ exam_session: e.target.value })}
+                  placeholder="VD: Cuối khóa 11/2026"
+                />
+              )}
+            </FormField>
+            <FormField label="Ngày đánh giá / thi" required>
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={value.exam_date}
+                  onChange={(dateISO) => onChange({ exam_date: dateISO })}
+                  placeholder="Chọn ngày thi"
+                />
+              )}
+            </FormField>
+            <FormField label="Học từ ngày">
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={value.study_start ?? ""}
+                  onChange={(dateISO) => onChange({ study_start: dateISO || null })}
+                  placeholder="Chọn ngày bắt đầu"
+                />
+              )}
+            </FormField>
+            <FormField label="Đến ngày">
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={value.study_end ?? ""}
+                  onChange={(dateISO) => onChange({ study_end: dateISO || null })}
+                  placeholder="Chọn ngày kết thúc"
+                />
+              )}
+            </FormField>
+            <FormField label="Đơn vị ghi nhận / tổ chức">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  value={value.issuer}
+                  onChange={(e) => onChange({ issuer: e.target.value })}
+                />
+              )}
+            </FormField>
           </div>
-
-          <span className="hidden shrink-0 text-[11px] tabular-nums text-muted-foreground sm:inline">
-            Đạt từ {rule.pass}
-          </span>
-
-          <StatusPill tone={passed ? "success" : "warning"}>
-            {passed ? "Đạt" : "Chưa đạt"}
-          </StatusPill>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Đợt đánh giá & Thời gian học</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Khóa học">
+          <FormField label="Ghi chú nội bộ">
             {(field) => (
-              <AdminInput
+              <AdminTextarea
                 {...field}
-                value={value.course_name}
-                onChange={(e) => onChange({ course_name: e.target.value })}
-                placeholder="VD: HSK 4"
+                rows={2}
+                value={value.notes}
+                onChange={(e) => onChange({ notes: e.target.value })}
               />
             )}
           </FormField>
-          <FormField label="Đợt đánh giá">
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={value.exam_session}
-                onChange={(e) => onChange({ exam_session: e.target.value })}
-                placeholder="VD: Cuối khóa 11/2026"
-              />
-            )}
-          </FormField>
-          <FormField label="Ngày đánh giá / thi" required>
-            {(field) => (
-              <DatePicker
-                id={field.id}
-                value={value.exam_date}
-                onChange={(dateISO) => onChange({ exam_date: dateISO })}
-                placeholder="Chọn ngày thi"
-              />
-            )}
-          </FormField>
-          <FormField label="Học từ ngày">
-            {(field) => (
-              <DatePicker
-                id={field.id}
-                value={value.study_start ?? ""}
-                onChange={(dateISO) => onChange({ study_start: dateISO || null })}
-                placeholder="Chọn ngày bắt đầu"
-              />
-            )}
-          </FormField>
-          <FormField label="Đến ngày">
-            {(field) => (
-              <DatePicker
-                id={field.id}
-                value={value.study_end ?? ""}
-                onChange={(dateISO) => onChange({ study_end: dateISO || null })}
-                placeholder="Chọn ngày kết thúc"
-              />
-            )}
-          </FormField>
-          <FormField label="Đơn vị ghi nhận / tổ chức">
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={value.issuer}
-                onChange={(e) => onChange({ issuer: e.target.value })}
-              />
-            )}
-          </FormField>
-        </div>
-        <FormField label="Ghi chú nội bộ">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={2}
-              value={value.notes}
-              onChange={(e) => onChange({ notes: e.target.value })}
-            />
-          )}
-        </FormField>
-      </section>
+        </section>
+      </fieldset>
 
-      {value.id && (
+      {value.id && !readOnly && (
         <section className="space-y-3">
           <h3 className={SECTION_TITLE}>Lý do chỉnh sửa</h3>
           <FormField label="Bắt buộc — được ghi vào nhật ký kiểm toán" required>
@@ -1344,38 +1368,40 @@ function HskResultDrawer({
 
       {value.id &&
         (!isRevoked ? (
-          <section className="space-y-2 pt-1">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
-              Vùng nguy hiểm
-            </h3>
-            <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-              <div className="flex items-start gap-2">
-                <AlertTriangle aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-foreground">Hủy kết quả này</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Kết quả sẽ không còn hiệu lực tra cứu công khai. Hành động được ghi nhật ký.
-                  </p>
+          !readOnly && (
+            <section className="space-y-2 pt-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                Vùng nguy hiểm
+              </h3>
+              <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground">Hủy kết quả này</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Kết quả sẽ không còn hiệu lực tra cứu công khai. Hành động được ghi nhật ký.
+                    </p>
+                  </div>
                 </div>
+                <AdminInput
+                  aria-label="Lý do hủy kết quả"
+                  className="border-destructive/30 bg-card focus-visible:ring-destructive/30"
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  placeholder="Lý do hủy kết quả (bắt buộc)"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="admin"
+                  disabled={busy}
+                  onClick={() => void runRevoke()}
+                >
+                  Hủy kết quả này
+                </Button>
               </div>
-              <AdminInput
-                aria-label="Lý do hủy kết quả"
-                className="border-destructive/30 bg-card focus-visible:ring-destructive/30"
-                value={revokeReason}
-                onChange={(e) => setRevokeReason(e.target.value)}
-                placeholder="Lý do hủy kết quả (bắt buộc)"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="admin"
-                disabled={busy}
-                onClick={() => void runRevoke()}
-              >
-                Hủy kết quả này
-              </Button>
-            </div>
-          </section>
+            </section>
+          )
         ) : (
           <>
             <div className="space-y-3 rounded-2xl border border-warning-foreground/25 bg-warning-soft p-4">
@@ -1391,24 +1417,28 @@ function HskResultDrawer({
                   </p>
                 </div>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="admin"
-                disabled={busy}
-                onClick={() => void runRestore()}
-              >
-                <RotateCcw aria-hidden /> Khôi phục kết quả
-              </Button>
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="admin"
+                  disabled={busy}
+                  onClick={() => void runRestore()}
+                >
+                  <RotateCcw aria-hidden /> Khôi phục kết quả
+                </Button>
+              )}
             </div>
-            <DangerZone
-              title="Xóa kết quả vĩnh viễn"
-              description="Chỉ admin xóa được kết quả đã hủy. Không hoàn tác được."
-              actionLabel="Xóa kết quả"
-              confirmLabel="Xác nhận xóa vĩnh viễn"
-              onConfirm={() => void runDelete()}
-              disabled={busy}
-            />
+            {!readOnly && (
+              <DangerZone
+                title="Xóa kết quả vĩnh viễn"
+                description="Chỉ xóa được kết quả đã hủy. Không hoàn tác được."
+                actionLabel="Xóa kết quả"
+                confirmLabel="Xác nhận xóa vĩnh viễn"
+                onConfirm={() => void runDelete()}
+                disabled={busy}
+              />
+            )}
           </>
         ))}
     </AdminDrawer>
