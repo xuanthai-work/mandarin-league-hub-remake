@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   Check,
@@ -15,7 +15,6 @@ import {
   QrCode,
   Search,
   Trash2,
-  X,
 } from "lucide-react";
 import {
   Select,
@@ -31,6 +30,11 @@ import { EmptyState } from "@/components/admin/kit/EmptyState";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { StatusPill, type StatusTone } from "@/components/admin/kit/StatusPill";
 import { useConfirm } from "@/components/admin/kit/useConfirm";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { FormField } from "@/components/admin/kit/FormField";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -68,16 +72,7 @@ export const Route = createFileRoute("/_authenticated/admin/members")({
   component: MembersPage,
 });
 
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
-
-/** Shadcn select styled to match the drawer inputs (and float above the z-[60] drawer). */
-const DRAWER_SELECT_TRIGGER =
-  "mt-1 flex h-9 w-full items-center justify-between rounded-xl border border-input bg-background px-3 text-xs font-normal shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
-const DRAWER_SELECT_CONTENT =
-  "z-[70] max-h-64 rounded-xl border-border bg-popover/95 backdrop-blur-md shadow-xl";
-const DRAWER_SELECT_ITEM =
-  "rounded-lg text-xs cursor-pointer py-1.5 focus:bg-accent focus:text-accent-foreground";
 
 function randomPassword() {
   const c = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
@@ -716,16 +711,6 @@ function MemberDrawer({
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      if (document.querySelector('[role="alertdialog"]')) return;
-      onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
-
   const statusOptions = EDIT_DRAWER_STATUS_BUTTONS;
 
   const handleCopyCode = async () => {
@@ -846,461 +831,442 @@ function MemberDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 backdrop-blur-sm bg-black/15"
-        onClick={onClose}
-      />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Chi tiết thành viên ${m.full_name}`}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-              {initials(m.full_name)}
-            </span>
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-bold text-foreground">{m.full_name}</h2>
-              <div className="flex items-center gap-1.5 pt-0.5">
-                <span className="font-mono text-xs font-semibold text-primary">
-                  {m.member_code}
-                </span>
-                {m.member_code && (
-                  <button
-                    type="button"
-                    onClick={handleCopyCode}
-                    title="Sao chép mã thành viên"
-                    aria-label="Sao chép mã thành viên"
-                    className="rounded p-0.5 text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
-                  >
-                    {copiedCode ? (
-                      <Check className="h-3.5 w-3.5 text-success" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
+    <AdminDrawer
+      title={m.full_name}
+      leading={
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+          {initials(m.full_name)}
+        </span>
+      }
+      subtitle={
+        <span className="flex items-center gap-1.5">
+          <span className="font-mono font-semibold text-primary">{m.member_code}</span>
+          {m.member_code && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="admin-icon"
+              onClick={handleCopyCode}
+              title="Sao chép mã thành viên"
+              aria-label="Sao chép mã thành viên"
+              className="h-6 w-6 text-primary/70 hover:bg-primary/10 hover:text-primary [&_svg]:size-3.5"
+            >
+              {copiedCode ? <Check aria-hidden className="text-success" /> : <Copy aria-hidden />}
+            </Button>
+          )}
+        </span>
+      }
+      onClose={onClose}
+      dismissible={!busy}
+      footer={
+        <>
+          <Button type="button" variant="outline" size="admin" onClick={onClose}>
+            Hủy
+          </Button>
+          {canEdit && (
+            <Button type="button" size="admin-lg" disabled={busy} onClick={save}>
+              {busy && <Loader2 aria-hidden className="animate-spin" />}
+              Lưu thay đổi
+            </Button>
+          )}
+        </>
+      }
+    >
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Vị trí & tổ chức
+        </h3>
+        {canEdit ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            <FormField label="Ban">
+              {(field) => (
+                <Select
+                  value={department}
+                  onValueChange={(val) => {
+                    setDepartment(val);
+                    setPosition(positionsFor(val)[0]!);
+                  }}
+                >
+                  <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                    <SelectValue placeholder="Chọn Ban" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {ACCOUNT_DEPTS.map((d) => (
+                      <SelectItem key={d.id} value={d.id} className="text-xs">
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+            <FormField label="Chức vụ">
+              {(field) => (
+                <Select value={position} onValueChange={setPosition}>
+                  <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                    <SelectValue placeholder="Chọn chức vụ" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {positionsFor(department).map((p) => (
+                      <SelectItem key={p} value={p} className="text-xs">
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
           </div>
-        </div>
+        ) : (
+          <p className="text-sm">
+            {deptName(department)} · {position}
+          </p>
+        )}
+        <dl className="grid grid-cols-2 gap-3 rounded-xl bg-muted/30 p-3 text-sm">
+          <div>
+            <dt className="text-xs text-muted-foreground">Ngày tham gia</dt>
+            <dd className="mt-0.5 font-medium">{fmt(m.joined_on)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Điểm cống hiến</dt>
+            <dd className="mt-0.5 font-mono font-semibold text-primary">{m.contribution_points}</dd>
+          </div>
+        </dl>
+      </section>
 
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto custom-scrollbar px-6 py-5">
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Vị trí & tổ chức
-            </h3>
-            {canEdit ? (
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div>
-                  <span className="block text-xs text-muted-foreground">Ban</span>
+      <section className="space-y-3 border-t border-border/60 pt-5">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Trạng thái thành viên
+            {status === "inactive" && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal normal-case text-muted-foreground">
+                (Chưa kích hoạt)
+              </span>
+            )}
+          </h3>
+          {isAdmin && (
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              onClick={() => onRotate(m)}
+              className="group [&_svg]:size-3.5"
+            >
+              <QrCode
+                aria-hidden
+                className="transition-transform duration-300 group-hover:rotate-45"
+              />
+              Làm mới mã QR
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {statusOptions.map((o) => {
+            const isSelected = status === o.value;
+            return (
+              <Button
+                key={o.value}
+                type="button"
+                variant={isSelected ? "default" : "outline"}
+                size="admin"
+                disabled={!canEdit}
+                aria-pressed={isSelected}
+                onClick={() => setStatus(o.value)}
+                className="gap-1.5 px-2 disabled:opacity-70"
+              >
+                <span
+                  aria-hidden
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${isSelected ? "bg-primary-foreground" : o.dot}`}
+                />
+                {o.label}
+              </Button>
+            );
+          })}
+        </div>
+        {isAdmin && status === "left" && (
+          <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+            Hồ sơ đang ở trạng thái <strong>Đã rời</strong> vì tài khoản nội bộ đã bị xóa. Cấp lại
+            tài khoản ở mục bên dưới sẽ đưa hồ sơ về <strong>Đang hoạt động</strong>.
+          </p>
+        )}
+        {isAdmin && status === "inactive" && !m.account && (
+          <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+            Hồ sơ đang ở trạng thái <strong>Chưa kích hoạt</strong>. Chọn{" "}
+            <strong>Đang hoạt động</strong> ở trên rồi bấm <strong>Lưu thay đổi</strong> để đưa
+            thành viên vào danh sách hoạt động — việc cấp tài khoản đăng nhập là tuỳ chọn.
+          </p>
+        )}
+        {isAdmin && status === "inactive" && m.account && (
+          <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+            Tài khoản chưa được kích hoạt. Chọn <strong>Đang hoạt động</strong> ở trên rồi bấm{" "}
+            <strong>Lưu thay đổi</strong> để mở quyền đăng nhập.
+          </p>
+        )}
+        {status === "on_leave" && (
+          <div className="grid grid-cols-2 gap-2">
+            <FormField label="Bắt đầu nghỉ">
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={leaveFrom}
+                  onChange={setLeaveFrom}
+                  disabled={!canEdit}
+                />
+              )}
+            </FormField>
+            <FormField label="Quay lại ngày" required>
+              {(field) => (
+                <DatePicker
+                  id={field.id}
+                  value={leaveUntil}
+                  min={leaveFrom}
+                  onChange={setLeaveUntil}
+                  disabled={!canEdit}
+                />
+              )}
+            </FormField>
+          </div>
+        )}
+        {status !== "active" && (
+          <FormField label={status === "on_leave" ? "Lý do xin nghỉ" : "Lý do / ghi chú"}>
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={3}
+                maxLength={500}
+                value={note}
+                disabled={!canEdit}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            )}
+          </FormField>
+        )}
+      </section>
+
+      {isAdmin && (
+        <section className="space-y-3 border-t border-border/60 pt-5">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Tài khoản & bảo mật
+          </h3>
+          {m.account ? (
+            <>
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                <p className="min-w-0 truncate font-mono text-xs font-medium text-foreground">
+                  {m.account.email}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="admin-icon"
+                  onClick={handleCopyEmail}
+                  title="Sao chép email"
+                  aria-label="Sao chép email"
+                  className="h-7 w-7 shrink-0 text-muted-foreground [&_svg]:size-3.5"
+                >
+                  {copiedEmail ? (
+                    <Check aria-hidden className="text-success" />
+                  ) : (
+                    <Copy aria-hidden />
+                  )}
+                </Button>
+              </div>
+              <FormField label="Vai trò hệ thống">
+                {(field) => (
                   <Select
-                    value={department}
+                    value={access}
                     onValueChange={(val) => {
-                      setDepartment(val);
-                      setPosition(positionsFor(val)[0]!);
+                      const a = val as AccessLevel;
+                      setAccess(a);
+                      setPermissions(PERMISSION_TEMPLATES[a]);
                     }}
                   >
-                    <SelectTrigger aria-label="Ban" className={DRAWER_SELECT_TRIGGER}>
-                      <SelectValue placeholder="Chọn Ban" />
+                    <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                      <SelectValue placeholder="Chọn vai trò" />
                     </SelectTrigger>
-                    <SelectContent className={DRAWER_SELECT_CONTENT}>
-                      {ACCOUNT_DEPTS.map((d) => (
-                        <SelectItem key={d.id} value={d.id} className={DRAWER_SELECT_ITEM}>
-                          {d.name}
+                    <SelectContent className="rounded-xl">
+                      {Object.entries(ACCESS_LABELS).map(([k, l]) => (
+                        <SelectItem key={k} value={k} className="text-xs">
+                          {l}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <span className="block text-xs text-muted-foreground">Chức vụ</span>
-                  <Select value={position} onValueChange={setPosition}>
-                    <SelectTrigger aria-label="Chức vụ" className={DRAWER_SELECT_TRIGGER}>
-                      <SelectValue placeholder="Chọn chức vụ" />
-                    </SelectTrigger>
-                    <SelectContent className={DRAWER_SELECT_CONTENT}>
-                      {positionsFor(department).map((p) => (
-                        <SelectItem key={p} value={p} className={DRAWER_SELECT_ITEM}>
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm">
-                {deptName(department)} · {position}
-              </p>
-            )}
-            <dl className="grid grid-cols-2 gap-3 rounded-xl bg-muted/30 p-3 text-sm">
-              <div>
-                <dt className="text-xs text-muted-foreground">Ngày tham gia</dt>
-                <dd className="mt-0.5 font-medium">{fmt(m.joined_on)}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Điểm cống hiến</dt>
-                <dd className="mt-0.5 font-mono font-semibold text-primary">
-                  {m.contribution_points}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section className="space-y-3 border-t border-border/60 pt-5">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Trạng thái thành viên
-                {status === "inactive" && (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal normal-case text-muted-foreground">
-                    (Chưa kích hoạt)
-                  </span>
                 )}
-              </h3>
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => onRotate(m)}
-                  className="group inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold hover:bg-accent"
-                >
-                  <QrCode className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45" />
-                  Làm mới mã QR
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {statusOptions.map((o) => {
-                const isSelected = status === o.value;
-                return (
-                  <button
-                    key={o.value}
+              </FormField>
+              <PermissionSwitches
+                selected={permissions}
+                onToggle={(k) =>
+                  setPermissions(
+                    permissions.includes(k)
+                      ? permissions.filter((x) => x !== k)
+                      : [...permissions, k],
+                  )
+                }
+              />
+              <div className="rounded-xl border border-border/70 p-3">
+                <h4 className="flex items-center gap-2 text-sm font-semibold">
+                  <KeyRound className="h-4 w-4" />
+                  Mật khẩu
+                </h4>
+                <div className="mt-2 flex gap-2">
+                  <AdminInput
+                    aria-label="Mật khẩu mới"
+                    className="flex-1 font-mono"
+                    value={pw}
+                    onChange={(e) => setPw(e.target.value)}
+                  />
+                  <Button
                     type="button"
-                    disabled={!canEdit}
-                    onClick={() => setStatus(o.value)}
-                    aria-pressed={isSelected}
-                    className={`relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg border px-2 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${isSelected ? "border-primary text-primary-foreground shadow-xs" : "border-border text-foreground hover:bg-accent/50"}`}
+                    variant="outline"
+                    size="admin"
+                    onClick={() => setPw(randomPassword())}
                   >
-                    {isSelected && (
-                      <motion.span
-                        layoutId="active-status-pill"
-                        className="absolute inset-0 rounded-[7px] bg-primary"
-                        transition={{ type: "spring", damping: 26, stiffness: 350 }}
-                      />
-                    )}
-                    <span
-                      className={`relative z-10 h-1.5 w-1.5 shrink-0 rounded-full ${isSelected ? "bg-primary-foreground" : o.dot}`}
-                    />
-                    <span className="relative z-10">{o.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {isAdmin && status === "left" && (
-              <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-                Hồ sơ đang ở trạng thái <strong>Đã rời</strong> vì tài khoản nội bộ đã bị xóa. Cấp
-                lại tài khoản ở mục bên dưới sẽ đưa hồ sơ về <strong>Đang hoạt động</strong>.
-              </p>
-            )}
-            {isAdmin && status === "inactive" && !m.account && (
-              <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-                Hồ sơ đang ở trạng thái <strong>Chưa kích hoạt</strong>. Chọn{" "}
-                <strong>Đang hoạt động</strong> ở trên rồi bấm <strong>Lưu thay đổi</strong> để đưa
-                thành viên vào danh sách hoạt động — việc cấp tài khoản đăng nhập là tuỳ chọn.
-              </p>
-            )}
-            {isAdmin && status === "inactive" && m.account && (
-              <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-                Tài khoản chưa được kích hoạt. Chọn <strong>Đang hoạt động</strong> ở trên rồi bấm{" "}
-                <strong>Lưu thay đổi</strong> để mở quyền đăng nhập.
-              </p>
-            )}
-            {status === "on_leave" && (
-              <div className="grid grid-cols-2 gap-2">
-                <label className="text-xs text-muted-foreground">
-                  Bắt đầu nghỉ
-                  <input
-                    type="date"
-                    className={`${inp} mt-1`}
-                    value={leaveFrom}
-                    disabled={!canEdit}
-                    onChange={(e) => setLeaveFrom(e.target.value)}
-                  />
-                </label>
-                <label className="text-xs text-muted-foreground">
-                  Quay lại ngày *
-                  <input
-                    type="date"
-                    className={`${inp} mt-1`}
-                    value={leaveUntil}
-                    min={leaveFrom}
-                    disabled={!canEdit}
-                    onChange={(e) => setLeaveUntil(e.target.value)}
-                  />
-                </label>
-              </div>
-            )}
-            {status !== "active" && (
-              <label className="block text-xs text-muted-foreground">
-                {status === "on_leave" ? "Lý do xin nghỉ" : "Lý do / ghi chú"}
-                <textarea
-                  rows={3}
-                  maxLength={500}
-                  className={`${inp} mt-1`}
-                  value={note}
-                  disabled={!canEdit}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </label>
-            )}
-          </section>
-
-          {isAdmin && (
-            <section className="space-y-3 border-t border-border/60 pt-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Tài khoản & bảo mật
-              </h3>
-              {m.account ? (
-                <>
-                  <div className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
-                    <p className="min-w-0 truncate font-mono text-xs font-medium text-foreground">
-                      {m.account.email}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleCopyEmail}
-                      title="Sao chép email"
-                      aria-label="Sao chép email"
-                      className="inline-flex shrink-0 items-center justify-center rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                      {copiedEmail ? (
-                        <Check className="h-3.5 w-3.5 text-success" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                  <div>
-                    <span className="block text-xs text-muted-foreground">Vai trò hệ thống</span>
-                    <Select
-                      value={access}
-                      onValueChange={(val) => {
-                        const a = val as AccessLevel;
-                        setAccess(a);
-                        setPermissions(PERMISSION_TEMPLATES[a]);
-                      }}
-                    >
-                      <SelectTrigger
-                        aria-label="Vai trò hệ thống"
-                        className={DRAWER_SELECT_TRIGGER}
-                      >
-                        <SelectValue placeholder="Chọn vai trò" />
-                      </SelectTrigger>
-                      <SelectContent className={DRAWER_SELECT_CONTENT}>
-                        {Object.entries(ACCESS_LABELS).map(([k, l]) => (
-                          <SelectItem key={k} value={k} className={DRAWER_SELECT_ITEM}>
-                            {l}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <PermissionSwitches
-                    selected={permissions}
-                    onToggle={(k) =>
-                      setPermissions(
-                        permissions.includes(k)
-                          ? permissions.filter((x) => x !== k)
-                          : [...permissions, k],
+                    Ngẫu nhiên
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="admin"
+                    disabled={pwBusy}
+                    onClick={() =>
+                      runPw(
+                        () =>
+                          resetAccountPassword({
+                            data: { userId: m.account!.userId, mode: "temp", password: pw },
+                          }),
+                        `Đã đặt mật khẩu tạm thời: ${pw} — thành viên phải đổi khi đăng nhập.`,
                       )
                     }
-                  />
-                  <div className="rounded-xl border border-border/70 p-3">
-                    <h4 className="flex items-center gap-2 text-sm font-semibold">
-                      <KeyRound className="h-4 w-4" />
-                      Mật khẩu
-                    </h4>
-                    <div className="mt-2 flex gap-2">
-                      <input
-                        className={`${inp} flex-1 font-mono`}
-                        value={pw}
-                        onChange={(e) => setPw(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setPw(randomPassword())}
-                        className="rounded-lg border border-border px-2 text-xs"
-                      >
-                        Ngẫu nhiên
-                      </button>
-                      <button
-                        type="button"
-                        disabled={pwBusy}
-                        onClick={() =>
-                          runPw(
-                            () =>
-                              resetAccountPassword({
-                                data: { userId: m.account!.userId, mode: "temp", password: pw },
-                              }),
-                            `Đã đặt mật khẩu tạm thời: ${pw} — thành viên phải đổi khi đăng nhập.`,
-                          )
-                        }
-                        className="rounded-lg border border-border px-3 text-xs font-semibold disabled:opacity-60"
-                      >
-                        Đặt lại
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={pwBusy}
-                      onClick={() =>
-                        runPw(
-                          () =>
-                            resetAccountPassword({
-                              data: {
-                                userId: m.account!.userId,
-                                mode: "link",
-                                redirectTo: `${window.location.origin}/reset-password`,
-                              },
-                            }),
-                          "Đã gửi liên kết đặt lại mật khẩu tới email.",
-                        )
-                      }
-                      className="mt-2 text-xs text-primary underline"
-                    >
-                      Gửi liên kết đặt lại mật khẩu qua email
-                    </button>
-                    {m.account.mustChange && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Tài khoản đang yêu cầu đổi mật khẩu ở lần đăng nhập kế tiếp.
-                      </p>
-                    )}
-                  </div>
-                </>
-              ) : grantOpen ? (
-                <GrantAccount m={m} onChanged={onChanged} onClose={onClose} />
-              ) : (
-                <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4 text-center">
-                  <p className="text-sm font-medium text-foreground">
-                    Hồ sơ này chưa có tài khoản đăng nhập
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Cấp tài khoản để thành viên truy cập cổng nội bộ và nhận quyền quản trị.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setGrantOpen(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                   >
-                    <Plus className="h-4 w-4" />
-                    Cấp tài khoản đăng nhập nội bộ
-                  </button>
+                    Đặt lại
+                  </Button>
                 </div>
-              )}
-            </section>
-          )}
-
-          {isAdmin && (
-            <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
-              {m.account ? (
-                <>
-                  <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                    Xóa tài khoản đăng nhập
-                  </h3>
-                  <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <p className="font-medium text-foreground/90">
-                      Thao tác này dành cho thành viên chính thức kết thúc nhiệm kỳ hoặc rời CLB:
-                    </p>
-                    <p>
-                      • <strong className="text-foreground">Quyền đăng nhập:</strong> Thu hồi vĩnh
-                      viễn quyền truy cập vào cổng nội bộ.
-                    </p>
-                    <p>
-                      • <strong className="text-foreground">Lịch sử nhân sự:</strong> Hồ sơ và điểm
-                      cống hiến vẫn được lưu giữ an toàn, tự động chuyển sang trạng thái{" "}
-                      <strong>« Đã rời »</strong>.
-                    </p>
-                    <p className="italic pt-1 text-muted-foreground">
-                      (Nếu thành viên chỉ tạm vắng ôn thi hoặc bận việc một thời gian, vui lòng chọn{" "}
-                      <strong>Tạm nghỉ</strong> hoặc <strong>Tạm khóa</strong> ở phía trên).
-                    </p>
-                  </div>
-                  <input
-                    className={`${inp} mt-3 font-mono`}
-                    placeholder="Gõ XOA để xác nhận"
-                    value={confirmText}
-                    onChange={(e) => setConfirmText(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    disabled={busy || confirmText.trim().toUpperCase() !== "XOA"}
-                    onClick={removeAccount}
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
-                  >
-                    Xác nhận xóa tài khoản
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                    Xóa hồ sơ
-                  </h3>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                    Hồ sơ chưa có tài khoản đăng nhập. Chỉ xóa khi đây là hồ sơ mồ côi hoặc bị trùng
-                    — thao tác không thể hoàn tác.
+                <Button
+                  type="button"
+                  variant="link"
+                  size="admin-sm"
+                  disabled={pwBusy}
+                  onClick={() =>
+                    runPw(
+                      () =>
+                        resetAccountPassword({
+                          data: {
+                            userId: m.account!.userId,
+                            mode: "link",
+                            redirectTo: `${window.location.origin}/reset-password`,
+                          },
+                        }),
+                      "Đã gửi liên kết đặt lại mật khẩu tới email.",
+                    )
+                  }
+                  className="mt-2 h-auto px-0 font-normal underline"
+                >
+                  Gửi liên kết đặt lại mật khẩu qua email
+                </Button>
+                {m.account.mustChange && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Tài khoản đang yêu cầu đổi mật khẩu ở lần đăng nhập kế tiếp.
                   </p>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={removeProfile}
-                    className="mt-3 rounded-lg border border-destructive px-4 py-2 text-sm font-semibold text-destructive disabled:opacity-50"
-                  >
-                    Xóa hồ sơ thành viên
-                  </button>
-                </>
-              )}
-            </section>
+                )}
+              </div>
+            </>
+          ) : grantOpen ? (
+            <GrantAccount m={m} onChanged={onChanged} onClose={onClose} />
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4 text-center">
+              <p className="text-sm font-medium text-foreground">
+                Hồ sơ này chưa có tài khoản đăng nhập
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Cấp tài khoản để thành viên truy cập cổng nội bộ và nhận quyền quản trị.
+              </p>
+              <Button
+                type="button"
+                size="admin"
+                className="mt-3"
+                onClick={() => setGrantOpen(true)}
+              >
+                <Plus aria-hidden /> Cấp tài khoản đăng nhập nội bộ
+              </Button>
+            </div>
           )}
+        </section>
+      )}
 
-          {msg && <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{msg}</p>}
-          {err && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>
+      {isAdmin && (
+        <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+          {m.account ? (
+            <>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                <Trash2 className="h-4 w-4" />
+                Xóa tài khoản đăng nhập
+              </h3>
+              <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
+                <p className="font-medium text-foreground/90">
+                  Thao tác này dành cho thành viên chính thức kết thúc nhiệm kỳ hoặc rời CLB:
+                </p>
+                <p>
+                  • <strong className="text-foreground">Quyền đăng nhập:</strong> Thu hồi vĩnh viễn
+                  quyền truy cập vào cổng nội bộ.
+                </p>
+                <p>
+                  • <strong className="text-foreground">Lịch sử nhân sự:</strong> Hồ sơ và điểm cống
+                  hiến vẫn được lưu giữ an toàn, tự động chuyển sang trạng thái{" "}
+                  <strong>« Đã rời »</strong>.
+                </p>
+                <p className="italic pt-1 text-muted-foreground">
+                  (Nếu thành viên chỉ tạm vắng ôn thi hoặc bận việc một thời gian, vui lòng chọn{" "}
+                  <strong>Tạm nghỉ</strong> hoặc <strong>Tạm khóa</strong> ở phía trên).
+                </p>
+              </div>
+              <AdminInput
+                aria-label="Gõ XOA để xác nhận"
+                className="mt-3 font-mono"
+                placeholder="Gõ XOA để xác nhận"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="admin"
+                className="mt-3"
+                disabled={busy || confirmText.trim().toUpperCase() !== "XOA"}
+                onClick={removeAccount}
+              >
+                Xác nhận xóa tài khoản
+              </Button>
+            </>
+          ) : (
+            <>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                <Trash2 className="h-4 w-4" />
+                Xóa hồ sơ
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                Hồ sơ chưa có tài khoản đăng nhập. Chỉ xóa khi đây là hồ sơ mồ côi hoặc bị trùng —
+                thao tác không thể hoàn tác.
+              </p>
+              <Button
+                type="button"
+                variant="destructive-outline"
+                size="admin"
+                className="mt-3"
+                disabled={busy}
+                onClick={removeProfile}
+              >
+                Xóa hồ sơ thành viên
+              </Button>
+            </>
           )}
-        </div>
+        </section>
+      )}
 
-        <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-          >
-            Hủy
-          </button>
-          {canEdit && (
-            <button
-              disabled={busy}
-              onClick={save}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-            >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-              Lưu thay đổi
-            </button>
-          )}
-        </div>
-      </motion.div>
-    </div>
+      {msg && <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{msg}</p>}
+      {err && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>
+      )}
+    </AdminDrawer>
   );
 }
 
@@ -1387,15 +1353,17 @@ function GrantAccount({
           <br />
           Đăng nhập: {typeof window !== "undefined" ? window.location.origin : ""}/login
         </div>
-        <button
+        <Button
+          type="button"
+          size="admin"
+          className="w-full"
           onClick={() => {
             onChanged();
             onClose();
           }}
-          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
         >
           Xong
-        </button>
+        </Button>
       </div>
     );
 
@@ -1404,67 +1372,76 @@ function GrantAccount({
       <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
         Hồ sơ này chưa có tài khoản đăng nhập. Cấp tài khoản để thành viên truy cập cổng nội bộ.
       </p>
-      <label className="block text-xs text-muted-foreground">
-        Email đăng nhập
-        <input
-          className={`${inp} mt-1`}
-          type="email"
-          value={v.email}
-          onChange={(e) => set({ email: e.target.value })}
-        />
-      </label>
-      <div className="flex gap-2">
-        <input
-          className={`${inp} flex-1 font-mono`}
-          placeholder="Mật khẩu tạm thời"
-          value={v.password}
-          onChange={(e) => set({ password: e.target.value })}
-        />
-        <button
-          type="button"
-          onClick={() => set({ password: randomPassword() })}
-          className="rounded-lg border border-border px-3 text-xs"
-        >
-          Tạo ngẫu nhiên
-        </button>
-      </div>
+      <FormField label="Email đăng nhập">
+        {(field) => (
+          <AdminInput
+            {...field}
+            type="email"
+            value={v.email}
+            onChange={(e) => set({ email: e.target.value })}
+          />
+        )}
+      </FormField>
+      <FormField label="Mật khẩu tạm thời">
+        {(field) => (
+          <div className="flex gap-2">
+            <AdminInput
+              {...field}
+              className="flex-1 font-mono"
+              placeholder="Mật khẩu tạm thời"
+              value={v.password}
+              onChange={(e) => set({ password: e.target.value })}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="admin"
+              onClick={() => set({ password: randomPassword() })}
+            >
+              Tạo ngẫu nhiên
+            </Button>
+          </div>
+        )}
+      </FormField>
       <div className="grid gap-2 sm:grid-cols-2">
-        <div>
-          <span className="block text-xs text-muted-foreground">Vai trò hệ thống</span>
-          <Select
-            value={v.access}
-            onValueChange={(val) => {
-              const a = val as AccessLevel;
-              set({ access: a, permissions: PERMISSION_TEMPLATES[a] });
-            }}
-          >
-            <SelectTrigger aria-label="Vai trò hệ thống" className={DRAWER_SELECT_TRIGGER}>
-              <SelectValue placeholder="Chọn vai trò" />
-            </SelectTrigger>
-            <SelectContent className={DRAWER_SELECT_CONTENT}>
-              {Object.entries(ACCESS_LABELS).map(([k, l]) => (
-                <SelectItem key={k} value={k} className={DRAWER_SELECT_ITEM}>
-                  {l}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <span className="block text-xs text-muted-foreground">Trạng thái tài khoản</span>
-          <Select value={v.status} onValueChange={(val) => set({ status: val as AccountStatus })}>
-            <SelectTrigger aria-label="Trạng thái tài khoản" className={DRAWER_SELECT_TRIGGER}>
-              <SelectValue placeholder="Chọn trạng thái" />
-            </SelectTrigger>
-            <SelectContent className={DRAWER_SELECT_CONTENT}>
-              {ACCOUNT_STATUS_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value} className={DRAWER_SELECT_ITEM}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FormField label="Vai trò hệ thống">
+          {(field) => (
+            <Select
+              value={v.access}
+              onValueChange={(val) => {
+                const a = val as AccessLevel;
+                set({ access: a, permissions: PERMISSION_TEMPLATES[a] });
+              }}
+            >
+              <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                <SelectValue placeholder="Chọn vai trò" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {Object.entries(ACCESS_LABELS).map(([k, l]) => (
+                  <SelectItem key={k} value={k} className="text-xs">
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </FormField>
+        <FormField label="Trạng thái tài khoản">
+          {(field) => (
+            <Select value={v.status} onValueChange={(val) => set({ status: val as AccountStatus })}>
+              <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                <SelectValue placeholder="Chọn trạng thái" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {ACCOUNT_STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value} className="text-xs">
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </FormField>
       </div>
       <PermissionSwitches
         selected={v.permissions}
@@ -1477,23 +1454,16 @@ function GrantAccount({
         }
       />
       <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={v.mustChange}
-          onChange={(e) => set({ mustChange: e.target.checked })}
-        />
+        <Checkbox checked={v.mustChange} onCheckedChange={(c) => set({ mustChange: c === true })} />
         Yêu cầu đổi mật khẩu khi đăng nhập lần đầu
       </label>
       {err && (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>
       )}
-      <button
-        disabled={busy}
-        onClick={submit}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-      >
-        {busy && <Loader2 className="h-4 w-4 animate-spin" />}Cấp tài khoản
-      </button>
+      <Button type="button" size="admin" className="w-full" disabled={busy} onClick={submit}>
+        {busy && <Loader2 aria-hidden className="animate-spin" />}
+        Cấp tài khoản
+      </Button>
     </div>
   );
 }
@@ -1526,14 +1496,6 @@ function NewMemberDrawer({
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const set = (p: Partial<typeof v>) => setV((s) => ({ ...s, ...p }));
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   const submit = async () => {
     setErr("");
@@ -1582,259 +1544,223 @@ function NewMemberDrawer({
 
   if (done) {
     return (
-      <div className="fixed inset-0 z-[60] flex justify-end">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed inset-0 backdrop-blur-sm bg-black/15"
-          onClick={onClose}
-        />
-        <motion.div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Đã thêm thành viên"
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "100%" }}
-          transition={{ type: "spring", damping: 32, stiffness: 320 }}
-          className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
-        >
-          <div className="flex shrink-0 items-start justify-between border-b border-border/70 px-6 py-4">
-            <h2 className="text-lg font-bold">Đã thêm thành viên</h2>
-          </div>
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto custom-scrollbar px-6 py-5">
-            <p className="text-sm">
-              Gửi thông tin đăng nhập cho thành viên qua kênh riêng. Mật khẩu này sẽ không hiển thị
-              lại.
-            </p>
-            <div className="rounded-lg bg-secondary p-3 font-mono text-sm">
-              Email: {v.email}
-              <br />
-              Mật khẩu tạm thời: {v.password}
-              <br />
-              Đăng nhập: {typeof window !== "undefined" ? window.location.origin : ""}/login
-            </div>
-          </div>
-          <div className="flex shrink-0 justify-end border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-            <button
-              onClick={() => {
-                onChanged();
-                onClose();
-              }}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              Xong
-            </button>
-          </div>
-        </motion.div>
-      </div>
+      <AdminDrawer
+        title="Đã thêm thành viên"
+        onClose={onClose}
+        bodyClassName="space-y-3"
+        footer={
+          <Button
+            type="button"
+            size="admin-lg"
+            onClick={() => {
+              onChanged();
+              onClose();
+            }}
+          >
+            Xong
+          </Button>
+        }
+      >
+        <p className="text-sm">
+          Gửi thông tin đăng nhập cho thành viên qua kênh riêng. Mật khẩu này sẽ không hiển thị lại.
+        </p>
+        <div className="rounded-lg bg-secondary p-3 font-mono text-sm">
+          Email: {v.email}
+          <br />
+          Mật khẩu tạm thời: {v.password}
+          <br />
+          Đăng nhập: {typeof window !== "undefined" ? window.location.origin : ""}/login
+        </div>
+      </AdminDrawer>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 backdrop-blur-sm bg-black/15"
-        onClick={onClose}
-      />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Thêm thành viên"
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/70 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-bold">Thêm thành viên</h2>
-          </div>
-        </div>
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto custom-scrollbar px-6 py-5">
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Hồ sơ thành viên
-            </h3>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <label className="block text-xs text-muted-foreground">
-                Họ và tên *
-                <input
-                  className={`${inp} mt-1`}
-                  value={v.full_name}
-                  onChange={(e) => set({ full_name: e.target.value })}
-                  placeholder="Nguyễn Văn A"
-                />
-              </label>
-              <label className="block text-xs text-muted-foreground">
-                Số điện thoại
-                <input
-                  className={`${inp} mt-1`}
-                  value={v.phone}
-                  onChange={(e) => set({ phone: e.target.value })}
-                />
-              </label>
-              <div>
-                <span className="block text-xs text-muted-foreground">Ban</span>
-                <Select
-                  value={v.department}
-                  onValueChange={(val) => set({ department: val, position: positionsFor(val)[0]! })}
-                >
-                  <SelectTrigger aria-label="Ban" className={DRAWER_SELECT_TRIGGER}>
-                    <SelectValue placeholder="Chọn Ban" />
-                  </SelectTrigger>
-                  <SelectContent className={DRAWER_SELECT_CONTENT}>
-                    {ACCOUNT_DEPTS.map((d) => (
-                      <SelectItem key={d.id} value={d.id} className={DRAWER_SELECT_ITEM}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <span className="block text-xs text-muted-foreground">Chức vụ</span>
-                <Select value={v.position} onValueChange={(val) => set({ position: val })}>
-                  <SelectTrigger aria-label="Chức vụ" className={DRAWER_SELECT_TRIGGER}>
-                    <SelectValue placeholder="Chọn chức vụ" />
-                  </SelectTrigger>
-                  <SelectContent className={DRAWER_SELECT_CONTENT}>
-                    {positionsFor(v.department).map((p) => (
-                      <SelectItem key={p} value={p} className={DRAWER_SELECT_ITEM}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <label className="block text-xs text-muted-foreground">
-              Email liên hệ
-              <input
-                className={`${inp} mt-1`}
-                type="email"
-                value={v.email}
-                onChange={(e) => set({ email: e.target.value })}
-                placeholder="ten@gmail.com"
+    <AdminDrawer
+      title="Thêm thành viên"
+      onClose={onClose}
+      dismissible={!busy}
+      footer={
+        <>
+          <Button type="button" variant="outline" size="admin" onClick={onClose}>
+            Hủy
+          </Button>
+          <Button type="button" size="admin-lg" disabled={busy} onClick={submit}>
+            {busy && <Loader2 aria-hidden className="animate-spin" />}
+            Thêm thành viên
+          </Button>
+        </>
+      }
+    >
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Hồ sơ thành viên
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <FormField label="Họ và tên" required>
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={v.full_name}
+                onChange={(e) => set({ full_name: e.target.value })}
+                placeholder="Nguyễn Văn A"
               />
-            </label>
-          </section>
-
-          <section className="space-y-3 border-t border-border/60 pt-5">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Tài khoản đăng nhập
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              Hồ sơ mới luôn được tạo ở trạng thái{" "}
-              <strong className="font-semibold text-foreground">Đang hoạt động</strong>.
-            </p>
-            {canCreateAccount && (
-              <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
-                <input
-                  type="checkbox"
-                  checked={v.withAccount}
-                  onChange={(e) => set({ withAccount: e.target.checked })}
-                />
-                Cấp luôn tài khoản đăng nhập nội bộ
-              </label>
             )}
+          </FormField>
+          <FormField label="Số điện thoại">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={v.phone}
+                onChange={(e) => set({ phone: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Ban">
+            {(field) => (
+              <Select
+                value={v.department}
+                onValueChange={(val) => set({ department: val, position: positionsFor(val)[0]! })}
+              >
+                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                  <SelectValue placeholder="Chọn Ban" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {ACCOUNT_DEPTS.map((d) => (
+                    <SelectItem key={d.id} value={d.id} className="text-xs">
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+          <FormField label="Chức vụ">
+            {(field) => (
+              <Select value={v.position} onValueChange={(val) => set({ position: val })}>
+                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                  <SelectValue placeholder="Chọn chức vụ" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {positionsFor(v.department).map((p) => (
+                    <SelectItem key={p} value={p} className="text-xs">
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+        </div>
+        <FormField label="Email liên hệ">
+          {(field) => (
+            <AdminInput
+              {...field}
+              type="email"
+              value={v.email}
+              onChange={(e) => set({ email: e.target.value })}
+              placeholder="ten@gmail.com"
+            />
+          )}
+        </FormField>
+      </section>
 
-            {canCreateAccount && v.withAccount && (
-              <>
+      <section className="space-y-3 border-t border-border/60 pt-5">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Tài khoản đăng nhập
+        </h3>
+        <p className="text-[11px] text-muted-foreground">
+          Hồ sơ mới luôn được tạo ở trạng thái{" "}
+          <strong className="font-semibold text-foreground">Đang hoạt động</strong>.
+        </p>
+        {canCreateAccount && (
+          <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
+            <Checkbox
+              checked={v.withAccount}
+              onCheckedChange={(c) => set({ withAccount: c === true })}
+            />
+            Cấp luôn tài khoản đăng nhập nội bộ
+          </label>
+        )}
+
+        {canCreateAccount && v.withAccount && (
+          <>
+            <FormField label="Mật khẩu tạm thời">
+              {(field) => (
                 <div className="flex gap-2">
-                  <input
-                    className={`${inp} flex-1 font-mono`}
+                  <AdminInput
+                    {...field}
+                    className="flex-1 font-mono"
                     placeholder="Mật khẩu tạm thời"
                     value={v.password}
                     onChange={(e) => set({ password: e.target.value })}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="admin"
                     onClick={() => set({ password: randomPassword() })}
-                    className="whitespace-nowrap rounded-lg border border-border px-3 text-xs"
+                    className="whitespace-nowrap"
                   >
                     Tạo ngẫu nhiên
-                  </button>
+                  </Button>
                 </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={v.mustChange}
-                    onChange={(e) => set({ mustChange: e.target.checked })}
-                  />
-                  Yêu cầu đổi mật khẩu khi đăng nhập lần đầu
-                </label>
-              </>
-            )}
-          </section>
-
-          {canCreateAccount && v.withAccount && (
-            <section className="space-y-3 border-t border-border/60 pt-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Quyền quản trị
-              </h3>
-              <div>
-                <span className="block text-xs text-muted-foreground">Vai trò hệ thống</span>
-                <Select
-                  value={v.access}
-                  onValueChange={(val) => {
-                    const a = val as AccessLevel;
-                    set({ access: a, permissions: PERMISSION_TEMPLATES[a] });
-                  }}
-                >
-                  <SelectTrigger aria-label="Vai trò hệ thống" className={DRAWER_SELECT_TRIGGER}>
-                    <SelectValue placeholder="Chọn vai trò" />
-                  </SelectTrigger>
-                  <SelectContent className={DRAWER_SELECT_CONTENT}>
-                    {Object.entries(ACCESS_LABELS).map(([k, l]) => (
-                      <SelectItem key={k} value={k} className={DRAWER_SELECT_ITEM}>
-                        {l}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <PermissionSwitches
-                selected={v.permissions}
-                onToggle={(k) =>
-                  set({
-                    permissions: v.permissions.includes(k)
-                      ? v.permissions.filter((x) => x !== k)
-                      : [...v.permissions, k],
-                  })
-                }
+              )}
+            </FormField>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={v.mustChange}
+                onCheckedChange={(c) => set({ mustChange: c === true })}
               />
-            </section>
-          )}
+              Yêu cầu đổi mật khẩu khi đăng nhập lần đầu
+            </label>
+          </>
+        )}
+      </section>
 
-          {err && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>
-          )}
-        </div>
+      {canCreateAccount && v.withAccount && (
+        <section className="space-y-3 border-t border-border/60 pt-5">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Quyền quản trị
+          </h3>
+          <FormField label="Vai trò hệ thống">
+            {(field) => (
+              <Select
+                value={v.access}
+                onValueChange={(val) => {
+                  const a = val as AccessLevel;
+                  set({ access: a, permissions: PERMISSION_TEMPLATES[a] });
+                }}
+              >
+                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                  <SelectValue placeholder="Chọn vai trò" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {Object.entries(ACCESS_LABELS).map(([k, l]) => (
+                    <SelectItem key={k} value={k} className="text-xs">
+                      {l}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+          <PermissionSwitches
+            selected={v.permissions}
+            onToggle={(k) =>
+              set({
+                permissions: v.permissions.includes(k)
+                  ? v.permissions.filter((x) => x !== k)
+                  : [...v.permissions, k],
+              })
+            }
+          />
+        </section>
+      )}
 
-        <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-          >
-            Hủy
-          </button>
-          <button
-            disabled={busy}
-            onClick={submit}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />}Thêm thành viên
-          </button>
-        </div>
-      </motion.div>
-    </div>
+      {err && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>
+      )}
+    </AdminDrawer>
   );
 }
