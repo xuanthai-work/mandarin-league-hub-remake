@@ -219,6 +219,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-165-PERMISSIONS-GRANTS-TABLE-FIT`                             | Phân quyền: bảng Quyền riêng không còn tràn                                                            | 2026-11-07     | **PASS** | [task-oc-165-permissions-grants-table-fit.md](tasks/task-oc-165-permissions-grants-table-fit.md)                                                         |
 | `TASK-OC-166-PERMISSIONS-MATRIX-PER-DEPARTMENT`                        | Phân quyền: bỏ "Tất cả các ban", ma trận theo artifact                                                 | 2026-11-07     | **PASS** | [task-oc-166-permissions-matrix-per-department.md](tasks/task-oc-166-permissions-matrix-per-department.md)                                               |
 | `TASK-GE-168-HSK-RESULTS-USE-ADMIN-KIT`                                | Kết quả HSK dùng bộ component admin                                                                    | 2026-11-07     | **PASS** | [task-ge-168-hsk-results-use-admin-kit.md](tasks/task-ge-168-hsk-results-use-admin-kit.md)                                                               |
+| `TASK-OC-167-PERMISSIONS-DEPARTMENT-SELECT`                            | Phân quyền: chọn ban bằng ô Select                                                                     | 2026-11-07     | **PASS** | [task-oc-167-permissions-department-select.md](tasks/task-oc-167-permissions-department-select.md)                                                       |
 
 ---
 

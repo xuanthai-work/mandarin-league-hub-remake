@@ -154,6 +154,20 @@ export function MatrixTab() {
             { value: "action", label: "Theo hành động" },
           ]}
         />
+        {view === "dept" && (
+          <Select value={department} onValueChange={setDepartment}>
+            <SelectTrigger aria-label="Chọn ban" className="h-9 w-64 rounded-xl text-xs shadow-xs">
+              <SelectValue>{deptName(department)}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {DEPARTMENT_IDS.map((id) => (
+                <SelectItem key={id} value={id}>
+                  {deptName(id)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <SearchInput
           value={q}
           onChange={setQ}
@@ -183,16 +197,6 @@ export function MatrixTab() {
         </span>
         <span>Quản trị viên luôn có mọi quyền.</span>
       </div>
-
-      {view === "dept" && (
-        <SegmentedControl
-          label="Chọn ban"
-          className="flex-wrap"
-          value={department}
-          onChange={setDepartment}
-          options={DEPARTMENT_IDS.map((id) => ({ value: id, label: deptName(id) }))}
-        />
-      )}
 
       {groups.length === 0 ? (
         <EmptyState title="Không có hành động khớp từ khóa." />
