@@ -37,6 +37,9 @@ export const Route = createFileRoute("/_authenticated/admin/contributions")({
 
 const LEDGER_LIMIT = 500;
 
+/** Meeting attendance is paused until automatic attendance ships; set to true to bring it back. */
+const ATTENDANCE_ENABLED: boolean = false;
+
 function PointsPage() {
   const qc = useQueryClient();
   const access = useAdminAccess();
@@ -48,7 +51,7 @@ function PointsPage() {
     }),
     [access.data?.department, access.data?.position],
   );
-  const canAttend = can(perms, "points.attendance");
+  const canAttend = ATTENDANCE_ENABLED && can(perms, "points.attendance");
   const attendAllDepts = hasAllScope(perms, "points.attendance");
   const canAdjust = can(perms, "points.adjust");
   const ownDept = me.department;
