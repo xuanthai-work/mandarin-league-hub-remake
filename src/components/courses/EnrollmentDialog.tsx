@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Copy, X } from "lucide-react";
 import { toast } from "sonner";
 import { submitEnrollment } from "@/lib/courses.functions";
+import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { useTr } from "@/lib/i18n";
 
 const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
@@ -40,18 +41,30 @@ export function EnrollmentDialog({
   });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ code: string; submittedAt: string } | null>(null);
+  const [captcha, setCaptcha] = useState("");
+  const captchaRef = useRef<RecaptchaHandle>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
     setF({ ...f, [k]: e.target.value });
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captcha) {
+      toast.error(tr('Vui lòng tick ô "Tôi không phải là người máy" trước khi gửi.'));
+      return;
+    }
     setBusy(true);
     try {
-      const r = await submit({ data: { ...f, level, course_id: courseId, hsk_class_id: classId } });
+      const r = await submit({
+        data: { ...f, level, course_id: courseId, hsk_class_id: classId, captcha },
+      });
       if (r.ok) setDone({ code: r.code, submittedAt: r.submittedAt });
-      else toast.error(r.error);
+      else {
+        toast.error(r.error);
+        captchaRef.current?.reset();
+      }
     } catch {
       toast.error(tr("Không gửi được đơn, vui lòng thử lại."));
+      captchaRef.current?.reset();
     }
     setBusy(false);
   };
@@ -182,6 +195,9 @@ export function EnrollmentDialog({
                 onChange={set("message")}
               />
             </label>
+            <div className="flex justify-center overflow-hidden">
+              <Recaptcha ref={captchaRef} onChange={setCaptcha} />
+            </div>
             <button
               disabled={busy}
               className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60"

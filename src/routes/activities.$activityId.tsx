@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CalendarDays, Clock, ExternalLink, MapPin, Users } from "lucide-react";
 import { EmptyState } from "@/components/site/ui";
@@ -15,6 +15,7 @@ import {
   type ActivityRow,
 } from "@/lib/activities";
 import { submitActivityRegistration } from "@/lib/activities.functions";
+import { Recaptcha, type RecaptchaHandle } from "@/components/Recaptcha";
 import { useTr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/activities/$activityId")({
@@ -144,6 +145,8 @@ function RegisterBox({ a }: { a: ActivityRow }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState<{ code: string } | null>(null);
+  const [captcha, setCaptcha] = useState("");
+  const captchaRef = useRef<RecaptchaHandle>(null);
   const ended = liveStatus(a) === "ended" || a.manual_status === "cancelled";
   if (a.registration_url && !ended)
     return (
@@ -187,15 +190,22 @@ function RegisterBox({ a }: { a: ActivityRow }) {
   const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
   const go = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captcha) {
+      setErr(tr('Vui lòng tick ô "Tôi không phải là người máy" trước khi gửi.'));
+      return;
+    }
     setBusy(true);
     setErr("");
-    const r = await submit({ data: { activity_id: a.id, ...f } }).catch(() => ({
+    const r = await submit({ data: { activity_id: a.id, ...f, captcha } }).catch(() => ({
       ok: false as const,
       error: tr("Không gửi được, vui lòng thử lại."),
     }));
     setBusy(false);
     if (r.ok) setDone({ code: r.code });
-    else setErr(r.error);
+    else {
+      setErr(r.error);
+      captchaRef.current?.reset();
+    }
   };
   return (
     <form onSubmit={go} className="mt-2 space-y-2">
@@ -240,6 +250,9 @@ function RegisterBox({ a }: { a: ActivityRow }) {
         value={f.message}
         onChange={(e) => setF({ ...f, message: e.target.value })}
       />
+      <div className="flex justify-center overflow-hidden">
+        <Recaptcha ref={captchaRef} onChange={setCaptcha} />
+      </div>
       {err && <p className="text-xs text-destructive">{err}</p>}
       <button
         disabled={busy}

@@ -659,6 +659,10 @@ export const PHRASES: Record<string, [string, string]> = {
     "查询前请勾选“我不是机器人”。",
     'Please tick "I\'m not a robot" before searching.',
   ],
+  'Vui lòng tick ô "Tôi không phải là người máy" trước khi gửi.': [
+    "提交前请勾选“我不是机器人”。",
+    'Please tick "I\'m not a robot" before submitting.',
+  ],
   "ĐÃ THU HỒI": ["已撤销", "REVOKED"],
   // Enrollment dialog
   "Đăng ký khóa học": ["报名课程", "Course registration"],

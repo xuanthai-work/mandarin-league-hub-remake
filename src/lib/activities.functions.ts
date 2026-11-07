@@ -27,6 +27,9 @@ const fmt = (d: Date | string) =>
 export const submitActivityRegistration = createServerFn({ method: "POST" })
   .validator((d) => d as unknown)
   .handler(async ({ data: raw }) => {
+    const { verifyRecaptcha, CAPTCHA_ERROR } = await import("./recaptcha.server");
+    if (!(await verifyRecaptcha((raw as { captcha?: unknown } | null)?.captcha)))
+      return { ok: false as const, error: CAPTCHA_ERROR };
     const parsed = schema.safeParse(raw);
     if (!parsed.success) {
       const LABEL: Record<string, string> = {
