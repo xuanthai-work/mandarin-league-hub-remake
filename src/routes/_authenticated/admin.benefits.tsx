@@ -370,56 +370,63 @@ function BenefitCard({
           onClick={(e) => e.stopPropagation()}
           className="mt-4 cursor-text space-y-1.5 rounded-xl border border-border/60 bg-muted/30 p-3 text-xs select-text"
         >
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <div className="flex items-center gap-2">
+          <div className="space-y-1.5">
+            {/* Hàng 1: Tài khoản + Nút Sao chép */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
                 <span className="w-[68px] shrink-0 text-muted-foreground">Tài khoản</span>
                 <span className="min-w-0 flex-1 truncate font-medium text-foreground select-text">
                   {b.login || "Chưa thiết lập"}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin-icon"
+                className="h-6 w-6 shrink-0"
+                disabled={!b.login && !b.secret}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void copyCredentials();
+                }}
+                aria-label="Sao chép tài khoản và mật khẩu"
+                title={
+                  b.login || b.secret
+                    ? "Sao chép tài khoản & mật khẩu"
+                    : "Chưa thiết lập tài khoản & mật khẩu"
+                }
+              >
+                {copied ? <Check className="text-success" /> : <Copy />}
+              </Button>
+            </div>
+
+            {/* Hàng 2: Mật khẩu + Nút Xem/Ẩn mật khẩu (thẳng hàng nút Sao chép bên trên) */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
                 <span className="w-[68px] shrink-0 text-muted-foreground">Mật khẩu</span>
                 <span className="min-w-0 flex-1 truncate font-mono font-medium text-foreground select-text">
                   {b.secret ? (revealed ? b.secret : "••••••••") : "Chưa thiết lập"}
                 </span>
-                {b.secret && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="admin-icon"
-                    className="h-6 w-6 shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setRevealed((v) => !v);
-                    }}
-                    aria-label={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    title={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {revealed ? <EyeOff /> : <Eye />}
-                  </Button>
-                )}
               </div>
+              {b.secret ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="admin-icon"
+                  className="h-6 w-6 shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRevealed((v) => !v);
+                  }}
+                  aria-label={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  title={revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {revealed ? <EyeOff /> : <Eye />}
+                </Button>
+              ) : (
+                <div className="h-6 w-6 shrink-0" />
+              )}
             </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin-icon"
-              disabled={!b.login && !b.secret}
-              onClick={(e) => {
-                e.stopPropagation();
-                void copyCredentials();
-              }}
-              aria-label="Sao chép tài khoản và mật khẩu"
-              title={
-                b.login || b.secret
-                  ? "Sao chép tài khoản & mật khẩu"
-                  : "Chưa thiết lập tài khoản & mật khẩu"
-              }
-            >
-              {copied ? <Check className="text-success" /> : <Copy />}
-            </Button>
           </div>
 
           {(b.access_url || b.usage_note) && (
@@ -817,13 +824,13 @@ function GrantMemberRow({
       </div>
       <div className="flex items-center gap-2">
         {active && grant && (
-          <AdminInput
-            type="date"
-            className="h-9 w-auto px-2 text-xs"
+          <DatePicker
             value={grant.ends_on ?? ""}
-            onChange={(e) => onEndsOn(grant, e.target.value || null)}
-            title="Hạn riêng"
-            aria-label={`Hạn riêng của ${member.full_name}`}
+            onChange={(ends) => onEndsOn(grant, ends || null)}
+            placeholder="Vô thời hạn"
+            clearable
+            clearLabel="Vô thời hạn"
+            className="h-8 w-[130px] text-xs"
           />
         )}
         <span
@@ -846,6 +853,7 @@ function GrantMemberRow({
 function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }) {
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("");
+  const [busyAll, setBusyAll] = useState(false);
   const data = useQuery({
     queryKey: ["benefit-grants", benefit.id],
     queryFn: async () => {
@@ -925,6 +933,60 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
   const granted = filtered.filter(hasAccess);
   const unapproved = filtered.filter((m) => !hasAccess(m));
 
+  const grantAll = async () => {
+    if (unapproved.length === 0) return;
+    setBusyAll(true);
+    const records = unapproved.map((m) => ({
+      benefit_id: benefit.id,
+      member_id: m.id,
+      status: "active",
+      ends_on: null,
+    }));
+    const { error } = await supabase
+      .from("member_benefits")
+      .upsert(records, { onConflict: "benefit_id,member_id" });
+    setBusyAll(false);
+    if (error) return void toast.error(error.message);
+    toast.success(`Đã cấp quyền lợi cho ${records.length} thành viên`);
+    await data.refetch();
+  };
+
+  const revokeAll = async () => {
+    if (granted.length === 0) return;
+    setBusyAll(true);
+    const ruleMembers = granted.filter(ruleAccess);
+    const nonRuleMembers = granted.filter((m) => !ruleAccess(m));
+    const promises: PromiseLike<unknown>[] = [];
+    if (ruleMembers.length > 0) {
+      promises.push(
+        supabase.from("member_benefits").upsert(
+          ruleMembers.map((m) => ({
+            benefit_id: benefit.id,
+            member_id: m.id,
+            status: "revoked",
+          })),
+          { onConflict: "benefit_id,member_id" },
+        ),
+      );
+    }
+    if (nonRuleMembers.length > 0) {
+      promises.push(
+        supabase
+          .from("member_benefits")
+          .delete()
+          .eq("benefit_id", benefit.id)
+          .in(
+            "member_id",
+            nonRuleMembers.map((m) => m.id),
+          ),
+      );
+    }
+    await Promise.all(promises);
+    setBusyAll(false);
+    toast.success(`Đã thu hồi quyền lợi của ${granted.length} thành viên`);
+    await data.refetch();
+  };
+
   return (
     <AdminModal
       size="lg"
@@ -970,9 +1032,24 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
       </div>
 
       <section className="space-y-2">
-        <div className="flex items-center gap-2 px-1">
-          <h3 className="text-sm font-bold text-foreground">Đã cấp quyền lợi</h3>
-          <StatusPill tone="success">{granted.length} thành viên</StatusPill>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-foreground">Đã cấp quyền lợi</h3>
+            <StatusPill tone="success">{granted.length} thành viên</StatusPill>
+          </div>
+          <div className="flex items-center gap-3">
+            {granted.length > 0 && (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-[11px] font-medium text-destructive underline underline-offset-2"
+                disabled={busyAll}
+                onClick={() => void revokeAll()}
+              >
+                Bỏ cấp tất cả ({granted.length})
+              </Button>
+            )}
+          </div>
         </div>
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
           <ul className="divide-y divide-border/60">
@@ -996,9 +1073,24 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
       </section>
 
       <section className="space-y-2">
-        <div className="flex items-center gap-2 px-1">
-          <h3 className="text-sm font-bold text-foreground">Chưa cấp quyền lợi</h3>
-          <StatusPill tone="neutral">{unapproved.length} thành viên</StatusPill>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-foreground">Chưa cấp quyền lợi</h3>
+            <StatusPill tone="neutral">{unapproved.length} thành viên</StatusPill>
+          </div>
+          <div className="flex items-center gap-3">
+            {unapproved.length > 0 && (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-[11px] font-medium underline underline-offset-2"
+                disabled={busyAll}
+                onClick={() => void grantAll()}
+              >
+                Cấp tất cả ({unapproved.length})
+              </Button>
+            )}
+          </div>
         </div>
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
           <ul className="divide-y divide-border/60">
