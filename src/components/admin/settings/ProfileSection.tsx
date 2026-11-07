@@ -113,6 +113,7 @@ export function ProfileSection({ me }: { me: MyAccount }) {
     >
       <div className="flex items-center gap-4 py-4">
         {member ? (
+          // eslint-disable-next-line no-restricted-syntax -- ảnh đại diện bấm được phủ toàn ô ảnh, Button của kit không hợp
           <button
             type="button"
             onClick={() => setZoomAvatar(true)}
@@ -145,15 +146,17 @@ export function ProfileSection({ me }: { me: MyAccount }) {
           <p className="truncate text-sm text-muted-foreground">{me.email}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {member && (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="admin-sm"
                 onClick={copyCode}
                 aria-label="Sao chép mã thành viên"
-                className="inline-flex items-center gap-1 rounded-md border border-border/80 px-2 py-0.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
+                className="h-auto gap-1 rounded-md border-border/80 px-2 py-0.5 font-mono text-xs font-normal text-muted-foreground shadow-none hover:bg-accent/70 hover:text-foreground [&_svg]:size-3"
               >
                 {member.member_code}
-                <Copy className="h-3 w-3" />
-              </button>
+                <Copy aria-hidden />
+              </Button>
             )}
             {roleLabel && (
               <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">

@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { ContentDiffList } from "@/components/admin/content/ContentDiffList";
 import { auditBaseline, describeChanges, type FieldChange } from "@/lib/site-content-fields";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
 
 export interface ContentHistoryProps {
   onRestore: (key: "home" | "site", data: unknown) => void;
@@ -45,6 +47,14 @@ const KEY_LABEL: Record<string, string> = {
   home: "Trang chủ",
   site: "Liên hệ & Chân trang",
 };
+
+const HISTORY_COLS: AdminColumn[] = [
+  { key: "time", label: "Thời gian", className: "w-[170px]" },
+  { key: "key", label: "Mục" },
+  { key: "action", label: "Thao tác", className: "w-[140px]" },
+  { key: "actor", label: "Người thực hiện", className: "w-[180px]" },
+  { key: "changes", label: "Thay đổi", className: "w-[100px]" },
+];
 
 export function ContentHistory({ onRestore }: ContentHistoryProps) {
   const [filter, setFilter] = useState<"all" | "home" | "site">("all");
@@ -110,79 +120,37 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[680px] text-sm">
-          <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-            <tr>
-              <th className="p-3 font-semibold">Thời gian</th>
-              <th className="p-3 font-semibold">Mục</th>
-              <th className="p-3 font-semibold">Thao tác</th>
-              <th className="p-3 font-semibold">Người thực hiện</th>
-              <th className="p-3 font-semibold">Thay đổi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.isLoading && (
-              <tr>
-                <td colSpan={5} className="p-6 text-center text-muted-foreground">
-                  Đang tải…
-                </td>
-              </tr>
-            )}
+      <AdminTable
+        columns={HISTORY_COLS}
+        minWidth="min-w-[680px]"
+        isEmpty={q.isLoading || filteredRows.length === 0}
+        emptyMessage={q.isLoading ? "Đang tải…" : "Chưa có thay đổi."}
+      >
+        {filteredRows.map((item) => {
+          const { row, changes } = item;
+          const isPublish = row.action === "publish";
 
-            {!q.isLoading && filteredRows.length === 0 && (
-              <tr>
-                <td colSpan={5} className="p-6 text-center text-muted-foreground">
-                  Chưa có thay đổi.
-                </td>
-              </tr>
-            )}
-
-            {!q.isLoading &&
-              filteredRows.map((item) => {
-                const { row, changes } = item;
-                const isPublish = row.action === "publish";
-
-                return (
-                  <tr
-                    key={row.id}
-                    tabIndex={0}
-                    onClick={() => setSelectedItem(item)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        if (e.key === " ") e.preventDefault();
-                        setSelectedItem(item);
-                      }
-                    }}
-                    className="cursor-pointer border-t border-border transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
-                  >
-                    <td className="p-3 text-xs tabular-nums text-muted-foreground">
-                      {new Date(row.created_at).toLocaleString("vi-VN")}
-                    </td>
-                    <td className="p-3 font-medium text-foreground">
-                      {KEY_LABEL[row.content_key] ?? row.content_key}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          isPublish
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {ACTION_LABEL[row.action] ?? row.action}
-                      </span>
-                    </td>
-                    <td className="p-3 text-muted-foreground">{row.actor_name || "—"}</td>
-                    <td className="p-3 text-foreground tabular-nums">
-                      {changes.length > 0 ? `${changes.length} ô` : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
-      </div>
+          return (
+            <AdminTableRow key={row.id} onOpen={() => setSelectedItem(item)}>
+              <td className="p-3 text-xs tabular-nums text-muted-foreground">
+                {new Date(row.created_at).toLocaleString("vi-VN")}
+              </td>
+              <td className="p-3 font-medium text-foreground">
+                {KEY_LABEL[row.content_key] ?? row.content_key}
+              </td>
+              <td className="p-3">
+                <StatusPill dot={false} tone={isPublish ? "info" : "neutral"}>
+                  {ACTION_LABEL[row.action] ?? row.action}
+                </StatusPill>
+              </td>
+              <td className="p-3 text-muted-foreground">{row.actor_name || "—"}</td>
+              <td className="p-3 text-foreground tabular-nums">
+                {changes.length > 0 ? `${changes.length} ô` : "—"}
+              </td>
+            </AdminTableRow>
+          );
+        })}
+      </AdminTable>
 
       {/* Drawer */}
       <AnimatePresence>

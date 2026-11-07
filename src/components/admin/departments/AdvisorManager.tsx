@@ -142,36 +142,42 @@ export function AdvisorManager({
                       {m && ` · ${deptName(m.department)}`}
                     </p>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="admin-icon"
                     aria-label="Lên"
                     title="Đưa lên"
                     disabled={i === 0 || busy}
                     onClick={() => void move(i, -1)}
-                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
+                    className="h-7 w-7 text-muted-foreground"
                   >
-                    <ArrowUp className="h-4 w-4" />
-                  </button>
-                  <button
+                    <ArrowUp aria-hidden />
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="admin-icon"
                     aria-label="Xuống"
                     title="Đưa xuống"
                     disabled={i === advisors.length - 1 || busy}
                     onClick={() => void move(i, 1)}
-                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
+                    className="h-7 w-7 text-muted-foreground"
                   >
-                    <ArrowDown className="h-4 w-4" />
-                  </button>
-                  <button
+                    <ArrowDown aria-hidden />
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="admin-icon"
                     aria-label="Gỡ cố vấn"
                     title="Gỡ cố vấn"
                     disabled={busy}
                     onClick={() => void remove(r)}
-                    className="rounded p-1 text-destructive transition-colors hover:bg-accent disabled:opacity-30"
+                    className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                    <Trash2 aria-hidden />
+                  </Button>
                 </li>
               );
             })}

@@ -3,6 +3,8 @@ import { RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirm, type ConfirmOpts } from "@/components/admin/kit/useConfirm";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { Button } from "@/components/ui/button";
 
 export { useConfirm, type ConfirmOpts };
 
@@ -80,11 +82,7 @@ export function TrashList({
         Mục đã xóa nằm ở đây và không hiển thị công khai. Bạn có thể khôi phục bất kỳ lúc nào.
       </p>
       {q.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
-      {!q.isLoading && (q.data ?? []).length === 0 && (
-        <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Thùng rác trống.
-        </p>
-      )}
+      {!q.isLoading && (q.data ?? []).length === 0 && <EmptyState title="Thùng rác trống." />}
       {(q.data ?? []).map((r) => (
         <div
           key={r.id}
@@ -96,19 +94,24 @@ export function TrashList({
               Đã xóa lúc {new Date(r.deleted_at).toLocaleString("vi-VN")}
             </p>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-sm"
             onClick={() => restore(r.id)}
-            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-primary"
+            className="text-primary hover:text-primary"
           >
-            <RotateCcw className="h-4 w-4" /> Khôi phục
-          </button>
+            <RotateCcw aria-hidden /> Khôi phục
+          </Button>
           {canHardDelete && (
-            <button
+            <Button
+              type="button"
+              variant="destructive-outline"
+              size="admin-sm"
               onClick={() => purge(r.id, r[titleCol] ?? "")}
-              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-destructive"
             >
-              <Trash2 className="h-4 w-4" /> Xóa vĩnh viễn
-            </button>
+              <Trash2 aria-hidden /> Xóa vĩnh viễn
+            </Button>
           )}
         </div>
       ))}

@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
 import { ArrowUpRight, ExternalLink, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +31,7 @@ import { ContentOutline } from "@/components/admin/content/ContentOutline";
 import { ContentFieldInput } from "@/components/admin/content/ContentFieldInput";
 import { PublishDialog } from "@/components/admin/content/PublishDialog";
 import { ContentHistory } from "@/components/admin/content/ContentHistory";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
 
 export const Route = createFileRoute("/_authenticated/admin/content")({
   staticData: { sitemap: false },
@@ -298,47 +298,31 @@ function ContentAdmin() {
       <div className="space-y-4">
         {/* Tabs with horizontal scrollbar on small screens */}
         <div className="custom-scrollbar max-w-full overflow-x-auto">
-          <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
-            {(
+          <SegmentedControl
+            label="Mục nội dung"
+            value={tab}
+            onChange={setTab}
+            options={(
               [
                 ["home", "Trang chủ", unsavedHome > 0],
                 ["site", "Liên hệ & Chân trang", unsavedSite > 0],
                 ["log", "Lịch sử thay đổi", false],
               ] as const
-            ).map(([k, label, isDirty]) => {
-              const active = tab === k;
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setTab(k)}
-                  aria-pressed={active}
-                  className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-4 cursor-pointer ${
-                    active
-                      ? "text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {active && (
-                    <motion.span
-                      layoutId="content-tab-pill"
-                      className="absolute inset-0 rounded-lg bg-primary shadow-xs"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            ).map(([k, label, isDirty]) => ({
+              value: k,
+              label: (
+                <span className="flex items-center gap-1.5">
+                  <span>{label}</span>
+                  {isDirty && (
+                    <span
+                      className="inline-block h-1.5 w-1.5 rounded-full bg-gold"
+                      aria-label="Có thay đổi chưa lưu"
                     />
                   )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    <span>{label}</span>
-                    {isDirty && (
-                      <span
-                        className="inline-block h-1.5 w-1.5 rounded-full bg-gold"
-                        aria-label="Có thay đổi chưa lưu"
-                      />
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                </span>
+              ),
+            }))}
+          />
         </div>
 
         {/* Status Line + Action Buttons */}

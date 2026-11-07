@@ -231,6 +231,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-170-MEMBER-DRAWER-PERMISSIONS-SECTION`                        | Drawer thành viên: mục Quyền quản trị                                                                  | 2026-11-07     | **PASS** | [task-oc-170-member-drawer-permissions-section.md](tasks/task-oc-170-member-drawer-permissions-section.md)                                               |
 | `TASK-OC-171-MERGE-ORIGIN-DEV`                                         | Gộp origin/dev (thang điểm 0–450, ảnh đại diện)                                                        | 2026-11-07     | **PASS** | [task-oc-171-merge-origin-dev.md](tasks/task-oc-171-merge-origin-dev.md)                                                                                 |
 | `TASK-OC-172-GRANT-CARD-LABEL-ONCE`                                    | Quyền riêng hiện tên 1 lần, bỏ migration 0050 điểm                                                     | 2026-11-07     | **PASS** | [task-oc-172-grant-card-label-once.md](tasks/task-oc-172-grant-card-label-once.md)                                                                       |
+| `TASK-GE-175-ADMIN-LEFTOVERS-USE-ADMIN-KIT`                            | Dọn khung admin, Thùng rác, Ban, Nội dung, Cài đặt sang bộ component admin                             | 2026-11-07     | **PASS** | [task-ge-175-admin-leftovers-use-admin-kit.md](tasks/task-ge-175-admin-leftovers-use-admin-kit.md)                                                       |
 
 ---
 

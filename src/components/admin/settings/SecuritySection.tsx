@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { ShieldCheck, X } from "lucide-react";
+import { useState } from "react";
+import { AnimatePresence } from "motion/react";
+import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
 import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 import {
   AlertDialog,
@@ -18,63 +19,21 @@ import {
 import { SettingsRow, SettingsSection, type MyAccount } from "./shared";
 
 function PasswordDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[60] flex justify-end">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm"
-            onClick={onClose}
+        <AdminDrawer width="sm" title="Đổi mật khẩu" onClose={onClose} bodyClassName="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Nhập mật khẩu hiện tại để xác nhận đây là bạn.
+          </p>
+          <NewPasswordForm
+            requireCurrent
+            onDone={() => {
+              onClose();
+              toast.success("Đã đổi mật khẩu");
+            }}
           />
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Đổi mật khẩu"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 32, stiffness: 320 }}
-            className="relative z-10 flex h-full w-full max-w-[480px] flex-col border-l border-border bg-card shadow-2xl"
-          >
-            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
-              <h2 className="text-base font-bold text-foreground">Đổi mật khẩu</h2>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Đóng"
-                title="Đóng (Esc)"
-                className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
-              <p className="text-sm text-muted-foreground">
-                Nhập mật khẩu hiện tại để xác nhận đây là bạn.
-              </p>
-              <NewPasswordForm
-                requireCurrent
-                onDone={() => {
-                  onClose();
-                  toast.success("Đã đổi mật khẩu");
-                }}
-              />
-            </div>
-          </motion.div>
-        </div>
+        </AdminDrawer>
       )}
     </AnimatePresence>
   );

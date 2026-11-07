@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -74,11 +75,12 @@ export function ContentOutline({
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
               )}
             >
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => onSelect(block.id)}
                 aria-current={isSelected ? "true" : undefined}
-                className="flex min-w-0 flex-1 items-center gap-2 self-stretch px-3 py-2 text-left text-sm cursor-pointer"
+                className="h-auto min-w-0 flex-1 justify-start gap-2 self-stretch rounded-lg px-3 py-2 text-left text-sm text-inherit [font-weight:inherit] hover:bg-transparent hover:text-inherit"
               >
                 <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                   {idx + 1}.
@@ -97,7 +99,7 @@ export function ContentOutline({
                     aria-label="Có thay đổi chưa lưu"
                   />
                 )}
-              </button>
+              </Button>
 
               <span className="shrink-0 flex items-center gap-1.5">
                 {block.toggle && show && onToggle && (

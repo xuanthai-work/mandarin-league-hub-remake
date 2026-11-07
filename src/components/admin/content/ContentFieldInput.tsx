@@ -1,4 +1,5 @@
 import { RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -53,14 +54,15 @@ export function ContentFieldInput({
           ) : (
             <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
               <span>Đã sửa</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => onChange("")}
                 aria-label="Dùng chữ mặc định"
-                className="rounded p-0.5 text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                className="h-auto rounded p-0.5 text-primary/70 hover:bg-transparent hover:text-primary [&_svg]:size-3"
               >
-                <RotateCcw className="h-3 w-3" />
-              </button>
+                <RotateCcw aria-hidden />
+              </Button>
             </span>
           )}
 

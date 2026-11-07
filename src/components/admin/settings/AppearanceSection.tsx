@@ -31,6 +31,7 @@ export function AppearanceSection() {
           const active = theme === value;
           const light = value === "light";
           return (
+            // eslint-disable-next-line no-restricted-syntax -- thẻ chọn giao diện có ô xem trước phủ toàn thẻ, Button của kit không hợp
             <button
               key={value}
               type="button"

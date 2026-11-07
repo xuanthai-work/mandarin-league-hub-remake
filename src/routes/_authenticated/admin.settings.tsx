@@ -92,20 +92,21 @@ function AdminSettings() {
           {items.map(({ id, label, icon: Icon }) => {
             const isActive = active === id;
             return (
-              <button
+              <Button
                 key={id}
                 type="button"
+                variant="ghost"
                 onClick={() => jump(id)}
                 aria-current={isActive ? "true" : undefined}
-                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] transition-all duration-150 ${
+                className={`h-auto w-full justify-start gap-2.5 rounded-xl px-3 py-2 text-[13px] ${
                   isActive
-                    ? "border border-border/80 bg-background font-semibold text-foreground shadow-2xs"
-                    : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+                    ? "border border-border/80 bg-background font-semibold text-foreground shadow-2xs hover:bg-background"
+                    : "font-normal text-muted-foreground hover:bg-accent/70 hover:text-foreground"
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                <Icon aria-hidden className={isActive ? "text-primary" : ""} />
                 {label}
-              </button>
+              </Button>
             );
           })}
         </nav>
@@ -117,19 +118,19 @@ function AdminSettings() {
           {items.map(({ id, label }) => {
             const isActive = active === id;
             return (
-              <button
+              <Button
                 key={id}
                 type="button"
+                variant={isActive ? "default" : "ghost"}
+                size="admin-sm"
                 onClick={() => jump(id)}
                 aria-current={isActive ? "true" : undefined}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+                className={`h-auto shrink-0 rounded-full px-3 py-1.5 text-xs font-medium shadow-none ${
+                  isActive ? "" : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
                 }`}
               >
                 {label}
-              </button>
+              </Button>
             );
           })}
         </nav>
