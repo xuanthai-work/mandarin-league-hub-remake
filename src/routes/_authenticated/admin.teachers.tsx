@@ -13,6 +13,8 @@ import {
   type TeacherType,
 } from "@/lib/teachers";
 import { matchesSearch } from "@/lib/search";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
@@ -96,6 +98,8 @@ const CHINESE_LEVELS = ["HSK 4", "HSK 5", "HSK 6", "HSK 7", "HSK 8", "HSK 9"];
 
 function TeachersPage() {
   const qc = useQueryClient();
+  const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
+  const canEdit = can(perms, "teachers.edit");
   const [q, setQ] = useState("");
   const [lv, setLv] = useState(0);
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -129,6 +133,7 @@ function TeachersPage() {
   });
 
   const upload = async (file: File) => {
+    if (!canEdit) return;
     if (!edit) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       toast.error("Chỉ nhận ảnh JPG, PNG hoặc WebP");
@@ -153,6 +158,7 @@ function TeachersPage() {
   };
 
   const save = async (): Promise<void> => {
+    if (!canEdit) return;
     if (!edit) return;
     if (edit.full_name.trim().length < 2) {
       toast.error("Vui lòng nhập họ tên");
@@ -177,6 +183,7 @@ function TeachersPage() {
     refresh();
   };
   const toggleStatus = async (t: Teacher) => {
+    if (!canEdit) return;
     const nextStatus = t.status === "visible" ? "hidden" : "visible";
     const { error } = await supabase.from("teachers").update({ status: nextStatus }).eq("id", t.id);
     if (error) {
@@ -191,6 +198,7 @@ function TeachersPage() {
     refresh();
   };
   const remove = async (t: Teacher) => {
+    if (!canEdit) return;
     const { error } = await supabase.from("teachers").delete().eq("id", t.id);
     if (error) toast.error(error.message);
     else {
@@ -206,13 +214,15 @@ function TeachersPage() {
         title="Giáo viên"
         description="Hồ sơ hiển thị ở trang Giảng viên, Khóa học và Đội ngũ Giảng viên trang chủ."
         actions={
-          <Button
-            size="admin"
-            onClick={() => setEdit({ ...EMPTY, sort_order: (data?.length ?? 0) + 1 })}
-          >
-            <Plus />
-            Thêm giáo viên
-          </Button>
+          canEdit ? (
+            <Button
+              size="admin"
+              onClick={() => setEdit({ ...EMPTY, sort_order: (data?.length ?? 0) + 1 })}
+            >
+              <Plus />
+              Thêm giáo viên
+            </Button>
+          ) : undefined
         }
       />
       <div className="flex flex-wrap items-center gap-2.5">
@@ -282,6 +292,7 @@ function TeachersPage() {
             <TeacherCard
               key={t.id}
               t={t}
+              canEdit={canEdit}
               onEdit={() => setEdit(t)}
               onToggleStatus={() => void toggleStatus(t)}
             />
@@ -302,7 +313,8 @@ function TeachersPage() {
               setEditRaw((prev) => (prev ? { ...prev, avatar_url: "", photo: "" } : null));
             }}
             onSave={() => void save()}
-            onDelete={edit.id ? () => void remove(edit as Teacher) : undefined}
+            readOnly={!canEdit}
+            onDelete={canEdit && edit.id ? () => void remove(edit as Teacher) : undefined}
             onClose={() => setEdit(null)}
           />
         )}
@@ -313,10 +325,12 @@ function TeachersPage() {
 
 function TeacherCard({
   t,
+  canEdit,
   onEdit,
   onToggleStatus,
 }: {
   t: Teacher;
+  canEdit: boolean;
   onEdit: () => void;
   onToggleStatus: () => void;
 }) {
@@ -324,7 +338,7 @@ function TeacherCard({
     <article
       role="button"
       tabIndex={0}
-      aria-label={`Sửa hồ sơ ${t.full_name}`}
+      aria-label={canEdit ? `Sửa hồ sơ ${t.full_name}` : `Xem hồ sơ ${t.full_name}`}
       onClick={onEdit}
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget) return;
@@ -373,21 +387,27 @@ function TeacherCard({
                   </p>
                 )}
               </div>
-              <Switch
-                checked={t.status === "visible"}
-                onCheckedChange={onToggleStatus}
-                onClick={(e) => e.stopPropagation()}
-                aria-label={
-                  t.status === "visible"
-                    ? `Dừng hoạt động ${t.full_name}`
-                    : `Kích hoạt hoạt động ${t.full_name}`
-                }
-                title={
-                  t.status === "visible"
-                    ? "Đang hoạt động (click để dừng hoạt động)"
-                    : "Dừng hoạt động (click để kích hoạt)"
-                }
-              />
+              {canEdit ? (
+                <Switch
+                  checked={t.status === "visible"}
+                  onCheckedChange={onToggleStatus}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={
+                    t.status === "visible"
+                      ? `Dừng hoạt động ${t.full_name}`
+                      : `Kích hoạt hoạt động ${t.full_name}`
+                  }
+                  title={
+                    t.status === "visible"
+                      ? "Đang hoạt động (click để dừng hoạt động)"
+                      : "Dừng hoạt động (click để kích hoạt)"
+                  }
+                />
+              ) : (
+                <StatusPill tone={t.status === "visible" ? "success" : "neutral"}>
+                  {t.status === "visible" ? "Đang hoạt động" : "Dừng hoạt động"}
+                </StatusPill>
+              )}
             </div>
             <p className="mt-1 truncate text-xs font-medium text-primary">
               {t.title || "Giảng viên"}
@@ -454,6 +474,7 @@ function TeacherDrawer({
   onUpload,
   onClearPhoto,
   onSave,
+  readOnly,
   onDelete,
   onClose,
 }: {
@@ -464,13 +485,14 @@ function TeacherDrawer({
   onUpload: (file: File) => void;
   onClearPhoto: () => void;
   onSave: () => void;
+  readOnly: boolean;
   onDelete: (() => void) | undefined;
   onClose: () => void;
 }) {
   /** Where this teacher is assigned, so deleting never silently strips programs and classes. */
   const usage = useQuery({
     queryKey: ["teacher-usage", value.id],
-    enabled: !!value.id,
+    enabled: !!value.id && !readOnly,
     queryFn: async () => {
       const id = value.id!;
       const [programs, classes, levels] = await Promise.all([
@@ -509,7 +531,7 @@ function TeacherDrawer({
 
   return (
     <AdminDrawer
-      title={value.id ? "Sửa hồ sơ giáo viên" : "Thêm giáo viên mới"}
+      title={readOnly ? "Hồ sơ giáo viên" : value.id ? "Sửa hồ sơ giáo viên" : "Thêm giáo viên mới"}
       leading={
         <div className="relative shrink-0">
           {photoUrl ? (
@@ -538,306 +560,314 @@ function TeacherDrawer({
       }
       onClose={onClose}
       footer={
-        <Button type="button" size="admin-lg" className="w-full sm:w-auto" onClick={onSave}>
-          {value.id ? "Lưu thay đổi" : "Tạo hồ sơ giáo viên"}
-        </Button>
+        readOnly ? undefined : (
+          <Button type="button" size="admin-lg" className="w-full sm:w-auto" onClick={onSave}>
+            {value.id ? "Lưu thay đổi" : "Tạo hồ sơ giáo viên"}
+          </Button>
+        )
       }
     >
-      <section className="space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Định danh & Ảnh chân dung
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Họ tên tiếng Việt" required>
+      <fieldset disabled={readOnly} className="m-0 min-w-0 space-y-6 border-0 p-0">
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Định danh & Ảnh chân dung
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Họ tên tiếng Việt" required>
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  placeholder="VD: Nguyễn Văn A"
+                  value={value.full_name}
+                  onChange={(e) => onChange({ full_name: e.target.value })}
+                />
+              )}
+            </FormField>
+            <FormField label="Tên tiếng Trung (tùy chọn)">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  className="font-han"
+                  placeholder="VD: 阮老师"
+                  value={value.chinese_name}
+                  onChange={(e) => onChange({ chinese_name: e.target.value })}
+                />
+              )}
+            </FormField>
+          </div>
+
+          <FormField label="Chức danh công tác">
             {(field) => (
               <AdminInput
                 {...field}
-                placeholder="VD: Nguyễn Văn A"
-                value={value.full_name}
-                onChange={(e) => onChange({ full_name: e.target.value })}
+                placeholder="VD: Giảng viên HSK ĐH Quốc Gia, Cố vấn học thuật"
+                value={value.title}
+                onChange={(e) => onChange({ title: e.target.value })}
               />
             )}
           </FormField>
-          <FormField label="Tên tiếng Trung (tùy chọn)">
-            {(field) => (
-              <AdminInput
-                {...field}
-                className="font-han"
-                placeholder="VD: 阮老师"
-                value={value.chinese_name}
-                onChange={(e) => onChange({ chinese_name: e.target.value })}
-              />
-            )}
-          </FormField>
-        </div>
 
-        <FormField label="Chức danh công tác">
-          {(field) => (
-            <AdminInput
-              {...field}
-              placeholder="VD: Giảng viên HSK ĐH Quốc Gia, Cố vấn học thuật"
-              value={value.title}
-              onChange={(e) => onChange({ title: e.target.value })}
-            />
-          )}
-        </FormField>
-
-        <div className="rounded-xl border border-border/70 bg-muted/20 p-3.5">
-          <span className="block text-xs font-medium text-foreground">Ảnh đại diện chân dung</span>
-          <div className="mt-2.5 flex items-center gap-3.5">
-            {photoUrl ? (
-              <img
-                src={photoUrl}
-                alt=""
-                className="h-16 w-16 rounded-2xl object-cover shadow-xs ring-2 ring-primary/20"
-              />
-            ) : (
-              <div className="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary shadow-xs ring-2 ring-primary/20">
-                <UserRound className="h-8 w-8" />
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted">
-                  {uploading ? "Đang tải lên…" : "Tải ảnh từ máy"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    disabled={uploading}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (f) void onUpload(f);
-                    }}
-                  />
-                </label>
-                {value.avatar_url && (
-                  <Button
-                    type="button"
-                    variant="destructive-outline"
-                    size="admin-sm"
-                    onClick={onClearPhoto}
-                  >
-                    Gỡ ảnh
-                  </Button>
-                )}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Hỗ trợ định dạng JPG, PNG hoặc WebP. Tối đa 5MB.
-              </p>
+          <div className="rounded-xl border border-border/70 bg-muted/20 p-3.5">
+            <span className="block text-xs font-medium text-foreground">
+              Ảnh đại diện chân dung
+            </span>
+            <div className="mt-2.5 flex items-center gap-3.5">
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt=""
+                  className="h-16 w-16 rounded-2xl object-cover shadow-xs ring-2 ring-primary/20"
+                />
+              ) : (
+                <div className="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary shadow-xs ring-2 ring-primary/20">
+                  <UserRound className="h-8 w-8" />
+                </div>
+              )}
+              {!readOnly && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted">
+                      {uploading ? "Đang tải lên…" : "Tải ảnh từ máy"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.target.value = "";
+                          if (f) void onUpload(f);
+                        }}
+                      />
+                    </label>
+                    {value.avatar_url && (
+                      <Button
+                        type="button"
+                        variant="destructive-outline"
+                        size="admin-sm"
+                        onClick={onClearPhoto}
+                      >
+                        Gỡ ảnh
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Hỗ trợ định dạng JPG, PNG hoặc WebP. Tối đa 5MB.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Năng lực chuyên môn & Giảng dạy
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Trình độ Hán ngữ">
-            {(field) => (
-              <Select
-                value={value.chinese_level || ""}
-                onValueChange={(v) => onChange({ chinese_level: v })}
-              >
-                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
-                  <SelectValue placeholder="Chọn trình độ HSK">
-                    {value.chinese_level || "Chưa chọn trình độ"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {CHINESE_LEVELS.map((level) => (
-                    <SelectItem key={level} value={level} className="text-xs">
-                      {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-
-          <FormField label="Cấp HSK phụ trách">
-            {(field) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    {...field}
-                    type="button"
-                    variant="outline"
-                    className="h-9 w-full justify-between rounded-lg px-3 text-sm font-normal"
-                  >
-                    <span className="truncate">
-                      {value.teaching_levels.length === 0
-                        ? "Chưa chọn cấp HSK"
-                        : value.teaching_levels.length === 6
-                          ? "HSK 1 - 6"
-                          : value.teaching_levels.map((l) => `HSK ${l}`).join(", ")}
-                    </span>
-                    <ChevronDown className="shrink-0 opacity-60" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="w-[--radix-dropdown-menu-trigger-width] min-w-[180px] rounded-xl p-1"
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Năng lực chuyên môn & Giảng dạy
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Trình độ Hán ngữ">
+              {(field) => (
+                <Select
+                  value={value.chinese_level || ""}
+                  onValueChange={(v) => onChange({ chinese_level: v })}
                 >
-                  {LEVELS.map((l) => {
-                    const checked = value.teaching_levels.includes(l);
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={l}
-                        checked={checked}
-                        onCheckedChange={() => {
-                          const next = checked
-                            ? value.teaching_levels.filter((x) => x !== l)
-                            : [...value.teaching_levels, l].sort();
-                          onChange({ teaching_levels: next });
-                        }}
-                        onSelect={(e) => e.preventDefault()}
-                        className="text-xs"
-                      >
-                        HSK {l}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </FormField>
-        </div>
+                  <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                    <SelectValue placeholder="Chọn trình độ HSK">
+                      {value.chinese_level || "Chưa chọn trình độ"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {CHINESE_LEVELS.map((level) => (
+                      <SelectItem key={level} value={level} className="text-xs">
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
 
-        <FormField label="Chứng chỉ đạt được (mỗi dòng một chứng chỉ)">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={2}
-              placeholder="VD: HSK 6 - 280 điểm&#10;TOCFL Band C"
-              value={value.certificates}
-              onChange={(e) => onChange({ certificates: e.target.value })}
-            />
-          )}
-        </FormField>
+            <FormField label="Cấp HSK phụ trách">
+              {(field) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      {...field}
+                      type="button"
+                      variant="outline"
+                      className="h-9 w-full justify-between rounded-lg px-3 text-sm font-normal"
+                    >
+                      <span className="truncate">
+                        {value.teaching_levels.length === 0
+                          ? "Chưa chọn cấp HSK"
+                          : value.teaching_levels.length === 6
+                            ? "HSK 1 - 6"
+                            : value.teaching_levels.map((l) => `HSK ${l}`).join(", ")}
+                      </span>
+                      <ChevronDown className="shrink-0 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-[--radix-dropdown-menu-trigger-width] min-w-[180px] rounded-xl p-1"
+                  >
+                    {LEVELS.map((l) => {
+                      const checked = value.teaching_levels.includes(l);
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={l}
+                          checked={checked}
+                          onCheckedChange={() => {
+                            const next = checked
+                              ? value.teaching_levels.filter((x) => x !== l)
+                              : [...value.teaching_levels, l].sort();
+                            onChange({ teaching_levels: next });
+                          }}
+                          onSelect={(e) => e.preventDefault()}
+                          className="text-xs"
+                        >
+                          HSK {l}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </FormField>
+          </div>
 
-        <FormField label="Kinh nghiệm giảng dạy">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={2}
-              placeholder="VD: 5 năm giảng dạy HSK tại các trung tâm lớn..."
-              value={value.experience}
-              onChange={(e) => onChange({ experience: e.target.value })}
-            />
-          )}
-        </FormField>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Giới thiệu bản thân
-        </h3>
-        <FormField label="Giới thiệu (tiếng Việt)">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={3}
-              maxLength={2000}
-              placeholder="Tóm tắt tiểu sử, phong cách giảng dạy..."
-              value={value.bio}
-              onChange={(e) => onChange({ bio: e.target.value })}
-            />
-          )}
-        </FormField>
-        <FormField label="Giới thiệu (tiếng Trung, tùy chọn)">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={3}
-              maxLength={2000}
-              className="font-han"
-              placeholder="个人简介..."
-              value={value.bio_zh}
-              onChange={(e) => onChange({ bio_zh: e.target.value })}
-            />
-          )}
-        </FormField>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Cấu hình hiển thị
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Phân loại giảng viên">
+          <FormField label="Chứng chỉ đạt được (mỗi dòng một chứng chỉ)">
             {(field) => (
-              <Select
-                value={value.teacher_type}
-                onValueChange={(v) => onChange({ teacher_type: v as TeacherType })}
-              >
-                <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
-                  <SelectValue>
-                    {TEACHER_TYPE_LABEL[value.teacher_type] ?? value.teacher_type}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => (
-                    <SelectItem key={k} value={k} className="text-xs">
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-
-          <FormField label="Thứ tự ưu tiên hiển thị">
-            {(field) => (
-              <AdminInput
+              <AdminTextarea
                 {...field}
-                type="number"
-                value={value.sort_order}
-                onChange={(e) => onChange({ sort_order: Number(e.target.value) })}
+                rows={2}
+                placeholder="VD: HSK 6 - 280 điểm&#10;TOCFL Band C"
+                value={value.certificates}
+                onChange={(e) => onChange({ certificates: e.target.value })}
               />
             )}
           </FormField>
-        </div>
 
-        <div className="space-y-2 pt-1">
-          <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
-            <div className="space-y-0.5">
-              <span className="text-xs font-medium text-foreground">
-                Hiện ở Đội ngũ Giảng viên trang chủ
-              </span>
-              <p className="text-[11px] text-muted-foreground">
-                Đưa giáo viên vào slider danh dự trên trang chủ
-              </p>
-            </div>
-            <Switch
-              checked={value.show_on_home}
-              onCheckedChange={(v) => onChange({ show_on_home: v })}
-              aria-label="Hiện ở Đội ngũ Giảng viên trang chủ"
-            />
-          </label>
+          <FormField label="Kinh nghiệm giảng dạy">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={2}
+                placeholder="VD: 5 năm giảng dạy HSK tại các trung tâm lớn..."
+                value={value.experience}
+                onChange={(e) => onChange({ experience: e.target.value })}
+              />
+            )}
+          </FormField>
+        </section>
 
-          <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
-            <div className="space-y-0.5">
-              <span className="text-xs font-medium text-foreground">
-                Đánh dấu giảng viên nổi bật (★)
-              </span>
-              <p className="text-[11px] text-muted-foreground">
-                Gắn huy hiệu sao vàng danh dự trên thẻ
-              </p>
-            </div>
-            <Switch
-              checked={value.is_featured}
-              onCheckedChange={(v) => onChange({ is_featured: v })}
-              aria-label="Đánh dấu giảng viên nổi bật"
-            />
-          </label>
-        </div>
-      </section>
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Giới thiệu bản thân
+          </h3>
+          <FormField label="Giới thiệu (tiếng Việt)">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={3}
+                maxLength={2000}
+                placeholder="Tóm tắt tiểu sử, phong cách giảng dạy..."
+                value={value.bio}
+                onChange={(e) => onChange({ bio: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Giới thiệu (tiếng Trung, tùy chọn)">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={3}
+                maxLength={2000}
+                className="font-han"
+                placeholder="个人简介..."
+                value={value.bio_zh}
+                onChange={(e) => onChange({ bio_zh: e.target.value })}
+              />
+            )}
+          </FormField>
+        </section>
 
-      {value.id && onDelete && (
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Cấu hình hiển thị
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Phân loại giảng viên">
+              {(field) => (
+                <Select
+                  value={value.teacher_type}
+                  onValueChange={(v) => onChange({ teacher_type: v as TeacherType })}
+                >
+                  <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                    <SelectValue>
+                      {TEACHER_TYPE_LABEL[value.teacher_type] ?? value.teacher_type}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {Object.entries(TEACHER_TYPE_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+
+            <FormField label="Thứ tự ưu tiên hiển thị">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  type="number"
+                  value={value.sort_order}
+                  onChange={(e) => onChange({ sort_order: Number(e.target.value) })}
+                />
+              )}
+            </FormField>
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+              <div className="space-y-0.5">
+                <span className="text-xs font-medium text-foreground">
+                  Hiện ở Đội ngũ Giảng viên trang chủ
+                </span>
+                <p className="text-[11px] text-muted-foreground">
+                  Đưa giáo viên vào slider danh dự trên trang chủ
+                </p>
+              </div>
+              <Switch
+                checked={value.show_on_home}
+                onCheckedChange={(v) => onChange({ show_on_home: v })}
+                aria-label="Hiện ở Đội ngũ Giảng viên trang chủ"
+              />
+            </label>
+
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+              <div className="space-y-0.5">
+                <span className="text-xs font-medium text-foreground">
+                  Đánh dấu giảng viên nổi bật (★)
+                </span>
+                <p className="text-[11px] text-muted-foreground">
+                  Gắn huy hiệu sao vàng danh dự trên thẻ
+                </p>
+              </div>
+              <Switch
+                checked={value.is_featured}
+                onCheckedChange={(v) => onChange({ is_featured: v })}
+                aria-label="Đánh dấu giảng viên nổi bật"
+              />
+            </label>
+          </div>
+        </section>
+      </fieldset>
+
+      {value.id && onDelete && !readOnly && (
         <DangerZone
           title="Xóa hồ sơ giáo viên"
           description="Hành động này sẽ xóa vĩnh viễn giáo viên khỏi hệ thống."
