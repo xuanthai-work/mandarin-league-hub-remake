@@ -20,11 +20,12 @@ import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import {
-  LEADER_DEFAULT_POINTS,
+  LEADER_TIER,
   LEADER_TONE,
   POINT_KIND,
   TIERS,
-  isLeader,
+  getMemberCardTone,
+  isFounder,
   tierOf,
 } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
@@ -214,8 +215,9 @@ function MemberDashboard() {
   useEffect(() => {
     const mm = me.data?.member;
     if (!mm) return;
-    const t = tierOf(mm.contribution_points);
-    const idx = TIERS.length - TIERS.indexOf(t);
+    const founder = isFounder(mm.position);
+    const t = founder ? LEADER_TIER : tierOf(mm.contribution_points);
+    const idx = founder ? TIERS.length + 1 : TIERS.length - TIERS.indexOf(t);
     const key = `tml_tier_seen_${mm.member_code}`;
     const prev = Number(localStorage.getItem(key) ?? 0);
     if (prev && idx > prev) setCongrats(t.label);
@@ -313,20 +315,17 @@ function MemberDashboard() {
     }
   };
 
-  const realTier = tierOf(m.contribution_points);
-  const special =
-    isLeader(m, me.data?.roles ?? [], (advisor.data ?? []).length > 0) &&
-    m.position !== "Thành viên";
+  /** Points shown are always the real stored value; founders get the tier, not a floor. */
+  const effectivePoints = m.contribution_points ?? 0;
+  const realTier = tierOf(effectivePoints);
+  const isCoFounder = isFounder(m.position);
+  const isAdvisorMember = (advisor.data ?? []).length > 0;
   const previewTier =
     previewTone && previewTone !== "black" ? TIERS.find((t) => t.tone === previewTone) : undefined;
-  const tier = previewTier ?? realTier;
-  const tone = previewTone ?? (special ? "black" : realTier.tone);
-  /** Co-founders / current advisors never display below the 400-point floor. */
-  const effectivePoints =
-    /co-founder|cố vấn/i.test(m.position ?? "") || (advisor.data ?? []).length > 0
-      ? Math.max(m.contribution_points ?? 0, LEADER_DEFAULT_POINTS)
-      : m.contribution_points;
-  const displayTier = tierOf(effectivePoints);
+  const tier = isCoFounder ? LEADER_TIER : (previewTier ?? realTier);
+  // Founders keep obsidian, heads/advisors sapphire, deputies lavender, members their tier.
+  const defaultTone = getMemberCardTone(m, me.data?.roles ?? [], isAdvisorMember, realTier.tone);
+  const tone = previewTone ?? defaultTone;
   const advNames = (advisor.data ?? []).map(
     (a) =>
       deptName(a.dept)
@@ -593,7 +592,9 @@ function MemberDashboard() {
               <div
                 ref={cardRef}
                 data-tone={tone}
-                style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
+                style={
+                  { "--pass-c": `var(--pass-${tone}, var(--pass-blue))` } as React.CSSProperties
+                }
                 className={`flip-face tml-pass relative flex flex-col overflow-hidden rounded-[18px] text-primary-deep ${layout === "v" ? "aspect-[54/85.6]" : "aspect-[85.6/54] md:aspect-auto"}`}
               >
                 <div aria-hidden className="tml-microprint pointer-events-none absolute inset-0" />
@@ -891,7 +892,9 @@ function MemberDashboard() {
               {/* ---------- BACK (luxury security face) ---------- */}
               <div
                 data-tone={tone}
-                style={{ "--pass-c": `var(--pass-${tone})` } as React.CSSProperties}
+                style={
+                  { "--pass-c": `var(--pass-${tone}, var(--pass-blue))` } as React.CSSProperties
+                }
                 aria-hidden={!isFlipped}
                 className="flip-face back tml-pass tml-pass-back flex flex-col overflow-hidden rounded-[18px] text-primary-deep"
               >
@@ -1044,12 +1047,12 @@ function MemberDashboard() {
                 </button>
               </div>
               <div className="mt-4">
-                <TierProgress points={effectivePoints} />
+                <TierProgress points={effectivePoints} isFounder={isCoFounder} />
                 <div className="mt-6">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="font-semibold text-white/90">Lịch sử điểm</h3>
                     <span className="rounded-full border border-gold/40 bg-gold/10 px-3 py-0.5 text-xs font-semibold text-gold">
-                      {displayTier.label} · {effectivePoints}
+                      {isCoFounder ? LEADER_TIER.label : realTier.label} · {effectivePoints}
                     </span>
                   </div>
                   <ol className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/5">
@@ -1090,7 +1093,9 @@ function MemberDashboard() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {[
                         ...[...TIERS].reverse().map((t) => [t.tone, t.label] as const),
-                        [LEADER_TONE.key, LEADER_TONE.label] as const,
+                        ["sapphire", "Trưởng Ban / Cố vấn (Lam Bảo Thạch)"] as const,
+                        ["lavender", "Phó Ban (Tử La Lan)"] as const,
+                        [LEADER_TONE.key, "Nhà sáng lập (Obsidian)"] as const,
                       ].map(([k, l]) => (
                         <button
                           key={k}

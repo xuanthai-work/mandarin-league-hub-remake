@@ -3,7 +3,7 @@
 - **Dev**: Gemini (Antigravity CLI)
 - **Ngày nghiệm thu**: 2026-11-07
 - **Kết quả**: PASS (lần 1)
-- **Migration**: `0061_task_assigner_only_rights.sql` (User chạy tay lên Supabase dev + prod)
+- **Migration**: `0063_task_assigner_only_rights.sql` (User chạy tay lên Supabase dev + prod)
 
 ## Bối cảnh & yêu cầu
 
@@ -13,7 +13,7 @@ Quy tắc User chốt: chỉ **người giao việc** (`tasks.created_by = auth.
 
 ## Thay đổi
 
-- `drizzle/migrations/0061_task_assigner_only_rights.sql`: định nghĩa lại `review_task` và `delete_task`, thêm chặn `NOT is_admin() AND created_by IS DISTINCT FROM auth.uid()`; giữ REVOKE/GRANT.
+- `drizzle/migrations/0063_task_assigner_only_rights.sql`: định nghĩa lại `review_task` và `delete_task`, thêm chặn `NOT is_admin() AND created_by IS DISTINCT FROM auth.uid()`; giữ REVOKE/GRANT.
 - `src/lib/tasks.functions.ts`: `updateTask` lấy thêm `created_by`, gọi `is_admin` và chặn khi không phải người giao.
 - `src/components/admin/tasks/shared.ts`: `Task.created_by`; `TaskViewer`, `TaskRights`, `NO_TASK_RIGHTS`, `taskRights()` (bản sao phía client của luật server), `groupRights()`.
 - `src/components/admin/tasks/shared.test.ts`: 7 ca cho `taskRights()` (Trưởng Ban với việc Co-founder giao, việc tự giao, tự duyệt, admin với `created_by` rỗng, trạng thái done, thiếu quyền Ban khác, viewer null).
@@ -32,5 +32,5 @@ Quy tắc User chốt: chỉ **người giao việc** (`tasks.created_by = auth.
 
 ## Cần User tự kiểm
 
-- Chạy migration `0061` lên cả 2 project Supabase; trước khi chạy, luật xóa/duyệt mới chỉ có ở giao diện, DB vẫn cho phép.
+- Chạy migration `0063` (trước đây tên `0061_task_assigner_only_rights.sql`) lên cả 2 project Supabase; trước khi chạy, luật xóa/duyệt mới chỉ có ở giao diện, DB vẫn cho phép.
 - Đăng nhập Trưởng Ban, mở việc Co-founder giao: chỉ xem được, không có Lưu / Xóa / Duyệt.

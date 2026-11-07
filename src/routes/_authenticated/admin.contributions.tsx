@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
 import { canAdjustMember, hasAllScope } from "@/lib/admin-permissions";
 import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { isFounder } from "@/lib/points";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({
@@ -158,6 +159,15 @@ function PointsPage() {
     return memberList.filter((m) => m.status === "active" && ids.has(m.id));
   }, [memberList, activeAccountIds.data]);
 
+  /**
+   * Founders hold the symbolic "Lãnh đạo" tier, not a contribution rank, so they stay off the
+   * leaderboard while advisors and heads keep competing with everyone else.
+   */
+  const boardMembers = useMemo(
+    () => (leaderboard.data ?? []).filter((m) => !isFounder(m.position)),
+    [leaderboard.data],
+  );
+
   /** Bonus/penalty targets: same scope as points.adjust and strictly lower position. */
   const adjustableMembers = useMemo(
     () => activeMembers.filter((m) => canAdjustMember(perms, me, m)),
@@ -218,7 +228,7 @@ function PointsPage() {
         />
       )}
 
-      <LeaderboardPanel members={leaderboard.data ?? []} loading={leaderboard.isLoading} />
+      <LeaderboardPanel members={boardMembers} loading={leaderboard.isLoading} />
 
       <TransactionLedger
         rows={history.data ?? []}
