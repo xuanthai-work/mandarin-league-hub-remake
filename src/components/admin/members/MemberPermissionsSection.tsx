@@ -168,7 +168,11 @@ export function MemberPermissionsSection({ member, targetIsAdmin, canGrant }: Pr
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-sm font-medium">{meta.label}</span>
-                      <ScopePill meta={meta} row={row} />
+                      {meta.scoped && (
+                        <StatusPill dot={false} tone={row.scope === "all" ? "info" : "warning"}>
+                          {scopeLabel(row.scope as PermissionScope, true)}
+                        </StatusPill>
+                      )}
                     </div>
                     {canGrant && row.grant_id && (
                       <Button
