@@ -340,6 +340,7 @@ function CoursesAdmin() {
       )}
       {tab === "programs" && (
         <ProgramsAdmin
+          canEdit={canEdit}
           createOpen={createProgramOpen}
           onClearCreate={() => setCreateProgramOpen(false)}
           enrollCounts={(rows ?? []).reduce(

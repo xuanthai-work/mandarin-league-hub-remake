@@ -27,10 +27,12 @@ export function TeacherPicker({
   teachers,
   picks,
   onChange,
+  readOnly = false,
 }: {
   teachers: TeacherOpt[];
   picks: TeacherPick[];
   onChange: (p: TeacherPick[]) => void;
+  readOnly?: boolean;
 }) {
   const [q, setQ] = useState("");
   const avail = teachers.filter(
@@ -90,53 +92,59 @@ export function TeacherPicker({
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                type="button"
-                variant="ghost"
-                size="admin-icon"
-                onClick={() => onChange(picks.filter((_, k) => k !== i))}
-                className="text-destructive"
-                aria-label={`Gỡ ${t?.full_name ?? "giáo viên"}`}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="admin-icon"
+                  onClick={() => onChange(picks.filter((_, k) => k !== i))}
+                  className="text-destructive"
+                  aria-label={`Gỡ ${t?.full_name ?? "giáo viên"}`}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           );
         })}
       </div>
-      <AdminInput
-        className="mt-2"
-        placeholder="Tìm giáo viên để thêm…"
-        aria-label="Tìm giáo viên để thêm"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-      />
-      {avail.length > 0 && (
-        <div className="mt-1 max-h-36 overflow-y-auto rounded-lg border border-border">
-          {avail.map((t) => (
-            <Button
-              type="button"
-              variant="ghost"
-              key={t.id}
-              onClick={() => {
-                onChange([
-                  ...picks,
-                  { teacher_id: t.id, role: picks.length ? "instructor" : "lead" },
-                ]);
-                setQ("");
-              }}
-              className="h-auto w-full justify-start gap-2 rounded-none px-3 py-1.5 text-sm font-normal"
-            >
-              {t.photo ? (
-                <img src={t.photo} alt="" className="h-6 w-6 rounded-full object-cover" />
-              ) : (
-                <div className="h-6 w-6 rounded-full bg-accent" />
-              )}
-              {t.full_name}
-              <Plus className="ml-auto h-3.5 w-3.5" />
-            </Button>
-          ))}
-        </div>
+      {!readOnly && (
+        <>
+          <AdminInput
+            className="mt-2"
+            placeholder="Tìm giáo viên để thêm…"
+            aria-label="Tìm giáo viên để thêm"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {avail.length > 0 && (
+            <div className="mt-1 max-h-36 overflow-y-auto rounded-lg border border-border">
+              {avail.map((t) => (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  key={t.id}
+                  onClick={() => {
+                    onChange([
+                      ...picks,
+                      { teacher_id: t.id, role: picks.length ? "instructor" : "lead" },
+                    ]);
+                    setQ("");
+                  }}
+                  className="h-auto w-full justify-start gap-2 rounded-none px-3 py-1.5 text-sm font-normal"
+                >
+                  {t.photo ? (
+                    <img src={t.photo} alt="" className="h-6 w-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-accent" />
+                  )}
+                  {t.full_name}
+                  <Plus className="ml-auto h-3.5 w-3.5" />
+                </Button>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

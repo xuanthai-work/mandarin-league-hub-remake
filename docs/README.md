@@ -258,6 +258,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-192-ACTIVITIES-PHOTOS-READ-ONLY`                              | Hoạt động và Hình ảnh chỉ đọc khi không có quyền sửa                                                   | 2026-11-08     | **PASS** | [task-ge-192-activities-photos-read-only.md](tasks/task-ge-192-activities-photos-read-only.md)                                                           |
 | `TASK-OC-179-COURSES-ENROLL-HSK-READ-ONLY`                             | Khóa học chỉ đọc: tab Đơn đăng ký và Lớp HSK                                                           | 2026-11-08     | **PASS** | [task-oc-179-courses-enroll-hsk-read-only.md](tasks/task-oc-179-courses-enroll-hsk-read-only.md)                                                         |
 | `TASK-GE-193-NEWS-PERMS-RANK-REVIEW`                                   | Tin tức: xem / sửa, duyệt bài theo chức vụ cao hơn tác giả                                             | 2026-11-08     | **PASS** | [task-ge-193-news-perms-rank-review.md](tasks/task-ge-193-news-perms-rank-review.md)                                                                     |
+| `TASK-OC-180-COURSES-PROGRAMS-READ-ONLY`                               | Khóa học chỉ đọc: tab Chương trình học                                                                 | 2026-11-08     | **PASS** | [task-oc-180-courses-programs-read-only.md](tasks/task-oc-180-courses-programs-read-only.md)                                                             |
 
 ---
 

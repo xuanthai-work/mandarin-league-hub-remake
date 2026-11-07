@@ -109,11 +109,13 @@ type Link = { course_id: string; teacher_id: string; role: CourseTeacherRole; so
 
 /** Admin CRUD for the program catalog; enrollment counts come from course_enrollments.course_id. */
 export function ProgramsAdmin({
+  canEdit,
   enrollCounts,
   onFilter,
   createOpen,
   onClearCreate,
 }: {
+  canEdit: boolean;
   enrollCounts: Map<string, number>;
   onFilter: (id: string) => void;
   createOpen?: boolean;
@@ -192,6 +194,7 @@ export function ProgramsAdmin({
     v: { is_published?: boolean; deleted_at?: string; show_in_activities?: boolean },
     msg: string,
   ) => {
+    if (!canEdit) return false;
     const { error } = await supabase
       .from("courses")
       .update({ ...v, updated_at: new Date().toISOString() })
@@ -206,6 +209,7 @@ export function ProgramsAdmin({
   };
 
   const remove = async (p: Program, skipConfirm = false) => {
+    if (!canEdit) return false;
     const n = enrollCounts.get(p.id) ?? 0;
     if (
       !skipConfirm &&
@@ -225,12 +229,14 @@ export function ProgramsAdmin({
   };
 
   const removeEditing = async () => {
+    if (!canEdit) return;
     if (!edit?.id) return;
     const row = list?.find((p) => p.id === edit.id);
     if (row && (await remove(row, true))) setEdit(null);
   };
 
   const duplicate = (p: Program) => {
+    if (!canEdit) return;
     const { id: _id, ...rest } = p;
     setEdit({ ...rest, title: `${p.title} (bản sao)`, slug: "", is_published: false });
   };
@@ -301,9 +307,11 @@ export function ProgramsAdmin({
         <EmptyState
           title="Chưa có chương trình nào."
           action={
-            <Button type="button" size="admin" onClick={() => setEdit({ ...EMPTY })}>
-              Tạo chương trình
-            </Button>
+            canEdit ? (
+              <Button type="button" size="admin" onClick={() => setEdit({ ...EMPTY })}>
+                Tạo chương trình
+              </Button>
+            ) : undefined
           }
         />
       ) : filtered.length === 0 ? (
@@ -391,67 +399,69 @@ export function ProgramsAdmin({
                 {new Date(p.created_at).toLocaleDateString("vi-VN")}
               </td>
               <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="admin-icon"
-                      aria-label={`Thao tác chương trình ${p.title}`}
+                {canEdit && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="admin-icon"
+                        aria-label={`Thao tác chương trình ${p.title}`}
+                      >
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="rounded-xl"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreHorizontal />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="rounded-xl"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <DropdownMenuItem onClick={() => setEdit(p)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Sửa
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        void patch(
-                          p,
-                          { is_published: !p.is_published },
-                          p.is_published ? "Đã ẩn" : "Đã hiển thị",
-                        )
-                      }
-                    >
-                      {p.is_published ? (
-                        <EyeOff className="mr-2 h-4 w-4" />
-                      ) : (
-                        <Eye className="mr-2 h-4 w-4" />
-                      )}
-                      {p.is_published ? "Ẩn khỏi website" : "Hiện trên website"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        void patch(
-                          p,
-                          { show_in_activities: !p.show_in_activities },
-                          p.show_in_activities
-                            ? "Đã gỡ khỏi Hoạt động"
-                            : "Đã hiển thị trong Hoạt động",
-                        )
-                      }
-                    >
-                      <CalendarCheck className="mr-2 h-4 w-4" />
-                      {p.show_in_activities ? "Gỡ khỏi Hoạt động" : "Hiện trong Hoạt động"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => duplicate(p)}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Nhân bản
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive" onClick={() => void remove(p)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Xóa chương trình
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <DropdownMenuItem onClick={() => setEdit(p)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Sửa
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          void patch(
+                            p,
+                            { is_published: !p.is_published },
+                            p.is_published ? "Đã ẩn" : "Đã hiển thị",
+                          )
+                        }
+                      >
+                        {p.is_published ? (
+                          <EyeOff className="mr-2 h-4 w-4" />
+                        ) : (
+                          <Eye className="mr-2 h-4 w-4" />
+                        )}
+                        {p.is_published ? "Ẩn khỏi website" : "Hiện trên website"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          void patch(
+                            p,
+                            { show_in_activities: !p.show_in_activities },
+                            p.show_in_activities
+                              ? "Đã gỡ khỏi Hoạt động"
+                              : "Đã hiển thị trong Hoạt động",
+                          )
+                        }
+                      >
+                        <CalendarCheck className="mr-2 h-4 w-4" />
+                        {p.show_in_activities ? "Gỡ khỏi Hoạt động" : "Hiện trong Hoạt động"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => duplicate(p)}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Nhân bản
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive" onClick={() => void remove(p)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Xóa chương trình
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </td>
             </AdminTableRow>
           ))}
@@ -464,6 +474,7 @@ export function ProgramsAdmin({
             key={edit.id ?? "new"}
             init={edit}
             teachers={teachers ?? []}
+            readOnly={!canEdit}
             initLinks={(links ?? [])
               .filter((l) => l.course_id === edit.id)
               .map(({ teacher_id, role }) => ({ teacher_id, role }))}
@@ -472,7 +483,7 @@ export function ProgramsAdmin({
               setEdit(null);
               refresh();
             }}
-            {...(edit.id ? { onDelete: removeEditing } : {})}
+            {...(canEdit && edit.id ? { onDelete: removeEditing } : {})}
           />
         )}
       </AnimatePresence>
