@@ -254,6 +254,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-176-TEACHERS-READ-ONLY`                                       | Trang Giáo viên chỉ đọc khi không có teachers.edit                                                     | 2026-11-08     | **PASS** | [task-oc-176-teachers-read-only.md](tasks/task-oc-176-teachers-read-only.md)                                                                             |
 | `TASK-GE-191-MEDIA-PERMS-VIEW-EDIT`                                    | Quyền Hoạt động, Hình ảnh, Đối tác: xem / sửa (5 Ban)                                                  | 2026-11-08     | **PASS** | [task-ge-191-media-perms-view-edit.md](tasks/task-ge-191-media-perms-view-edit.md)                                                                       |
 | `TASK-OC-177-HSK-READ-ONLY`                                            | Trang Kết quả HSK chỉ đọc khi không có hsk.edit                                                        | 2026-11-08     | **PASS** | [task-oc-177-hsk-read-only.md](tasks/task-oc-177-hsk-read-only.md)                                                                                       |
+| `TASK-OC-178-CERTIFICATES-READ-ONLY`                                   | Trang Chứng nhận chỉ đọc khi không có certificates.edit                                                | 2026-11-08     | **PASS** | [task-oc-178-certificates-read-only.md](tasks/task-oc-178-certificates-read-only.md)                                                                     |
 
 ---
 

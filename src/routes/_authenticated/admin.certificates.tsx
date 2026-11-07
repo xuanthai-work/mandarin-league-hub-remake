@@ -22,6 +22,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CERT_TYPES, normalizeCode } from "@/lib/certificates";
 import { matchesSearch } from "@/lib/search";
 import { csvCell } from "@/lib/csv";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAdminAccess } from "./admin";
 import { extractCertificate } from "@/lib/certificate-extract.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MemberCombobox } from "@/components/admin/MemberCombobox";
@@ -112,6 +114,8 @@ function initials(name: string) {
 
 function CertificatesPage() {
   const qc = useQueryClient();
+  const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
+  const canEdit = can(perms, "certificates.edit");
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
@@ -122,6 +126,7 @@ function CertificatesPage() {
   const [aiNote, setAiNote] = useState("");
   const extractFn = useServerFn(extractCertificate);
   const runExtract = async () => {
+    if (!canEdit) return;
     if (!file || !edit) return;
     setExtracting(true);
     setAiNote("");
@@ -168,6 +173,7 @@ function CertificatesPage() {
     }
   };
   const pickFile = (f: File | undefined) => {
+    if (!canEdit) return;
     if (!f) return;
     if (!["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(f.type)) {
       toast.error("Chỉ nhận PDF, PNG, JPG hoặc WEBP");
@@ -225,12 +231,14 @@ function CertificatesPage() {
   const topTypeCount = topTypeEntry ? topTypeEntry[1] : 0;
 
   const openNew = async () => {
+    if (!canEdit) return;
     const { data: code } = await supabase.rpc("suggest_certificate_code");
     setFile(null);
     setEdit({ ...EMPTY, issue_date: today(), certificate_code: code ?? "" });
   };
 
   const save = async () => {
+    if (!canEdit) return;
     if (!edit) return;
     const code = normalizeCode(edit.certificate_code);
     if (!/^[A-Z0-9_-]{3,50}$/.test(code)) {
@@ -291,6 +299,7 @@ function CertificatesPage() {
   };
 
   const revokeCert = async (reason: string) => {
+    if (!canEdit) return;
     if (!edit?.id) return;
     const note = reason.trim();
     if (!note) {
@@ -313,6 +322,7 @@ function CertificatesPage() {
   };
 
   const restoreCert = async () => {
+    if (!canEdit) return;
     if (!edit?.id) return;
     const { error } = await supabase
       .from("certificates")
@@ -330,6 +340,7 @@ function CertificatesPage() {
   };
 
   const genNewCode = async () => {
+    if (!canEdit) return;
     const { data: code } = await supabase.rpc("suggest_certificate_code");
     if (code) setEdit((prev) => (prev ? { ...prev, certificate_code: code } : prev));
   };
@@ -374,9 +385,11 @@ function CertificatesPage() {
             <Button type="button" size="admin" variant="outline" onClick={exportCsv}>
               <Download /> Xuất CSV
             </Button>
-            <Button type="button" size="admin" onClick={openNew}>
-              <Plus /> Cấp chứng nhận
-            </Button>
+            {canEdit && (
+              <Button type="button" size="admin" onClick={openNew}>
+                <Plus /> Cấp chứng nhận
+              </Button>
+            )}
           </>
         }
       />
@@ -599,6 +612,7 @@ function CertificatesPage() {
             }}
             onGenCode={() => void genNewCode()}
             onSave={() => void save()}
+            readOnly={!canEdit}
             onRevoke={revokeCert}
             onRestore={restoreCert}
           />
@@ -627,6 +641,7 @@ function CertificateDrawer({
   onViewFile,
   onGenCode,
   onSave,
+  readOnly,
   onRevoke,
   onRestore,
 }: {
@@ -644,6 +659,7 @@ function CertificateDrawer({
   onViewFile: () => void;
   onGenCode: () => void;
   onSave: () => void;
+  readOnly: boolean;
   onRevoke: (reason: string) => Promise<void>;
   onRestore: () => Promise<void>;
 }) {
@@ -672,7 +688,9 @@ function CertificateDrawer({
   return (
     <AdminDrawer
       width="lg"
-      title={isEditing ? "Chỉnh sửa chứng nhận" : "Cấp chứng nhận mới"}
+      title={
+        readOnly ? "Chi tiết chứng nhận" : isEditing ? "Chỉnh sửa chứng nhận" : "Cấp chứng nhận mới"
+      }
       leading={
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
           <Award className="h-5 w-5" />
@@ -693,205 +711,183 @@ function CertificateDrawer({
       onClose={onClose}
       dismissible={!saving && !actionBusy}
       footer={
-        <Button type="button" size="admin-lg" disabled={saving} onClick={onSave}>
-          {saving ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Cấp chứng nhận"}
-        </Button>
+        readOnly ? undefined : (
+          <Button type="button" size="admin-lg" disabled={saving} onClick={onSave}>
+            {saving ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Cấp chứng nhận"}
+          </Button>
+        )
       }
     >
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Mã chứng nhận & Xác thực</h3>
-        <FormField
-          label="Mã chứng nhận"
-          hint="Mã ngẫu nhiên chống dò, có thể gõ mã riêng (3–50 ký tự, không khoảng trắng, tự viết hoa)."
-        >
-          {(field) => (
-            <div className="flex gap-2">
-              <AdminInput
-                {...field}
-                className="flex-1 font-mono font-semibold uppercase tracking-wider"
-                value={value.certificate_code}
-                maxLength={50}
-                placeholder="VD: TML-CERT-2610-8K3P9M"
-                onChange={(e) => onChange({ certificate_code: normalizeCode(e.target.value) })}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="admin"
-                title="Tạo mã ngẫu nhiên"
-                onClick={onGenCode}
-              >
-                <Sparkles className="text-primary" /> Tạo mã
-              </Button>
-            </div>
-          )}
-        </FormField>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Người nhận chứng nhận</h3>
-        <div className="space-y-2.5">
-          <FormField label="Chọn thành viên nội bộ (tùy chọn)">
+      <fieldset disabled={readOnly} className="m-0 min-w-0 space-y-6 border-0 p-0">
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Mã chứng nhận & Xác thực</h3>
+          <FormField
+            label="Mã chứng nhận"
+            hint="Mã ngẫu nhiên chống dò, có thể gõ mã riêng (3–50 ký tự, không khoảng trắng, tự viết hoa)."
+          >
             {(field) => (
-              <MemberCombobox
-                id={field.id}
-                members={members}
-                value={value.member_id}
-                onChange={(memberId) => {
-                  const m = members.find((x) => x.id === memberId);
-                  onChange({
-                    member_id: m?.id ?? null,
-                    holder_name: m ? m.full_name : value.holder_name,
-                  });
-                }}
-              />
+              <div className="flex gap-2">
+                <AdminInput
+                  {...field}
+                  className="flex-1 font-mono font-semibold uppercase tracking-wider"
+                  value={value.certificate_code}
+                  maxLength={50}
+                  placeholder="VD: TML-CERT-2610-8K3P9M"
+                  onChange={(e) => onChange({ certificate_code: normalizeCode(e.target.value) })}
+                />
+                {!readOnly && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="admin"
+                    title="Tạo mã ngẫu nhiên"
+                    onClick={onGenCode}
+                  >
+                    <Sparkles className="text-primary" /> Tạo mã
+                  </Button>
+                )}
+              </div>
             )}
           </FormField>
+        </section>
 
-          <FormField label="Họ tên người nhận" required>
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={value.holder_name}
-                onChange={(e) => onChange({ holder_name: e.target.value })}
-                placeholder="Nhập họ và tên người nhận"
-              />
-            )}
-          </FormField>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Chương trình & Phân loại</h3>
-        <div className="space-y-2.5">
-          <FormField label="Chương trình / Khóa học / Sự kiện" required>
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={value.program_name}
-                onChange={(e) => onChange({ program_name: e.target.value })}
-                placeholder="VD: Hán ngữ Sơ cấp 1, Trại hè Ngôn ngữ 2026…"
-              />
-            )}
-          </FormField>
-
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            <FormField label="Loại chứng nhận" required>
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Người nhận chứng nhận</h3>
+          <div className="space-y-2.5">
+            <FormField label="Chọn thành viên nội bộ (tùy chọn)">
               {(field) => (
-                <Select
-                  value={value.certificate_type}
-                  onValueChange={(v) => onChange({ certificate_type: v })}
-                >
-                  <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
-                    <SelectValue>
-                      {CERT_TYPES[value.certificate_type] ?? value.certificate_type}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {Object.entries(CERT_TYPES).map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-xs">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MemberCombobox
+                  id={field.id}
+                  members={members}
+                  value={value.member_id}
+                  onChange={(memberId) => {
+                    const m = members.find((x) => x.id === memberId);
+                    onChange({
+                      member_id: m?.id ?? null,
+                      holder_name: m ? m.full_name : value.holder_name,
+                    });
+                  }}
+                />
               )}
             </FormField>
 
-            <FormField label="Xếp loại / Vai trò">
+            <FormField label="Họ tên người nhận" required>
               {(field) => (
                 <AdminInput
                   {...field}
-                  value={value.classification}
-                  onChange={(e) => onChange({ classification: e.target.value })}
-                  placeholder="VD: Hoàn thành, Xuất sắc, Trưởng ban…"
+                  value={value.holder_name}
+                  onChange={(e) => onChange({ holder_name: e.target.value })}
+                  placeholder="Nhập họ và tên người nhận"
                 />
               )}
             </FormField>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Thời hạn & Đơn vị cấp</h3>
-        <div className="space-y-2.5">
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            <FormField label="Ngày cấp" required>
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Chương trình & Phân loại</h3>
+          <div className="space-y-2.5">
+            <FormField label="Chương trình / Khóa học / Sự kiện" required>
               {(field) => (
-                <DatePicker
-                  id={field.id}
-                  value={value.issue_date}
-                  onChange={(dateISO) => onChange({ issue_date: dateISO })}
-                  placeholder="Chọn ngày cấp"
+                <AdminInput
+                  {...field}
+                  value={value.program_name}
+                  onChange={(e) => onChange({ program_name: e.target.value })}
+                  placeholder="VD: Hán ngữ Sơ cấp 1, Trại hè Ngôn ngữ 2026…"
                 />
               )}
             </FormField>
-            <FormField label="Hiệu lực đến (bỏ trống nếu vĩnh viễn)">
+
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <FormField label="Loại chứng nhận" required>
+                {(field) => (
+                  <Select
+                    value={value.certificate_type}
+                    onValueChange={(v) => onChange({ certificate_type: v })}
+                  >
+                    <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+                      <SelectValue>
+                        {CERT_TYPES[value.certificate_type] ?? value.certificate_type}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {Object.entries(CERT_TYPES).map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="text-xs">
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </FormField>
+
+              <FormField label="Xếp loại / Vai trò">
+                {(field) => (
+                  <AdminInput
+                    {...field}
+                    value={value.classification}
+                    onChange={(e) => onChange({ classification: e.target.value })}
+                    placeholder="VD: Hoàn thành, Xuất sắc, Trưởng ban…"
+                  />
+                )}
+              </FormField>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Thời hạn & Đơn vị cấp</h3>
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <FormField label="Ngày cấp" required>
+                {(field) => (
+                  <DatePicker
+                    id={field.id}
+                    value={value.issue_date}
+                    onChange={(dateISO) => onChange({ issue_date: dateISO })}
+                    placeholder="Chọn ngày cấp"
+                  />
+                )}
+              </FormField>
+              <FormField label="Hiệu lực đến (bỏ trống nếu vĩnh viễn)">
+                {(field) => (
+                  <DatePicker
+                    id={field.id}
+                    value={value.expiry_date ?? ""}
+                    onChange={(dateISO) => onChange({ expiry_date: dateISO || null })}
+                    {...(value.issue_date ? { min: value.issue_date } : {})}
+                    placeholder="Vĩnh viễn"
+                    clearable
+                    clearLabel="Bỏ trống (vĩnh viễn)"
+                  />
+                )}
+              </FormField>
+            </div>
+
+            <FormField label="Đơn vị / Người cấp">
               {(field) => (
-                <DatePicker
-                  id={field.id}
-                  value={value.expiry_date ?? ""}
-                  onChange={(dateISO) => onChange({ expiry_date: dateISO || null })}
-                  {...(value.issue_date ? { min: value.issue_date } : {})}
-                  placeholder="Vĩnh viễn"
-                  clearable
-                  clearLabel="Bỏ trống (vĩnh viễn)"
+                <AdminInput
+                  {...field}
+                  value={value.issuer}
+                  onChange={(e) => onChange({ issuer: e.target.value })}
+                  placeholder="VD: Ban Chuyên môn The Mandarin League"
                 />
               )}
             </FormField>
           </div>
-
-          <FormField label="Đơn vị / Người cấp">
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={value.issuer}
-                onChange={(e) => onChange({ issuer: e.target.value })}
-                placeholder="VD: Ban Chuyên môn The Mandarin League"
-              />
-            )}
-          </FormField>
-        </div>
-      </section>
+        </section>
+      </fieldset>
 
       <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Tệp chứng nhận gốc & AI Scanner</h3>
-        <div className="space-y-2">
-          <div className="flex items-stretch gap-2">
-            <label
-              title="Kéo thả hoặc bấm để chọn tệp khác"
-              className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-3.5 transition-colors hover:bg-secondary/40"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                onPickFile(e.dataTransfer.files[0]);
-              }}
-            >
-              <Paperclip className="h-4 w-4 shrink-0 text-primary" />
-              {file || value.file_path ? (
-                <>
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
-                    {file
-                      ? `${file.name} · ${(file.size / 1024).toFixed(0)}KB`
-                      : value.file_name || "Tệp đã đính kèm"}
-                  </span>
-                  <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">
-                    Bấm để thay
-                  </span>
-                </>
-              ) : (
-                <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                  Kéo thả hoặc bấm để chọn tệp (PDF/Ảnh ≤ 1MB)
-                </span>
-              )}
-              <input
-                type="file"
-                accept="application/pdf,image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={(e) => onPickFile(e.target.files?.[0])}
-              />
-            </label>
-
+        <h3 className={SECTION_TITLE}>
+          {readOnly ? "Tệp chứng nhận gốc" : "Tệp chứng nhận gốc & AI Scanner"}
+        </h3>
+        {readOnly ? (
+          <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/20 p-3.5">
+            <Paperclip className="h-4 w-4 shrink-0 text-primary" />
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+              {value.file_path ? value.file_name || "Tệp đã đính kèm" : "Chưa có tệp đính kèm"}
+            </span>
             {value.file_path && (
               <Button
                 type="button"
@@ -905,55 +901,109 @@ function CertificateDrawer({
                 <span className="hidden sm:inline">Xem</span>
               </Button>
             )}
-            {(file || value.file_path) && (
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-stretch gap-2">
+              <label
+                title="Kéo thả hoặc bấm để chọn tệp khác"
+                className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-muted/20 p-3.5 transition-colors hover:bg-secondary/40"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  onPickFile(e.dataTransfer.files[0]);
+                }}
+              >
+                <Paperclip className="h-4 w-4 shrink-0 text-primary" />
+                {file || value.file_path ? (
+                  <>
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+                      {file
+                        ? `${file.name} · ${(file.size / 1024).toFixed(0)}KB`
+                        : value.file_name || "Tệp đã đính kèm"}
+                    </span>
+                    <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">
+                      Bấm để thay
+                    </span>
+                  </>
+                ) : (
+                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                    Kéo thả hoặc bấm để chọn tệp (PDF/Ảnh ≤ 1MB)
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => onPickFile(e.target.files?.[0])}
+                />
+              </label>
+
+              {value.file_path && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="admin"
+                  title="Xem tệp gốc"
+                  aria-label="Xem tệp gốc"
+                  onClick={onViewFile}
+                >
+                  <ExternalLink />
+                  <span className="hidden sm:inline">Xem</span>
+                </Button>
+              )}
+              {(file || value.file_path) && (
+                <Button
+                  type="button"
+                  variant="destructive-outline"
+                  size="admin"
+                  title="Gỡ tệp đính kèm"
+                  aria-label="Gỡ tệp đính kèm"
+                  onClick={onRemoveFile}
+                >
+                  <X />
+                  <span className="hidden sm:inline">Gỡ</span>
+                </Button>
+              )}
+            </div>
+
+            {file && (
               <Button
                 type="button"
-                variant="destructive-outline"
-                size="admin"
-                title="Gỡ tệp đính kèm"
-                aria-label="Gỡ tệp đính kèm"
-                onClick={onRemoveFile}
+                variant="secondary"
+                size="admin-sm"
+                className="w-fit"
+                disabled={extracting}
+                onClick={onRunExtract}
               >
-                <X />
-                <span className="hidden sm:inline">Gỡ</span>
+                <Wand2 />
+                {extracting ? "AI đang đọc…" : "AI đọc & điền sẵn thông tin"}
               </Button>
             )}
+
+            {aiNote && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
+                {aiNote}
+              </div>
+            )}
           </div>
-
-          {file && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="admin-sm"
-              className="w-fit"
-              disabled={extracting}
-              onClick={onRunExtract}
-            >
-              <Wand2 />
-              {extracting ? "AI đang đọc…" : "AI đọc & điền sẵn thông tin"}
-            </Button>
-          )}
-
-          {aiNote && (
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
-              {aiNote}
-            </div>
-          )}
-        </div>
+        )}
       </section>
 
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Ghi chú nội bộ</h3>
-        <AdminTextarea
-          rows={2}
-          aria-label="Ghi chú nội bộ"
-          value={value.notes}
-          onChange={(e) => onChange({ notes: e.target.value })}
-          placeholder="Chỉ quản trị viên nhìn thấy, không hiển thị trên trang tra cứu công khai…"
-        />
-      </section>
+      <fieldset disabled={readOnly} className="m-0 min-w-0 space-y-6 border-0 p-0">
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Ghi chú nội bộ</h3>
+          <AdminTextarea
+            rows={2}
+            aria-label="Ghi chú nội bộ"
+            value={value.notes}
+            onChange={(e) => onChange({ notes: e.target.value })}
+            placeholder="Chỉ quản trị viên nhìn thấy, không hiển thị trên trang tra cứu công khai…"
+          />
+        </section>
+      </fieldset>
 
-      {isEditing && (
+      {isEditing && (!readOnly || isRevoked) && (
         <div className="pt-2">
           {!isRevoked ? (
             <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
@@ -988,7 +1038,7 @@ function CertificateDrawer({
               <div className="flex items-center gap-2 text-warning-foreground">
                 <RotateCcw className="h-4 w-4" />
                 <span className="text-xs font-semibold uppercase tracking-wide">
-                  Khôi phục hiệu lực chứng nhận
+                  {readOnly ? "Chứng nhận đã bị thu hồi" : "Khôi phục hiệu lực chứng nhận"}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground">
@@ -997,15 +1047,17 @@ function CertificateDrawer({
                   {value.revoked_reason || "Không ghi nhận lý do"}
                 </span>
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="admin"
-                disabled={actionBusy}
-                onClick={() => void handleRestore()}
-              >
-                <RotateCcw /> {actionBusy ? "Đang khôi phục…" : "Khôi phục trạng thái Hợp lệ"}
-              </Button>
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="admin"
+                  disabled={actionBusy}
+                  onClick={() => void handleRestore()}
+                >
+                  <RotateCcw /> {actionBusy ? "Đang khôi phục…" : "Khôi phục trạng thái Hợp lệ"}
+                </Button>
+              )}
             </div>
           )}
         </div>
