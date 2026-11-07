@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import {
   Eye,
@@ -22,10 +22,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { QuestionBankStudio } from "@/components/admin/recruitment/QuestionBankStudio";
-import { DatePicker } from "@/components/ui/date-picker";
-import { useConfirm } from "@/components/admin/Trash";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { FormField } from "@/components/admin/kit/FormField";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
+import { StatusPill, type StatusTone } from "@/components/admin/kit/StatusPill";
+import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PERIOD_STATUS,
@@ -40,25 +48,14 @@ export const Route = createFileRoute("/_authenticated/admin/recruitment")({
   component: RecruitmentAdmin,
 });
 
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-const btn =
-  "inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent";
 const DAY_MS = 86_400_000;
 
-/** Shadcn select styled to match the inputs and float above the z-[60] drawer. */
-const DRAWER_SELECT_TRIGGER =
-  "mt-1 flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-normal shadow-xs transition-colors hover:border-input/80 focus:outline-none focus:ring-1 focus:ring-primary/30";
-const DRAWER_SELECT_CONTENT =
-  "z-[70] max-h-64 rounded-xl border-border bg-popover/95 backdrop-blur-md shadow-xl";
-const DRAWER_SELECT_ITEM =
-  "rounded-lg text-xs cursor-pointer py-1.5 focus:bg-accent focus:text-accent-foreground";
-
-const STATUS_TONE: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  open: "bg-success/15 text-success",
-  paused: "bg-gold/15 text-gold",
-  ended: "bg-secondary text-muted-foreground",
-  cancelled: "bg-destructive/10 text-destructive",
+const PERIOD_STATUS_TONE: Record<string, StatusTone> = {
+  draft: "neutral",
+  open: "success",
+  paused: "gold",
+  ended: "neutral",
+  cancelled: "danger",
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -68,6 +65,15 @@ const STATUS_DOT: Record<string, string> = {
   ended: "bg-muted-foreground/50",
   cancelled: "bg-destructive",
 };
+
+const PERIOD_COLS: AdminColumn[] = [
+  { key: "name", label: "Đợt tuyển" },
+  { key: "time", label: "Thời gian", className: "w-[200px]" },
+  { key: "positions", label: "Vị trí", className: "w-[110px]" },
+  { key: "apps", label: "Hồ sơ", className: "w-[100px]" },
+  { key: "status", label: "Trạng thái", className: "w-[130px]" },
+  { key: "actions", label: "Thao tác", srOnly: true, className: "w-[230px] text-right" },
+];
 
 /** Keeps a textarea exactly as tall as its content so it never grows an inner scrollbar. */
 function useAutoGrow(ref: RefObject<HTMLTextAreaElement | null>, value: string) {
@@ -181,6 +187,17 @@ type Run = (
 ) => Promise<boolean>;
 type Confirm = ReturnType<typeof useConfirm>["confirm"];
 
+function TabLabel({ text, count }: { text: string; count: number }) {
+  return (
+    <span className="flex items-center gap-2">
+      {text}
+      <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold leading-relaxed text-muted-foreground">
+        {count}
+      </span>
+    </span>
+  );
+}
+
 function RecruitmentAdmin() {
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-recruitment"], queryFn: load });
@@ -213,63 +230,42 @@ function RecruitmentAdmin() {
         title="Đợt tuyển & Câu hỏi"
         actions={
           tab === "periods" ? (
-            <button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
-              Tạo đợt tuyển
-            </button>
+            <Button type="button" size="admin" onClick={() => setCreating(true)}>
+              <Plus /> Tạo đợt tuyển
+            </Button>
           ) : null
         }
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
-          {(["periods", "questions"] as const).map((t) => {
-            const active = tab === t;
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => {
-                  setTab(t);
-                  setPreviewOpen(false);
-                }}
-                aria-pressed={active}
-                className={`relative rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
-                  active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="recruitment-tab-pill"
-                    className="absolute inset-0 rounded-lg bg-primary shadow-xs"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
-                  {t === "periods" ? "Đợt tuyển dụng" : "Ngân hàng câu hỏi"}
-                  <span
-                    className={`rounded-full px-1.5 text-[10px] font-semibold leading-relaxed ${active ? "bg-white/20 text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-                  >
-                    {t === "periods" ? (data?.periods.length ?? 0) : (data?.questions.length ?? 0)}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          label="Chọn mục quản lý tuyển dụng"
+          value={tab}
+          onChange={(t) => {
+            setTab(t);
+            setPreviewOpen(false);
+          }}
+          options={[
+            {
+              value: "periods",
+              label: <TabLabel text="Đợt tuyển dụng" count={data?.periods.length ?? 0} />,
+            },
+            {
+              value: "questions",
+              label: <TabLabel text="Ngân hàng câu hỏi" count={data?.questions.length ?? 0} />,
+            },
+          ]}
+        />
         {tab === "questions" && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="admin"
             onClick={() => setPreviewOpen(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/5 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            className="border-primary/40 bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground [&_svg]:size-3.5"
           >
-            <Eye className="h-3.5 w-3.5" />
-            Xem trước dạng ứng viên
-          </button>
+            <Eye aria-hidden /> Xem trước dạng ứng viên
+          </Button>
         )}
       </div>
 
@@ -374,20 +370,16 @@ function Periods({
 
   if (data.periods.length === 0) {
     return (
-      <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-        <p className="font-semibold text-primary-deep">Chưa có đợt tuyển nào</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tạo đợt tuyển đầu tiên để bắt đầu nhận hồ sơ ứng viên.
-        </p>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" />
-          Tạo đợt tuyển
-        </button>
-      </div>
+      <EmptyState
+        className="mt-6"
+        title="Chưa có đợt tuyển nào"
+        description="Tạo đợt tuyển đầu tiên để bắt đầu nhận hồ sơ ứng viên."
+        action={
+          <Button type="button" size="admin" onClick={onCreate}>
+            <Plus /> Tạo đợt tuyển
+          </Button>
+        }
+      />
     );
   }
 
@@ -421,106 +413,87 @@ function Periods({
         </div>
 
         {previous.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Chưa có đợt tuyển nào khác.
-          </p>
+          <EmptyState title="Chưa có đợt tuyển nào khác." />
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead className="bg-secondary/70 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Đợt tuyển</th>
-                  <th className="px-4 py-3 font-semibold">Thời gian</th>
-                  <th className="px-4 py-3 font-semibold">Vị trí</th>
-                  <th className="px-4 py-3 font-semibold">Hồ sơ</th>
-                  <th className="px-4 py-3 font-semibold">Trạng thái</th>
-                  <th className="px-4 py-3 text-right font-semibold">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {previous.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-t border-border/70 transition-colors hover:bg-accent/40"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-foreground">{p.name}</div>
-                      {p.description && (
-                        <div className="mt-0.5 line-clamp-1 max-w-[320px] text-xs text-muted-foreground">
-                          {p.description}
-                        </div>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                      {fmtDate(p.starts_on)} → {fmtDate(p.ends_on)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs">
-                      <span className="font-mono font-semibold text-foreground">
-                        {enabledOf(p.id)}
-                      </span>
-                      <span className="text-muted-foreground"> vị trí mở</span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs">
-                      <span className="font-mono font-semibold text-foreground">
-                        {data.appCountByPeriod[p.id] ?? 0}
-                      </span>
-                      <span className="text-muted-foreground"> hồ sơ</span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_TONE[periodStatus(p.status)] ?? "bg-secondary text-muted-foreground"}`}
-                      >
-                        {periodStatusLabel(p.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                        {canReopen(p) && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => openPeriod(p)}
-                              className={`${btn} text-primary`}
-                              title="Chuyển đợt sang trạng thái Đang mở"
-                            >
-                              <Play className="h-3.5 w-3.5" />
-                              Mở đợt
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onConfigure(p.id)}
-                              className={btn}
-                              title="Cấu hình thông tin, ban & vị trí tuyển"
-                            >
-                              <Settings2 className="h-3.5 w-3.5" />
-                              Cấu hình
-                            </button>
-                          </>
-                        )}
-                        <button
+          <AdminTable columns={PERIOD_COLS} minWidth="min-w-[860px]">
+            {previous.map((p) => (
+              <AdminTableRow key={p.id}>
+                <td className="px-4 py-3">
+                  <div className="font-semibold text-foreground">{p.name}</div>
+                  {p.description && (
+                    <div
+                      className="mt-0.5 truncate text-xs text-muted-foreground"
+                      title={p.description}
+                    >
+                      {p.description}
+                    </div>
+                  )}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
+                  {fmtDate(p.starts_on)} → {fmtDate(p.ends_on)}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs">
+                  <span className="font-mono font-semibold text-foreground">{enabledOf(p.id)}</span>
+                  <span className="text-muted-foreground"> vị trí mở</span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs">
+                  <span className="font-mono font-semibold text-foreground">
+                    {data.appCountByPeriod[p.id] ?? 0}
+                  </span>
+                  <span className="text-muted-foreground"> hồ sơ</span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <StatusPill tone={PERIOD_STATUS_TONE[periodStatus(p.status)] ?? "neutral"}>
+                    {periodStatusLabel(p.status)}
+                  </StatusPill>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                    {canReopen(p) && (
+                      <>
+                        <Button
                           type="button"
-                          onClick={() => removePeriod(p)}
-                          aria-label={`Xóa đợt ${p.name}`}
-                          title="Xóa đợt tuyển"
-                          className="rounded-lg border border-border p-1.5 text-destructive transition-colors hover:bg-destructive/10"
+                          variant="outline"
+                          size="admin-sm"
+                          onClick={() => openPeriod(p)}
+                          title="Chuyển đợt sang trạng thái Đang mở"
+                          className="text-primary hover:text-primary [&_svg]:size-3.5"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          <Play aria-hidden /> Mở đợt
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="admin-sm"
+                          onClick={() => onConfigure(p.id)}
+                          title="Cấu hình thông tin, ban & vị trí tuyển"
+                          className="[&_svg]:size-3.5"
+                        >
+                          <Settings2 aria-hidden /> Cấu hình
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive-outline"
+                      size="admin-icon"
+                      onClick={() => removePeriod(p)}
+                      aria-label={`Xóa đợt ${p.name}`}
+                      title="Xóa đợt tuyển"
+                      className="[&_svg]:size-3.5"
+                    >
+                      <Trash2 aria-hidden />
+                    </Button>
+                  </div>
+                </td>
+              </AdminTableRow>
+            ))}
+          </AdminTable>
         )}
       </section>
     </div>
   );
 }
-
-const metricBase =
-  "flex flex-col items-stretch justify-start rounded-xl border border-border/70 bg-secondary/40 p-3 text-left transition-colors";
 
 function ActiveCampaignHero({
   period,
@@ -546,7 +519,6 @@ function ActiveCampaignHero({
   const remainingDays = Math.max(0, Math.round((endMs - nowMs) / DAY_MS));
   const status = periodStatus(period.status);
 
-  /** Departments that actually have at least one enabled position in this campaign. */
   /** Archiving is irreversible (ended/cancelled periods can never reopen), so ask first. */
   const changeStatus = async (next: string) => {
     if (next === status) return;
@@ -603,16 +575,17 @@ function ActiveCampaignHero({
           </SelectContent>
         </Select>
 
-        <button
+        <Button
           type="button"
+          size="admin"
           onClick={onConfigure}
           aria-label="Cấu hình đợt tuyển"
           title="Sửa thông tin, bật/tắt ban & vị trí tuyển"
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 [@media(pointer:coarse)]:h-11"
+          className="shrink-0 [@media(pointer:coarse)]:h-11"
         >
-          <Settings2 className="h-4 w-4" />
+          <Settings2 aria-hidden />
           <span className="hidden @min-[560px]:inline">Cấu hình</span>
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-6 px-6 pt-4 pb-6 @min-[880px]:px-7 @min-[880px]:pt-5 @min-[880px]:pb-6">
@@ -648,11 +621,12 @@ function ActiveCampaignHero({
 
         {/* Tier 2 — metric strip */}
         <div className="grid grid-cols-2 gap-3.5 border-t border-border/60 pt-5">
+          {/* eslint-disable-next-line no-restricted-syntax -- ô số liệu bấm được phủ toàn bộ, Button của kit không hợp */}
           <button
             type="button"
             onClick={onConfigure}
             title="Bấm để mở ma trận cấu hình vị trí"
-            className={`${metricBase} transition-colors hover:border-primary/40 hover:bg-accent/50`}
+            className="flex flex-col items-stretch justify-start rounded-xl border border-border/70 bg-secondary/40 p-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/50"
           >
             <MetricContent
               icon={Users}
@@ -665,7 +639,7 @@ function ActiveCampaignHero({
           <Link
             to="/admin/candidates"
             title="Bấm để đi tới danh sách hồ sơ ứng viên"
-            className={`${metricBase} transition-colors hover:border-primary/40 hover:bg-accent/50`}
+            className="flex flex-col items-stretch justify-start rounded-xl border border-border/70 bg-secondary/40 p-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/50"
           >
             <MetricContent
               icon={FileText}
@@ -707,6 +681,71 @@ function MetricContent({
 
 // ---------------------------------------------------------------- position drawer
 
+type PeriodInfo = { name: string; description: string; starts_on: string; ends_on: string };
+
+/** Tên, ngày và mô tả đợt tuyển, dùng chung cho drawer tạo mới và drawer cấu hình. */
+function PeriodInfoFields({
+  value,
+  onChange,
+  descriptionRef,
+  autoFocusName = false,
+}: {
+  value: PeriodInfo;
+  onChange: (patch: Partial<PeriodInfo>) => void;
+  descriptionRef: RefObject<HTMLTextAreaElement | null>;
+  autoFocusName?: boolean;
+}) {
+  return (
+    <section className="space-y-3">
+      <FormField label="Tên đợt tuyển" required>
+        {(field) => (
+          <AdminInput
+            {...field}
+            autoFocus={autoFocusName}
+            value={value.name}
+            onChange={(e) => onChange({ name: e.target.value })}
+            placeholder="VD: Tuyển thành viên Gen 5"
+          />
+        )}
+      </FormField>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Ngày bắt đầu" required>
+          {(field) => (
+            <DatePicker
+              id={field.id}
+              value={value.starts_on}
+              onChange={(val) => onChange({ starts_on: val })}
+            />
+          )}
+        </FormField>
+        <FormField label="Ngày kết thúc" required>
+          {(field) => (
+            <DatePicker
+              id={field.id}
+              value={value.ends_on}
+              {...(value.starts_on ? { min: value.starts_on } : {})}
+              onChange={(val) => onChange({ ends_on: val })}
+            />
+          )}
+        </FormField>
+      </div>
+      <FormField label="Mô tả">
+        {(field) => (
+          <AdminTextarea
+            {...field}
+            ref={descriptionRef}
+            rows={2}
+            placeholder="Thêm mô tả cho đợt tuyển…"
+            value={value.description}
+            onChange={(e) => onChange({ description: e.target.value })}
+            className="max-h-52 min-h-0 resize-none overflow-y-auto leading-relaxed"
+          />
+        )}
+      </FormField>
+    </section>
+  );
+}
+
 function PeriodDrawer({
   period,
   positions,
@@ -745,29 +784,12 @@ function PeriodDrawer({
     else onClose();
   };
 
-  useEffect(() => {
-    const el = descriptionRef.current;
-    if (!el) return;
-    const style = getComputedStyle(el);
-    const borders =
-      (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0);
-    el.style.height = "auto";
-    // scrollHeight excludes borders, so add them back or the box overflows by 1px and shows a bar.
-    el.style.height = `${el.scrollHeight + borders}px`;
-  }, [f.description]);
+  const dismiss = () => {
+    if (discardAsk) setDiscardAsk(false);
+    else requestClose();
+  };
 
   useAutoGrow(descriptionRef, f.description);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      if (discardAsk) setDiscardAsk(false);
-      else if (dirty) setDiscardAsk(true);
-      else onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, dirty, discardAsk]);
 
   const keyOf = (dept: string, position: string) => `${dept}|${position}`;
   const enabledOf = (dept: string, position: string) => {
@@ -826,133 +848,69 @@ function PeriodDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/15 backdrop-blur-sm"
-        onClick={requestClose}
-      />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Cấu hình đợt tuyển ${period.name}`}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <div className="relative shrink-0 border-b border-border/70 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gold">
-              Cấu hình đợt tuyển
-            </p>
-            {dirty && (
-              <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-gold">
-                Chưa lưu
-              </span>
-            )}
-          </div>
-          <input
-            aria-label="Tên đợt tuyển"
-            placeholder="Tên đợt tuyển *"
-            value={f.name}
-            onChange={(e) => setF({ ...f, name: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-transparent bg-transparent px-2 py-0.5 text-lg font-bold text-foreground outline-none transition-colors placeholder:font-semibold placeholder:text-muted-foreground/60 hover:border-border focus:border-input focus:bg-background"
-          />
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <label className="block min-w-0 text-[11px] text-muted-foreground">
-              Ngày bắt đầu *
-              <DatePicker
-                className="mt-0.5"
-                value={f.starts_on}
-                onChange={(val) => setF({ ...f, starts_on: val })}
-              />
-            </label>
-            <label className="block min-w-0 text-[11px] text-muted-foreground">
-              Ngày kết thúc *
-              <DatePicker
-                className="mt-0.5"
-                value={f.ends_on}
-                min={f.starts_on}
-                onChange={(val) => setF({ ...f, ends_on: val })}
-              />
-            </label>
-          </div>
-          <textarea
-            ref={descriptionRef}
-            aria-label="Mô tả đợt tuyển"
-            rows={2}
-            placeholder="Thêm mô tả cho đợt tuyển…"
-            value={f.description}
-            onChange={(e) => setF({ ...f, description: e.target.value })}
-            className="mt-2 max-h-52 w-full resize-none overflow-y-auto rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs leading-relaxed text-foreground outline-none transition-colors [scrollbar-width:none] placeholder:text-muted-foreground/60 hover:border-border focus:border-input focus:bg-background [&::-webkit-scrollbar]:hidden"
-          />
-        </div>
-
-        <div className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
-          <section className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Ban &amp; vị trí tuyển dụng
-              </h3>
-              <span className="text-[11px] text-muted-foreground">
-                {enabledCount} vị trí đang mở
-              </span>
-            </div>
-            <PositionMatrix
-              enabledOf={enabledOf}
-              onToggle={(dept, position, next) => void toggle(dept, position, next)}
-              busyKey={busyKey}
-            />
-          </section>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          {discardAsk ? (
-            <>
-              <p className="mr-auto text-xs font-medium text-destructive">Có thay đổi chưa lưu.</p>
-              <button
-                type="button"
-                onClick={() => setDiscardAsk(false)}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
-              >
-                Ở lại
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground hover:bg-destructive/90"
-              >
-                Bỏ thay đổi
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={requestClose}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-              >
-                Đóng
-              </button>
-              <button
-                type="button"
-                onClick={saveInfo}
-                disabled={!dirty || busy}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-              >
-                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                Lưu thông tin
-              </button>
-            </>
+    <AdminDrawer
+      title="Cấu hình đợt tuyển"
+      subtitle={
+        <span className="flex items-center gap-1.5">
+          <span className="truncate">{period.name}</span>
+          {dirty && (
+            <StatusPill tone="gold" dot={false}>
+              Chưa lưu
+            </StatusPill>
           )}
+        </span>
+      }
+      onClose={dismiss}
+      dismissible={!busy}
+      bodyClassName="space-y-5"
+      footer={
+        discardAsk ? (
+          <>
+            <p className="mr-auto text-xs font-medium text-destructive">Có thay đổi chưa lưu.</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="admin"
+              onClick={() => setDiscardAsk(false)}
+            >
+              Ở lại
+            </Button>
+            <Button type="button" variant="destructive" size="admin" onClick={onClose}>
+              Bỏ thay đổi
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button type="button" variant="outline" size="admin" onClick={requestClose}>
+              Đóng
+            </Button>
+            <Button type="button" size="admin-lg" onClick={saveInfo} disabled={!dirty || busy}>
+              {busy && <Loader2 aria-hidden className="animate-spin" />}
+              Lưu thông tin
+            </Button>
+          </>
+        )
+      }
+    >
+      <PeriodInfoFields
+        value={f}
+        onChange={(patch) => setF({ ...f, ...patch })}
+        descriptionRef={descriptionRef}
+      />
+      <section className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Ban &amp; vị trí tuyển dụng
+          </h3>
+          <span className="text-[11px] text-muted-foreground">{enabledCount} vị trí đang mở</span>
         </div>
-      </motion.div>
-    </div>
+        <PositionMatrix
+          enabledOf={enabledOf}
+          onToggle={(dept, position, next) => void toggle(dept, position, next)}
+          busyKey={busyKey}
+        />
+      </section>
+    </AdminDrawer>
   );
 }
 
@@ -1050,18 +1008,12 @@ function CreatePeriodDrawer({ refresh, onClose }: { refresh: () => void; onClose
     else onClose();
   };
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      if (discardAsk) setDiscardAsk(false);
-      else if (dirty) setDiscardAsk(true);
-      else onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, dirty, discardAsk]);
+  const dismiss = () => {
+    if (discardAsk) setDiscardAsk(false);
+    else requestClose();
+  };
 
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (f.name.trim().length < 3) return void toast.error("Tên đợt tuyển tối thiểu 3 ký tự.");
     if (!f.starts_on || !f.ends_on)
@@ -1106,162 +1058,89 @@ function CreatePeriodDrawer({ refresh, onClose }: { refresh: () => void; onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/15 backdrop-blur-sm"
-        onClick={requestClose}
+    <AdminDrawer
+      title="Tạo đợt tuyển mới"
+      onClose={dismiss}
+      dismissible={!busy}
+      onSubmit={submit}
+      bodyClassName="space-y-5"
+      footer={
+        discardAsk ? (
+          <>
+            <p className="mr-auto text-xs font-medium text-destructive">Có thay đổi chưa lưu.</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="admin"
+              onClick={() => setDiscardAsk(false)}
+            >
+              Ở lại
+            </Button>
+            <Button type="button" variant="destructive" size="admin" onClick={onClose}>
+              Bỏ thay đổi
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button type="button" variant="outline" size="admin" onClick={requestClose}>
+              Hủy
+            </Button>
+            <Button type="submit" size="admin-lg" disabled={busy}>
+              {busy && <Loader2 aria-hidden className="animate-spin" />}
+              Tạo đợt tuyển
+            </Button>
+          </>
+        )
+      }
+    >
+      <PeriodInfoFields
+        value={f}
+        onChange={(patch) => setF({ ...f, ...patch })}
+        descriptionRef={descriptionRef}
+        autoFocusName
       />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Tạo đợt tuyển mới"
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-[550px] flex-col border-l border-border bg-card shadow-2xl"
+
+      <FormField
+        label="Trạng thái ban đầu"
+        hint="Chỉ một đợt tuyển được ở trạng thái “Đang mở” tại một thời điểm."
       >
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="relative shrink-0 border-b border-border/70 px-6 py-4">
-            <div className="flex items-center gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gold">
-                Đợt tuyển mới
-              </p>
-            </div>
-            <input
-              autoFocus
-              aria-label="Tên đợt tuyển"
-              placeholder="Tên đợt tuyển *"
-              value={f.name}
-              onChange={(e) => setF({ ...f, name: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-transparent bg-transparent px-2 py-0.5 text-lg font-bold text-foreground outline-none transition-colors placeholder:font-semibold placeholder:text-muted-foreground/60 hover:border-border focus:border-input focus:bg-background"
-            />
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <label className="block min-w-0 text-[11px] text-muted-foreground">
-                Ngày bắt đầu *
-                <DatePicker
-                  className="mt-0.5"
-                  value={f.starts_on}
-                  onChange={(val) => setF({ ...f, starts_on: val })}
-                />
-              </label>
-              <label className="block min-w-0 text-[11px] text-muted-foreground">
-                Ngày kết thúc *
-                <DatePicker
-                  className="mt-0.5"
-                  value={f.ends_on}
-                  min={f.starts_on}
-                  onChange={(val) => setF({ ...f, ends_on: val })}
-                />
-              </label>
-            </div>
-            <textarea
-              ref={descriptionRef}
-              aria-label="Mô tả đợt tuyển"
-              rows={2}
-              placeholder="Thêm mô tả cho đợt tuyển…"
-              value={f.description}
-              onChange={(e) => setF({ ...f, description: e.target.value })}
-              className="mt-2 max-h-52 w-full resize-none overflow-y-auto rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs leading-relaxed text-foreground outline-none transition-colors [scrollbar-width:none] placeholder:text-muted-foreground/60 hover:border-border focus:border-input focus:bg-background [&::-webkit-scrollbar]:hidden"
-            />
-          </div>
-
-          <div className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
-            <section className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Trạng thái ban đầu
-              </h3>
-              <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
-                <SelectTrigger aria-label="Trạng thái ban đầu" className={DRAWER_SELECT_TRIGGER}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={DRAWER_SELECT_CONTENT}>
-                  <SelectItem value="draft" className={DRAWER_SELECT_ITEM}>
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT["draft"]}`}
-                      />
-                      Nháp — chưa nhận hồ sơ
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="open" className={DRAWER_SELECT_ITEM}>
-                    <span className="flex items-center gap-2">
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT["open"]}`} />
-                      Mở ngay — nhận hồ sơ từ hôm nay
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Chỉ một đợt tuyển được ở trạng thái “Đang mở” tại một thời điểm.
-              </p>
-            </section>
-
-            <section className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Ban &amp; vị trí tuyển dụng
-                </h3>
-                <span className="text-[11px] text-muted-foreground">
-                  {enabledCount} vị trí đang mở
+        {(field) => (
+          <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+            <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="draft" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT["draft"]}`} />
+                  Nháp — chưa nhận hồ sơ
                 </span>
-              </div>
-              <PositionMatrix enabledOf={enabledOf} onToggle={togglePosition} />
-              {f.status === "open" && enabledCount === 0 && (
-                <p className="rounded-lg bg-gold/10 px-3 py-2 text-[11px] text-gold">
-                  Đợt mở nhận đơn cần ít nhất một vị trí để ứng viên chọn ở biểu mẫu /join.
-                </p>
-              )}
-            </section>
-          </div>
+              </SelectItem>
+              <SelectItem value="open" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT["open"]}`} />
+                  Mở ngay — nhận hồ sơ từ hôm nay
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </FormField>
 
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-            {discardAsk ? (
-              <>
-                <p className="mr-auto text-xs font-medium text-destructive">
-                  Có thay đổi chưa lưu.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setDiscardAsk(false)}
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
-                >
-                  Ở lại
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Bỏ thay đổi
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Tạo đợt tuyển
-                </button>
-              </>
-            )}
-          </div>
-        </form>
-      </motion.div>
-    </div>
+      <section className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Ban &amp; vị trí tuyển dụng
+          </h3>
+          <span className="text-[11px] text-muted-foreground">{enabledCount} vị trí đang mở</span>
+        </div>
+        <PositionMatrix enabledOf={enabledOf} onToggle={togglePosition} />
+        {f.status === "open" && enabledCount === 0 && (
+          <p className="rounded-lg bg-warning-soft px-3 py-2 text-[11px] text-warning-foreground">
+            Đợt mở nhận đơn cần ít nhất một vị trí để ứng viên chọn ở biểu mẫu /join.
+          </p>
+        )}
+      </section>
+    </AdminDrawer>
   );
 }
