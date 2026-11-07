@@ -251,17 +251,19 @@ function RowActions({ a, canPublish, onDuplicate, onTogglePublish, onRemove }: R
           </Link>
         </Button>
       )}
-      <Button
-        type="button"
-        variant="outline"
-        size="admin-icon"
-        title="Sao chép"
-        aria-label="Sao chép"
-        onClick={() => onDuplicate(a)}
-        className="text-muted-foreground [&_svg]:size-3.5"
-      >
-        <Copy aria-hidden />
-      </Button>
+      {canPublish && (
+        <Button
+          type="button"
+          variant="outline"
+          size="admin-icon"
+          title="Sao chép"
+          aria-label="Sao chép"
+          onClick={() => onDuplicate(a)}
+          className="text-muted-foreground [&_svg]:size-3.5"
+        >
+          <Copy aria-hidden />
+        </Button>
+      )}
       {canPublish && (
         <Button
           type="button"
@@ -275,7 +277,7 @@ function RowActions({ a, canPublish, onDuplicate, onTogglePublish, onRemove }: R
           {published ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
         </Button>
       )}
-      {(canPublish || a.manual_status === "draft") && (
+      {canPublish && (
         <Button
           type="button"
           variant="destructive-outline"
@@ -313,7 +315,6 @@ function ActivityGroup({
   now: number;
   onEdit: (a: ActivityRow) => void;
 } & Omit<RowActionProps, "a">) {
-  const canEdit = (a: ActivityRow) => canPublish || a.manual_status === "draft";
   return (
     <section>
       <h3 className="mb-2 px-1">
@@ -338,7 +339,7 @@ function ActivityGroup({
         <>
           <AdminTable className="hidden md:block" columns={ACT_COLS} minWidth="min-w-[860px]">
             {rows.map((a) => (
-              <AdminTableRow key={a.id} {...(canEdit(a) ? { onOpen: () => onEdit(a) } : {})}>
+              <AdminTableRow key={a.id} onOpen={() => onEdit(a)}>
                 <td className="p-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <Thumb src={a.banner} className="h-[45px] w-20" />
@@ -379,8 +380,8 @@ function ActivityGroup({
             {rows.map((a) => (
               <article
                 key={a.id}
-                onClick={canEdit(a) ? () => onEdit(a) : undefined}
-                className={`flex gap-3 rounded-xl border border-border bg-card p-3 shadow-2xs ${canEdit(a) ? "cursor-pointer active:bg-accent/50" : ""}`}
+                onClick={() => onEdit(a)}
+                className="flex cursor-pointer gap-3 rounded-xl border border-border bg-card p-3 shadow-2xs active:bg-accent/50"
               >
                 <Thumb src={a.banner} className="aspect-video w-24 self-start" />
                 <div className="min-w-0 flex-1">
@@ -456,11 +457,12 @@ function ActivityDrawer({
   onOpenRegs,
 }: ActivityDrawerProps) {
   const isEditing = !!value.id;
+  const readOnly = !canPublish;
 
   return (
     <AdminDrawer
       width="lg"
-      title={isEditing ? "Sửa hoạt động" : "Tạo hoạt động mới"}
+      title={readOnly ? "Chi tiết hoạt động" : isEditing ? "Sửa hoạt động" : "Tạo hoạt động mới"}
       leading={
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-2 ring-primary/20">
           <CalendarDays aria-hidden className="h-5 w-5" />
@@ -496,340 +498,203 @@ function ActivityDrawer({
       }
       onClose={onClose}
       dismissible={!busy}
-      onSubmit={onSave}
       bodyClassName="space-y-6 text-xs"
-      footer={
-        <>
-          <div className="min-w-0 flex-1">
-            {err && (
-              <p className="truncate text-xs text-destructive" title={err}>
-                {err}
-              </p>
-            )}
-          </div>
-          <Button type="submit" size="admin-lg" disabled={busy} className="shrink-0">
-            {busy ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Tạo hoạt động"}
-          </Button>
-        </>
-      }
+      {...(!readOnly
+        ? {
+            onSubmit: onSave,
+            footer: (
+              <>
+                <div className="min-w-0 flex-1">
+                  {err && (
+                    <p className="truncate text-xs text-destructive" title={err}>
+                      {err}
+                    </p>
+                  )}
+                </div>
+                <Button type="submit" size="admin-lg" disabled={busy} className="shrink-0">
+                  {busy ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Tạo hoạt động"}
+                </Button>
+              </>
+            ),
+          }
+        : {})}
     >
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Thông tin chung</h3>
-        <FormField label="Tên hoạt động" required>
-          {(field) => (
-            <AdminInput
-              {...field}
-              required
-              minLength={3}
-              maxLength={200}
-              value={value.title}
-              onChange={(e) =>
-                onChange({
-                  title: e.target.value,
-                  ...(value.id ? {} : { slug: slugify(e.target.value) }),
-                })
-              }
-            />
-          )}
-        </FormField>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <FormField label="Slug (đường dẫn)" hint={`Đường dẫn: /activities/${value.slug || "…"}`}>
+      <fieldset disabled={readOnly} className="m-0 min-w-0 space-y-6 border-0 p-0">
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Thông tin chung</h3>
+          <FormField label="Tên hoạt động" required>
             {(field) => (
               <AdminInput
                 {...field}
-                value={value.slug}
-                onChange={(e) => onChange({ slug: e.target.value })}
-              />
-            )}
-          </FormField>
-          <FormField label="Loại hoạt động">
-            {(field) => (
-              <Select
-                value={value.category}
-                onValueChange={(v) => onChange({ category: v as ActivityCategory })}
-              >
-                <SelectTrigger
-                  {...field}
-                  aria-label="Loại hoạt động"
-                  className="h-9 w-full rounded-lg text-sm"
-                >
-                  <SelectValue>{CATEGORY_LABEL[value.category]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="z-[95] rounded-xl">
-                  {CATS.map((k) => (
-                    <SelectItem key={k} value={k} className="text-xs">
-                      {CATEGORY_LABEL[k]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Ảnh banner</h3>
-        <label
-          className="group relative block aspect-video w-full max-w-[320px] cursor-pointer overflow-hidden rounded-xl border border-dashed border-input bg-muted/30 transition-colors hover:bg-secondary/40"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            if (file) onUpload(file);
-          }}
-        >
-          {bannerUrl ? (
-            <>
-              <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
-              <span className="absolute inset-x-0 bottom-0 bg-black/50 py-1.5 text-center text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-                Bấm hoặc kéo thả để đổi ảnh
-              </span>
-            </>
-          ) : (
-            <span className="flex h-full flex-col items-center justify-center gap-1.5 px-4 text-center text-muted-foreground">
-              <Upload className="h-5 w-5" />
-              <span className="font-medium text-foreground">
-                {value.banner_path ? "Đã có ảnh, bấm để đổi" : "Kéo thả hoặc bấm để tải ảnh"}
-              </span>
-              <span className="text-[11px]">JPG/PNG/WebP ≤ 5MB, nên dùng tỉ lệ 16:9</span>
-            </span>
-          )}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onUpload(file);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        {value.banner_path && (
-          <Button
-            type="button"
-            variant="link"
-            size="admin-sm"
-            onClick={() => onChange({ banner_path: "" })}
-            className="h-auto px-0 font-normal text-destructive [&_svg]:size-3.5"
-          >
-            <X aria-hidden /> Gỡ ảnh
-          </Button>
-        )}
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Mô tả</h3>
-        <FormField label="Mô tả ngắn" hint={`${value.short_description.length}/300`}>
-          {(field) => (
-            <AdminInput
-              {...field}
-              maxLength={300}
-              value={value.short_description}
-              onChange={(e) => onChange({ short_description: e.target.value })}
-            />
-          )}
-        </FormField>
-        <FormField label="Mô tả chi tiết">
-          {(field) => (
-            <AdminTextarea
-              {...field}
-              rows={6}
-              maxLength={10000}
-              value={value.description}
-              onChange={(e) => onChange({ description: e.target.value })}
-            />
-          )}
-        </FormField>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Thời gian & địa điểm</h3>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <FormField label="Bắt đầu">
-            {(field) => (
-              <DateTimePicker
-                id={field.id}
-                value={isoToLocal(value.start_time)}
-                onChange={(v) => onChange({ start_time: localToIso(v) })}
-                placeholder="Chọn ngày giờ bắt đầu"
-                clearable
-              />
-            )}
-          </FormField>
-          <FormField label="Kết thúc">
-            {(field) => (
-              <DateTimePicker
-                id={field.id}
-                value={isoToLocal(value.end_time)}
-                onChange={(v) => onChange({ end_time: localToIso(v) })}
-                {...(value.start_time ? { min: isoToLocal(value.start_time) } : {})}
-                placeholder="Chọn ngày giờ kết thúc"
-                clearable
-              />
-            )}
-          </FormField>
-          <FormField label="Hình thức">
-            {(field) => (
-              <Select
-                value={value.location_type}
-                onValueChange={(v) => onChange({ location_type: v as LocationType })}
-              >
-                <SelectTrigger
-                  {...field}
-                  aria-label="Hình thức"
-                  className="h-9 w-full rounded-lg text-sm"
-                >
-                  <SelectValue>{LOCATION_LABEL[value.location_type]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="z-[95] rounded-xl">
-                  {Object.entries(LOCATION_LABEL).map(([k, v]) => (
-                    <SelectItem key={k} value={k} className="text-xs">
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </FormField>
-          <FormField label="Địa điểm / nền tảng">
-            {(field) => (
-              <AdminInput
-                {...field}
-                maxLength={300}
-                placeholder="vd: Google Meet hoặc địa chỉ"
-                value={value.location_detail}
-                onChange={(e) => onChange({ location_detail: e.target.value })}
-              />
-            )}
-          </FormField>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Đăng ký</h3>
-        {onOpenRegs && (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
-            <span className="flex items-center gap-2 text-xs text-foreground">
-              <Ticket className="h-4 w-4 text-primary" />
-              Đã có <strong className="font-semibold">{regCount}</strong> đơn đăng ký
-            </span>
-            <Button
-              type="button"
-              variant="link"
-              size="admin-sm"
-              onClick={onOpenRegs}
-              className="h-auto shrink-0 px-0 font-semibold text-primary"
-            >
-              Xem đơn →
-            </Button>
-          </div>
-        )}
-        <div className="grid gap-2 sm:grid-cols-2">
-          {REG_MODES.map(([k, l, d]) => {
-            const on = k === "ext" ? extMode : !extMode;
-            return (
-              <Button
-                type="button"
-                key={k}
-                variant="outline"
-                aria-pressed={on}
-                onClick={() => onExtMode(k === "ext")}
-                className={`h-auto flex-col items-start gap-0.5 whitespace-normal rounded-xl p-3 text-left font-normal shadow-none ${
-                  on ? "border-primary bg-primary/5 hover:bg-primary/5" : ""
-                }`}
-              >
-                <span className="text-xs font-semibold text-foreground">{l}</span>
-                <span className="block text-[11px] text-muted-foreground">{d}</span>
-              </Button>
-            );
-          })}
-        </div>
-        {extMode && (
-          <FormField label="Link đăng ký ngoài (không bắt buộc)">
-            {(field) => (
-              <AdminInput
-                {...field}
-                placeholder="forms.gle/…"
-                value={value.registration_url}
-                onChange={(e) => onChange({ registration_url: e.target.value })}
-              />
-            )}
-          </FormField>
-        )}
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <FormField label="Hạn đăng ký (không bắt buộc)">
-            {(field) => (
-              <DateTimePicker
-                id={field.id}
-                value={isoToLocal(value.registration_deadline)}
-                onChange={(v) => onChange({ registration_deadline: localToIso(v) })}
-                placeholder="Không đặt hạn"
-                clearable
-                clearLabel="Bỏ hạn đăng ký"
-              />
-            )}
-          </FormField>
-          <FormField label="Số người tối đa" hint="0 = không giới hạn">
-            {(field) => (
-              <AdminInput
-                {...field}
-                type="number"
-                min={0}
-                value={value.max_participants}
+                required
+                minLength={3}
+                maxLength={200}
+                value={value.title}
                 onChange={(e) =>
-                  onChange({ max_participants: Math.max(0, Number(e.target.value)) })
+                  onChange({
+                    title: e.target.value,
+                    ...(value.id ? {} : { slug: slugify(e.target.value) }),
+                  })
                 }
               />
             )}
           </FormField>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Liên kết</h3>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <FormField label="Link Facebook">
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={value.facebook_url}
-                onChange={(e) => onChange({ facebook_url: e.target.value })}
-              />
-            )}
-          </FormField>
-          <FormField label="Link Website">
-            {(field) => (
-              <AdminInput
-                {...field}
-                value={value.website_url}
-                onChange={(e) => onChange({ website_url: e.target.value })}
-              />
-            )}
-          </FormField>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className={SECTION_TITLE}>Xuất bản</h3>
-        {canPublish ? (
-          <>
-            <FormField label="Trạng thái hiển thị">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <FormField
+              label="Slug (đường dẫn)"
+              hint={`Đường dẫn: /activities/${value.slug || "…"}`}
+            >
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  value={value.slug}
+                  onChange={(e) => onChange({ slug: e.target.value })}
+                />
+              )}
+            </FormField>
+            <FormField label="Loại hoạt động">
               {(field) => (
                 <Select
-                  value={value.manual_status}
-                  onValueChange={(v) => onChange({ manual_status: v as ManualStatus })}
+                  value={value.category}
+                  onValueChange={(v) => onChange({ category: v as ActivityCategory })}
                 >
                   <SelectTrigger
                     {...field}
-                    aria-label="Trạng thái hiển thị"
+                    aria-label="Loại hoạt động"
                     className="h-9 w-full rounded-lg text-sm"
                   >
-                    <SelectValue>{MANUAL_LABEL[value.manual_status]}</SelectValue>
+                    <SelectValue>{CATEGORY_LABEL[value.category]}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="z-[95] rounded-xl">
-                    {Object.entries(MANUAL_LABEL).map(([k, v]) => (
+                    {CATS.map((k) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {CATEGORY_LABEL[k]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormField>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Ảnh banner</h3>
+          <label
+            className="group relative block aspect-video w-full max-w-[320px] cursor-pointer overflow-hidden rounded-xl border border-dashed border-input bg-muted/30 transition-colors hover:bg-secondary/40"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const file = e.dataTransfer.files[0];
+              if (file) onUpload(file);
+            }}
+          >
+            {bannerUrl ? (
+              <>
+                <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
+                <span className="absolute inset-x-0 bottom-0 bg-black/50 py-1.5 text-center text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  Bấm hoặc kéo thả để đổi ảnh
+                </span>
+              </>
+            ) : (
+              <span className="flex h-full flex-col items-center justify-center gap-1.5 px-4 text-center text-muted-foreground">
+                <Upload className="h-5 w-5" />
+                <span className="font-medium text-foreground">
+                  {value.banner_path ? "Đã có ảnh, bấm để đổi" : "Kéo thả hoặc bấm để tải ảnh"}
+                </span>
+                <span className="text-[11px]">JPG/PNG/WebP ≤ 5MB, nên dùng tỉ lệ 16:9</span>
+              </span>
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onUpload(file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {value.banner_path && (
+            <Button
+              type="button"
+              variant="link"
+              size="admin-sm"
+              onClick={() => onChange({ banner_path: "" })}
+              className="h-auto px-0 font-normal text-destructive [&_svg]:size-3.5"
+            >
+              <X aria-hidden /> Gỡ ảnh
+            </Button>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Mô tả</h3>
+          <FormField label="Mô tả ngắn" hint={`${value.short_description.length}/300`}>
+            {(field) => (
+              <AdminInput
+                {...field}
+                maxLength={300}
+                value={value.short_description}
+                onChange={(e) => onChange({ short_description: e.target.value })}
+              />
+            )}
+          </FormField>
+          <FormField label="Mô tả chi tiết">
+            {(field) => (
+              <AdminTextarea
+                {...field}
+                rows={6}
+                maxLength={10000}
+                value={value.description}
+                onChange={(e) => onChange({ description: e.target.value })}
+              />
+            )}
+          </FormField>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Thời gian & địa điểm</h3>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <FormField label="Bắt đầu">
+              {(field) => (
+                <DateTimePicker
+                  id={field.id}
+                  value={isoToLocal(value.start_time)}
+                  onChange={(v) => onChange({ start_time: localToIso(v) })}
+                  placeholder="Chọn ngày giờ bắt đầu"
+                  clearable
+                />
+              )}
+            </FormField>
+            <FormField label="Kết thúc">
+              {(field) => (
+                <DateTimePicker
+                  id={field.id}
+                  value={isoToLocal(value.end_time)}
+                  onChange={(v) => onChange({ end_time: localToIso(v) })}
+                  {...(value.start_time ? { min: isoToLocal(value.start_time) } : {})}
+                  placeholder="Chọn ngày giờ kết thúc"
+                  clearable
+                />
+              )}
+            </FormField>
+            <FormField label="Hình thức">
+              {(field) => (
+                <Select
+                  value={value.location_type}
+                  onValueChange={(v) => onChange({ location_type: v as LocationType })}
+                >
+                  <SelectTrigger
+                    {...field}
+                    aria-label="Hình thức"
+                    className="h-9 w-full rounded-lg text-sm"
+                  >
+                    <SelectValue>{LOCATION_LABEL[value.location_type]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="z-[95] rounded-xl">
+                    {Object.entries(LOCATION_LABEL).map(([k, v]) => (
                       <SelectItem key={k} value={k} className="text-xs">
                         {v}
                       </SelectItem>
@@ -838,17 +703,164 @@ function ActivityDrawer({
                 </Select>
               )}
             </FormField>
+            <FormField label="Địa điểm / nền tảng">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  maxLength={300}
+                  placeholder="vd: Google Meet hoặc địa chỉ"
+                  value={value.location_detail}
+                  onChange={(e) => onChange({ location_detail: e.target.value })}
+                />
+              )}
+            </FormField>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Đăng ký</h3>
+          {onOpenRegs && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+              <span className="flex items-center gap-2 text-xs text-foreground">
+                <Ticket className="h-4 w-4 text-primary" />
+                Đã có <strong className="font-semibold">{regCount}</strong> đơn đăng ký
+              </span>
+              <Button
+                type="button"
+                variant="link"
+                size="admin-sm"
+                onClick={onOpenRegs}
+                className="h-auto shrink-0 px-0 font-semibold text-primary"
+              >
+                Xem đơn →
+              </Button>
+            </div>
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {REG_MODES.map(([k, l, d]) => {
+              const on = k === "ext" ? extMode : !extMode;
+              return (
+                <Button
+                  type="button"
+                  key={k}
+                  variant="outline"
+                  aria-pressed={on}
+                  onClick={() => onExtMode(k === "ext")}
+                  className={`h-auto flex-col items-start gap-0.5 whitespace-normal rounded-xl p-3 text-left font-normal shadow-none ${
+                    on ? "border-primary bg-primary/5 hover:bg-primary/5" : ""
+                  }`}
+                >
+                  <span className="text-xs font-semibold text-foreground">{l}</span>
+                  <span className="block text-[11px] text-muted-foreground">{d}</span>
+                </Button>
+              );
+            })}
+          </div>
+          {extMode && (
+            <FormField label="Link đăng ký ngoài (không bắt buộc)">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  placeholder="forms.gle/…"
+                  value={value.registration_url}
+                  onChange={(e) => onChange({ registration_url: e.target.value })}
+                />
+              )}
+            </FormField>
+          )}
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <FormField label="Hạn đăng ký (không bắt buộc)">
+              {(field) => (
+                <DateTimePicker
+                  id={field.id}
+                  value={isoToLocal(value.registration_deadline)}
+                  onChange={(v) => onChange({ registration_deadline: localToIso(v) })}
+                  placeholder="Không đặt hạn"
+                  clearable
+                  clearLabel="Bỏ hạn đăng ký"
+                />
+              )}
+            </FormField>
+            <FormField label="Số người tối đa" hint="0 = không giới hạn">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  type="number"
+                  min={0}
+                  value={value.max_participants}
+                  onChange={(e) =>
+                    onChange({ max_participants: Math.max(0, Number(e.target.value)) })
+                  }
+                />
+              )}
+            </FormField>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Liên kết</h3>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <FormField label="Link Facebook">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  value={value.facebook_url}
+                  onChange={(e) => onChange({ facebook_url: e.target.value })}
+                />
+              )}
+            </FormField>
+            <FormField label="Link Website">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  value={value.website_url}
+                  onChange={(e) => onChange({ website_url: e.target.value })}
+                />
+              )}
+            </FormField>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Xuất bản</h3>
+          {canPublish ? (
+            <>
+              <FormField label="Trạng thái hiển thị">
+                {(field) => (
+                  <Select
+                    value={value.manual_status}
+                    onValueChange={(v) => onChange({ manual_status: v as ManualStatus })}
+                  >
+                    <SelectTrigger
+                      {...field}
+                      aria-label="Trạng thái hiển thị"
+                      className="h-9 w-full rounded-lg text-sm"
+                    >
+                      <SelectValue>{MANUAL_LABEL[value.manual_status]}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="z-[95] rounded-xl">
+                      {Object.entries(MANUAL_LABEL).map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="text-xs">
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </FormField>
+              <p className="text-[11px] text-muted-foreground">
+                Khi Đã đăng, trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời
+                gian.
+              </p>
+            </>
+          ) : (
             <p className="text-[11px] text-muted-foreground">
-              Khi Đã đăng, trạng thái Sắp diễn ra / Đang diễn ra / Đã kết thúc tự tính theo thời
-              gian.
+              Trạng thái: <b className="text-foreground">{MANUAL_LABEL[value.manual_status]}</b>.
+              Bạn đang xem ở chế độ chỉ đọc; Trưởng/Phó Ban sẽ chỉnh sửa và đăng hoạt động.
             </p>
-          </>
-        ) : (
-          <p className="text-[11px] text-muted-foreground">
-            Hoạt động được lưu ở dạng Nháp. Trưởng/Phó Ban Truyền thông sẽ duyệt và đăng.
-          </p>
-        )}
-      </section>
+          )}
+        </section>
+      </fieldset>
 
       {onTrash && (
         <DangerZone
@@ -898,7 +910,7 @@ function ActivitiesAdmin() {
             ([k]) =>
               k === "list" ||
               (k === "regs" && canRegs) ||
-              (k === "audit" && canPublish) ||
+              (k === "audit" && canRegs) ||
               (k === "trash" && (canPublish || canPurge)),
           ).map(([k, label]) => {
             const badge = k === "list" ? (acts.data?.length ?? 0) : k === "regs" ? pendingRegs : 0;
@@ -920,7 +932,7 @@ function ActivitiesAdmin() {
       </div>
       {tab === "list" && (
         <ListTab
-          {...(canPublish
+          {...(canRegs
             ? {
                 onOpenPendingRegs: () => {
                   setRegsPreset("PENDING");
@@ -937,7 +949,9 @@ function ActivitiesAdmin() {
           pendingRegs={pendingRegs}
         />
       )}
-      {tab === "regs" && <RegsTab initialStatus={regsPreset} initialActivity={regsActivity} />}
+      {tab === "regs" && (
+        <RegsTab canEdit={canPublish} initialStatus={regsPreset} initialActivity={regsActivity} />
+      )}
       {tab === "audit" && <AuditTab />}
       {tab === "trash" && (
         <TrashList
@@ -1024,7 +1038,7 @@ function ListTab({
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!f) return;
+    if (!canPublish || !f) return;
     setErr("");
     if (f.start_time && f.end_time && f.end_time < f.start_time)
       return setErr("Thời gian kết thúc phải sau thời gian bắt đầu.");
@@ -1067,7 +1081,7 @@ function ListTab({
     refresh();
   };
   const upload = async (file: File) => {
-    if (!f) return;
+    if (!canPublish || !f) return;
     if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 5 * 1024 * 1024)
       return setErr("Ảnh JPG/PNG/WebP, tối đa 5MB.");
     setBusy(true);
@@ -1081,11 +1095,13 @@ function ListTab({
     setF({ ...f, banner_path: path });
   };
   const patch = async (a: ActivityRow, p: Partial<Omit<ActivityRow, "banner">>) => {
+    if (!canPublish) return;
     const { error } = await supabase.from("activities").update(p).eq("id", a.id);
     if (error) setErr(error.message);
     else refresh();
   };
   const duplicate = (a: ActivityRow) => {
+    if (!canPublish) return;
     const { id: _i, created_at: _c, deleted_at: _d, banner: _b, ...rest } = a;
     setF({
       ...rest,
@@ -1096,6 +1112,7 @@ function ListTab({
   };
   const { confirm, dialog } = useConfirm();
   const remove = async (a: ActivityRow) => {
+    if (!canPublish) return;
     if (
       !(await confirm({
         title: "Chuyển hoạt động vào Thùng rác?",
@@ -1108,8 +1125,10 @@ function ListTab({
     patch(a, { deleted_at: new Date().toISOString() } as Partial<Omit<ActivityRow, "banner">>);
   };
 
-  const togglePublish = (a: ActivityRow) =>
+  const togglePublish = (a: ActivityRow) => {
+    if (!canPublish) return;
     patch(a, { manual_status: a.manual_status === "published" ? "hidden" : "published" });
+  };
 
   const now = Date.now();
   const all = acts.data ?? [];
@@ -1142,7 +1161,7 @@ function ListTab({
     <AdminPageHeader
       title="Hoạt động"
       actions={
-        f ? null : (
+        f || !canPublish ? null : (
           <Button type="button" size="admin" onClick={() => setF({ ...EMPTY })}>
             <Plus /> Tạo hoạt động
           </Button>
@@ -1292,7 +1311,12 @@ function ListTab({
         (all.length === 0 ? (
           <EmptyState
             title="Chưa có hoạt động nào"
-            description="Bấm “Tạo hoạt động” trên thanh tiêu đề để thêm workshop, cuộc thi hay sự kiện đầu tiên."
+            {...(canPublish
+              ? {
+                  description:
+                    "Bấm “Tạo hoạt động” trên thanh tiêu đề để thêm workshop, cuộc thi hay sự kiện đầu tiên.",
+                }
+              : {})}
           />
         ) : (
           <EmptyState
@@ -1349,8 +1373,8 @@ function ListTab({
               setF(null);
               setErr("");
             }}
-            {...(editRow ? { onDuplicate: () => duplicate(editRow) } : {})}
-            {...(editRow && (canPublish || editRow.manual_status === "draft")
+            {...(editRow && canPublish ? { onDuplicate: () => duplicate(editRow) } : {})}
+            {...(editRow && canPublish
               ? {
                   onTrash: () => {
                     setF(null);
@@ -1437,9 +1461,11 @@ function RegStatusPicker({
 }
 
 function RegsTab({
+  canEdit,
   initialStatus = "",
   initialActivity = "",
 }: {
+  canEdit: boolean;
   initialStatus?: string;
   initialActivity?: string;
 }) {
@@ -1452,6 +1478,7 @@ function RegsTab({
   const [err, setErr] = useState("");
   const title = (id: string) => acts.data?.find((a) => a.id === id)?.title ?? "—";
   const setStatus = async (r: Reg, status: string) => {
+    if (!canEdit) return;
     const note = window.prompt("Ghi chú (tùy chọn):", r.admin_note) ?? r.admin_note;
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase
@@ -1577,12 +1604,14 @@ function RegsTab({
               {r.admin_note && <p className="mt-1 text-muted-foreground">{r.admin_note}</p>}
             </td>
             <td className="p-3">
-              <RegStatusPicker
-                options={Object.fromEntries(
-                  Object.entries(REG_STATUS).filter(([k]) => k !== r.status),
-                )}
-                onPick={(s) => setStatus(r, s)}
-              />
+              {canEdit && (
+                <RegStatusPicker
+                  options={Object.fromEntries(
+                    Object.entries(REG_STATUS).filter(([k]) => k !== r.status),
+                  )}
+                  onPick={(s) => setStatus(r, s)}
+                />
+              )}
             </td>
           </AdminTableRow>
         ))}

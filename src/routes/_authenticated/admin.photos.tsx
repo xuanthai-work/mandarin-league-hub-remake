@@ -83,11 +83,12 @@ function AdminPhotos() {
 
   const access = useAdminAccess();
   const canManage = !!access.data && can(access.data.perms, "photos.edit");
+  const canView = canManage || (!!access.data && can(access.data.perms, "photos.view"));
 
   const photos = useQuery({
     queryKey: ["activity-photos", "all"],
     queryFn: listAllPhotos,
-    enabled: canManage,
+    enabled: canView,
   });
 
   const [busy, setBusy] = useState(false);
@@ -127,6 +128,7 @@ function AdminPhotos() {
   }, []);
 
   const run = async (fn: () => Promise<unknown>, ok: string) => {
+    if (!canManage) return;
     setBusy(true);
     try {
       await fn();
@@ -148,6 +150,7 @@ function AdminPhotos() {
   const canReorder = filter === "all" && !busy && pending.length === 0;
 
   const moveTo = (id: string, target: number) => {
+    if (!canManage) return;
     if (busy || pending.length > 0) return;
     const ids = list.map((p) => p.id);
     const from = ids.indexOf(id);
@@ -158,6 +161,7 @@ function AdminPhotos() {
   };
 
   const handleFiles = async (files: File[]) => {
+    if (!canManage) return;
     if (!files.length) return;
 
     const validFiles = files.filter((f) => f.type.startsWith("image/"));
@@ -245,7 +249,7 @@ function AdminPhotos() {
   };
 
   if (access.isLoading) return <p className="p-10 text-center">Đang kiểm tra quyền…</p>;
-  if (!canManage)
+  if (!canView)
     return (
       <div className="mx-auto max-w-md p-10 text-center">
         <p>Bạn chưa được cấp quyền quản lý ảnh.</p>
@@ -271,16 +275,18 @@ function AdminPhotos() {
       <AdminPageHeader
         title="Hình ảnh"
         actions={
-          <Button
-            type="button"
-            size="admin"
-            onClick={() => fileInputRef.current?.click()}
-            aria-label="Tải ảnh lên"
-            title="Tải ảnh lên"
-          >
-            <Upload className="h-4 w-4" />
-            Tải ảnh lên
-          </Button>
+          canManage ? (
+            <Button
+              type="button"
+              size="admin"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Tải ảnh lên"
+              title="Tải ảnh lên"
+            >
+              <Upload className="h-4 w-4" />
+              Tải ảnh lên
+            </Button>
+          ) : null
         }
       />
 
@@ -300,11 +306,15 @@ function AdminPhotos() {
 
       {/* Thanh tóm tắt + bộ lọc */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="hidden text-xs text-muted-foreground sm:block">
-          {filter === "all"
-            ? "Kéo thả để đổi thứ tự. 3 ảnh đang hiện đầu tiên xuất hiện ngay khi khách mở trang chủ."
-            : "Chọn Tất cả để kéo thả đổi thứ tự."}
-        </p>
+        {canManage ? (
+          <p className="hidden text-xs text-muted-foreground sm:block">
+            {filter === "all"
+              ? "Kéo thả để đổi thứ tự. 3 ảnh đang hiện đầu tiên xuất hiện ngay khi khách mở trang chủ."
+              : "Chọn Tất cả để kéo thả đổi thứ tự."}
+          </p>
+        ) : (
+          <span />
+        )}
 
         <SegmentedControl
           label="Lọc ảnh theo trạng thái"
@@ -331,32 +341,37 @@ function AdminPhotos() {
       )}
 
       {/* Danh sách rỗng hoàn toàn */}
-      {!photos.isLoading && list.length === 0 && pending.length === 0 && (
-        // eslint-disable-next-line no-restricted-syntax -- vùng kéo thả phủ cả khối, Button của kit không hợp
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => fileInputRef.current?.click()}
-          {...dropHandlers}
-          className={`flex min-h-72 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 ${
-            dragOver
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/60 hover:bg-primary/5"
-          }`}
-        >
-          <ImagePlus className="mb-2 h-10 w-10 text-muted-foreground" />
-          <p className="text-sm font-semibold text-foreground sm:hidden">Chạm để thêm ảnh</p>
-          <p className="hidden text-sm font-semibold text-foreground sm:block">
-            Kéo thả ảnh vào đây hoặc bấm để chọn ảnh
-          </p>
-          <p className="mt-1 hidden text-xs text-muted-foreground sm:block">
-            Có thể chọn nhiều ảnh cùng lúc. Định dạng PNG, JPG, WebP...
-          </p>
-          <p className="mt-2 text-xs font-medium text-primary">
-            Ảnh sẽ hiển thị ở mục Khoảnh khắc cùng TML trên trang chủ.
-          </p>
-        </button>
-      )}
+      {!photos.isLoading &&
+        list.length === 0 &&
+        pending.length === 0 &&
+        (canManage ? (
+          // eslint-disable-next-line no-restricted-syntax -- vùng kéo thả phủ cả khối, Button của kit không hợp
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => fileInputRef.current?.click()}
+            {...dropHandlers}
+            className={`flex min-h-72 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 ${
+              dragOver
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/60 hover:bg-primary/5"
+            }`}
+          >
+            <ImagePlus className="mb-2 h-10 w-10 text-muted-foreground" />
+            <p className="text-sm font-semibold text-foreground sm:hidden">Chạm để thêm ảnh</p>
+            <p className="hidden text-sm font-semibold text-foreground sm:block">
+              Kéo thả ảnh vào đây hoặc bấm để chọn ảnh
+            </p>
+            <p className="mt-1 hidden text-xs text-muted-foreground sm:block">
+              Có thể chọn nhiều ảnh cùng lúc. Định dạng PNG, JPG, WebP...
+            </p>
+            <p className="mt-2 text-xs font-medium text-primary">
+              Ảnh sẽ hiển thị ở mục Khoảnh khắc cùng TML trên trang chủ.
+            </p>
+          </button>
+        ) : (
+          <EmptyState title="Chưa có ảnh nào." />
+        ))}
 
       {/* Lọc không có kết quả */}
       {!photos.isLoading &&
@@ -406,7 +421,8 @@ function AdminPhotos() {
                     isFeaturedHome={isFeaturedHome}
                     isSelected={isSelected}
                     busy={busy}
-                    sortable={canReorder}
+                    sortable={canManage && canReorder}
+                    canEdit={canManage}
                     onOpen={(id) => {
                       if (suppressClickRef.current) return;
                       setOpenId(id);
@@ -467,7 +483,7 @@ function AdminPhotos() {
             ))}
 
             {/* Ô kéo thả tải ảnh cuối lưới (chỉ hiện khi filter === "all") */}
-            {filter === "all" && (
+            {filter === "all" && canManage && (
               // eslint-disable-next-line no-restricted-syntax -- vùng kéo thả phủ cả khối, Button của kit không hợp
               <button
                 type="button"
@@ -503,6 +519,7 @@ function AdminPhotos() {
             index={list.findIndex((p) => p.id === activePhoto.id)}
             total={list.length}
             busy={busy}
+            readOnly={!canManage}
             reorderLocked={busy || pending.length > 0}
             onClose={() => setOpenId(null)}
             onUpdateCaption={async (id, cap) => {
@@ -538,6 +555,7 @@ function PhotoCard({
   isSelected,
   busy,
   sortable,
+  canEdit,
   onOpen,
   onToggle,
 }: {
@@ -547,6 +565,7 @@ function PhotoCard({
   isSelected: boolean;
   busy: boolean;
   sortable: boolean;
+  canEdit: boolean;
   onOpen: (id: string) => void;
   onToggle: (photo: ActivityPhoto) => void;
 }) {
@@ -633,29 +652,31 @@ function PhotoCard({
         )}
 
         {/* Nút ẩn/hiện nhanh góc trên-phải (anh em sibling với nút mở drawer) */}
-        <Button
-          type="button"
-          variant="outline"
-          size="admin-icon"
-          disabled={busy}
-          aria-label={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
-          title={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle(photo);
-          }}
-          className={`absolute right-1.5 top-1.5 z-10 h-7 w-7 rounded-full bg-card/90 backdrop-blur-sm transition-opacity sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
-            isDragging ? "invisible pointer-events-none" : ""
-          }`}
-        >
-          {photo.visible ? (
-            <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          ) : (
-            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          )}
-        </Button>
+        {canEdit && (
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-icon"
+            disabled={busy}
+            aria-label={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
+            title={photo.visible ? "Ẩn khỏi trang chủ" : "Hiện trên trang chủ"}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(photo);
+            }}
+            className={`absolute right-1.5 top-1.5 z-10 h-7 w-7 rounded-full bg-card/90 backdrop-blur-sm transition-opacity sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
+              isDragging ? "invisible pointer-events-none" : ""
+            }`}
+          >
+            {photo.visible ? (
+              <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            ) : (
+              <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Chú thích dưới ảnh */}
@@ -675,6 +696,7 @@ function PhotoDrawer({
   index,
   total,
   busy,
+  readOnly,
   reorderLocked,
   onClose,
   onUpdateCaption,
@@ -687,6 +709,7 @@ function PhotoDrawer({
   index: number;
   total: number;
   busy: boolean;
+  readOnly: boolean;
   reorderLocked: boolean;
   onClose: () => void;
   onUpdateCaption: (id: string, caption: string) => Promise<void>;
@@ -741,71 +764,84 @@ function PhotoDrawer({
           )}
         </div>
 
-        <div>
-          <input
-            ref={replaceInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            disabled={busy}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (file) {
-                if (!file.type.startsWith("image/")) {
-                  toast.error("Vui lòng chọn tệp hình ảnh.");
-                  return;
-                }
-                onReplace(photo, file);
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="admin-sm"
-            disabled={busy}
-            onClick={() => replaceInputRef.current?.click()}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Thay ảnh
-          </Button>
-        </div>
-      </div>
-
-      {/* 2. Chú thích */}
-      <FormField
-        label="Chú thích"
-        hint="Hiện dưới ảnh trên trang chủ và dùng làm mô tả cho trình đọc màn hình."
-      >
-        {(field) => (
-          <div className="flex gap-2">
-            <AdminInput
-              {...field}
-              maxLength={200}
+        {!readOnly && (
+          <div>
+            <input
+              ref={replaceInputRef}
+              type="file"
+              accept="image/*"
+              hidden
               disabled={busy}
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && caption.trim() !== (photo.caption ?? "").trim()) {
-                  e.preventDefault();
-                  onUpdateCaption(photo.id, caption.trim());
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) {
+                  if (!file.type.startsWith("image/")) {
+                    toast.error("Vui lòng chọn tệp hình ảnh.");
+                    return;
+                  }
+                  onReplace(photo, file);
                 }
               }}
-              placeholder="Nhập chú thích cho ảnh…"
-              className="flex-1"
             />
             <Button
               type="button"
-              size="admin"
-              disabled={busy || caption.trim() === (photo.caption ?? "").trim()}
-              onClick={() => onUpdateCaption(photo.id, caption.trim())}
+              variant="outline"
+              size="admin-sm"
+              disabled={busy}
+              onClick={() => replaceInputRef.current?.click()}
             >
-              Lưu
+              <RefreshCw className="h-3.5 w-3.5" />
+              Thay ảnh
             </Button>
           </div>
         )}
-      </FormField>
+      </div>
+
+      {/* 2. Chú thích */}
+      {readOnly ? (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-foreground">Chú thích</p>
+          <p className="text-sm text-foreground">
+            {photo.caption || (
+              <span className="italic text-muted-foreground">Chưa có chú thích</span>
+            )}
+          </p>
+        </div>
+      ) : (
+        <FormField
+          label="Chú thích"
+          hint="Hiện dưới ảnh trên trang chủ và dùng làm mô tả cho trình đọc màn hình."
+        >
+          {(field) => (
+            <div className="flex gap-2">
+              <AdminInput
+                {...field}
+                maxLength={200}
+                disabled={busy}
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && caption.trim() !== (photo.caption ?? "").trim()) {
+                    e.preventDefault();
+                    onUpdateCaption(photo.id, caption.trim());
+                  }
+                }}
+                placeholder="Nhập chú thích cho ảnh…"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                size="admin"
+                disabled={busy || caption.trim() === (photo.caption ?? "").trim()}
+                onClick={() => onUpdateCaption(photo.id, caption.trim())}
+              >
+                Lưu
+              </Button>
+            </div>
+          )}
+        </FormField>
+      )}
 
       {/* 3. Hiển thị */}
       <div className="flex items-center justify-between rounded-xl border border-border/70 bg-card p-3">
@@ -817,72 +853,76 @@ function PhotoDrawer({
         </div>
         <Switch
           aria-label="Hiện trên trang chủ"
-          disabled={busy}
+          disabled={busy || readOnly}
           checked={photo.visible}
           onCheckedChange={(checked) => onToggleVisible(photo, checked)}
         />
       </div>
 
       {/* 4. Vị trí */}
-      <div className="space-y-1.5">
-        <p className="text-xs font-semibold text-foreground">Vị trí trong danh sách</p>
-        <div
-          role="group"
-          aria-label="Vị trí trong danh sách"
-          className="flex flex-wrap items-center gap-2"
-        >
-          <Button
-            type="button"
-            variant="outline"
-            size="admin-sm"
-            disabled={reorderLocked || index === 0}
-            onClick={() => onMoveTo(photo.id, 0)}
+      {!readOnly && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold text-foreground">Vị trí trong danh sách</p>
+          <div
+            role="group"
+            aria-label="Vị trí trong danh sách"
+            className="flex flex-wrap items-center gap-2"
           >
-            <ChevronsUp className="h-3.5 w-3.5" />
-            Lên đầu
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="admin-sm"
-            disabled={reorderLocked || index === 0}
-            onClick={() => onMoveTo(photo.id, index - 1)}
-          >
-            <ArrowUp className="h-3.5 w-3.5" />
-            Lên
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="admin-sm"
-            disabled={reorderLocked || index === total - 1}
-            onClick={() => onMoveTo(photo.id, index + 1)}
-          >
-            <ArrowDown className="h-3.5 w-3.5" />
-            Xuống
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="admin-sm"
-            disabled={reorderLocked || index === total - 1}
-            onClick={() => onMoveTo(photo.id, total - 1)}
-          >
-            <ChevronsDown className="h-3.5 w-3.5" />
-            Xuống cuối
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              disabled={reorderLocked || index === 0}
+              onClick={() => onMoveTo(photo.id, 0)}
+            >
+              <ChevronsUp className="h-3.5 w-3.5" />
+              Lên đầu
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              disabled={reorderLocked || index === 0}
+              onClick={() => onMoveTo(photo.id, index - 1)}
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+              Lên
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              disabled={reorderLocked || index === total - 1}
+              onClick={() => onMoveTo(photo.id, index + 1)}
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+              Xuống
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              disabled={reorderLocked || index === total - 1}
+              onClick={() => onMoveTo(photo.id, total - 1)}
+            >
+              <ChevronsDown className="h-3.5 w-3.5" />
+              Xuống cuối
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 5. Danger zone xóa ảnh */}
-      <DangerZone
-        title="Xóa ảnh"
-        description="Ảnh sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không khôi phục được. Muốn tạm gỡ khỏi trang chủ, hãy tắt Hiện trên trang chủ."
-        confirmLabel="Xác nhận xóa vĩnh viễn"
-        actionLabel="Xóa ảnh"
-        onConfirm={() => void onDelete(photo)}
-        disabled={busy}
-      />
+      {!readOnly && (
+        <DangerZone
+          title="Xóa ảnh"
+          description="Ảnh sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không khôi phục được. Muốn tạm gỡ khỏi trang chủ, hãy tắt Hiện trên trang chủ."
+          confirmLabel="Xác nhận xóa vĩnh viễn"
+          actionLabel="Xóa ảnh"
+          onConfirm={() => void onDelete(photo)}
+          disabled={busy}
+        />
+      )}
     </AdminDrawer>
   );
 }
