@@ -52,6 +52,13 @@ import {
 } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
+import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
+import { StatusPill as KitStatusPill, type StatusTone } from "@/components/admin/kit/StatusPill";
+import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/admin/activities")({
   staticData: { sitemap: false },
   head: () => ({
@@ -133,20 +140,20 @@ function timeHint(a: ActivityRow, g: Group, now = Date.now()): string {
   return a.end_time ? `Kết thúc ${fmtDateTime(a.end_time)}` : "";
 }
 
-const MANUAL_TONE: Record<ManualStatus, string> = {
-  draft: "bg-muted text-muted-foreground",
-  published: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  hidden: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  cancelled: "bg-destructive/10 text-destructive",
+const MANUAL_TONE: Record<ManualStatus, StatusTone> = {
+  draft: "neutral",
+  published: "success",
+  hidden: "warning",
+  cancelled: "danger",
 };
 
-const ACT_COLS = [
-  { label: "Hoạt động", className: "" },
-  { label: "Thời gian", className: "w-[190px]" },
-  { label: "Đăng ký", className: "w-[160px]" },
-  { label: "Hiển thị", className: "w-[120px]" },
-  { label: "Thao tác", className: "w-[150px] text-right" },
-] as const;
+const ACT_COLS: AdminColumn[] = [
+  { key: "activity", label: "Hoạt động" },
+  { key: "time", label: "Thời gian", className: "w-[190px]" },
+  { key: "reg", label: "Đăng ký", className: "w-[160px]" },
+  { key: "status", label: "Hiển thị", className: "w-[120px]" },
+  { key: "actions", label: "Thao tác", srOnly: true, className: "w-[150px] text-right" },
+];
 
 const SECTION_TITLE = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 const FIELD =
@@ -157,14 +164,7 @@ const SELECT_TRIGGER =
 
 /** Single status label per activity: the group already conveys the time lifecycle. */
 function StatusPill({ status }: { status: ManualStatus }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${MANUAL_TONE[status]}`}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-      {MANUAL_LABEL[status]}
-    </span>
-  );
+  return <KitStatusPill tone={MANUAL_TONE[status]}>{MANUAL_LABEL[status]}</KitStatusPill>;
 }
 
 function Thumb({ src, className = "" }: { src?: string | undefined; className?: string }) {
@@ -200,12 +200,14 @@ function RegCell({ a, count }: { a: ActivityRow; count: number }) {
       <p className="text-xs font-medium tabular-nums text-foreground">
         {count}
         {max > 0 && <span className="text-muted-foreground">/{max}</span>}
-        {full && <span className="ml-1.5 text-[10px] font-semibold text-amber-600">Đã đủ</span>}
+        {full && (
+          <span className="ml-1.5 text-[10px] font-semibold text-warning-foreground">Đã đủ</span>
+        )}
       </p>
       {max > 0 && (
         <div className="mt-1 h-1 w-full max-w-[110px] overflow-hidden rounded-full bg-muted">
           <div
-            className={`h-full rounded-full ${full ? "bg-amber-500" : "bg-primary"}`}
+            className={`h-full rounded-full ${full ? "bg-warning-foreground" : "bg-primary"}`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -229,55 +231,64 @@ type RowActionProps = {
   onRemove: (a: ActivityRow) => void;
 };
 
-const ICON_BTN =
-  "inline-flex cursor-pointer items-center justify-center rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
-
 function RowActions({ a, canPublish, onDuplicate, onTogglePublish, onRemove }: RowActionProps) {
   const published = a.manual_status === "published";
   return (
     <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
       {published && (
-        <Link
-          to="/activities/$activityId"
-          params={{ activityId: a.slug }}
-          target="_blank"
-          title="Xem trang công khai"
-          aria-label="Xem trang công khai"
-          className={ICON_BTN}
+        <Button
+          asChild
+          variant="outline"
+          size="admin-icon"
+          className="text-muted-foreground [&_svg]:size-3.5"
         >
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
+          <Link
+            to="/activities/$activityId"
+            params={{ activityId: a.slug }}
+            target="_blank"
+            title="Xem trang công khai"
+            aria-label="Xem trang công khai"
+          >
+            <ExternalLink aria-hidden />
+          </Link>
+        </Button>
       )}
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="admin-icon"
         title="Sao chép"
         aria-label="Sao chép"
         onClick={() => onDuplicate(a)}
-        className={ICON_BTN}
+        className="text-muted-foreground [&_svg]:size-3.5"
       >
-        <Copy className="h-3.5 w-3.5" />
-      </button>
+        <Copy aria-hidden />
+      </Button>
       {canPublish && (
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="admin-icon"
           title={published ? "Tạm ẩn" : "Duyệt & Đăng"}
           aria-label={published ? "Tạm ẩn" : "Duyệt & Đăng"}
           onClick={() => onTogglePublish(a)}
-          className={ICON_BTN}
+          className="text-muted-foreground [&_svg]:size-3.5"
         >
-          {published ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-        </button>
+          {published ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+        </Button>
       )}
       {(canPublish || a.manual_status === "draft") && (
-        <button
+        <Button
           type="button"
+          variant="destructive-outline"
+          size="admin-icon"
           title="Chuyển vào Thùng rác"
           aria-label="Chuyển vào Thùng rác"
           onClick={() => onRemove(a)}
-          className={`${ICON_BTN} text-destructive hover:bg-destructive/10 hover:text-destructive`}
+          className="[&_svg]:size-3.5"
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+          <Trash2 aria-hidden />
+        </Button>
       )}
     </div>
   );
@@ -308,80 +319,63 @@ function ActivityGroup({
   return (
     <section>
       <h3 className="mb-2 px-1">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={onToggle}
           aria-expanded={open}
-          className="flex cursor-pointer items-center gap-2 text-sm font-bold tracking-tight text-foreground"
+          className="h-auto gap-2 px-0 text-sm font-bold tracking-tight text-foreground hover:bg-transparent"
         >
           <ChevronRight
-            className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+            aria-hidden
+            className={`text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
           />
           {label}
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
             {rows.length}
           </span>
-        </button>
+        </Button>
       </h3>
       {open && (
         <>
-          <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-xs md:block">
-            <div className="custom-scrollbar overflow-x-auto">
-              <table className="w-full min-w-[860px] table-fixed text-sm">
-                <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-                  <tr>
-                    {ACT_COLS.map((col) => (
-                      <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
-                        {col.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((a) => (
-                    <tr
-                      key={a.id}
-                      onClick={canEdit(a) ? () => onEdit(a) : undefined}
-                      className={`border-t border-border/60 transition-colors ${canEdit(a) ? "cursor-pointer hover:bg-accent/50" : ""}`}
-                    >
-                      <td className="p-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <Thumb src={a.banner} className="h-[45px] w-20" />
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-foreground" title={a.title}>
-                              {a.title}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {CATEGORY_LABEL[a.category]} · {LOCATION_LABEL[a.location_type]}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <p
-                          className={`text-xs font-medium ${a.start_time ? "text-foreground" : "text-muted-foreground"}`}
-                        >
-                          {a.start_time ? fmtDateTime(a.start_time) : "Chưa có lịch"}
-                        </p>
-                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                          {timeHint(a, group, now)}
-                        </p>
-                      </td>
-                      <td className="p-3">
-                        <RegCell a={a} count={counts?.get(a.id) ?? 0} />
-                      </td>
-                      <td className="p-3">
-                        <StatusPill status={a.manual_status} />
-                      </td>
-                      <td className="p-3">
-                        <RowActions a={a} canPublish={canPublish} {...actions} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <AdminTable className="hidden md:block" columns={ACT_COLS} minWidth="min-w-[860px]">
+            {rows.map((a) => (
+              <AdminTableRow key={a.id} {...(canEdit(a) ? { onOpen: () => onEdit(a) } : {})}>
+                <td className="p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Thumb src={a.banner} className="h-[45px] w-20" />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground" title={a.title}>
+                        {a.title}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {CATEGORY_LABEL[a.category]} · {LOCATION_LABEL[a.location_type]}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="p-3">
+                  <p
+                    className={`text-xs font-medium ${a.start_time ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    {a.start_time ? fmtDateTime(a.start_time) : "Chưa có lịch"}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                    {timeHint(a, group, now)}
+                  </p>
+                </td>
+                <td className="p-3">
+                  <RegCell a={a} count={counts?.get(a.id) ?? 0} />
+                </td>
+                <td className="p-3">
+                  <StatusPill status={a.manual_status} />
+                </td>
+                <td className="p-3">
+                  <RowActions a={a} canPublish={canPublish} {...actions} />
+                </td>
+              </AdminTableRow>
+            ))}
+          </AdminTable>
 
           <div className="space-y-2 md:hidden">
             {rows.map((a) => (
@@ -982,51 +976,33 @@ function ActivitiesAdmin() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <div className="custom-scrollbar max-w-full overflow-x-auto">
-        <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
-          {TABS.filter(
+        <SegmentedControl
+          label="Mục quản lý hoạt động"
+          value={tab}
+          onChange={openTab}
+          options={TABS.filter(
             ([k]) =>
               k === "list" ||
               (k === "regs" && canRegs) ||
               (k === "audit" && canPublish) ||
               (k === "trash" && (canPublish || canPurge)),
           ).map(([k, label]) => {
-            const active = tab === k;
             const badge = k === "list" ? (acts.data?.length ?? 0) : k === "regs" ? pendingRegs : 0;
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() => openTab(k)}
-                aria-pressed={active}
-                className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-4 ${
-                  active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="activities-tab-pill"
-                    className="absolute inset-0 rounded-lg bg-primary shadow-xs"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
+            return {
+              value: k as typeof tab,
+              label: (
+                <span className="flex items-center gap-2">
                   {label}
                   {badge > 0 && (
-                    <span
-                      className={`rounded-full px-1.5 text-[10px] font-semibold leading-relaxed ${
-                        active
-                          ? "bg-white/20 text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
+                    <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold leading-relaxed text-muted-foreground">
                       {badge}
                     </span>
                   )}
                 </span>
-              </button>
-            );
+              ),
+            };
           })}
-        </div>
+        />
       </div>
       {tab === "list" && (
         <ListTab
@@ -1253,15 +1229,9 @@ function ListTab({
       title="Hoạt động"
       actions={
         f ? null : (
-          <button
-            type="button"
-            onClick={() => setF({ ...EMPTY })}
-            aria-label="Tạo hoạt động"
-            title="Tạo hoạt động"
-          >
-            <Plus className="h-4 w-4" />
-            Tạo hoạt động
-          </button>
+          <Button type="button" size="admin" onClick={() => setF({ ...EMPTY })}>
+            <Plus /> Tạo hoạt động
+          </Button>
         )
       }
     />
@@ -1278,94 +1248,48 @@ function ListTab({
             : "grid grid-cols-2 gap-3 lg:grid-cols-3"
         }
       >
-        <button
-          type="button"
-          onClick={() => setTime(time === "upcoming" ? "" : "upcoming")}
-          aria-pressed={time === "upcoming"}
-          className={`cursor-pointer rounded-2xl border bg-card p-4 text-left shadow-2xs transition-colors hover:border-primary/40 ${
-            time === "upcoming" ? "border-primary ring-2 ring-primary/15" : "border-border/70"
-          }`}
-        >
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Sắp diễn ra</span>
-            <CalendarClock className="h-4 w-4 text-primary" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{upcoming}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Chưa tới giờ bắt đầu</p>
-        </button>
-
-        <div className="rounded-2xl border border-border/70 bg-card p-4 text-left shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Đang mở đăng ký</span>
-            <Ticket className="h-4 w-4 text-emerald-500" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{openRegs}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Đã đăng, còn hạn đăng ký</p>
-        </div>
-
+        <StatFilterCard
+          label="Sắp diễn ra"
+          icon={CalendarClock}
+          value={upcoming}
+          hint="Chưa tới giờ bắt đầu"
+          active={time === "upcoming"}
+          onToggle={() => setTime(time === "upcoming" ? "" : "upcoming")}
+        />
+        <StatFilterCard
+          label="Đang mở đăng ký"
+          icon={Ticket}
+          value={openRegs}
+          hint="Đã đăng, còn hạn đăng ký"
+        />
         {onOpenPendingRegs && (
-          <button
-            type="button"
-            onClick={() => onOpenPendingRegs()}
-            className="cursor-pointer rounded-2xl border border-border/70 bg-card p-4 text-left shadow-2xs transition-colors hover:border-primary/40"
-          >
-            <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-medium">Đơn chờ duyệt</span>
-              <Inbox className="h-4 w-4 text-amber-500" />
-            </div>
-            <p
-              className={`mt-2 text-2xl font-bold tracking-tight ${
-                pendingRegs > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"
-              }`}
-            >
-              {pendingRegs}
-            </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">Bấm để duyệt</p>
-          </button>
+          <StatFilterCard
+            label="Đơn chờ duyệt"
+            icon={Inbox}
+            value={pendingRegs}
+            hint="Bấm để duyệt"
+            attention={pendingRegs > 0}
+            onToggle={() => onOpenPendingRegs()}
+          />
         )}
-
-        <button
-          type="button"
-          onClick={() => setSt(st === "draft" ? "" : "draft")}
-          aria-pressed={st === "draft"}
-          className={`cursor-pointer rounded-2xl border bg-card p-4 text-left shadow-2xs transition-colors hover:border-primary/40 ${
-            st === "draft" ? "border-primary ring-2 ring-primary/15" : "border-border/70"
-          }`}
-        >
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Bản nháp</span>
-            <FilePen className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{drafts}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Chưa đăng lên website</p>
-        </button>
+        <StatFilterCard
+          label="Bản nháp"
+          icon={FilePen}
+          value={drafts}
+          hint="Chưa đăng lên website"
+          active={st === "draft"}
+          onToggle={() => setSt(st === "draft" ? "" : "draft")}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center">
-        <div className="relative col-span-2 sm:min-w-[240px] sm:max-w-xs sm:flex-1">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm tên hoặc slug…"
-            aria-label="Tìm kiếm hoạt động"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tên hoặc slug…"
+          label="Tìm kiếm hoạt động"
+          className="col-span-2 sm:min-w-[240px] sm:max-w-xs sm:flex-1"
+        />
         <Select value={cat || "all"} onValueChange={(v) => setCat(v === "all" ? "" : v)}>
           <SelectTrigger
             aria-label="Lọc theo loại"
@@ -1428,13 +1352,15 @@ function ListTab({
         </Select>
         <div className="flex items-center justify-end gap-3 sm:ml-auto">
           {filtered && (
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="admin-sm"
               onClick={clearFilters}
-              className="cursor-pointer text-xs font-medium text-primary hover:underline"
+              className="h-auto px-0 text-xs font-medium"
             >
               Xóa lọc
-            </button>
+            </Button>
           )}
           <span className="text-xs text-muted-foreground">{rows.length} hoạt động</span>
         </div>
@@ -1450,21 +1376,19 @@ function ListTab({
       {!acts.isLoading &&
         rows.length === 0 &&
         (all.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            Chưa có hoạt động nào. Bấm <strong className="text-foreground">Tạo hoạt động</strong>{" "}
-            trên thanh tiêu đề để thêm workshop, cuộc thi hay sự kiện đầu tiên.
-          </p>
+          <EmptyState
+            title="Chưa có hoạt động nào"
+            description="Bấm “Tạo hoạt động” trên thanh tiêu đề để thêm workshop, cuộc thi hay sự kiện đầu tiên."
+          />
         ) : (
-          <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            <p>Không có hoạt động khớp bộ lọc.</p>
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="mt-2 cursor-pointer text-xs font-medium text-primary hover:underline"
-            >
-              Xóa lọc
-            </button>
-          </div>
+          <EmptyState
+            title="Không có hoạt động khớp bộ lọc."
+            action={
+              <Button type="button" variant="outline" size="admin-sm" onClick={clearFilters}>
+                Xóa lọc
+              </Button>
+            }
+          />
         ))}
       <div className="space-y-6">
         {GROUPS.map((g) => {
