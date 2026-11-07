@@ -51,9 +51,22 @@ function PointsPage() {
   const attendAllDepts = hasAllScope(perms, "points.attendance");
   const canAdjust = can(perms, "points.adjust");
   const ownDept = me.department;
+  const canViewHistory = can(perms, "points.view");
+  const canPick = canAttend || canAdjust;
+  const manages = canViewHistory || canPick;
+
+  const leaderboard = useQuery({
+    queryKey: ["points-leaderboard"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("points_leaderboard");
+      if (error) throw error;
+      return (data ?? []).map((m) => ({ ...m, status: "active" })) as PointMember[];
+    },
+  });
 
   const members = useQuery({
     queryKey: ["points-members"],
+    enabled: manages,
     queryFn: async () =>
       ((
         await supabase
@@ -66,6 +79,7 @@ function PointsPage() {
   const fetchActiveAccountIds = useServerFn(getActiveAccountMemberIds);
   const activeAccountIds = useQuery({
     queryKey: ["points-active-accounts"],
+    enabled: manages,
     queryFn: async () => new Set(await fetchActiveAccountIds()),
   });
 
@@ -94,6 +108,7 @@ function PointsPage() {
   const statsSince = useMemo(() => shiftMonth(monthStart(new Date()), -1).toISOString(), []);
   const stats = useQuery({
     queryKey: ["points-stats", statsSince],
+    enabled: canViewHistory,
     queryFn: async () =>
       ((
         await supabase
@@ -119,6 +134,7 @@ function PointsPage() {
   };
 
   const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["points-leaderboard"] });
     qc.invalidateQueries({ queryKey: ["points-members"] });
     qc.invalidateQueries({ queryKey: ["points-history"] });
     qc.invalidateQueries({ queryKey: ["points-stats"] });
@@ -126,6 +142,12 @@ function PointsPage() {
   };
 
   const memberList = useMemo(() => members.data ?? [], [members.data]);
+  const ledgerMembers = useMemo(() => {
+    const map = new Map<string, PointMember>();
+    for (const m of [...(leaderboard.data ?? []), ...memberList]) map.set(m.id, m);
+    return [...map.values()];
+  }, [leaderboard.data, memberList]);
+
   /**
    * Only a member with an active profile AND an activated internal account joins the roster,
    * podium, attendance and bonus/penalty pickers. Everyone else stays on /admin/members.
@@ -179,27 +201,31 @@ function PointsPage() {
     <div className="mx-auto max-w-7xl space-y-5 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
         title="Điểm đóng góp"
-        description="Điều hành điểm cống hiến: bảng vinh danh, điểm danh hàng loạt và sổ cái kiểm toán đầy đủ."
+        description={
+          manages
+            ? "Điều hành điểm cống hiến: bảng vinh danh, điểm danh hàng loạt và sổ cái kiểm toán đầy đủ."
+            : "Bảng vinh danh điểm cống hiến của cả Liên đoàn và lịch sử điểm của riêng bạn."
+        }
         actions={headerActions}
       />
 
-      <ContributionsMetrics
-        rows={stats.data ?? history.data ?? []}
-        totalMembers={activeMembers.length}
-        loading={stats.isLoading && history.isLoading}
-        onFilterSelect={handleMetricClick}
-      />
+      {canViewHistory && (
+        <ContributionsMetrics
+          rows={stats.data ?? history.data ?? []}
+          totalMembers={activeMembers.length}
+          loading={stats.isLoading && history.isLoading}
+          onFilterSelect={handleMetricClick}
+        />
+      )}
 
-      <LeaderboardPanel
-        members={activeMembers}
-        loading={members.isLoading || activeAccountIds.isLoading}
-      />
+      <LeaderboardPanel members={leaderboard.data ?? []} loading={leaderboard.isLoading} />
 
       <TransactionLedger
         rows={history.data ?? []}
-        members={memberList}
+        members={ledgerMembers}
         loading={history.isLoading}
         capped={(history.data?.length ?? 0) >= LEDGER_LIMIT}
+        title={canViewHistory ? "Sổ cái lịch sử điểm" : "Lịch sử điểm của tôi"}
         appliedFilter={appliedFilter}
       />
 

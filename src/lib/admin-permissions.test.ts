@@ -82,6 +82,8 @@ describe("landsOnAdmin", () => {
   it("keeps member-only users on the dashboard", () =>
     expect(landsOnAdmin(["members", "settings"])).toBe(false));
   it("sends users with tasks to admin", () => expect(landsOnAdmin(["tasks"])).toBe(true));
+  it("sends users with contributions to admin", () =>
+    expect(landsOnAdmin(["contributions"])).toBe(true));
   it("sends users with a module section to admin", () =>
     expect(landsOnAdmin(["members", "news", "settings"])).toBe(true));
   it("keeps users without sections on the dashboard", () => expect(landsOnAdmin([])).toBe(false));
@@ -90,24 +92,34 @@ describe("landsOnAdmin", () => {
 describe("withPersonalSections", () => {
   it("keeps full access untouched and gives an empty list the personal sections", () => {
     expect(withPersonalSections("all")).toBe("all");
-    expect(withPersonalSections([])).toEqual(["tasks", "settings"]);
+    expect(withPersonalSections([])).toEqual(["tasks", "contributions", "settings"]);
   });
 
-  it("adds tasks and settings once, keeping module sections intact without duplicates", () => {
-    expect(withPersonalSections(["partners"])).toEqual(["partners", "tasks", "settings"]);
-    expect(withPersonalSections(["tasks", "settings"])).toEqual(["tasks", "settings"]);
+  it("adds personal sections once, keeping module sections intact without duplicates", () => {
+    expect(withPersonalSections(["partners"])).toEqual([
+      "partners",
+      "tasks",
+      "contributions",
+      "settings",
+    ]);
+    expect(withPersonalSections(["tasks", "contributions", "settings"])).toEqual([
+      "tasks",
+      "contributions",
+      "settings",
+    ]);
   });
 });
 
 describe("onlyPersonalSections", () => {
   it("is true when the user has only personal sections or an empty list", () => {
-    expect(onlyPersonalSections(["tasks", "settings"])).toBe(true);
+    expect(onlyPersonalSections(["tasks", "contributions", "settings"])).toBe(true);
+    expect(onlyPersonalSections(["contributions"])).toBe(true);
     expect(onlyPersonalSections(["settings"])).toBe(true);
     expect(onlyPersonalSections([])).toBe(true);
   });
 
   it("is false when the user has module sections or full access", () => {
-    expect(onlyPersonalSections(["partners", "tasks", "settings"])).toBe(false);
+    expect(onlyPersonalSections(["partners", "tasks", "contributions", "settings"])).toBe(false);
     expect(onlyPersonalSections("all")).toBe(false);
   });
 });

@@ -36,6 +36,7 @@ interface TransactionLedgerProps {
   members: PointMember[];
   loading: boolean;
   capped: boolean;
+  title?: string;
   /** Drill-down filter pushed from the metric cards; `stamp` forces re-application. */
   appliedFilter?: { filter: Partial<LedgerFilters>; stamp: number } | null;
 }
@@ -157,6 +158,7 @@ export function TransactionLedger({
   members,
   loading,
   capped,
+  title = "Sổ cái lịch sử điểm",
   appliedFilter,
 }: TransactionLedgerProps) {
   const [filters, setFilters] = useState<LedgerFilters>(EMPTY_LEDGER_FILTERS);
@@ -284,7 +286,7 @@ export function TransactionLedger({
       <header className="flex flex-wrap items-center gap-2">
         <h2 className="mr-auto flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
           <ReceiptText aria-hidden className="h-4 w-4 text-primary" />
-          Sổ cái lịch sử điểm
+          {title}
         </h2>
         <Button
           type="button"

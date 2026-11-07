@@ -2263,6 +2263,17 @@ export type Database = {
       outranks: { Args: { _member: string }; Returns: boolean };
       perm_on_choices: { Args: { _action: string; _choices: Json }; Returns: boolean };
       perm_scope: { Args: { _action: string }; Returns: string };
+      points_leaderboard: {
+        Args: never;
+        Returns: {
+          id: string;
+          full_name: string;
+          member_code: string;
+          department: string;
+          position: string | null;
+          contribution_points: number;
+        }[];
+      };
       position_rank: { Args: { _position: string }; Returns: number };
       public_dept_advisors: {
         Args: never;
