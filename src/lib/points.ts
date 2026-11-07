@@ -2,8 +2,9 @@ export type Tier = { key: string; label: string; min: number; className: string;
 
 /**
  * 7 contribution tiers (highest first) on the 0–450 scale.
- * Lowering the thresholds only promotes members, so nobody is demoted; the
- * leader/advisor tone is separate and uses LEADER_DEFAULT_POINTS as its floor.
+ * Lowering the thresholds only promotes members, so nobody is demoted. The
+ * exclusive "leader" tier is not part of this scale: only founders/co-founders
+ * see and hold it.
  */
 export const TIERS: Tier[] = [
   { key: "honor", label: "Danh dự", min: 401, className: "tier-honor", tone: "honor" },
@@ -15,10 +16,48 @@ export const TIERS: Tier[] = [
   { key: "bronze", label: "Tập sự", min: 0, className: "tier-bronze", tone: "bronze" },
 ];
 
-/** Co-founders and current professional advisors start at 400 points (Ưu tú floor). */
+/** Founders and co-founders start at 400 points (Ưu tú floor). */
 export const LEADER_DEFAULT_POINTS = 400;
 
+/** Founder / co-founder detection by position title. */
+export const isFounder = (position: string | null | undefined): boolean =>
+  /co-founder|founder/i.test(position ?? "");
+
+/** Exclusive highest tier: visible only to founders/co-founders. */
+export const LEADER_TIER: Tier = {
+  key: "leader",
+  label: "Lãnh đạo",
+  min: 9999,
+  className: "border-gold/40 bg-[color:var(--enamel-obsidian,#0b0f19)] text-gold",
+  tone: "black",
+};
+
 export const LEADER_TONE = { key: "black", label: "Lãnh đạo / Cố vấn" } as const;
+
+/**
+ * Card colour by position: founders keep the obsidian leader card, department heads and
+ * advisors get sapphire blue, deputies get lavender, everyone else follows their tier.
+ */
+export const getMemberCardTone = (
+  m: { department?: string; position: string | null },
+  roles: string[] = [],
+  isAdvisor = false,
+  defaultTierTone = "blue",
+): string => {
+  const pos = m.position ?? "";
+  // 1. Founder / Co-founder luôn dùng thẻ Đen Obsidian
+  if (isFounder(pos)) return "black";
+  // 2. Trưởng Ban & Cố vấn dùng màu Lam Bảo Thạch
+  if (/trưởng/i.test(pos) || isAdvisor || /cố vấn/i.test(pos)) {
+    return "sapphire";
+  }
+  // 3. Phó Ban dùng màu Tử La Lan
+  if (/phó/i.test(pos)) {
+    return "lavender";
+  }
+  // 4. Thành viên thường dùng màu theo cấp bậc điểm
+  return defaultTierTone;
+};
 
 export const tierOf = (points: number) =>
   TIERS.find((t) => points >= t.min) ?? TIERS[TIERS.length - 1]!;

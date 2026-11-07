@@ -26,7 +26,23 @@ t2("professional advisors are left off the leaderboard", () => {
   e2(isLeader2({ department: "media", position: "Thành viên" }, [], false)).toBe(false);
 });
 
-import { tierOf } from "./points";
+import { getMemberCardTone, isFounder, tierOf } from "./points";
+
+describe("isFounder", () => {
+  it("recognises co-founders and founders", () => {
+    expect(isFounder("Co-founder")).toBe(true);
+    expect(isFounder("co-founder")).toBe(true);
+    expect(isFounder("Founder")).toBe(true);
+    expect(isFounder("Co-Founder & CEO")).toBe(true);
+  });
+
+  it("excludes advisors, heads and ordinary members", () => {
+    expect(isFounder("Cố vấn chuyên môn")).toBe(false);
+    expect(isFounder("Trưởng Ban")).toBe(false);
+    expect(isFounder("Thành viên")).toBe(false);
+    expect(isFounder(null)).toBe(false);
+  });
+});
 t2("tier thresholds 0/51/101/151/201/351/401", () => {
   const cases: [number, string][] = [
     [0, "Tập sự"],
@@ -45,4 +61,30 @@ t2("tier thresholds 0/51/101/151/201/351/401", () => {
     [450, "Danh dự"],
   ];
   for (const [p, l] of cases) e2(tierOf(p).label).toBe(l);
+});
+
+t2("tiers follow the real stored points, founders included", () => {
+  e2(tierOf(0).key).toBe("bronze");
+  e2(tierOf(400).key).toBe("platinum");
+});
+
+describe("getMemberCardTone", () => {
+  it("assigns sapphire (#103b70) to department heads and advisors", () => {
+    expect(getMemberCardTone({ position: "Trưởng Ban" }, [], false)).toBe("sapphire");
+    expect(getMemberCardTone({ position: "Cố vấn chuyên môn" }, [], false)).toBe("sapphire");
+    expect(getMemberCardTone({ position: "Thành viên" }, [], true)).toBe("sapphire");
+  });
+
+  it("assigns lavender (#2c1c38) to deputy heads", () => {
+    expect(getMemberCardTone({ position: "Phó Ban" }, [], false)).toBe("lavender");
+  });
+
+  it("assigns black to founders and co-founders", () => {
+    expect(getMemberCardTone({ position: "Co-founder" }, [], false)).toBe("black");
+    expect(getMemberCardTone({ position: "Founder" }, [], false)).toBe("black");
+  });
+
+  it("assigns tier tone to regular members", () => {
+    expect(getMemberCardTone({ position: "Thành viên" }, [], false, "green")).toBe("green");
+  });
 });
