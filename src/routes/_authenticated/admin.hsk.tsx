@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import {
   AlertTriangle,
   Award,
@@ -14,11 +14,9 @@ import {
   History,
   Plus,
   QrCode,
-  Search,
+  RotateCcw,
   ShieldCheck,
-  Trash2,
   UploadCloud,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
@@ -41,6 +39,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
+import { AdminModal } from "@/components/admin/kit/AdminModal";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
+import { DangerZone } from "@/components/admin/kit/DangerZone";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { FormField } from "@/components/admin/kit/FormField";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
+import { StatusPill } from "@/components/admin/kit/StatusPill";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin/hsk")({
   staticData: { sitemap: false },
@@ -120,7 +129,6 @@ const EMPTY: Draft = {
   study_end: null,
   change_reason: "",
 };
-const inp = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 const SKILL_LABEL = {
   listening: "Nghe 听力",
   reading: "Đọc 阅读",
@@ -129,15 +137,15 @@ const SKILL_LABEL = {
 } as const;
 const scoreKey = (s: keyof typeof SKILL_LABEL) => `${s}_score` as const;
 
-const HSK_COLS = [
-  { label: "Mã thí sinh", className: "w-[170px]" },
-  { label: "Họ tên", className: "w-[220px]" },
-  { label: "Cấp độ", className: "w-[110px]" },
-  { label: "Ngày thi", className: "w-[120px]" },
-  { label: "Tổng điểm", className: "w-[100px]" },
-  { label: "Kết quả", className: "w-[130px]" },
-  { label: "Thao tác", className: "w-[130px] text-right" },
-] as const;
+const HSK_COLS: AdminColumn[] = [
+  { key: "code", label: "Mã thí sinh", className: "w-[170px]" },
+  { key: "name", label: "Họ tên", className: "w-[220px]" },
+  { key: "level", label: "Cấp độ", className: "w-[110px]" },
+  { key: "date", label: "Ngày thi", className: "w-[120px]" },
+  { key: "total", label: "Tổng điểm", className: "w-[100px]" },
+  { key: "result", label: "Kết quả", className: "w-[130px]" },
+  { key: "actions", label: "Thao tác", srOnly: true, className: "w-[130px] text-right" },
+];
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -517,105 +525,70 @@ function HskAdminPage() {
         description="Ghi nhận kết quả thi thử / đánh giá do TML tổ chức hoặc liên kết. Tổng điểm và Đạt/Chưa đạt do hệ thống tự tính."
         actions={
           <>
-            <button
+            <Button
+              type="button"
+              size="admin"
+              variant="outline"
               onClick={() => setCsvModalOpen(true)}
-              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent"
             >
-              <UploadCloud className="h-4 w-4" /> Nhập CSV
-            </button>
-            <button
-              onClick={exportCsv}
-              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent"
-            >
-              <Download className="h-4 w-4" /> Xuất CSV
-            </button>
-            <button
-              onClick={openNew}
-              className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            >
-              <Plus className="h-4 w-4" /> Nhập kết quả
-            </button>
+              <UploadCloud /> Nhập CSV
+            </Button>
+            <Button type="button" size="admin" variant="outline" onClick={exportCsv}>
+              <Download /> Xuất CSV
+            </Button>
+            <Button type="button" size="admin" onClick={openNew}>
+              <Plus /> Nhập kết quả
+            </Button>
           </>
         }
       />
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Tổng thí sinh</span>
-            <GraduationCap className="h-4 w-4" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{totalRecords}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {validRecords.length} chứng nhận hợp lệ
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Tỷ lệ Đạt</span>
-            <Award className="h-4 w-4 text-emerald-500" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-            {passRate}%
-          </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {passedCount} / {validRecords.length} thí sinh đỗ
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Đợt thi gần nhất</span>
-            <Calendar className="h-4 w-4" />
-          </div>
-          <p className="mt-2 truncate text-base font-bold text-foreground">
-            {latestExam?.exam_session || latestExam?.exam_date || "Chưa có"}
-          </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {latestExam ? `Ngày: ${latestExam.exam_date}` : "Chưa có dữ liệu"}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Chứng nhận hiệu lực</span>
-            <ShieldCheck className="h-4 w-4 text-primary" />
-          </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
-            {validRecords.length}{" "}
-            <span className="text-xs font-normal text-muted-foreground">/ {totalRecords}</span>
-          </p>
-          <p className="mt-0.5 text-[11px] text-destructive">
-            {totalRecords - validRecords.length} chứng nhận đã hủy
-          </p>
-        </div>
+        <StatFilterCard
+          label="Tổng thí sinh"
+          icon={GraduationCap}
+          value={totalRecords}
+          hint={`${validRecords.length} chứng nhận hợp lệ`}
+        />
+        <StatFilterCard
+          label="Tỷ lệ Đạt"
+          icon={Award}
+          value={<span className="text-success">{passRate}%</span>}
+          hint={`${passedCount} / ${validRecords.length} thí sinh đỗ`}
+        />
+        <StatFilterCard
+          label="Đợt thi gần nhất"
+          icon={Calendar}
+          value={
+            <span className="block truncate text-base">
+              {latestExam?.exam_session || latestExam?.exam_date || "Chưa có"}
+            </span>
+          }
+          hint={latestExam ? `Ngày: ${latestExam.exam_date}` : "Chưa có dữ liệu"}
+        />
+        <StatFilterCard
+          label="Chứng nhận hiệu lực"
+          icon={ShieldCheck}
+          value={
+            <>
+              {validRecords.length}{" "}
+              <span className="text-xs font-normal text-muted-foreground">/ {totalRecords}</span>
+            </>
+          }
+          hint={
+            <span className="text-destructive">
+              {totalRecords - validRecords.length} chứng nhận đã hủy
+            </span>
+          }
+        />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm mã, tên, đợt thi…"
-            aria-label="Tìm kiếm kết quả HSK"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm mã, tên, đợt thi…"
+          label="Tìm kiếm kết quả HSK"
+        />
         <Select value={level || "all"} onValueChange={(v) => setLevel(v === "all" ? "" : v)}>
           <SelectTrigger
             aria-label="Lọc theo cấp độ"
@@ -661,119 +634,101 @@ function HskAdminPage() {
       </div>
 
       {!isLoading && rows.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-border/80 bg-card/50 p-10 text-center">
-          <FileSpreadsheet className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm font-medium text-foreground">Không tìm thấy kết quả phù hợp</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Thử tìm bằng từ khóa khác hoặc bỏ bớt các bộ lọc cấp độ, trạng thái.
-          </p>
-        </div>
+        <EmptyState
+          className="mt-4"
+          icon={FileSpreadsheet}
+          title="Không tìm thấy kết quả phù hợp"
+          description="Thử tìm bằng từ khóa khác hoặc bỏ bớt các bộ lọc cấp độ, trạng thái."
+        />
       ) : (
-        <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full min-w-[980px] table-fixed text-sm">
-              <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-                <tr>
-                  {HSK_COLS.map((col) => (
-                    <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
-                      {col.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading && (
-                  <tr>
-                    <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
-                      Đang tải…
-                    </td>
-                  </tr>
+        <AdminTable
+          className="mt-4"
+          columns={HSK_COLS}
+          minWidth="min-w-[980px]"
+          isEmpty={isLoading}
+          emptyMessage="Đang tải…"
+        >
+          {rows.map((r) => (
+            <AdminTableRow key={r.id} onOpen={() => openEdit(r)}>
+              <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">
+                {r.candidate_code}
+              </td>
+              <td className="p-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                    {initials(r.candidate_name)}
+                  </span>
+                  <div className="min-w-0">
+                    <span
+                      className="block truncate font-medium text-foreground"
+                      title={r.candidate_name}
+                    >
+                      {r.candidate_name}
+                    </span>
+                    {r.candidate_name_zh && (
+                      <span className="font-han block text-xs text-muted-foreground">
+                        {r.candidate_name_zh}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </td>
+              <td className="whitespace-nowrap p-3 font-medium text-foreground">
+                {HSK_LEVELS[r.level] ?? r.level}
+              </td>
+              <td className="whitespace-nowrap p-3 text-muted-foreground">{r.exam_date}</td>
+              <td className="p-3 font-mono font-semibold tabular-nums text-foreground">
+                {r.total_score}/{r.max_score}
+              </td>
+              <td className="p-3">
+                {r.status === "REVOKED" ? (
+                  <StatusPill tone="danger">Đã hủy</StatusPill>
+                ) : r.passed ? (
+                  <StatusPill tone="success">Đạt</StatusPill>
+                ) : (
+                  <StatusPill tone="warning">Chưa đạt</StatusPill>
                 )}
-                {rows.map((r) => (
-                  <tr
-                    key={r.id}
-                    onClick={() => openEdit(r)}
-                    className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50"
+              </td>
+              <td className="p-3">
+                <div className="flex items-center justify-end gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="admin-icon"
+                    title="Mở trang xác minh"
+                    aria-label={`Mở trang xác minh ${r.candidate_code}`}
+                    onClick={() => window.open(link(r), "_blank")}
+                    className="text-muted-foreground [&_svg]:size-3.5"
                   >
-                    <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">
-                      {r.candidate_code}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                          {initials(r.candidate_name)}
-                        </span>
-                        <div className="min-w-0">
-                          <span
-                            className="block truncate font-medium text-foreground"
-                            title={r.candidate_name}
-                          >
-                            {r.candidate_name}
-                          </span>
-                          {r.candidate_name_zh && (
-                            <span className="font-han block text-xs text-muted-foreground">
-                              {r.candidate_name_zh}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap p-3 font-medium text-foreground">
-                      {HSK_LEVELS[r.level] ?? r.level}
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-muted-foreground">{r.exam_date}</td>
-                    <td className="p-3 font-mono font-semibold tabular-nums text-foreground">
-                      {r.total_score}/{r.max_score}
-                    </td>
-                    <td className="p-3">
-                      {r.status === "REVOKED" ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-medium text-destructive">
-                          <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                          Đã hủy
-                        </span>
-                      ) : r.passed ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Đạt
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                          Chưa đạt
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          title="Mở trang xác minh"
-                          onClick={() => window.open(link(r), "_blank")}
-                          className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          title="Tải mã QR (PNG)"
-                          onClick={() => void downloadQr(r)}
-                          className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <QrCode className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          title="Nhật ký"
-                          onClick={() => setHistoryOf(r)}
-                          className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <History className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    <ExternalLink aria-hidden />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="admin-icon"
+                    title="Tải mã QR (PNG)"
+                    aria-label={`Tải mã QR ${r.candidate_code}`}
+                    onClick={() => void downloadQr(r)}
+                    className="text-muted-foreground [&_svg]:size-3.5"
+                  >
+                    <QrCode aria-hidden />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="admin-icon"
+                    title="Nhật ký"
+                    aria-label={`Nhật ký ${r.candidate_code}`}
+                    onClick={() => setHistoryOf(r)}
+                    className="text-muted-foreground [&_svg]:size-3.5"
+                  >
+                    <History aria-hidden />
+                  </Button>
+                </div>
+              </td>
+            </AdminTableRow>
+          ))}
+        </AdminTable>
       )}
 
       <CsvImportDialog
@@ -806,41 +761,42 @@ function HskAdminPage() {
           />
         )}
       </AnimatePresence>
-      {historyOf && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40 p-4"
-          onClick={() => setHistoryOf(null)}
-        >
-          <div
-            className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-card p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {historyOf && (
+          <AdminModal
+            size="md"
+            icon={History}
+            title={`Nhật ký · ${historyOf.candidate_code}`}
+            onClose={() => setHistoryOf(null)}
           >
-            <h2 className="text-lg font-bold">Nhật ký · {historyOf.candidate_code}</h2>
-            <ul className="mt-4 space-y-3 text-sm">
-              {(audits ?? []).map((a) => {
-                const o = a.old_data as Record<string, unknown> | null;
-                const n = a.new_data as Record<string, unknown> | null;
-                return (
-                  <li key={a.id} className="rounded-lg border border-border p-3">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>
-                        {a.actor_name || "Hệ thống"} · {a.action}
-                      </span>
-                      <span>{new Date(a.created_at).toLocaleString("vi-VN")}</span>
-                    </div>
-                    {a.reason && <p className="mt-1">Lý do: {a.reason}</p>}
-                    <p className="mt-1 text-xs">
-                      Tổng: {o ? `${String(o["total"])} → ` : ""}
-                      {String(n?.["total"] ?? "")} · Trạng thái: {String(n?.["status"] ?? "")}
-                    </p>
-                  </li>
-                );
-              })}
-              {audits?.length === 0 && <li className="text-muted-foreground">Chưa có nhật ký.</li>}
-            </ul>
-          </div>
-        </div>
-      )}
+            {audits?.length === 0 ? (
+              <EmptyState title="Chưa có nhật ký." />
+            ) : (
+              <ul className="space-y-3 text-sm">
+                {(audits ?? []).map((a) => {
+                  const o = a.old_data as Record<string, unknown> | null;
+                  const n = a.new_data as Record<string, unknown> | null;
+                  return (
+                    <li key={a.id} className="rounded-lg border border-border p-3">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>
+                          {a.actor_name || "Hệ thống"} · {a.action}
+                        </span>
+                        <span>{new Date(a.created_at).toLocaleString("vi-VN")}</span>
+                      </div>
+                      {a.reason && <p className="mt-1">Lý do: {a.reason}</p>}
+                      <p className="mt-1 text-xs">
+                        Tổng: {o ? `${String(o["total"])} → ` : ""}
+                        {String(n?.["total"] ?? "")} · Trạng thái: {String(n?.["status"] ?? "")}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </AdminModal>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
@@ -905,14 +861,16 @@ function CsvImportDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="admin-sm"
             onClick={onDownloadTemplate}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-2xs transition-colors hover:bg-muted"
+            className="[&_svg]:size-3.5"
           >
-            <Download className="h-3.5 w-3.5" />
+            <Download aria-hidden />
             Tải file CSV mẫu
-          </button>
+          </Button>
 
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center transition-colors hover:bg-muted/40">
             <FileSpreadsheet className="h-7 w-7 text-muted-foreground" />
@@ -945,19 +903,15 @@ function CsvImportDialog({
                 "Chưa chọn file"
               )}
             </p>
-            <button
+            <Button
               type="button"
+              size="admin"
               disabled={!file || busy}
               onClick={() => void submit()}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
-                !file || busy
-                  ? "cursor-not-allowed bg-muted text-muted-foreground"
-                  : "cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
-              }`}
             >
-              <UploadCloud className="h-4 w-4" />
+              <UploadCloud aria-hidden />
               {busy ? "Đang nhập…" : "Xác nhận nhập dữ liệu"}
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -1005,20 +959,6 @@ function HskResultDrawer({
 }) {
   const [revokeReason, setRevokeReason] = useState("");
   const [busy, setBusy] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  // Never keep a half-armed delete when the drawer switches to another record.
-  useEffect(() => {
-    setConfirmDelete(false);
-  }, [value.id, record?.id]);
 
   const skills = hskSkills(value.level);
   const rule = hskRule(value.level);
@@ -1067,451 +1007,410 @@ function HskResultDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed inset-0 bg-black/20 backdrop-blur-xs"
-        onClick={onClose}
-      />
-
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Kết quả HSK ${value.candidate_name}`}
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="relative z-10 flex h-full w-full max-w-[580px] flex-col border-l border-border bg-card shadow-2xl"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/70 px-6 py-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 font-mono text-xs font-bold text-primary ring-2 ring-primary/20">
-              {HSK_LEVELS[value.level]?.replace("HSK", "H") ?? "HSK"}
+    <AdminDrawer
+      width="md"
+      title={value.candidate_name || "Thí sinh mới"}
+      leading={
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 font-mono text-xs font-bold text-primary ring-2 ring-primary/20">
+          {HSK_LEVELS[value.level]?.replace("HSK", "H") ?? "HSK"}
+        </span>
+      }
+      subtitle={
+        <span className="flex items-center gap-1.5">
+          <span className="truncate font-mono">{value.candidate_code || "Chưa có mã"}</span>
+          {value.candidate_name_zh && (
+            <span className="font-han truncate text-muted-foreground/70">
+              ({value.candidate_name_zh})
             </span>
-            <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-foreground">
-                {value.candidate_name || "Thí sinh mới"}
-              </h2>
-              <div className="flex items-center gap-1.5 pt-0.5">
-                <span className="truncate font-mono text-xs text-muted-foreground">
-                  {value.candidate_code || "Chưa có mã"}
-                </span>
-                {value.candidate_name_zh && (
-                  <span className="font-han truncate text-xs text-muted-foreground/70">
-                    ({value.candidate_name_zh})
-                  </span>
-                )}
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    isRevoked ? "bg-destructive/10 text-destructive" : "bg-success/15 text-success"
-                  }`}
-                >
-                  {isRevoked ? "Đã hủy" : "Hợp lệ"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            title="Đóng (Esc)"
-            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="custom-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Thí sinh & Mã định danh</h3>
-            <div>
-              <span className="text-xs text-muted-foreground">Mã kết quả</span>
-              <div className="mt-1 flex items-center gap-2">
-                {!value.id && (
-                  <Select value={prefix} onValueChange={onPrefixChange}>
-                    <SelectTrigger
-                      aria-label="Tiền tố mã"
-                      className="h-9 w-[110px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
-                    >
-                      <SelectValue>{prefix}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {HSK_PREFIXES.map((p) => (
-                        <SelectItem key={p} value={p} className="text-xs">
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                <input
-                  readOnly
-                  className={`${inp} flex-1 cursor-not-allowed bg-muted/60 font-mono uppercase text-muted-foreground`}
-                  value={value.candidate_code}
-                />
-              </div>
+          )}
+          <StatusPill tone={isRevoked ? "danger" : "success"}>
+            {isRevoked ? "Đã hủy" : "Hợp lệ"}
+          </StatusPill>
+        </span>
+      }
+      onClose={onClose}
+      dismissible={!saving}
+      bodyClassName="space-y-5"
+      footer={
+        <Button
+          type="button"
+          size="admin-lg"
+          onClick={onSave}
+          disabled={saving}
+          className="w-full sm:w-auto"
+        >
+          {saving ? "Đang lưu…" : "Lưu kết quả"}
+        </Button>
+      }
+    >
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Thí sinh & Mã định danh</h3>
+        <FormField
+          label="Mã kết quả"
+          {...(!value.id
+            ? { hint: "Hệ thống tự động sinh mã định danh duy nhất theo tiền tố." }
+            : {})}
+        >
+          {(field) => (
+            <div className="flex items-center gap-2">
               {!value.id && (
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Hệ thống tự động sinh mã định danh duy nhất theo tiền tố.
-                </p>
+                <Select value={prefix} onValueChange={onPrefixChange}>
+                  <SelectTrigger
+                    aria-label="Tiền tố mã"
+                    className="h-9 w-[110px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                  >
+                    <SelectValue>{prefix}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {HSK_PREFIXES.map((p) => (
+                      <SelectItem key={p} value={p} className="text-xs">
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </div>
-
-            <label className="block text-xs text-muted-foreground">
-              Họ và tên thí sinh <span className="text-destructive">*</span>
-              <input
-                className={`${inp} mt-1`}
-                value={value.candidate_name}
-                onChange={(e) => onChange({ candidate_name: e.target.value })}
+              <AdminInput
+                {...field}
+                readOnly
+                className="flex-1 cursor-not-allowed bg-muted/60 font-mono uppercase text-muted-foreground"
+                value={value.candidate_code}
               />
-            </label>
-            <label className="block text-xs text-muted-foreground">
-              Tên chữ Hán (tuỳ chọn)
-              <input
-                className={`${inp} mt-1 font-han`}
-                value={value.candidate_name_zh}
-                onChange={(e) => onChange({ candidate_name_zh: e.target.value })}
-              />
-            </label>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Cấp độ HSK & Lớp học liên kết</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="text-xs text-muted-foreground">
-                <span>{prefix === "TMLHSKK" ? "Cấp độ HSKK" : "Cấp độ HSK"}</span>
-                <Select value={value.level} onValueChange={handleLevelChange}>
-                  <SelectTrigger
-                    aria-label="Cấp độ"
-                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
-                  >
-                    <SelectValue>{HSK_LEVELS[value.level] ?? value.level}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {availableLevels.map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-xs">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                <span>Giáo viên giảng dạy</span>
-                <Select
-                  value={value.teacher_id ?? "none"}
-                  onValueChange={(v) => onChange({ teacher_id: v === "none" ? null : v })}
-                >
-                  <SelectTrigger
-                    aria-label="Giáo viên giảng dạy"
-                    className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
-                  >
-                    <SelectValue>
-                      {teachers.find((t) => t.id === value.teacher_id)?.full_name ??
-                        "— Chưa chọn —"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="none" className="text-xs">
-                      — Chưa chọn —
-                    </SelectItem>
-                    {teachers.map((t) => (
-                      <SelectItem key={t.id} value={t.id} className="text-xs">
-                        {t.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              <span>Lớp học (tự điền giáo viên, thời gian)</span>
-              <Select
-                value={value.hsk_class_id ?? "none"}
-                onValueChange={(v) => onPickClass(v === "none" ? "" : v)}
-              >
+          )}
+        </FormField>
+
+        <FormField label="Họ và tên thí sinh" required>
+          {(field) => (
+            <AdminInput
+              {...field}
+              value={value.candidate_name}
+              onChange={(e) => onChange({ candidate_name: e.target.value })}
+            />
+          )}
+        </FormField>
+        <FormField label="Tên chữ Hán (tuỳ chọn)">
+          {(field) => (
+            <AdminInput
+              {...field}
+              className="font-han"
+              value={value.candidate_name_zh}
+              onChange={(e) => onChange({ candidate_name_zh: e.target.value })}
+            />
+          )}
+        </FormField>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Cấp độ HSK & Lớp học liên kết</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label={prefix === "TMLHSKK" ? "Cấp độ HSKK" : "Cấp độ HSK"}>
+            {(field) => (
+              <Select value={value.level} onValueChange={handleLevelChange}>
                 <SelectTrigger
-                  aria-label="Lớp học"
-                  className="mt-1 h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                  {...field}
+                  className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
                 >
-                  <SelectValue>
-                    {classes.find((c) => c.id === value.hsk_class_id)?.name ?? "— Không gắn lớp —"}
-                  </SelectValue>
+                  <SelectValue>{HSK_LEVELS[value.level] ?? value.level}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  <SelectItem value="none" className="text-xs">
-                    — Không gắn lớp —
-                  </SelectItem>
-                  {classes.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="text-xs">
-                      HSK {c.level} · {c.name}
+                  {availableLevels.map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-xs">
+                      {v}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Điểm số kỹ năng</h3>
-            <div
-              className={`grid gap-3 ${
-                skills.length === 1 ? "max-w-xs sm:grid-cols-1" : "sm:grid-cols-2"
-              }`}
-            >
-              {skills.map((s) => (
-                <label key={s} className="text-xs text-muted-foreground">
-                  {SKILL_LABEL[s]} (0–100)
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    className={`${inp} mt-1`}
-                    value={value[scoreKey(s)] ?? ""}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      if (raw === "") {
-                        onChange({ [scoreKey(s)]: null });
-                        return;
-                      }
-                      const parsed = parseInt(raw, 10);
-                      if (Number.isNaN(parsed)) return;
-                      onChange({ [scoreKey(s)]: Math.max(0, Math.min(100, parsed)) });
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-            <div
-              role="meter"
-              aria-label="Tổng điểm tạm tính"
-              aria-valuemin={0}
-              aria-valuemax={rule.max}
-              aria-valuenow={total}
-              aria-valuetext={`${total}/${rule.max} điểm, ${passed ? "đạt" : "chưa đạt"} (ngưỡng ${rule.pass})`}
-              title="Hệ thống sẽ tính lại tổng điểm và trạng thái khi lưu."
-              className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2"
-            >
-              <p className="shrink-0 text-xs text-muted-foreground">
-                Tổng <span className="text-sm font-bold tabular-nums text-foreground">{total}</span>
-                <span className="tabular-nums">/{rule.max}</span>
-              </p>
-
-              <div className="relative h-1.5 min-w-16 flex-1 rounded-full bg-muted">
-                <div
-                  className={`h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none ${
-                    passed ? "bg-emerald-500" : "bg-amber-400"
-                  }`}
-                  style={{ width: `${totalPct}%` }}
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-foreground/40"
-                  style={{ left: `${passPct}%` }}
-                />
-              </div>
-
-              <span className="hidden shrink-0 text-[11px] tabular-nums text-muted-foreground sm:inline">
-                Đạt từ {rule.pass}
-              </span>
-
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                  passed
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                    : "bg-warning-soft text-warning-foreground"
-                }`}
+            )}
+          </FormField>
+          <FormField label="Giáo viên giảng dạy">
+            {(field) => (
+              <Select
+                value={value.teacher_id ?? "none"}
+                onValueChange={(v) => onChange({ teacher_id: v === "none" ? null : v })}
               >
-                {passed ? "Đạt" : "Chưa đạt"}
-              </span>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className={SECTION_TITLE}>Đợt đánh giá & Thời gian học</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-xs text-muted-foreground">
-                Khóa học
-                <input
-                  className={`${inp} mt-1`}
-                  value={value.course_name}
-                  onChange={(e) => onChange({ course_name: e.target.value })}
-                  placeholder="VD: HSK 4"
-                />
-              </label>
-              <label className="text-xs text-muted-foreground">
-                Đợt đánh giá
-                <input
-                  className={`${inp} mt-1`}
-                  value={value.exam_session}
-                  onChange={(e) => onChange({ exam_session: e.target.value })}
-                  placeholder="VD: Cuối khóa 11/2026"
-                />
-              </label>
-              <div className="text-xs text-muted-foreground">
-                <span>
-                  Ngày đánh giá / thi <span className="text-destructive">*</span>
-                </span>
-                <div className="mt-1">
-                  <DatePicker
-                    value={value.exam_date}
-                    onChange={(dateISO) => onChange({ exam_date: dateISO })}
-                    placeholder="Chọn ngày thi"
-                  />
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                <span>Học từ ngày</span>
-                <div className="mt-1">
-                  <DatePicker
-                    value={value.study_start ?? ""}
-                    onChange={(dateISO) => onChange({ study_start: dateISO || null })}
-                    placeholder="Chọn ngày bắt đầu"
-                  />
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                <span>Đến ngày</span>
-                <div className="mt-1">
-                  <DatePicker
-                    value={value.study_end ?? ""}
-                    onChange={(dateISO) => onChange({ study_end: dateISO || null })}
-                    placeholder="Chọn ngày kết thúc"
-                  />
-                </div>
-              </div>
-              <label className="text-xs text-muted-foreground">
-                Đơn vị ghi nhận / tổ chức
-                <input
-                  className={`${inp} mt-1`}
-                  value={value.issuer}
-                  onChange={(e) => onChange({ issuer: e.target.value })}
-                />
-              </label>
-            </div>
-            <label className="block text-xs text-muted-foreground">
-              Ghi chú nội bộ
-              <textarea
-                className={`${inp} mt-1`}
-                rows={2}
-                value={value.notes}
-                onChange={(e) => onChange({ notes: e.target.value })}
-              />
-            </label>
-          </section>
-
-          {value.id && (
-            <section className="space-y-3">
-              <h3 className={SECTION_TITLE}>Lý do chỉnh sửa</h3>
-              <label className="block text-xs text-muted-foreground">
-                Bắt buộc — được ghi vào nhật ký kiểm toán{" "}
-                <span className="text-destructive">*</span>
-                <input
-                  className={`${inp} mt-1`}
-                  value={value.change_reason}
-                  onChange={(e) => onChange({ change_reason: e.target.value })}
-                  placeholder="VD: Phúc khảo phần Viết"
-                />
-              </label>
-            </section>
+                <SelectTrigger
+                  {...field}
+                  className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+                >
+                  <SelectValue>
+                    {teachers.find((t) => t.id === value.teacher_id)?.full_name ?? "— Chưa chọn —"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="none" className="text-xs">
+                    — Chưa chọn —
+                  </SelectItem>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id} className="text-xs">
+                      {t.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+        </div>
+        <FormField label="Lớp học (tự điền giáo viên, thời gian)">
+          {(field) => (
+            <Select
+              value={value.hsk_class_id ?? "none"}
+              onValueChange={(v) => onPickClass(v === "none" ? "" : v)}
+            >
+              <SelectTrigger
+                {...field}
+                className="h-9 w-full rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+              >
+                <SelectValue>
+                  {classes.find((c) => c.id === value.hsk_class_id)?.name ?? "— Không gắn lớp —"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="none" className="text-xs">
+                  — Không gắn lớp —
+                </SelectItem>
+                {classes.map((c) => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs">
+                    HSK {c.level} · {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
+        </FormField>
+      </section>
 
-          {value.id && (
-            <section className="space-y-2 pt-1">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
-                Vùng nguy hiểm
-              </h3>
-              {isRevoked ? (
-                <div className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground">Kết quả đã bị hủy</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Lý do: {record?.revoked_reason || "—"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void runRestore()}
-                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600/90 disabled:opacity-60"
-                    >
-                      Khôi phục kết quả
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => {
-                        if (!confirmDelete) {
-                          setConfirmDelete(true);
-                          return;
-                        }
-                        setConfirmDelete(false);
-                        void runDelete();
-                      }}
-                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-2xs transition-colors disabled:opacity-60 ${
-                        confirmDelete
-                          ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          : "border-destructive/30 bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      }`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>{confirmDelete ? "Xác nhận xóa vĩnh viễn" : "Xóa kết quả"}</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground">Hủy kết quả này</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Kết quả sẽ không còn hiệu lực tra cứu công khai. Hành động được ghi nhật ký.
-                      </p>
-                    </div>
-                  </div>
-                  <input
-                    className={`${inp} bg-card`}
-                    value={revokeReason}
-                    onChange={(e) => setRevokeReason(e.target.value)}
-                    placeholder="Lý do hủy kết quả (bắt buộc)"
-                    aria-label="Lý do hủy kết quả"
-                  />
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void runRevoke()}
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-destructive px-3 py-2 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-60"
-                  >
-                    Hủy kết quả này
-                  </button>
-                </div>
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Điểm số kỹ năng</h3>
+        <div
+          className={`grid gap-3 ${
+            skills.length === 1 ? "max-w-xs sm:grid-cols-1" : "sm:grid-cols-2"
+          }`}
+        >
+          {skills.map((s) => (
+            <FormField key={s} label={`${SKILL_LABEL[s]} (0–100)`}>
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={100}
+                  value={value[scoreKey(s)] ?? ""}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      onChange({ [scoreKey(s)]: null });
+                      return;
+                    }
+                    const parsed = parseInt(raw, 10);
+                    if (Number.isNaN(parsed)) return;
+                    onChange({ [scoreKey(s)]: Math.max(0, Math.min(100, parsed)) });
+                  }}
+                />
               )}
-            </section>
-          )}
+            </FormField>
+          ))}
         </div>
+        <div
+          role="meter"
+          aria-label="Tổng điểm tạm tính"
+          aria-valuemin={0}
+          aria-valuemax={rule.max}
+          aria-valuenow={total}
+          aria-valuetext={`${total}/${rule.max} điểm, ${passed ? "đạt" : "chưa đạt"} (ngưỡng ${rule.pass})`}
+          title="Hệ thống sẽ tính lại tổng điểm và trạng thái khi lưu."
+          className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2"
+        >
+          <p className="shrink-0 text-xs text-muted-foreground">
+            Tổng <span className="text-sm font-bold tabular-nums text-foreground">{total}</span>
+            <span className="tabular-nums">/{rule.max}</span>
+          </p>
 
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border/70 bg-card/90 px-6 py-4 backdrop-blur-xs">
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving}
-            className="w-full cursor-pointer rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:opacity-60 sm:w-auto"
-          >
-            {saving ? "Đang lưu…" : "Lưu kết quả"}
-          </button>
+          <div className="relative h-1.5 min-w-16 flex-1 rounded-full bg-muted">
+            <div
+              className={`h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none ${
+                passed ? "bg-success" : "bg-warning-foreground"
+              }`}
+              style={{ width: `${totalPct}%` }}
+            />
+            <span
+              aria-hidden="true"
+              className="absolute top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-foreground/40"
+              style={{ left: `${passPct}%` }}
+            />
+          </div>
+
+          <span className="hidden shrink-0 text-[11px] tabular-nums text-muted-foreground sm:inline">
+            Đạt từ {rule.pass}
+          </span>
+
+          <StatusPill tone={passed ? "success" : "warning"}>
+            {passed ? "Đạt" : "Chưa đạt"}
+          </StatusPill>
         </div>
-      </motion.div>
-    </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className={SECTION_TITLE}>Đợt đánh giá & Thời gian học</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label="Khóa học">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.course_name}
+                onChange={(e) => onChange({ course_name: e.target.value })}
+                placeholder="VD: HSK 4"
+              />
+            )}
+          </FormField>
+          <FormField label="Đợt đánh giá">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.exam_session}
+                onChange={(e) => onChange({ exam_session: e.target.value })}
+                placeholder="VD: Cuối khóa 11/2026"
+              />
+            )}
+          </FormField>
+          <FormField label="Ngày đánh giá / thi" required>
+            {(field) => (
+              <DatePicker
+                id={field.id}
+                value={value.exam_date}
+                onChange={(dateISO) => onChange({ exam_date: dateISO })}
+                placeholder="Chọn ngày thi"
+              />
+            )}
+          </FormField>
+          <FormField label="Học từ ngày">
+            {(field) => (
+              <DatePicker
+                id={field.id}
+                value={value.study_start ?? ""}
+                onChange={(dateISO) => onChange({ study_start: dateISO || null })}
+                placeholder="Chọn ngày bắt đầu"
+              />
+            )}
+          </FormField>
+          <FormField label="Đến ngày">
+            {(field) => (
+              <DatePicker
+                id={field.id}
+                value={value.study_end ?? ""}
+                onChange={(dateISO) => onChange({ study_end: dateISO || null })}
+                placeholder="Chọn ngày kết thúc"
+              />
+            )}
+          </FormField>
+          <FormField label="Đơn vị ghi nhận / tổ chức">
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.issuer}
+                onChange={(e) => onChange({ issuer: e.target.value })}
+              />
+            )}
+          </FormField>
+        </div>
+        <FormField label="Ghi chú nội bộ">
+          {(field) => (
+            <AdminTextarea
+              {...field}
+              rows={2}
+              value={value.notes}
+              onChange={(e) => onChange({ notes: e.target.value })}
+            />
+          )}
+        </FormField>
+      </section>
+
+      {value.id && (
+        <section className="space-y-3">
+          <h3 className={SECTION_TITLE}>Lý do chỉnh sửa</h3>
+          <FormField label="Bắt buộc — được ghi vào nhật ký kiểm toán" required>
+            {(field) => (
+              <AdminInput
+                {...field}
+                value={value.change_reason}
+                onChange={(e) => onChange({ change_reason: e.target.value })}
+                placeholder="VD: Phúc khảo phần Viết"
+              />
+            )}
+          </FormField>
+        </section>
+      )}
+
+      {value.id &&
+        (!isRevoked ? (
+          <section className="space-y-2 pt-1">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive">
+              Vùng nguy hiểm
+            </h3>
+            <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground">Hủy kết quả này</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Kết quả sẽ không còn hiệu lực tra cứu công khai. Hành động được ghi nhật ký.
+                  </p>
+                </div>
+              </div>
+              <AdminInput
+                aria-label="Lý do hủy kết quả"
+                className="border-destructive/30 bg-card focus-visible:ring-destructive/30"
+                value={revokeReason}
+                onChange={(e) => setRevokeReason(e.target.value)}
+                placeholder="Lý do hủy kết quả (bắt buộc)"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="admin"
+                disabled={busy}
+                onClick={() => void runRevoke()}
+              >
+                Hủy kết quả này
+              </Button>
+            </div>
+          </section>
+        ) : (
+          <>
+            <div className="space-y-3 rounded-2xl border border-warning-foreground/25 bg-warning-soft p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle
+                  aria-hidden
+                  className="mt-0.5 h-4 w-4 shrink-0 text-warning-foreground"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground">Kết quả đã bị hủy</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Lý do: {record?.revoked_reason || "—"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="admin"
+                disabled={busy}
+                onClick={() => void runRestore()}
+              >
+                <RotateCcw aria-hidden /> Khôi phục kết quả
+              </Button>
+            </div>
+            <DangerZone
+              title="Xóa kết quả vĩnh viễn"
+              description="Chỉ admin xóa được kết quả đã hủy. Không hoàn tác được."
+              actionLabel="Xóa kết quả"
+              confirmLabel="Xác nhận xóa vĩnh viễn"
+              onConfirm={() => void runDelete()}
+              disabled={busy}
+            />
+          </>
+        ))}
+    </AdminDrawer>
   );
 }
