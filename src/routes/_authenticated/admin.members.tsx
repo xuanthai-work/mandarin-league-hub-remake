@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AnimatePresence } from "motion/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
@@ -51,7 +51,8 @@ import {
 } from "@/lib/accounts.functions";
 import { ACCOUNT_DEPTS, positionsFor, type AccountStatus } from "@/lib/accounts";
 import { useAdminAccess } from "./admin";
-import { can } from "@/lib/permission-catalog";
+import { can, NO_PERMISSIONS, type MyPermissions } from "@/lib/permission-catalog";
+import { assignablePositions, canActOnMember, departmentsFor } from "@/lib/admin-permissions";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
   staticData: { sitemap: false },
@@ -231,7 +232,15 @@ function AdminFlagRow({
 }
 
 /** Email + the row's single status indicator; members without an account get the quick-grant button. */
-function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }) {
+function AccountStatusCell({
+  m,
+  onGrant,
+  canGrant,
+}: {
+  m: MemberRow;
+  onGrant: () => void;
+  canGrant: boolean;
+}) {
   return (
     <div className="space-y-1">
       {m.account ? (
@@ -244,15 +253,17 @@ function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }
       ) : (
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] italic text-muted-foreground">Chưa cấp email nội bộ</span>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onGrant}
-            title="Cấp tài khoản đăng nhập cho thành viên này"
-            className="h-auto rounded-md border-dashed border-primary/50 px-1.5 py-0.5 text-[10px] font-semibold text-primary shadow-none hover:bg-primary/5 hover:text-primary"
-          >
-            + Cấp
-          </Button>
+          {canGrant && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onGrant}
+              title="Cấp tài khoản đăng nhập cho thành viên này"
+              className="h-auto rounded-md border-dashed border-primary/50 px-1.5 py-0.5 text-[10px] font-semibold text-primary shadow-none hover:bg-primary/5 hover:text-primary"
+            >
+              + Cấp
+            </Button>
+          )}
         </div>
       )}
       <MemberStatusPill m={m} />
@@ -275,13 +286,17 @@ const MEMBER_COLS: AdminColumn[] = [
 function DepartmentSection({
   deptId,
   members,
-  isAdmin,
+  showAccounts,
+  canGrant,
+  canRotate,
   onOpen,
   onRotate,
 }: {
   deptId: string;
   members: MemberRow[];
-  isAdmin: boolean;
+  showAccounts: boolean;
+  canGrant: (m: MemberRow) => boolean;
+  canRotate: boolean;
   onOpen: (m: MemberRow) => void;
   onRotate: (m: MemberRow) => void;
 }) {
@@ -317,8 +332,8 @@ function DepartmentSection({
               </div>
             </td>
             <td className="p-3 pr-1.5">
-              {isAdmin ? (
-                <AccountStatusCell m={m} onGrant={() => onOpen(m)} />
+              {showAccounts ? (
+                <AccountStatusCell m={m} onGrant={() => onOpen(m)} canGrant={canGrant(m)} />
               ) : (
                 <MemberStatusPill m={m} />
               )}
@@ -336,19 +351,21 @@ function DepartmentSection({
             <td className="whitespace-nowrap p-3 text-muted-foreground">{fmt(m.joined_on)}</td>
             <td className="p-3 font-mono tabular-nums">{m.contribution_points}</td>
             <td className="p-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="admin-sm"
-                onClick={() => onRotate(m)}
-                className="group [&_svg]:size-3.5"
-              >
-                <QrCode
-                  aria-hidden
-                  className="transition-transform duration-300 group-hover:rotate-45"
-                />
-                Làm mới mã QR
-              </Button>
+              {canRotate && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="admin-sm"
+                  onClick={() => onRotate(m)}
+                  className="group [&_svg]:size-3.5"
+                >
+                  <QrCode
+                    aria-hidden
+                    className="transition-transform duration-300 group-hover:rotate-45"
+                  />
+                  Làm mới mã QR
+                </Button>
+              )}
             </td>
           </AdminTableRow>
         ))}
@@ -370,10 +387,19 @@ function MembersPage() {
   const qc = useQueryClient();
   const access = useAdminAccess();
   const fetchAccounts = useServerFn(getAdminMemberAccounts);
-  /** Account credentials and mutations stay admin-only in the UI until the permission drawer task. */
-  const isAdmin = !!access.data?.perms.isAdmin;
-  /** Profile create/edit follows the members.edit matrix action; RLS and the guard trigger re-check rank. */
-  const canEditMembers = !!access.data && can(access.data.perms, "members.edit");
+  const perms = access.data?.perms ?? NO_PERMISSIONS;
+  const me = useMemo(
+    () => ({
+      department: access.data?.department ?? null,
+      position: access.data?.position ?? null,
+    }),
+    [access.data?.department, access.data?.position],
+  );
+  const isAdmin = perms.isAdmin;
+  /** Any accounts.manage scope: the server already narrows the account list to that scope. */
+  const canSeeAccounts = !!access.data && can(perms, "accounts.manage");
+  const canCreate = !!access.data && can(perms, "members.create");
+  const canExport = !!access.data && can(perms, "members.export");
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-members"] });
     // A newly granted account makes the member assignable, so the task pickers must refetch too.
@@ -393,12 +419,12 @@ function MembersPage() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-members", isAdmin],
+    queryKey: ["admin-members", canSeeAccounts],
     enabled: !!access.data,
     queryFn: async () => {
       const [m, accountsList] = await Promise.all([
         supabase.from("members").select("*").order("created_at", { ascending: false }),
-        isAdmin ? fetchAccounts() : Promise.resolve([]),
+        canSeeAccounts ? fetchAccounts() : Promise.resolve([]),
       ]);
       const accounts = new Map<string, AccountInfo>();
       for (const a of accountsList ?? []) {
@@ -445,6 +471,11 @@ function MembersPage() {
   const cntDept = (deptId: string) => scopedForDept.filter((m) => m.department === deptId).length;
   const selected = all.find((m) => m.id === selId);
   const open = (m: MemberRow) => setSelId(m.id);
+  const target = selected && {
+    department: selected.department,
+    position: selected.position,
+    isAdmin: selected.account?.isAdmin ?? false,
+  };
 
   const exportCsv = () => {
     const order = new Map(deptList.map((d, i) => [d.id, i]));
@@ -495,9 +526,9 @@ function MembersPage() {
         title="Thành viên"
         description="Hồ sơ nhân sự và tài khoản đăng nhập của thành viên. Bấm vào một dòng để xem hồ sơ và quản lý tài khoản."
         actions={
-          canEditMembers ? (
+          canExport || canCreate ? (
             <>
-              {isAdmin && (
+              {canExport && (
                 <Button
                   type="button"
                   size="admin"
@@ -508,9 +539,11 @@ function MembersPage() {
                   <Download /> Xuất CSV ({rows.length})
                 </Button>
               )}
-              <Button type="button" size="admin" onClick={() => setCreating(true)}>
-                <Plus /> Thêm thành viên
-              </Button>
+              {canCreate && (
+                <Button type="button" size="admin" onClick={() => setCreating(true)}>
+                  <Plus /> Thêm thành viên
+                </Button>
+              )}
             </>
           ) : null
         }
@@ -602,7 +635,15 @@ function MembersPage() {
               key={d.id}
               deptId={d.id}
               members={rows.filter((m) => m.department === d.id)}
-              isAdmin={isAdmin}
+              showAccounts={canSeeAccounts}
+              canGrant={(m) =>
+                canActOnMember(perms, "accounts.manage", me, {
+                  department: m.department,
+                  position: m.position,
+                  isAdmin: false,
+                })
+              }
+              canRotate={isAdmin}
               onOpen={open}
               onRotate={rotate}
             />
@@ -611,12 +652,22 @@ function MembersPage() {
       )}
 
       <AnimatePresence>
-        {selected && (
+        {selected && target && (
           <MemberDrawer
             key={selected.id}
             m={selected}
             isAdmin={isAdmin}
-            canEdit={canEditMembers}
+            canEditProfile={canActOnMember(perms, "members.edit", me, target)}
+            canEditPosition={canActOnMember(perms, "members.position", me, target)}
+            canManageAccount={canActOnMember(perms, "accounts.manage", me, target)}
+            canDeleteProfile={canActOnMember(perms, "members.delete", me, target)}
+            deptOptions={departmentsFor(
+              perms,
+              "members.position",
+              me,
+              ACCOUNT_DEPTS.map((d) => d.id),
+            )}
+            assignable={(positions) => assignablePositions(perms, me, positions)}
             onRotate={rotate}
             confirm={confirm}
             onClose={() => setSelId(null)}
@@ -625,9 +676,10 @@ function MembersPage() {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {canEditMembers && creating && (
+        {canCreate && creating && (
           <NewMemberDrawer
-            canCreateAccount={isAdmin}
+            perms={perms}
+            me={me}
             onClose={() => setCreating(false)}
             onChanged={refresh}
           />
@@ -642,7 +694,12 @@ function MembersPage() {
 function MemberDrawer({
   m,
   isAdmin,
-  canEdit,
+  canEditProfile,
+  canEditPosition,
+  canManageAccount,
+  canDeleteProfile,
+  deptOptions,
+  assignable,
   onRotate,
   confirm,
   onClose,
@@ -650,7 +707,12 @@ function MemberDrawer({
 }: {
   m: MemberRow;
   isAdmin: boolean;
-  canEdit: boolean;
+  canEditProfile: boolean;
+  canEditPosition: boolean;
+  canManageAccount: boolean;
+  canDeleteProfile: boolean;
+  deptOptions: string[];
+  assignable: (positions: readonly string[]) => string[];
   onRotate: (m: MemberRow) => void;
   confirm: ReturnType<typeof useConfirm>["confirm"];
   onClose: () => void;
@@ -678,6 +740,14 @@ function MemberDrawer({
   const [err, setErr] = useState("");
 
   const statusOptions = EDIT_DRAWER_STATUS_BUTTONS;
+  const departmentChoices = deptOptions.includes(m.department)
+    ? deptOptions
+    : [m.department, ...deptOptions];
+  const positionOptions = assignable(positionsFor(department));
+  const positionChoices =
+    department === m.department && !positionOptions.includes(m.position)
+      ? [m.position, ...positionOptions]
+      : positionOptions;
 
   const handleCopyCode = async () => {
     if (!m.member_code) return;
@@ -706,25 +776,31 @@ function MemberDrawer({
       setErr("Ngày quay lại phải sau ngày bắt đầu nghỉ.");
       return;
     }
+    if (canEditPosition && !position) {
+      setErr("Bạn không gán được chức vụ nào ở Ban này.");
+      return;
+    }
     setBusy(true);
     try {
-      const { error } = await supabase
-        .from("members")
-        .update({
-          department,
-          position,
-          // "inactive" may just mean "account not activated" (profile untouched), so keep the profile's own state.
-          status: status === "inactive" ? m.status : UNIFIED_MEMBER_STATUS[status],
-          leave_from: status === "on_leave" ? leaveFrom : null,
-          leave_until: status === "on_leave" ? leaveUntil : null,
-          status_note: status === "active" ? "" : note.trim().slice(0, 500),
-          left_on:
-            status === "left" ? (m.left_on ?? today) : status === "suspended" ? m.left_on : null,
-        })
-        .eq("id", m.id);
-      if (error) throw new Error(error.message);
-      // Account role/permission changes stay admin-only (the server function enforces it too).
-      if (isAdmin && m.account) {
+      if (canEditProfile || canEditPosition) {
+        const { error } = await supabase
+          .from("members")
+          .update({
+            department,
+            position,
+            // "inactive" may just mean "account not activated" (profile untouched), so keep the profile's own state.
+            status: status === "inactive" ? m.status : UNIFIED_MEMBER_STATUS[status],
+            leave_from: status === "on_leave" ? leaveFrom : null,
+            leave_until: status === "on_leave" ? leaveUntil : null,
+            status_note: status === "active" ? "" : note.trim().slice(0, 500),
+            left_on:
+              status === "left" ? (m.left_on ?? today) : status === "suspended" ? m.left_on : null,
+          })
+          .eq("id", m.id);
+        if (error) throw new Error(error.message);
+      }
+      // Account changes need accounts.manage for this member; the server function re-checks it.
+      if (canManageAccount && m.account) {
         await update({
           data: {
             userId: m.account.userId,
@@ -827,7 +903,7 @@ function MemberDrawer({
           <Button type="button" variant="outline" size="admin" onClick={onClose}>
             Hủy
           </Button>
-          {canEdit && (
+          {(canEditProfile || canEditPosition || (canManageAccount && !!m.account)) && (
             <Button type="button" size="admin-lg" disabled={busy} onClick={save}>
               {busy && <Loader2 aria-hidden className="animate-spin" />}
               Lưu thay đổi
@@ -840,7 +916,7 @@ function MemberDrawer({
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Vị trí & tổ chức
         </h3>
-        {canEdit ? (
+        {canEditPosition ? (
           <div className="grid gap-2 sm:grid-cols-2">
             <FormField label="Ban">
               {(field) => (
@@ -848,16 +924,16 @@ function MemberDrawer({
                   value={department}
                   onValueChange={(val) => {
                     setDepartment(val);
-                    setPosition(positionsFor(val)[0]!);
+                    setPosition(assignable(positionsFor(val))[0] ?? "");
                   }}
                 >
                   <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
                     <SelectValue placeholder="Chọn Ban" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {ACCOUNT_DEPTS.map((d) => (
-                      <SelectItem key={d.id} value={d.id} className="text-xs">
-                        {d.name}
+                    {departmentChoices.map((id) => (
+                      <SelectItem key={id} value={id} className="text-xs">
+                        {deptName(id)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -871,7 +947,7 @@ function MemberDrawer({
                     <SelectValue placeholder="Chọn chức vụ" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {positionsFor(department).map((p) => (
+                    {positionChoices.map((p) => (
                       <SelectItem key={p} value={p} className="text-xs">
                         {p}
                       </SelectItem>
@@ -933,7 +1009,7 @@ function MemberDrawer({
                 type="button"
                 variant={isSelected ? "default" : "outline"}
                 size="admin"
-                disabled={!canEdit}
+                disabled={!canEditProfile}
                 aria-pressed={isSelected}
                 onClick={() => setStatus(o.value)}
                 className="gap-1.5 px-2 disabled:opacity-70"
@@ -947,20 +1023,20 @@ function MemberDrawer({
             );
           })}
         </div>
-        {isAdmin && status === "left" && (
+        {canManageAccount && status === "left" && (
           <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
             Hồ sơ đang ở trạng thái <strong>Đã rời</strong> vì tài khoản nội bộ đã bị xóa. Cấp lại
             tài khoản ở mục bên dưới sẽ đưa hồ sơ về <strong>Đang hoạt động</strong>.
           </p>
         )}
-        {isAdmin && status === "inactive" && !m.account && (
+        {canManageAccount && status === "inactive" && !m.account && (
           <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
             Hồ sơ đang ở trạng thái <strong>Chưa kích hoạt</strong>. Chọn{" "}
             <strong>Đang hoạt động</strong> ở trên rồi bấm <strong>Lưu thay đổi</strong> để đưa
             thành viên vào danh sách hoạt động — việc cấp tài khoản đăng nhập là tuỳ chọn.
           </p>
         )}
-        {isAdmin && status === "inactive" && m.account && (
+        {canManageAccount && status === "inactive" && m.account && (
           <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
             Tài khoản chưa được kích hoạt. Chọn <strong>Đang hoạt động</strong> ở trên rồi bấm{" "}
             <strong>Lưu thay đổi</strong> để mở quyền đăng nhập.
@@ -974,7 +1050,7 @@ function MemberDrawer({
                   id={field.id}
                   value={leaveFrom}
                   onChange={setLeaveFrom}
-                  disabled={!canEdit}
+                  disabled={!canEditProfile}
                 />
               )}
             </FormField>
@@ -985,7 +1061,7 @@ function MemberDrawer({
                   value={leaveUntil}
                   min={leaveFrom}
                   onChange={setLeaveUntil}
-                  disabled={!canEdit}
+                  disabled={!canEditProfile}
                 />
               )}
             </FormField>
@@ -999,7 +1075,7 @@ function MemberDrawer({
                 rows={3}
                 maxLength={500}
                 value={note}
-                disabled={!canEdit}
+                disabled={!canEditProfile}
                 onChange={(e) => setNote(e.target.value)}
               />
             )}
@@ -1007,7 +1083,7 @@ function MemberDrawer({
         )}
       </section>
 
-      {isAdmin && (
+      {canManageAccount && (
         <section className="space-y-3 border-t border-border/60 pt-5">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Tài khoản & bảo mật
@@ -1034,7 +1110,7 @@ function MemberDrawer({
                   )}
                 </Button>
               </div>
-              <AdminFlagRow checked={adminFlag} onChange={setAdminFlag} />
+              {isAdmin && <AdminFlagRow checked={adminFlag} onChange={setAdminFlag} />}
               <div className="rounded-xl border border-border/70 p-3">
                 <h4 className="flex items-center gap-2 text-sm font-semibold">
                   <KeyRound className="h-4 w-4" />
@@ -1103,7 +1179,7 @@ function MemberDrawer({
               </div>
             </>
           ) : grantOpen ? (
-            <GrantAccount m={m} onChanged={onChanged} onClose={onClose} />
+            <GrantAccount m={m} canSetAdmin={isAdmin} onChanged={onChanged} onClose={onClose} />
           ) : (
             <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4 text-center">
               <p className="text-sm font-medium text-foreground">
@@ -1125,7 +1201,7 @@ function MemberDrawer({
         </section>
       )}
 
-      {isAdmin && (
+      {(m.account ? canManageAccount : canDeleteProfile) && (
         <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
           {m.account ? (
             <>
@@ -1206,10 +1282,12 @@ function MemberDrawer({
 
 function GrantAccount({
   m,
+  canSetAdmin,
   onChanged,
   onClose,
 }: {
   m: MemberRow;
+  canSetAdmin: boolean;
   onChanged: () => void;
   onClose: () => void;
 }) {
@@ -1351,7 +1429,7 @@ function GrantAccount({
           )}
         </FormField>
       </div>
-      <AdminFlagRow checked={v.isAdmin} onChange={(on) => set({ isAdmin: on })} />
+      {canSetAdmin && <AdminFlagRow checked={v.isAdmin} onChange={(on) => set({ isAdmin: on })} />}
       <label className="flex items-center gap-2 text-sm">
         <Checkbox checked={v.mustChange} onCheckedChange={(c) => set({ mustChange: c === true })} />
         Yêu cầu đổi mật khẩu khi đăng nhập lần đầu
@@ -1370,26 +1448,39 @@ function GrantAccount({
 // ---------------------------------------------------------------- add member
 
 function NewMemberDrawer({
-  canCreateAccount,
+  perms,
+  me,
   onClose,
   onChanged,
 }: {
-  canCreateAccount: boolean;
+  perms: MyPermissions;
+  me: { department: string | null; position: string | null };
   onClose: () => void;
   onChanged: () => void;
 }) {
   const create = useServerFn(createAccount);
-  const [v, setV] = useState({
-    full_name: "",
-    phone: "",
-    email: "",
-    department: "executive",
-    position: positionsFor("executive")[0]!,
-    withAccount: false,
-    password: randomPassword(),
-    isAdmin: false,
-    mustChange: true,
+  const deptOptions = departmentsFor(
+    perms,
+    "members.create",
+    me,
+    ACCOUNT_DEPTS.map((d) => d.id),
+  );
+  const [v, setV] = useState(() => {
+    const department = deptOptions[0] ?? "";
+    return {
+      full_name: "",
+      phone: "",
+      email: "",
+      department,
+      position: assignablePositions(perms, me, positionsFor(department))[0] ?? "",
+      withAccount: false,
+      password: randomPassword(),
+      isAdmin: false,
+      mustChange: true,
+    };
   });
+  const positionOptions = assignablePositions(perms, me, positionsFor(v.department));
+  const canCreateAccount = can(perms, "accounts.manage", v.department, me.department);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -1482,7 +1573,12 @@ function NewMemberDrawer({
           <Button type="button" variant="outline" size="admin" onClick={onClose}>
             Hủy
           </Button>
-          <Button type="button" size="admin-lg" disabled={busy} onClick={submit}>
+          <Button
+            type="button"
+            size="admin-lg"
+            disabled={busy || positionOptions.length === 0}
+            onClick={submit}
+          >
             {busy && <Loader2 aria-hidden className="animate-spin" />}
             Thêm thành viên
           </Button>
@@ -1517,15 +1613,20 @@ function NewMemberDrawer({
             {(field) => (
               <Select
                 value={v.department}
-                onValueChange={(val) => set({ department: val, position: positionsFor(val)[0]! })}
+                onValueChange={(val) =>
+                  set({
+                    department: val,
+                    position: assignablePositions(perms, me, positionsFor(val))[0] ?? "",
+                  })
+                }
               >
                 <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
                   <SelectValue placeholder="Chọn Ban" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {ACCOUNT_DEPTS.map((d) => (
-                    <SelectItem key={d.id} value={d.id} className="text-xs">
-                      {d.name}
+                  {deptOptions.map((id) => (
+                    <SelectItem key={id} value={id} className="text-xs">
+                      {deptName(id)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1539,7 +1640,7 @@ function NewMemberDrawer({
                   <SelectValue placeholder="Chọn chức vụ" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {positionsFor(v.department).map((p) => (
+                  {positionOptions.map((p) => (
                     <SelectItem key={p} value={p} className="text-xs">
                       {p}
                     </SelectItem>
@@ -1549,6 +1650,9 @@ function NewMemberDrawer({
             )}
           </FormField>
         </div>
+        {positionOptions.length === 0 && (
+          <p className="text-xs text-destructive">Bạn không gán được chức vụ nào ở Ban này.</p>
+        )}
         <FormField label="Email liên hệ">
           {(field) => (
             <AdminInput
@@ -1615,7 +1719,7 @@ function NewMemberDrawer({
         )}
       </section>
 
-      {canCreateAccount && v.withAccount && (
+      {perms.isAdmin && v.withAccount && canCreateAccount && (
         <section className="space-y-3 border-t border-border/60 pt-5">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Quyền quản trị

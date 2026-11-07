@@ -66,6 +66,44 @@ export function canAdjustMember(
   return outranksPosition(me.position ?? "Thành viên", target.position ?? "Thành viên");
 }
 
+type Me = { department: string | null; position: string | null };
+
+/**
+ * Client mirror of has_perm(code, target department) + outranks(): the admin flag passes; nobody
+ * else may act on an admin or on an equal/higher position. The database re-checks everything.
+ */
+export function canActOnMember(
+  p: MyPermissions,
+  code: PermissionCode,
+  me: Me,
+  target: { department: string; position: string | null; isAdmin?: boolean },
+): boolean {
+  if (p.isAdmin) return true;
+  if (target.isAdmin) return false;
+  if (!can(p, code, target.department, me.department)) return false;
+  return outranksPosition(me.position ?? "Thành viên", target.position ?? "Thành viên");
+}
+
+/** Departments (from `all`, in order) where the caller holds `code`, e.g. members.create / members.position. */
+export function departmentsFor(
+  p: MyPermissions,
+  code: PermissionCode,
+  me: Me,
+  all: readonly string[],
+): string[] {
+  return all.filter((d) => can(p, code, d, me.department));
+}
+
+/** Positions the caller may assign: client mirror of can_assign_position (strictly lower rank). */
+export function assignablePositions(
+  p: MyPermissions,
+  me: Me,
+  positions: readonly string[],
+): string[] {
+  if (p.isAdmin) return [...positions];
+  return positions.filter((x) => outranksPosition(me.position ?? "Thành viên", x));
+}
+
 /** Lands on /admin only when the user has real work there, not just the member list or settings. */
 export function landsOnAdmin(allowed: string[] | "all"): boolean {
   if (allowed === "all") return true;

@@ -226,6 +226,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-172-MEMBERS-DRAWERS-USE-ADMIN-KIT`                            | Thành viên (2/2): 3 drawer dùng bộ component admin                                                     | 2026-11-07     | **PASS** | [task-ge-172-members-drawers-use-admin-kit.md](tasks/task-ge-172-members-drawers-use-admin-kit.md)                                                       |
 | `TASK-OC-168-ACCOUNTS-ADMIN-FLAG-ONLY`                                 | Tài khoản chỉ còn cờ Quản trị viên                                                                     | 2026-11-07     | **PASS** | [task-oc-168-accounts-admin-flag-only.md](tasks/task-oc-168-accounts-admin-flag-only.md)                                                                 |
 | `TASK-GE-173-ACTIVITIES-LIST-USE-ADMIN-KIT`                            | Hoạt động (1/2): danh sách và khung trang dùng bộ component admin                                      | 2026-11-07     | **PASS** | [task-ge-173-activities-list-use-admin-kit.md](tasks/task-ge-173-activities-list-use-admin-kit.md)                                                       |
+| `TASK-OC-169-MEMBERS-PAGE-ON-PERMISSIONS`                              | Trang Thành viên theo ma trận quyền                                                                    | 2026-11-07     | **PASS** | [task-oc-169-members-page-on-permissions.md](tasks/task-oc-169-members-page-on-permissions.md)                                                           |
 
 ---
 

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { MyPermissions } from "./permission-catalog";
 import {
+  assignablePositions,
+  canActOnMember,
   canAdjustMember,
+  departmentsFor,
   allowedSections,
   hasAllScope,
   landsOnAdmin,
@@ -185,5 +188,93 @@ describe("canAdjustMember", () => {
     expect(
       canAdjustMember(perms({}), me("Trưởng Ban"), { department: "hr", position: "Thành viên" }),
     ).toBe(false);
+  });
+});
+
+describe("canActOnMember", () => {
+  const hrHead = { department: "hr", position: "Trưởng Ban" };
+  const target = (position: string, isAdmin = false) => ({ department: "hr", position, isAdmin });
+
+  it("lets an admin act on anyone, including another admin", () => {
+    expect(
+      canActOnMember(perms({}, true), "accounts.manage", hrHead, target("Co-founder", true)),
+    ).toBe(true);
+  });
+
+  it("blocks a non-admin from acting on an admin", () => {
+    expect(
+      canActOnMember(perms({ "accounts.manage": "all" }), "accounts.manage", hrHead, {
+        department: "hr",
+        position: "Thành viên",
+        isAdmin: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("scopes an own permission to the same department and strictly lower positions", () => {
+    const p = perms({ "accounts.manage": "own" });
+    expect(canActOnMember(p, "accounts.manage", hrHead, target("Thành viên"))).toBe(true);
+    expect(
+      canActOnMember(p, "accounts.manage", hrHead, { department: "comms", position: "Thành viên" }),
+    ).toBe(false);
+    expect(canActOnMember(p, "accounts.manage", hrHead, target("Trưởng Ban"))).toBe(false);
+  });
+
+  it("lets the all scope cross departments but still requires a lower position", () => {
+    const p = perms({ "accounts.manage": "all" });
+    expect(
+      canActOnMember(p, "accounts.manage", hrHead, { department: "comms", position: "Thành viên" }),
+    ).toBe(true);
+    expect(
+      canActOnMember(p, "accounts.manage", hrHead, { department: "comms", position: "Trưởng Ban" }),
+    ).toBe(false);
+  });
+
+  it("refuses without the permission", () => {
+    expect(canActOnMember(perms({}), "accounts.manage", hrHead, target("Thành viên"))).toBe(false);
+  });
+});
+
+describe("departmentsFor", () => {
+  const all = ["hr", "comms", "executive"];
+  const me = { department: "hr", position: "Trưởng Ban" };
+
+  it("returns the caller's own department for an own scope", () => {
+    expect(departmentsFor(perms({ "members.create": "own" }), "members.create", me, all)).toEqual([
+      "hr",
+    ]);
+  });
+
+  it("returns every department (in order) for an all scope", () => {
+    expect(departmentsFor(perms({ "members.create": "all" }), "members.create", me, all)).toEqual(
+      all,
+    );
+  });
+
+  it("returns nothing without the permission and everything for an admin", () => {
+    expect(departmentsFor(perms({}), "members.create", me, all)).toEqual([]);
+    expect(departmentsFor(perms({}, true), "members.create", me, all)).toEqual(all);
+  });
+});
+
+describe("assignablePositions", () => {
+  const positions = ["Trưởng Ban", "Phó Ban", "Thành viên", "Cố vấn chuyên môn"];
+  const me = (position: string) => ({ department: "hr", position });
+
+  it("keeps only strictly lower positions, in input order", () => {
+    expect(assignablePositions(perms({}), me("Trưởng Ban"), positions)).toEqual([
+      "Phó Ban",
+      "Thành viên",
+      "Cố vấn chuyên môn",
+    ]);
+    expect(assignablePositions(perms({}), me("Phó Ban"), positions)).toEqual([
+      "Thành viên",
+      "Cố vấn chuyên môn",
+    ]);
+    expect(assignablePositions(perms({}), me("Thành viên"), positions)).toEqual([]);
+  });
+
+  it("gives an admin every position", () => {
+    expect(assignablePositions(perms({}, true), me("Thành viên"), positions)).toEqual(positions);
   });
 });
