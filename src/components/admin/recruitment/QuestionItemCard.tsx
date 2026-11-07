@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { QUESTION_KINDS, canonicalKind } from "@/lib/recruitment";
 import { parsePastedOptions } from "@/lib/recruitment-choice";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
 import {
   Select,
   SelectContent,
@@ -12,17 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import {
-  isChoiceKind,
-  SELECT_CONTENT,
-  SELECT_TRIGGER,
-  type Confirm,
-  type Run,
-  type StudioQuestion,
-} from "./types";
-
-const iconBtn =
-  "grid h-7 w-7 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30";
+import { isChoiceKind, SELECT_CONTENT, type Confirm, type Run, type StudioQuestion } from "./types";
 
 /** Browsers with `field-sizing: content` grow the prompt box on their own. */
 const FIELD_SIZING =
@@ -137,10 +129,10 @@ export function QuestionItemCard({
           <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-secondary text-[11px] font-semibold text-muted-foreground">
             {index + 1}
           </span>
-          <textarea
+          <AdminTextarea
             ref={promptRef}
             rows={1}
-            className="field-sizing-content min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-input bg-background px-3 py-1.5 text-sm leading-snug"
+            className="field-sizing-content min-h-0 min-w-0 flex-1 resize-none overflow-hidden px-3 py-1.5 leading-snug"
             defaultValue={question.prompt}
             aria-label="Nội dung câu hỏi"
             placeholder="Nội dung câu hỏi"
@@ -188,27 +180,27 @@ export function QuestionItemCard({
           </div>
 
           <div className="flex shrink-0 items-center gap-0.5">
-            <button
+            <Button
               type="button"
-              className={iconBtn}
+              variant="ghost"
+              size="admin-icon"
+              className="h-7 w-7 text-muted-foreground [&_svg]:size-3.5"
               aria-label={question.visible ? "Ẩn câu hỏi" : "Hiện câu hỏi"}
               onClick={() => void save({ visible: !question.visible })}
             >
-              {question.visible ? (
-                <Eye className="h-3.5 w-3.5" />
-              ) : (
-                <EyeOff className="h-3.5 w-3.5" />
-              )}
-            </button>
-            <button
+              {question.visible ? <Eye aria-hidden /> : <EyeOff aria-hidden />}
+            </Button>
+            <Button
               type="button"
-              className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
+              variant="ghost"
+              size="admin-icon"
+              className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               aria-label="Xóa câu hỏi"
               disabled={checking}
               onClick={() => void remove()}
             >
-              <Trash2 className="h-4 w-4" />
-            </button>
+              <Trash2 aria-hidden />
+            </Button>
           </div>
         </div>
       </div>
@@ -223,21 +215,22 @@ export function QuestionItemCard({
                   className="inline-flex items-center gap-1 rounded-full border border-border bg-background py-0.5 pl-2.5 pr-1 text-xs text-foreground"
                 >
                   {option}
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     aria-label={`Xóa lựa chọn ${option}`}
-                    className="grid h-4 w-4 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => saveOptions(question.options.filter((o) => o !== option))}
+                    className="h-4 w-4 rounded-full p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
+                    <X aria-hidden />
+                  </Button>
                 </span>
               ))}
             </div>
           )}
           <div className="flex gap-1.5">
-            <input
-              className="min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+            <AdminInput
+              className="h-8 min-w-0 flex-1 text-xs"
               placeholder="Nhập lựa chọn rồi nhấn Enter… (hoặc dán danh sách nhiều dòng)"
               value={draft}
               aria-label="Thêm lựa chọn"
@@ -249,14 +242,15 @@ export function QuestionItemCard({
                 addOption();
               }}
             />
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="admin-sm"
               onClick={addOption}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 text-xs font-medium transition-colors hover:bg-accent"
+              className="shrink-0 [&_svg]:size-3"
             >
-              <Plus className="h-3 w-3" />
-              Thêm
-            </button>
+              <Plus aria-hidden /> Thêm
+            </Button>
           </div>
         </div>
       )}

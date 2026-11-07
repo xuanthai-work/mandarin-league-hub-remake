@@ -54,7 +54,4 @@ export type Swap = (
   table: "recruitment_topics" | "recruitment_questions",
 ) => void;
 
-export const FIELD = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
-export const SELECT_TRIGGER =
-  "h-9 w-full rounded-lg border-input bg-background text-sm font-normal shadow-none";
 export const SELECT_CONTENT = "rounded-xl";

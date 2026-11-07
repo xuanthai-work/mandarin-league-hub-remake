@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ChevronDown, Loader2, Plus, Search, Sparkles, X } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Sparkles, X } from "lucide-react";
 import {
   QUESTION_BANK,
   QUESTION_KINDS,
@@ -12,6 +12,12 @@ import {
 } from "@/lib/recruitment";
 import { filterQuestionBank } from "@/lib/recruitment-question-search";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { AdminInput } from "@/components/admin/kit/AdminInput";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { FormField } from "@/components/admin/kit/FormField";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
 import {
   Dialog,
   DialogContent,
@@ -34,14 +40,6 @@ import { isChoiceKind, type Confirm, type Run, type StudioData, type Swap } from
 
 /** Marks the whole-bank seed action in `loadingBank`. */
 const ALL = "all";
-
-/** Pill style for the new-topic multi-select position picker. */
-const positionPill = (active: boolean) =>
-  `rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-    active
-      ? "border-primary bg-primary text-primary-foreground"
-      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-  }`;
 
 /** Master-detail editor for the recruitment question bank: one department at a time. */
 export function QuestionBankStudio({
@@ -248,21 +246,10 @@ export function QuestionBankStudio({
   return (
     <div className="mt-5 space-y-4">
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        {(
-          [
-            ["Tổng chủ đề", stats.topics],
-            ["Tổng câu hỏi", stats.questions],
-            ["Câu bắt buộc", stats.required],
-            ["Câu trắc nghiệm", stats.choice],
-          ] as const
-        ).map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-border bg-card px-3 py-2.5">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              {label}
-            </p>
-            <p className="text-xl font-bold text-foreground">{value}</p>
-          </div>
-        ))}
+        <StatFilterCard label="Tổng chủ đề" value={stats.topics} />
+        <StatFilterCard label="Tổng câu hỏi" value={stats.questions} />
+        <StatFilterCard label="Câu bắt buộc" value={stats.required} />
+        <StatFilterCard label="Câu trắc nghiệm" value={stats.choice} />
       </div>
 
       {data.topics.length === 0 && (
@@ -270,19 +257,20 @@ export function QuestionBankStudio({
           <p className="text-foreground">
             Ngân hàng câu hỏi đang trống. Bắt đầu bằng bộ câu hỏi TML đã soạn sẵn.
           </p>
-          <button
+          <Button
             type="button"
+            size="admin"
             disabled={loadingBank === ALL}
             onClick={() => void seedBank(ALL)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+            className="[&_svg]:size-3.5"
           >
             {loadingBank === ALL ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 aria-hidden className="animate-spin" />
             ) : (
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles aria-hidden />
             )}
             Nạp bộ câu hỏi TML
-          </button>
+          </Button>
         </div>
       )}
 
@@ -297,28 +285,25 @@ export function QuestionBankStudio({
 
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[200px] flex-1">
-              <Search
-                aria-hidden
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                className="w-full rounded-xl border border-input bg-card py-2 pl-9 pr-3 text-sm shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Tìm chủ đề, câu hỏi hoặc lựa chọn trắc nghiệm…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Tìm chủ đề, câu hỏi hoặc lựa chọn trắc nghiệm…"
+              label="Tìm trong ngân hàng câu hỏi"
+              className="min-w-[200px] flex-1"
+            />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="admin"
                   aria-label="Lọc theo loại câu hỏi"
-                  className="inline-flex h-9 w-[170px] items-center justify-between gap-1 rounded-xl border border-input bg-card px-3 text-xs font-medium shadow-xs transition-colors hover:bg-accent/60"
+                  className="w-[170px] justify-between gap-1 bg-card font-medium shadow-xs [&_svg]:size-3.5"
                 >
                   <span className="truncate">{kindLabel}</span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" />
-                </button>
+                  <ChevronDown aria-hidden className="shrink-0 opacity-60" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
                 <DropdownMenuCheckboxItem
@@ -364,22 +349,25 @@ export function QuestionBankStudio({
                 )}
               </p>
             </div>
-            <button
+            <Button
               type="button"
+              size="admin-sm"
               onClick={() => setTopicDialogOpen(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="[&_svg]:size-3.5"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus aria-hidden />
               Chủ đề mới
-            </button>
+            </Button>
           </div>
 
           {filteredTopics.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-              {deptTopics.length === 0
-                ? "Ban này chưa có chủ đề nào. Bấm “Chủ đề mới” ở trên để bắt đầu."
-                : "Không có chủ đề nào khớp bộ lọc hiện tại."}
-            </p>
+            <EmptyState
+              title={
+                deptTopics.length === 0
+                  ? "Ban này chưa có chủ đề nào. Bấm “Chủ đề mới” ở trên để bắt đầu."
+                  : "Không có chủ đề nào khớp bộ lọc hiện tại."
+              }
+            />
           ) : (
             filteredTopics.map((item) => (
               <TopicAccordionCard
@@ -416,61 +404,58 @@ export function QuestionBankStudio({
             </DialogDescription>
           </DialogHeader>
           <form id="new-topic-form" onSubmit={addTopic} className="space-y-2.5">
-            <div>
-              <label
-                className="text-xs font-medium text-muted-foreground"
-                htmlFor="new-topic-title"
-              >
-                Tên chủ đề *
-              </label>
-              <input
-                id="new-topic-title"
-                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                placeholder="VD: Kinh nghiệm thiết kế"
-                required
-                value={newTopic.title}
-                onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground" htmlFor="new-topic-desc">
-                Mô tả ngắn
-              </label>
-              <input
-                id="new-topic-desc"
-                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                placeholder="Gợi ý nội dung cho ứng viên"
-                value={newTopic.description}
-                onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })}
-              />
-            </div>
+            <FormField label="Tên chủ đề" required>
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  required
+                  placeholder="VD: Kinh nghiệm thiết kế"
+                  value={newTopic.title}
+                  onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })}
+                />
+              )}
+            </FormField>
+            <FormField label="Mô tả ngắn">
+              {(field) => (
+                <AdminInput
+                  {...field}
+                  placeholder="Gợi ý nội dung cho ứng viên"
+                  value={newTopic.description}
+                  onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })}
+                />
+              )}
+            </FormField>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Vị trí áp dụng</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 Chọn một hoặc nhiều vị trí. Để trống nghĩa là mọi vị trí.
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
-                <button
+                <Button
                   type="button"
+                  variant={selectedPositions.length === 0 ? "default" : "outline"}
+                  size="admin-sm"
                   aria-pressed={selectedPositions.length === 0}
                   onClick={() => setSelectedPositions([])}
-                  className={positionPill(selectedPositions.length === 0)}
+                  className="h-7 rounded-full px-2.5 text-xs font-medium shadow-none"
                 >
                   Mọi vị trí
-                </button>
+                </Button>
                 {Array.from(new Set([...availablePositions, ...selectedPositions])).map((p) => {
                   const active = selectedPositions.includes(p);
                   if (isDefaultPosition(deptKey, p)) {
                     return (
-                      <button
+                      <Button
                         key={p}
                         type="button"
+                        variant={active ? "default" : "outline"}
+                        size="admin-sm"
                         aria-pressed={active}
                         onClick={() => togglePosition(p)}
-                        className={positionPill(active)}
+                        className="h-7 rounded-full px-2.5 text-xs font-medium shadow-none"
                       >
                         {p}
-                      </button>
+                      </Button>
                     );
                   }
                   return (
@@ -482,26 +467,28 @@ export function QuestionBankStudio({
                           : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                       }`}
                     >
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         aria-pressed={active}
                         onClick={() => togglePosition(p)}
-                        className="py-1 pl-2.5 pr-1"
+                        className="h-auto rounded-full py-1 pl-2.5 pr-1 text-xs font-medium text-inherit hover:bg-transparent hover:text-inherit"
                       >
                         {p}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
                         aria-label={`Xóa vị trí ${p}`}
                         title={`Xóa vị trí ${p}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           void deleteSelectedPosition(p);
                         }}
-                        className="py-1 pl-0.5 pr-2 opacity-70 transition-opacity hover:opacity-100"
+                        className="h-auto rounded-full py-1 pl-0.5 pr-2 text-inherit opacity-70 hover:bg-transparent hover:text-inherit hover:opacity-100 [&_svg]:size-3"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
+                        <X aria-hidden />
+                      </Button>
                     </span>
                   );
                 })}
@@ -509,21 +496,13 @@ export function QuestionBankStudio({
             </div>
           </form>
           <DialogFooter>
-            <button
-              type="button"
-              onClick={closeTopicDialog}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
-            >
+            <Button type="button" variant="outline" size="admin" onClick={closeTopicDialog}>
               Hủy
-            </button>
-            <button
-              type="submit"
-              form="new-topic-form"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
+            </Button>
+            <Button type="submit" form="new-topic-form" size="admin">
+              <Plus aria-hidden />
               Tạo chủ đề
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

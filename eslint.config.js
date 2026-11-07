@@ -34,6 +34,7 @@ const ADMIN_KIT_FILES = [
   "src/components/admin/candidates/**/*.tsx",
   "src/routes/_authenticated/admin.hsk.tsx",
   "src/routes/_authenticated/admin.recruitment.tsx",
+  "src/components/admin/recruitment/**/*.tsx",
 ];
 
 export default tseslint.config(

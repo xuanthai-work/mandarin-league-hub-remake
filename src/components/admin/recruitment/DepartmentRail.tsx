@@ -1,4 +1,5 @@
 import { Globe, ListPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { RAIL, bankTopicCount, deptOf } from "./rail";
 import type { StudioData } from "./types";
 
@@ -41,13 +42,16 @@ export function DepartmentRail({
           const seedable = s.topics === 0 && bankTopicCount(item.id) > 0;
           return (
             <div key={item.id}>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => onSelect(item.id)}
                 aria-current={active ? "true" : undefined}
-                className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors ${
-                  active ? "bg-primary/10 ring-1 ring-primary/40 ring-inset" : "hover:bg-accent"
-                }`}
+                className={`h-auto w-full items-start justify-start gap-2.5 whitespace-normal rounded-xl px-2.5 py-2 text-left font-normal ${
+                  active
+                    ? "bg-primary/10 ring-1 ring-primary/40 ring-inset hover:bg-primary/10"
+                    : ""
+                } [&_svg]:size-3.5`}
               >
                 <span className="min-w-0 flex-1">
                   <span
@@ -55,9 +59,7 @@ export function DepartmentRail({
                       active ? "font-semibold text-primary" : "font-medium text-foreground"
                     }`}
                   >
-                    {item.id === "common" && (
-                      <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    )}
+                    {item.id === "common" && <Globe className="shrink-0 text-muted-foreground" />}
                     <span className="truncate">{item.name}</span>
                   </span>
                   <span className="block text-[11px] text-muted-foreground">
@@ -65,17 +67,18 @@ export function DepartmentRail({
                     {item.hint && ` · ${item.hint}`}
                   </span>
                 </span>
-              </button>
+              </Button>
               {seedable && (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   disabled={loadingBank === item.id}
                   onClick={() => onLoadBank(item.id)}
-                  className="ml-7 mt-1 mb-1.5 inline-flex items-center gap-1 rounded-lg border border-dashed border-primary/40 px-2 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/5 disabled:opacity-60"
+                  className="ml-7 mt-1 mb-1.5 h-auto gap-1 rounded-lg border-dashed border-primary/40 px-2 py-1 text-[11px] font-medium text-primary shadow-none hover:bg-primary/5 hover:text-primary [&_svg]:size-3"
                 >
-                  <ListPlus className="h-3 w-3" />
+                  <ListPlus aria-hidden />
                   {loadingBank === item.id ? "Đang nạp…" : "Nạp câu hỏi mẫu Ban này"}
-                </button>
+                </Button>
               )}
             </div>
           );

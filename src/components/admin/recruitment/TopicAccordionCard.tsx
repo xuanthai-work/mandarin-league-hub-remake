@@ -3,6 +3,8 @@ import { ArrowDown, ArrowUp, ChevronDown, Eye, EyeOff, Plus, Trash2 } from "luci
 import { toast } from "sonner";
 import { formatTopicPositions, isDefaultPosition, parseTopicPositions } from "@/lib/recruitment";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { AdminInput } from "@/components/admin/kit/AdminInput";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -11,9 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { QuestionItemCard } from "./QuestionItemCard";
 import { type Confirm, type Run, type StudioQuestion, type StudioTopic } from "./types";
-
-const iconBtn =
-  "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30";
 
 /** A topic card: collapsible header with inline rename/toggle/reorder and its question list. */
 export function TopicAccordionCard({
@@ -125,19 +124,19 @@ export function TopicAccordionCard({
     >
       <div className="flex flex-col gap-2 md:flex-row md:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="admin-icon"
             onClick={onToggle}
             aria-expanded={expanded}
             aria-label={expanded ? "Thu gọn chủ đề" : "Mở rộng chủ đề"}
-            className={iconBtn}
+            className="text-muted-foreground"
           >
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${expanded ? "" : "-rotate-90"}`}
-            />
-          </button>
-          <input
-            className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-semibold"
+            <ChevronDown className={`transition-transform ${expanded ? "" : "-rotate-90"}`} />
+          </Button>
+          <AdminInput
+            className="h-8 min-w-0 flex-1 font-semibold"
             defaultValue={topic.title}
             aria-label="Tên chủ đề"
             onBlur={(e) => {
@@ -151,17 +150,18 @@ export function TopicAccordionCard({
           <div className="flex min-w-0 items-center gap-1.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   aria-label="Chỉnh sửa vị trí áp dụng"
                   title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
-                  className="flex min-w-0 max-w-[160px] items-center gap-1 rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground data-[state=open]:bg-primary/10 data-[state=open]:text-primary sm:max-w-[240px]"
+                  className="h-auto min-w-0 max-w-[160px] gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=open]:bg-primary/10 data-[state=open]:text-primary sm:max-w-[240px] [&_svg]:size-3"
                 >
                   <span className="min-w-0 truncate">
                     {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
                   </span>
-                  <ChevronDown aria-hidden className="h-3 w-3 shrink-0 opacity-60" />
-                </button>
+                  <ChevronDown aria-hidden className="shrink-0 opacity-60" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[220px]">
                 <DropdownMenuCheckboxItem
@@ -187,8 +187,10 @@ export function TopicAccordionCard({
                   >
                     <span className="min-w-0 flex-1 truncate">{p}</span>
                     {!isDefaultPosition(topic.department, p) && (
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        className="h-5 w-5 shrink-0 rounded p-0 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3"
                         aria-label={`Xóa vị trí ${p}`}
                         title={`Xóa vị trí ${p}`}
                         onClick={(e) => {
@@ -197,10 +199,9 @@ export function TopicAccordionCard({
                         }}
                         onPointerDown={(e) => e.stopPropagation()}
                         onPointerUp={(e) => e.stopPropagation()}
-                        className="shrink-0 rounded p-0.5 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                        <Trash2 aria-hidden />
+                      </Button>
                     )}
                   </DropdownMenuCheckboxItem>
                 ))}
@@ -221,50 +222,58 @@ export function TopicAccordionCard({
           </div>
 
           <div className="flex items-center gap-0.5">
-            <button
+            <Button
               type="button"
-              className={iconBtn}
+              variant="ghost"
+              size="admin-icon"
+              className="text-muted-foreground [&_svg]:size-3.5"
               aria-label={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
               title={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
               onClick={() => void save({ visible: !topic.visible })}
             >
-              {topic.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-            </button>
-            <button
+              {topic.visible ? <Eye aria-hidden /> : <EyeOff aria-hidden />}
+            </Button>
+            <Button
               type="button"
-              className={iconBtn}
+              variant="ghost"
+              size="admin-icon"
+              className="text-muted-foreground [&_svg]:size-3.5"
               aria-label="Đưa chủ đề lên"
               disabled={index === 0}
               onClick={() => onMove(index, index - 1)}
             >
-              <ArrowUp className="h-3.5 w-3.5" />
-            </button>
-            <button
+              <ArrowUp aria-hidden />
+            </Button>
+            <Button
               type="button"
-              className={iconBtn}
+              variant="ghost"
+              size="admin-icon"
+              className="text-muted-foreground [&_svg]:size-3.5"
               aria-label="Đưa chủ đề xuống"
               disabled={index === total - 1}
               onClick={() => onMove(index, index + 1)}
             >
-              <ArrowDown className="h-3.5 w-3.5" />
-            </button>
-            <button
+              <ArrowDown aria-hidden />
+            </Button>
+            <Button
               type="button"
-              className={`${iconBtn} hover:bg-destructive/10 hover:text-destructive`}
+              variant="ghost"
+              size="admin-icon"
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               aria-label="Xóa chủ đề"
               disabled={checking}
               onClick={() => void remove()}
             >
-              <Trash2 className="h-4 w-4" />
-            </button>
+              <Trash2 aria-hidden />
+            </Button>
           </div>
         </div>
       </div>
 
       {expanded && (
         <div className="mt-3 space-y-2.5">
-          <input
-            className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs"
+          <AdminInput
+            className="h-8 text-xs"
             defaultValue={topic.description}
             placeholder="Mô tả ngắn cho ứng viên"
             aria-label="Mô tả chủ đề"
@@ -290,8 +299,10 @@ export function TopicAccordionCard({
               />
             ))}
           </div>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="admin-sm"
             onClick={() =>
               void run(
                 supabase.from("recruitment_questions").insert({
@@ -302,11 +313,10 @@ export function TopicAccordionCard({
                 "Đã thêm câu hỏi.",
               )
             }
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-primary/40 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
+            className="w-full border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:text-primary [&_svg]:size-3.5"
           >
-            <Plus className="h-3.5 w-3.5" />
-            Thêm câu hỏi vào chủ đề này
-          </button>
+            <Plus aria-hidden /> Thêm câu hỏi vào chủ đề này
+          </Button>
         </div>
       )}
     </article>
