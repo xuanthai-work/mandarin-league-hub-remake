@@ -264,6 +264,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-195-HIDE-ADMIN-FLAG`                                          | Ẩn cờ admin với người không phải admin (cờ locked trung tính)                                          | 2026-11-08     | **PASS** | [task-ge-195-hide-admin-flag.md](tasks/task-ge-195-hide-admin-flag.md)                                                                                   |
 | `TASK-OC-182-NAME-CHANGE-VIA-MEMBERS-PAGE`                             | Họ tên chỉ đổi ở trang Thành viên, Cài đặt chỉ đổi ảnh                                                 | 2026-11-08     | **PASS** | [task-oc-182-name-change-via-members-page.md](tasks/task-oc-182-name-change-via-members-page.md)                                                         |
 | `TASK-GE-196-TIER-BENEFITS-CLEANUP`                                    | Sửa bỏ cấp quyền lợi hàng loạt, thêm màu Ưu tú, dọn code bậc thừa                                      | 2026-11-08     | **PASS** | [task-ge-196-tier-benefits-cleanup.md](tasks/task-ge-196-tier-benefits-cleanup.md)                                                                       |
+| `TASK-GE-197-LEADER-FLAG-DB`                                           | Cờ thẻ Lãnh đạo do admin gán, Lãnh đạo không nhận điểm, reset điểm về 0                                | 2026-11-08     | **PASS** | [task-ge-197-leader-flag-db.md](tasks/task-ge-197-leader-flag-db.md)                                                                                     |
 
 ---
 
