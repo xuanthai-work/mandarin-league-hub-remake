@@ -235,6 +235,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-176-ADMIN-KIT-LINT-ADMIN-WIDE`                                | Bật luật bộ component admin cho toàn admin (glob, trừ kit và Điểm danh)                                | 2026-11-07     | **PASS** | [task-ge-176-admin-kit-lint-admin-wide.md](tasks/task-ge-176-admin-kit-lint-admin-wide.md)                                                               |
 | `TASK-OC-173-DROP-ADMIN-INVITES`                                       | Xóa lời mời vai trò cũ (admin_invites)                                                                 | 2026-11-07     | **PASS** | [task-oc-173-drop-admin-invites.md](tasks/task-oc-173-drop-admin-invites.md)                                                                             |
 | `TASK-OC-174-PUBLIC-REGISTRATION-RECAPTCHA`                            | reCAPTCHA cho đăng ký hoạt động và khóa học                                                            | 2026-11-07     | **PASS** | [task-oc-174-public-registration-recaptcha.md](tasks/task-oc-174-public-registration-recaptcha.md)                                                       |
+| `TASK-GE-177-FOUNDER-LEADER-TIER-AND-ADVISORS-SCALE`                   | Phân định cấp bậc Lãnh đạo cho Founder, thẻ đen & BXH thi đua cho Cố vấn / Trưởng Ban                  | 2026-11-07     | **PASS** | [task-founder-leader-tier-and-advisors-scale.md](tasks/task-founder-leader-tier-and-advisors-scale.md)                                                 |
 
 ---
 

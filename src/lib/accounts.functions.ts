@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { PermissionCode } from "@/lib/permission-catalog";
+import { LEADER_DEFAULT_POINTS, isFounder } from "@/lib/points";
 
 const status = z.enum(["inactive", "active", "suspended", "disabled"]);
 
@@ -215,6 +216,8 @@ export const createAccount = createServerFn({ method: "POST" })
           email: data.email,
           department: data.department,
           position: data.position,
+          // Only founders / co-founders start at the 400-point floor.
+          contribution_points: isFounder(data.position) ? LEADER_DEFAULT_POINTS : 0,
         })
         .select("id")
         .single();

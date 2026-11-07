@@ -2,8 +2,9 @@ export type Tier = { key: string; label: string; min: number; className: string;
 
 /**
  * 7 contribution tiers (highest first) on the 0–450 scale.
- * Lowering the thresholds only promotes members, so nobody is demoted; the
- * leader/advisor tone is separate and uses LEADER_DEFAULT_POINTS as its floor.
+ * Lowering the thresholds only promotes members, so nobody is demoted. The
+ * exclusive "leader" tier is not part of this scale: only founders/co-founders
+ * see and hold it.
  */
 export const TIERS: Tier[] = [
   { key: "honor", label: "Danh dự", min: 401, className: "tier-honor", tone: "honor" },
@@ -15,8 +16,29 @@ export const TIERS: Tier[] = [
   { key: "bronze", label: "Tập sự", min: 0, className: "tier-bronze", tone: "bronze" },
 ];
 
-/** Co-founders and current professional advisors start at 400 points (Ưu tú floor). */
+/** Founders and co-founders start at 400 points (Ưu tú floor). */
 export const LEADER_DEFAULT_POINTS = 400;
+
+/** Founder / co-founder detection by position title. */
+export const isFounder = (position: string | null | undefined): boolean =>
+  /co-founder|founder/i.test(position ?? "");
+
+/** Exclusive highest tier: visible only to founders/co-founders. */
+export const LEADER_TIER: Tier = {
+  key: "leader",
+  label: "Lãnh đạo",
+  min: 9999,
+  className: "border-gold/40 bg-[color:var(--enamel-obsidian,#0b0f19)] text-gold",
+  tone: "black",
+};
+
+/** Display/creation floor: only founders/co-founders get the 400-point floor. */
+export const effectiveMemberPoints = (
+  points: number,
+  position: string | null | undefined,
+): number => {
+  return isFounder(position) ? Math.max(points, LEADER_DEFAULT_POINTS) : points;
+};
 
 export const LEADER_TONE = { key: "black", label: "Lãnh đạo / Cố vấn" } as const;
 

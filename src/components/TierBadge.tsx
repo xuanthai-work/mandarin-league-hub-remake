@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { Lock, X } from "lucide-react";
-import { TIERS, tierOf } from "@/lib/points";
+import { LEADER_TIER, TIERS, tierOf } from "@/lib/points";
 
 const METAL: Record<string, string> = {
   bronze: "bronze",
@@ -47,7 +47,7 @@ export const TIER_INFO: Record<string, { zh: string; motto: string; perks: strin
   },
   leader: {
     zh: "领导",
-    motto: "Lãnh đạo & Cố vấn dẫn dắt Liên Đoàn.",
+    motto: "Đồng sáng lập dẫn dắt Liên Đoàn Hán Ngữ.",
     perks: ["Thẻ Obsidian danh dự", "Không tính vào BXH điểm"],
   },
   honor: {
@@ -378,15 +378,25 @@ export function TierBadge({
   );
 }
 
-export function TierProgress({ points }: { points: number }) {
+export function TierProgress({
+  points,
+  isFounder = false,
+}: {
+  points: number;
+  isFounder?: boolean;
+}) {
   const [open, setOpen] = useState(false);
-  const cur = tierOf(points);
-  const asc = [...TIERS].reverse();
-  const idx = asc.findIndex((t) => t.key === cur.key);
-  const next = asc[idx + 1];
-  const pct = next
-    ? Math.min(100, Math.round(((points - cur.min) / (next.min - cur.min)) * 100))
-    : 100;
+  const realCur = tierOf(points);
+  const cur = isFounder ? LEADER_TIER : realCur;
+  // Founders see the exclusive 8th tier; everyone else only sees the 7 standard tiers.
+  const asc = isFounder ? [...[...TIERS].reverse(), LEADER_TIER] : [...TIERS].reverse();
+  const curIdx = asc.findIndex((t) => t.key === cur.key);
+  const next = isFounder ? null : asc[curIdx + 1];
+  const pct = isFounder
+    ? 100
+    : next
+      ? Math.min(100, Math.round(((points - cur.min) / (next.min - cur.min)) * 100))
+      : 100;
   return (
     <div className="mt-3 rounded-2xl border border-gold/25 bg-white/5 p-5 text-white backdrop-blur-md">
       <div className="flex items-center gap-4">
@@ -407,7 +417,12 @@ export function TierProgress({ points }: { points: number }) {
         />
       </div>
       <p className="mt-2.5 text-xs text-white/80">
-        {next ? (
+        {isFounder ? (
+          <>
+            Bạn đang nắm giữ cấp bậc tối cao của TML:{" "}
+            <b className="font-bold text-gold">LÃNH ĐẠO</b>
+          </>
+        ) : next ? (
           <>
             <span className="font-mono">
               {points}/{next.min} điểm
@@ -437,7 +452,11 @@ export function TierProgress({ points }: { points: number }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <h3 className="text-xl font-bold text-gold">Thang 7 bậc cống hiến TML</h3>
+                <h3 className="text-xl font-bold text-gold">
+                  {isFounder
+                    ? "Thang bậc cống hiến & Vị trí Lãnh đạo"
+                    : "Thang 7 bậc cống hiến TML"}
+                </h3>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
@@ -450,14 +469,16 @@ export function TierProgress({ points }: { points: number }) {
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {asc.map((t, i) => {
                   const info = TIER_INFO[t.key]!;
-                  const reached = points >= t.min;
+                  const reached = isFounder || points >= t.min;
                   const isCur = t.key === cur.key;
                   const rangeLabel =
-                    t.key === "honor"
-                      ? "401–450 điểm"
-                      : asc[i + 1]
-                        ? `${t.min}–${asc[i + 1]!.min - 1} điểm`
-                        : `${t.min}+ điểm`;
+                    t.key === "leader"
+                      ? "Đặc quyền tối cao"
+                      : t.key === "honor"
+                        ? "401–450 điểm"
+                        : asc[i + 1]
+                          ? `${t.min}–${asc[i + 1]!.min - 1} điểm`
+                          : `${t.min}+ điểm`;
                   return (
                     <div
                       key={t.key}
@@ -491,9 +512,9 @@ export function TierProgress({ points }: { points: number }) {
                 })}
               </div>
               <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/60">
-                Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Ban Quản trị,
-                Trưởng/Phó Ban và Cố vấn chuyên môn dùng thẻ màu Đen than chì riêng. Quyền lợi cụ
-                thể do Ban Điều Hành cấu hình.
+                Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Cấp bậc Lãnh đạo chỉ
+                dành riêng cho Co-founder / Founder. Ban Quản trị, Trưởng/Phó Ban và Cố vấn chuyên
+                môn dùng thẻ màu Đen than chì riêng. Quyền lợi cụ thể do Ban Điều Hành cấu hình.
               </p>
             </div>
           </div>,
