@@ -223,13 +223,13 @@ describe("canActOnMember", () => {
 
   it("lets an admin act on anyone, including another admin", () => {
     expect(
-      canActOnMember(perms({}, true), "accounts.manage", hrHead, target("Co-founder", true)),
+      canActOnMember(perms({}, true), "members.edit", hrHead, target("Co-founder", true)),
     ).toBe(true);
   });
 
   it("blocks a non-admin from acting on an admin", () => {
     expect(
-      canActOnMember(perms({ "accounts.manage": "all" }), "accounts.manage", hrHead, {
+      canActOnMember(perms({ "members.edit": "all" }), "members.edit", hrHead, {
         department: "hr",
         position: "Thành viên",
         isAdmin: true,
@@ -238,26 +238,26 @@ describe("canActOnMember", () => {
   });
 
   it("scopes an own permission to the same department and strictly lower positions", () => {
-    const p = perms({ "accounts.manage": "own" });
-    expect(canActOnMember(p, "accounts.manage", hrHead, target("Thành viên"))).toBe(true);
+    const p = perms({ "members.edit": "own" });
+    expect(canActOnMember(p, "members.edit", hrHead, target("Thành viên"))).toBe(true);
     expect(
-      canActOnMember(p, "accounts.manage", hrHead, { department: "comms", position: "Thành viên" }),
+      canActOnMember(p, "members.edit", hrHead, { department: "comms", position: "Thành viên" }),
     ).toBe(false);
-    expect(canActOnMember(p, "accounts.manage", hrHead, target("Trưởng Ban"))).toBe(false);
+    expect(canActOnMember(p, "members.edit", hrHead, target("Trưởng Ban"))).toBe(false);
   });
 
   it("lets the all scope cross departments but still requires a lower position", () => {
-    const p = perms({ "accounts.manage": "all" });
+    const p = perms({ "members.edit": "all" });
     expect(
-      canActOnMember(p, "accounts.manage", hrHead, { department: "comms", position: "Thành viên" }),
+      canActOnMember(p, "members.edit", hrHead, { department: "comms", position: "Thành viên" }),
     ).toBe(true);
     expect(
-      canActOnMember(p, "accounts.manage", hrHead, { department: "comms", position: "Trưởng Ban" }),
+      canActOnMember(p, "members.edit", hrHead, { department: "comms", position: "Trưởng Ban" }),
     ).toBe(false);
   });
 
   it("refuses without the permission", () => {
-    expect(canActOnMember(perms({}), "accounts.manage", hrHead, target("Thành viên"))).toBe(false);
+    expect(canActOnMember(perms({}), "members.edit", hrHead, target("Thành viên"))).toBe(false);
   });
 });
 
@@ -266,20 +266,18 @@ describe("departmentsFor", () => {
   const me = { department: "hr", position: "Trưởng Ban" };
 
   it("returns the caller's own department for an own scope", () => {
-    expect(departmentsFor(perms({ "members.create": "own" }), "members.create", me, all)).toEqual([
+    expect(departmentsFor(perms({ "members.edit": "own" }), "members.edit", me, all)).toEqual([
       "hr",
     ]);
   });
 
   it("returns every department (in order) for an all scope", () => {
-    expect(departmentsFor(perms({ "members.create": "all" }), "members.create", me, all)).toEqual(
-      all,
-    );
+    expect(departmentsFor(perms({ "members.edit": "all" }), "members.edit", me, all)).toEqual(all);
   });
 
   it("returns nothing without the permission and everything for an admin", () => {
-    expect(departmentsFor(perms({}), "members.create", me, all)).toEqual([]);
-    expect(departmentsFor(perms({}, true), "members.create", me, all)).toEqual(all);
+    expect(departmentsFor(perms({}), "members.edit", me, all)).toEqual([]);
+    expect(departmentsFor(perms({}, true), "members.edit", me, all)).toEqual(all);
   });
 });
 

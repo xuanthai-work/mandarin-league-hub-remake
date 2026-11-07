@@ -72,34 +72,14 @@ export const PERMISSION_ACTIONS = [
   {
     code: "members.view",
     module: "members",
-    label: "Xem danh sách và hồ sơ thành viên (gồm SĐT, email)",
+    label: "Xem danh sách, hồ sơ (gồm SĐT, email) và xuất CSV thành viên mọi Ban",
     scoped: true,
   },
-  { code: "members.create", module: "members", label: "Thêm hồ sơ thành viên", scoped: true },
   {
     code: "members.edit",
     module: "members",
-    label: "Sửa hồ sơ thành viên (trừ Ban và chức vụ)",
-    scoped: true,
-  },
-  {
-    code: "members.position",
-    module: "members",
-    label: "Đổi Ban và chức vụ của thành viên",
-    scoped: true,
-  },
-  { code: "members.delete", module: "members", label: "Xóa hồ sơ thành viên", scoped: true },
-  { code: "members.export", module: "members", label: "Xuất CSV thành viên", scoped: true },
-  {
-    code: "members.visibility",
-    module: "members",
-    label: "Ẩn hoặc hiện thành viên trên sơ đồ tổ chức công khai",
-    scoped: true,
-  },
-  {
-    code: "accounts.manage",
-    module: "members",
-    label: "Tạo, khóa, mở, đặt lại mật khẩu, xóa tài khoản đăng nhập",
+    label:
+      "Thêm, sửa, đổi Ban/chức vụ, ẩn/hiện, xóa thành viên và quản lý tài khoản đăng nhập (người chức thấp hơn)",
     scoped: true,
   },
   {

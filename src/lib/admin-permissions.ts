@@ -84,7 +84,7 @@ export function canActOnMember(
   return outranksPosition(me.position ?? "Thành viên", target.position ?? "Thành viên");
 }
 
-/** Departments (from `all`, in order) where the caller holds `code`, e.g. members.create / members.position. */
+/** Departments (from `all`, in order) where the caller holds `code`, e.g. members.edit. */
 export function departmentsFor(
   p: MyPermissions,
   code: PermissionCode,

@@ -398,10 +398,10 @@ function MembersPage() {
     [access.data?.department, access.data?.position],
   );
   const isAdmin = perms.isAdmin;
-  /** Any accounts.manage scope: the server already narrows the account list to that scope. */
-  const canSeeAccounts = !!access.data && can(perms, "accounts.manage");
-  const canCreate = !!access.data && can(perms, "members.create");
-  const canExport = !!access.data && can(perms, "members.export");
+  /** Any members.edit scope: the server already narrows the account list to that scope. */
+  const canSeeAccounts = !!access.data && can(perms, "members.edit");
+  const canCreate = !!access.data && can(perms, "members.edit");
+  const canExport = !!access.data && can(perms, "members.view");
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-members"] });
     // A newly granted account makes the member assignable, so the task pickers must refetch too.
@@ -639,7 +639,7 @@ function MembersPage() {
               members={rows.filter((m) => m.department === d.id)}
               showAccounts={canSeeAccounts}
               canGrant={(m) =>
-                canActOnMember(perms, "accounts.manage", me, {
+                canActOnMember(perms, "members.edit", me, {
                   department: m.department,
                   position: m.position,
                   isAdmin: false,
@@ -660,15 +660,15 @@ function MembersPage() {
             m={selected}
             isAdmin={isAdmin}
             canEditProfile={canActOnMember(perms, "members.edit", me, target)}
-            canEditPosition={canActOnMember(perms, "members.position", me, target)}
-            canManageAccount={canActOnMember(perms, "accounts.manage", me, target)}
-            canDeleteProfile={canActOnMember(perms, "members.delete", me, target)}
+            canEditPosition={canActOnMember(perms, "members.edit", me, target)}
+            canManageAccount={canActOnMember(perms, "members.edit", me, target)}
+            canDeleteProfile={canActOnMember(perms, "members.edit", me, target)}
             canViewPermissions={
-              isAdmin || can(perms, "accounts.manage", target.department, me.department)
+              isAdmin || can(perms, "members.edit", target.department, me.department)
             }
             deptOptions={departmentsFor(
               perms,
-              "members.position",
+              "members.edit",
               me,
               ACCOUNT_DEPTS.map((d) => d.id),
             )}
@@ -806,7 +806,7 @@ function MemberDrawer({
           .eq("id", m.id);
         if (error) throw new Error(error.message);
       }
-      // Account changes need accounts.manage for this member; the server function re-checks it.
+      // Account changes need members.edit for this member; the server function re-checks it.
       if (canManageAccount && m.account) {
         await update({
           data: {
@@ -1476,7 +1476,7 @@ function NewMemberDrawer({
   const create = useServerFn(createAccount);
   const deptOptions = departmentsFor(
     perms,
-    "members.create",
+    "members.edit",
     me,
     ACCOUNT_DEPTS.map((d) => d.id),
   );
@@ -1495,7 +1495,7 @@ function NewMemberDrawer({
     };
   });
   const positionOptions = assignablePositions(perms, me, positionsFor(v.department));
-  const canCreateAccount = can(perms, "accounts.manage", v.department, me.department);
+  const canCreateAccount = can(perms, "members.edit", v.department, me.department);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);

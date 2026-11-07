@@ -14,7 +14,7 @@ import {
 } from "./permission-catalog";
 
 describe("action catalog", () => {
-  it("has exactly 48 actions", () => expect(PERMISSION_ACTIONS).toHaveLength(48));
+  it("has exactly 42 actions", () => expect(PERMISSION_ACTIONS).toHaveLength(42));
 
   it("has unique codes matching the SQL pattern", () => {
     const codes = PERMISSION_ACTIONS.map((a) => a.code);

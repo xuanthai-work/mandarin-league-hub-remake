@@ -62,7 +62,7 @@ export const getAdminMemberAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: scope } = await context.supabase.rpc("perm_scope", {
-      _action: "accounts.manage",
+      _action: "members.edit",
     });
     if (!scope) return [];
     const db = await serviceDb();
@@ -158,7 +158,7 @@ export const createAccount = createServerFn({ method: "POST" })
     const db = await serviceDb();
     const admin = await isAdmin(context);
     await must(
-      hasPerm(context, "accounts.manage", data.department),
+      hasPerm(context, "members.edit", data.department),
       "Bạn không có quyền tạo tài khoản cho Ban này.",
     );
     await must(canAssign(context, data.position), "Chỉ được gán chức vụ thấp hơn chức vụ của bạn.");
@@ -184,11 +184,11 @@ export const createAccount = createServerFn({ method: "POST" })
       );
       if (member.department !== data.department || member.position !== data.position) {
         await must(
-          hasPerm(context, "members.position", member.department),
+          hasPerm(context, "members.edit", member.department),
           "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
         );
         await must(
-          hasPerm(context, "members.position", data.department),
+          hasPerm(context, "members.edit", data.department),
           "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
         );
       }
@@ -205,7 +205,7 @@ export const createAccount = createServerFn({ method: "POST" })
         .eq("id", memberId);
     } else {
       await must(
-        hasPerm(context, "members.create", data.department),
+        hasPerm(context, "members.edit", data.department),
         "Bạn không có quyền thêm thành viên vào Ban này.",
       );
       if (!data.newMember) throw new Error("Cần chọn hoặc nhập thông tin thành viên.");
@@ -283,7 +283,7 @@ export const updateAccount = createServerFn({ method: "POST" })
     const wasAdmin = roles.includes("admin");
 
     await must(
-      hasPerm(context, "accounts.manage", member.department),
+      hasPerm(context, "members.edit", member.department),
       "Bạn không có quyền quản lý tài khoản của Ban này.",
     );
     await must(
@@ -292,11 +292,11 @@ export const updateAccount = createServerFn({ method: "POST" })
     );
     if (member.department !== data.department || member.position !== data.position) {
       await must(
-        hasPerm(context, "members.position", member.department),
+        hasPerm(context, "members.edit", member.department),
         "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
       );
       await must(
-        hasPerm(context, "members.position", data.department),
+        hasPerm(context, "members.edit", data.department),
         "Bạn không có quyền đổi Ban hoặc chức vụ của thành viên này.",
       );
       await must(
@@ -352,7 +352,7 @@ export const resetAccountPassword = createServerFn({ method: "POST" })
     const member = acct.members as { department: string } | null;
     if (!member) throw new Error("Không tìm thấy tài khoản.");
     await must(
-      hasPerm(context, "accounts.manage", member.department),
+      hasPerm(context, "members.edit", member.department),
       "Bạn không có quyền quản lý tài khoản của Ban này.",
     );
     await must(
@@ -398,7 +398,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const member = acct.members as { department: string } | null;
     if (!member) throw new Error("Không tìm thấy hồ sơ thành viên.");
     await must(
-      hasPerm(context, "accounts.manage", member.department),
+      hasPerm(context, "members.edit", member.department),
       "Bạn không có quyền quản lý tài khoản của Ban này.",
     );
     await must(
@@ -450,7 +450,7 @@ export const deleteMember = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!member) throw new Error("Không tìm thấy hồ sơ thành viên.");
     await must(
-      hasPerm(context, "members.delete", member.department),
+      hasPerm(context, "members.edit", member.department),
       "Bạn không có quyền xóa hồ sơ thành viên Ban này.",
     );
     await must(
