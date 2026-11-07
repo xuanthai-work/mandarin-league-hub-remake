@@ -25,10 +25,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
+import { EmptyState } from "@/components/admin/kit/EmptyState";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { StatusPill, type StatusTone } from "@/components/admin/kit/StatusPill";
+import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { useConfirm } from "@/components/admin/Trash";
 import { deptName } from "@/lib/recruitment";
 import { csvCell } from "@/lib/csv";
 import { matchesSearch } from "@/lib/search";
@@ -130,28 +135,32 @@ const initials = (name: string) => {
 /** The five member states the whole admin UI exposes. */
 type UnifiedStatus = "inactive" | "active" | "on_leave" | "suspended" | "left";
 
-const UNIFIED_STATUS_MAP: Record<UnifiedStatus, { label: string; badge: string; dot: string }> = {
+const UNIFIED_STATUS_MAP: Record<UnifiedStatus, { label: string; dot: string }> = {
   inactive: {
     label: "Chưa kích hoạt",
-    badge: "bg-muted text-muted-foreground",
     dot: "bg-muted-foreground",
   },
-  active: { label: "Đang hoạt động", badge: "bg-success/15 text-success", dot: "bg-success" },
+  active: { label: "Đang hoạt động", dot: "bg-success" },
   on_leave: {
     label: "Tạm nghỉ",
-    badge: "bg-warning-soft text-warning-foreground",
     dot: "bg-warning-foreground",
   },
   suspended: {
     label: "Tạm khóa",
-    badge: "bg-destructive/10 text-destructive",
     dot: "bg-destructive",
   },
   left: {
     label: "Đã rời",
-    badge: "bg-secondary text-muted-foreground",
     dot: "bg-muted-foreground",
   },
+};
+
+const UNIFIED_STATUS_TONE: Record<UnifiedStatus, StatusTone> = {
+  inactive: "neutral",
+  active: "success",
+  on_leave: "warning",
+  suspended: "danger",
+  left: "neutral",
 };
 
 /** Filter order shown in the toolbar dropdown (full 5 states). */
@@ -170,7 +179,7 @@ const EDIT_DRAWER_STATUS_BUTTONS: { value: UnifiedStatus; label: string; dot: st
   { value: "suspended", label: "Tạm khóa", dot: "bg-destructive" },
 ];
 
-/** Collapse the profile state and the login state into the one badge the UI shows. */
+/** Collapse the profile state and the login state into the one status indicator the UI shows. */
 function unifiedStatus(m: MemberRow): UnifiedStatus {
   if (m.status === "left") return "left";
   if (m.account && (m.account.status === "suspended" || m.account.status === "disabled"))
@@ -210,16 +219,9 @@ const ACCOUNT_STATUS_OPTIONS = ACCOUNT_STATUS_ORDER.map((value) => ({
   label: UNIFIED_STATUS_MAP[value].label,
 }));
 
-function StatusPill({ m }: { m: MemberRow }) {
-  const s = UNIFIED_STATUS_MAP[unifiedStatus(m)];
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold ${s.badge}`}
-    >
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${s.dot}`} />
-      {s.label}
-    </span>
-  );
+function MemberStatusPill({ m }: { m: MemberRow }) {
+  const s = unifiedStatus(m);
+  return <StatusPill tone={UNIFIED_STATUS_TONE[s]}>{UNIFIED_STATUS_MAP[s].label}</StatusPill>;
 }
 
 /** 14 permission toggles rendered as compact switch rows; click anywhere on a row to toggle. */
@@ -242,9 +244,8 @@ function PermissionSwitches({
         {PERMISSIONS.map(([k, l]) => {
           const on = selected.includes(k);
           return (
-            <div
+            <label
               key={k}
-              onClick={() => onToggle(k)}
               className="flex cursor-pointer select-none items-center justify-between gap-2 rounded px-1 py-0.5 transition-colors hover:bg-muted/50"
             >
               <span
@@ -255,10 +256,10 @@ function PermissionSwitches({
               >
                 {l}
               </span>
-              <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+              <span className="shrink-0">
                 <Switch checked={on} onCheckedChange={() => onToggle(k)} className="scale-75" />
               </span>
-            </div>
+            </label>
           );
         })}
       </div>
@@ -266,7 +267,7 @@ function PermissionSwitches({
   );
 }
 
-/** Email + the row's single status badge; members without an account get the quick-grant button. */
+/** Email + the row's single status indicator; members without an account get the quick-grant button. */
 function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }) {
   return (
     <div className="space-y-1">
@@ -280,33 +281,32 @@ function AccountStatusCell({ m, onGrant }: { m: MemberRow; onGrant: () => void }
       ) : (
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] italic text-muted-foreground">Chưa cấp email nội bộ</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onGrant();
-            }}
-            className="rounded-md border border-dashed border-primary/50 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/5"
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onGrant}
             title="Cấp tài khoản đăng nhập cho thành viên này"
+            className="h-auto rounded-md border-dashed border-primary/50 px-1.5 py-0.5 text-[10px] font-semibold text-primary shadow-none hover:bg-primary/5 hover:text-primary"
           >
             + Cấp
-          </button>
+          </Button>
         </div>
       )}
-      <StatusPill m={m} />
+      <MemberStatusPill m={m} />
     </div>
   );
 }
 
 /** Shared fixed column widths so every department table lines up as one pixel-perfect grid (Total: 1050px). */
-const MEMBER_COLS = [
-  { label: "Mã thành viên", className: "w-[135px]" },
-  { label: "Họ tên", className: "w-[195px]" },
-  { label: "Tài khoản & Trạng thái", className: "w-[210px] pr-1.5" },
-  { label: "Chức vụ", className: "w-[180px] pl-1.5" },
-  { label: "Ngày gia nhập", className: "w-[115px]" },
-  { label: "Điểm", className: "w-[65px]" },
-  { label: "Thao tác", className: "w-[150px]" },
-] as const;
+const MEMBER_COLS: AdminColumn[] = [
+  { key: "code", label: "Mã thành viên", className: "w-[135px]" },
+  { key: "name", label: "Họ tên", className: "w-[195px]" },
+  { key: "account", label: "Tài khoản & Trạng thái", className: "w-[210px] pr-1.5" },
+  { key: "position", label: "Chức vụ", className: "w-[180px] pl-1.5" },
+  { key: "joined", label: "Ngày gia nhập", className: "w-[115px]" },
+  { key: "points", label: "Điểm", className: "w-[65px]" },
+  { key: "actions", label: "Thao tác", className: "w-[150px]" },
+];
 
 /** One department's members in their own table; the group header replaces a "Ban" column. */
 function DepartmentSection({
@@ -331,85 +331,65 @@ function DepartmentSection({
           {members.length} thành viên
         </span>
       </div>
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full min-w-[1050px] table-fixed text-sm">
-            <thead className="border-b border-border/60 bg-secondary/30 text-left text-xs text-muted-foreground">
-              <tr>
-                {MEMBER_COLS.map((col) => (
-                  <th key={col.label} className={`p-3 font-semibold ${col.className}`}>
-                    {col.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody ref={tableBodyRef}>
-              {members.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-xs text-muted-foreground">
-                    Chưa có thành viên nào trong ban này.
-                  </td>
-                </tr>
+      <AdminTable
+        columns={MEMBER_COLS}
+        minWidth="min-w-[1050px]"
+        bodyRef={tableBodyRef}
+        isEmpty={members.length === 0}
+        emptyMessage="Chưa có thành viên nào trong ban này."
+      >
+        {members.map((m) => (
+          <AdminTableRow key={m.id} onOpen={() => onOpen(m)}>
+            <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">
+              {m.member_code}
+            </td>
+            <td className="p-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                  {initials(m.full_name)}
+                </span>
+                <span className="min-w-0 truncate font-medium text-foreground" title={m.full_name}>
+                  {m.full_name}
+                </span>
+              </div>
+            </td>
+            <td className="p-3 pr-1.5">
+              {isAdmin ? (
+                <AccountStatusCell m={m} onGrant={() => onOpen(m)} />
               ) : (
-                members.map((m) => (
-                  <tr
-                    key={m.id}
-                    onClick={() => onOpen(m)}
-                    className="cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/50"
-                  >
-                    <td className="whitespace-nowrap p-3 font-mono text-xs font-medium text-primary">
-                      {m.member_code}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                          {initials(m.full_name)}
-                        </span>
-                        <span
-                          className="min-w-0 truncate font-medium text-foreground"
-                          title={m.full_name}
-                        >
-                          {m.full_name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-3 pr-1.5">
-                      {isAdmin ? (
-                        <AccountStatusCell m={m} onGrant={() => onOpen(m)} />
-                      ) : (
-                        <StatusPill m={m} />
-                      )}
-                    </td>
-                    <td className="p-3 pl-1.5">
-                      <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 font-medium text-foreground">
-                        <span className="truncate">{m.position}</span>
-                        {m.account?.access === "admin" && (
-                          <span className="shrink-0 rounded bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[color:var(--metal-gold-lo)] dark:text-gold">
-                            Admin
-                          </span>
-                        )}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-muted-foreground">
-                      {fmt(m.joined_on)}
-                    </td>
-                    <td className="p-3 font-mono tabular-nums">{m.contribution_points}</td>
-                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-accent"
-                        onClick={() => onRotate(m)}
-                      >
-                        <QrCode className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45" />
-                        Làm mới mã QR
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                <MemberStatusPill m={m} />
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </td>
+            <td className="p-3 pl-1.5">
+              <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 font-medium text-foreground">
+                <span className="truncate">{m.position}</span>
+                {m.account?.access === "admin" && (
+                  <span className="shrink-0 rounded bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[color:var(--metal-gold-lo)] dark:text-gold">
+                    Admin
+                  </span>
+                )}
+              </span>
+            </td>
+            <td className="whitespace-nowrap p-3 text-muted-foreground">{fmt(m.joined_on)}</td>
+            <td className="p-3 font-mono tabular-nums">{m.contribution_points}</td>
+            <td className="p-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="admin-sm"
+                onClick={() => onRotate(m)}
+                className="group [&_svg]:size-3.5"
+              >
+                <QrCode
+                  aria-hidden
+                  className="transition-transform duration-300 group-hover:rotate-45"
+                />
+                Làm mới mã QR
+              </Button>
+            </td>
+          </AdminTableRow>
+        ))}
+      </AdminTable>
     </div>
   );
 }
@@ -556,52 +536,30 @@ function MembersPage() {
           canEditMembers ? (
             <>
               {isAdmin && (
-                <button
+                <Button
                   type="button"
+                  size="admin"
+                  variant="outline"
                   onClick={exportCsv}
                   disabled={rows.length === 0}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
                 >
-                  <Download className="h-4 w-4" />
-                  Xuất CSV ({rows.length})
-                </button>
+                  <Download /> Xuất CSV ({rows.length})
+                </Button>
               )}
-              <button
-                onClick={() => setCreating(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                <Plus className="h-4 w-4" />
-                Thêm thành viên
-              </button>
+              <Button type="button" size="admin" onClick={() => setCreating(true)}>
+                <Plus /> Thêm thành viên
+              </Button>
             </>
           ) : null
         }
       />
       <div className="flex flex-wrap items-center gap-2.5">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm tên, mã, email…"
-            aria-label="Tìm kiếm thành viên"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="Xóa nội dung tìm kiếm"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Tìm tên, mã, email…"
+          label="Tìm kiếm thành viên"
+        />
 
         <Select
           value={deptFilter || "all"}
@@ -671,10 +629,7 @@ function MembersPage() {
           Đang tải…
         </div>
       ) : rows.length === 0 ? (
-        <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-10 text-center">
-          <Search aria-hidden className="h-5 w-5 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Không tìm thấy thành viên phù hợp</p>
-        </div>
+        <EmptyState className="mt-4" icon={Search} title="Không tìm thấy thành viên phù hợp" />
       ) : (
         <div className="mt-4 space-y-6">
           {(deptFilter

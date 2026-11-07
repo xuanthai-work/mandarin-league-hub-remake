@@ -222,6 +222,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-167-PERMISSIONS-DEPARTMENT-SELECT`                            | Phân quyền: chọn ban bằng ô Select                                                                     | 2026-11-07     | **PASS** | [task-oc-167-permissions-department-select.md](tasks/task-oc-167-permissions-department-select.md)                                                       |
 | `TASK-GE-169-RECRUITMENT-PERIODS-USE-ADMIN-KIT`                        | Tuyển thành viên (1/2): trang Đợt tuyển dùng bộ component admin                                        | 2026-11-07     | **PASS** | [task-ge-169-recruitment-periods-use-admin-kit.md](tasks/task-ge-169-recruitment-periods-use-admin-kit.md)                                               |
 | `TASK-GE-170-RECRUITMENT-QUESTION-BANK-USE-ADMIN-KIT`                  | Tuyển thành viên (2/2): Ngân hàng câu hỏi dùng bộ component admin                                      | 2026-11-07     | **PASS** | [task-ge-170-recruitment-question-bank-use-admin-kit.md](tasks/task-ge-170-recruitment-question-bank-use-admin-kit.md)                                   |
+| `TASK-GE-171-MEMBERS-LIST-USE-ADMIN-KIT`                               | Thành viên (1/2): trang danh sách dùng bộ component admin                                              | 2026-11-07     | **PASS** | [task-ge-171-members-list-use-admin-kit.md](tasks/task-ge-171-members-list-use-admin-kit.md)                                                             |
 
 ---
 
