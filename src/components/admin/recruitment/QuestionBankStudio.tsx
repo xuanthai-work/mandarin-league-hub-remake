@@ -46,12 +46,14 @@ export function QuestionBankStudio({
   data,
   run,
   confirm,
+  readOnly = false,
   previewOpen,
   onClosePreview,
 }: {
   data: StudioData;
   run: Run;
   confirm: Confirm;
+  readOnly?: boolean;
   /** Applicant preview drawer, opened from the tab row above the studio. */
   previewOpen: boolean;
   onClosePreview: () => void;
@@ -126,6 +128,7 @@ export function QuestionBankStudio({
     });
 
   const swap: Swap = (list, i, j, table) => {
+    if (readOnly) return;
     const a = list[i];
     const b = list[j];
     if (!a || !b) return;
@@ -139,6 +142,7 @@ export function QuestionBankStudio({
 
   /** Seeds the bundled TML bank, either whole or only the entries for one department. */
   const seedBank = async (railId: string) => {
+    if (readOnly) return;
     setLoadingBank(railId);
     const entries =
       railId === ALL ? QUESTION_BANK : QUESTION_BANK.filter((b) => b.department === deptOf(railId));
@@ -195,6 +199,7 @@ export function QuestionBankStudio({
 
   /** Removes a saved custom position from every topic of the selected department. */
   const deleteDepartmentPosition = async (position: string) => {
+    if (readOnly) return;
     const affected = deptTopics.filter((t) => parseTopicPositions(t.position).includes(position));
     if (affected.length === 0) return;
     await run(
@@ -212,6 +217,7 @@ export function QuestionBankStudio({
 
   /** Drops a custom position from the draft, or from the department after confirming. */
   const deleteSelectedPosition = async (position: string) => {
+    if (readOnly) return;
     setSelectedPositions((prev) => prev.filter((p) => p !== position));
     if (!availablePositions.includes(position)) return;
     const ok = await confirm({
@@ -227,6 +233,7 @@ export function QuestionBankStudio({
 
   const addTopic = (e: FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     const title = newTopic.title.trim();
     if (!title) return;
     void run(
@@ -255,22 +262,26 @@ export function QuestionBankStudio({
       {data.topics.length === 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-primary/40 bg-accent/40 p-4 text-sm">
           <p className="text-foreground">
-            Ngân hàng câu hỏi đang trống. Bắt đầu bằng bộ câu hỏi TML đã soạn sẵn.
+            {readOnly
+              ? "Ngân hàng câu hỏi đang trống."
+              : "Ngân hàng câu hỏi đang trống. Bắt đầu bằng bộ câu hỏi TML đã soạn sẵn."}
           </p>
-          <Button
-            type="button"
-            size="admin"
-            disabled={loadingBank === ALL}
-            onClick={() => void seedBank(ALL)}
-            className="[&_svg]:size-3.5"
-          >
-            {loadingBank === ALL ? (
-              <Loader2 aria-hidden className="animate-spin" />
-            ) : (
-              <Sparkles aria-hidden />
-            )}
-            Nạp bộ câu hỏi TML
-          </Button>
+          {!readOnly && (
+            <Button
+              type="button"
+              size="admin"
+              disabled={loadingBank === ALL}
+              onClick={() => void seedBank(ALL)}
+              className="[&_svg]:size-3.5"
+            >
+              {loadingBank === ALL ? (
+                <Loader2 aria-hidden className="animate-spin" />
+              ) : (
+                <Sparkles aria-hidden />
+              )}
+              Nạp bộ câu hỏi TML
+            </Button>
+          )}
         </div>
       )}
 
@@ -281,6 +292,7 @@ export function QuestionBankStudio({
           onSelect={setSelectedDept}
           onLoadBank={(id) => void seedBank(id)}
           loadingBank={loadingBank}
+          readOnly={readOnly}
         />
 
         <div className="min-w-0 space-y-3">
@@ -349,22 +361,26 @@ export function QuestionBankStudio({
                 )}
               </p>
             </div>
-            <Button
-              type="button"
-              size="admin-sm"
-              onClick={() => setTopicDialogOpen(true)}
-              className="[&_svg]:size-3.5"
-            >
-              <Plus aria-hidden />
-              Chủ đề mới
-            </Button>
+            {!readOnly && (
+              <Button
+                type="button"
+                size="admin-sm"
+                onClick={() => setTopicDialogOpen(true)}
+                className="[&_svg]:size-3.5"
+              >
+                <Plus aria-hidden />
+                Chủ đề mới
+              </Button>
+            )}
           </div>
 
           {filteredTopics.length === 0 ? (
             <EmptyState
               title={
                 deptTopics.length === 0
-                  ? "Ban này chưa có chủ đề nào. Bấm “Chủ đề mới” ở trên để bắt đầu."
+                  ? readOnly
+                    ? "Ban này chưa có chủ đề nào."
+                    : "Ban này chưa có chủ đề nào. Bấm “Chủ đề mới” ở trên để bắt đầu."
                   : "Không có chủ đề nào khớp bộ lọc hiện tại."
               }
             />
@@ -379,6 +395,7 @@ export function QuestionBankStudio({
                 index={deptTopics.indexOf(item.topic)}
                 total={deptTopics.length}
                 expanded={!collapsed.has(item.topic.id)}
+                readOnly={readOnly}
                 onToggle={() => toggleTopic(item.topic.id)}
                 onMove={(from, to) => swap(deptTopics, from, to, "recruitment_topics")}
                 onDeletePosition={deleteDepartmentPosition}
@@ -390,9 +407,9 @@ export function QuestionBankStudio({
         </div>
       </div>
       <Dialog
-        open={topicDialogOpen}
+        open={!readOnly && topicDialogOpen}
         onOpenChange={(open) => {
-          if (open) setTopicDialogOpen(true);
+          if (open && !readOnly) setTopicDialogOpen(true);
           else closeTopicDialog();
         }}
       >

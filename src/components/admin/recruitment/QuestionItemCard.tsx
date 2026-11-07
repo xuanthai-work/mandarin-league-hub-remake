@@ -26,11 +26,13 @@ const FIELD_SIZING =
 export function QuestionItemCard({
   question,
   index,
+  readOnly = false,
   run,
   confirm,
 }: {
   question: StudioQuestion;
   index: number;
+  readOnly?: boolean;
   run: Run;
   confirm: Confirm;
 }) {
@@ -57,17 +59,25 @@ export function QuestionItemCard({
   const save = (
     patch: Partial<Pick<StudioQuestion, "prompt" | "kind" | "options" | "required" | "visible">>,
     ok?: string,
-  ) => run(supabase.from("recruitment_questions").update(patch).eq("id", question.id), ok);
+  ) => {
+    if (readOnly) return Promise.resolve(false);
+    return run(supabase.from("recruitment_questions").update(patch).eq("id", question.id), ok);
+  };
 
-  const saveOptions = (options: string[]) => save({ options }, "Đã cập nhật lựa chọn.");
+  const saveOptions = (options: string[]) => {
+    if (readOnly) return;
+    void save({ options }, "Đã cập nhật lựa chọn.");
+  };
 
   /** Appends whatever survived parsing, so a pasted block costs a single update. */
   const addOptionsList = (newOptions: string[]) => {
+    if (readOnly) return;
     if (newOptions.length === 0) return;
     saveOptions([...question.options, ...newOptions]);
   };
 
   const addOption = () => {
+    if (readOnly) return;
     if (!draft.trim()) return;
     setDraft("");
     addOptionsList(parsePastedOptions(draft, question.options));
@@ -75,6 +85,7 @@ export function QuestionItemCard({
 
   /** A multi-line paste becomes one option per line instead of a single long label. */
   const pasteOptions = (e: ClipboardEvent<HTMLInputElement>) => {
+    if (readOnly) return;
     const pastedText = e.clipboardData.getData("text");
     if (!pastedText.includes("\n") && !pastedText.includes("\r")) return;
     e.preventDefault();
@@ -84,6 +95,7 @@ export function QuestionItemCard({
 
   /** Answered questions are only hidden, so existing applications keep their question text. */
   const remove = async () => {
+    if (readOnly) return;
     setChecking(true);
     const { data: answered, error } = await supabase.rpc("recruitment_answer_count", {
       _question: question.id,
@@ -136,8 +148,10 @@ export function QuestionItemCard({
             defaultValue={question.prompt}
             aria-label="Nội dung câu hỏi"
             placeholder="Nội dung câu hỏi"
+            readOnly={readOnly}
             onInput={growPrompt}
             onKeyDown={(e) => {
+              if (readOnly) return;
               // Enter adds a line, so save with Cmd/Ctrl+Enter instead.
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
@@ -145,6 +159,7 @@ export function QuestionItemCard({
               }
             }}
             onBlur={(e) => {
+              if (readOnly) return;
               const prompt = e.target.value.trim();
               if (prompt && prompt !== question.prompt) void save({ prompt });
             }}
@@ -153,7 +168,11 @@ export function QuestionItemCard({
 
         <div className="flex flex-wrap items-center justify-between gap-2 pl-8 md:justify-end md:pl-0">
           <div className="flex items-center gap-2">
-            <Select value={kind} onValueChange={(next) => void save({ kind: next })}>
+            <Select
+              value={kind}
+              disabled={readOnly}
+              onValueChange={(next) => void save({ kind: next })}
+            >
               <SelectTrigger
                 aria-label="Loại câu hỏi"
                 className="h-9 w-[130px] rounded-lg border-input bg-background text-xs font-normal shadow-none sm:w-[150px]"
@@ -169,9 +188,14 @@ export function QuestionItemCard({
               </SelectContent>
             </Select>
 
-            <label className="flex h-9 cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <label
+              className={`flex h-9 select-none items-center gap-1.5 text-xs font-medium text-muted-foreground ${
+                readOnly ? "cursor-default" : "cursor-pointer"
+              }`}
+            >
               <Switch
                 checked={question.required}
+                disabled={readOnly}
                 onCheckedChange={(required) => void save({ required })}
                 aria-label="Bắt buộc trả lời"
               />
@@ -179,79 +203,87 @@ export function QuestionItemCard({
             </label>
           </div>
 
-          <div className="flex shrink-0 items-center gap-0.5">
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin-icon"
-              className="h-7 w-7 text-muted-foreground [&_svg]:size-3.5"
-              aria-label={question.visible ? "Ẩn câu hỏi" : "Hiện câu hỏi"}
-              onClick={() => void save({ visible: !question.visible })}
-            >
-              {question.visible ? <Eye aria-hidden /> : <EyeOff aria-hidden />}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin-icon"
-              className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-              aria-label="Xóa câu hỏi"
-              disabled={checking}
-              onClick={() => void remove()}
-            >
-              <Trash2 aria-hidden />
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="flex shrink-0 items-center gap-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin-icon"
+                className="h-7 w-7 text-muted-foreground [&_svg]:size-3.5"
+                aria-label={question.visible ? "Ẩn câu hỏi" : "Hiện câu hỏi"}
+                onClick={() => void save({ visible: !question.visible })}
+              >
+                {question.visible ? <Eye aria-hidden /> : <EyeOff aria-hidden />}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin-icon"
+                className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Xóa câu hỏi"
+                disabled={checking}
+                onClick={() => void remove()}
+              >
+                <Trash2 aria-hidden />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {choice && (
+      {choice && (question.options.length > 0 || !readOnly) && (
         <div className="mt-2.5 space-y-2 rounded-lg bg-secondary/60 p-2.5">
           {question.options.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {question.options.map((option) => (
                 <span
                   key={option}
-                  className="inline-flex items-center gap-1 rounded-full border border-border bg-background py-0.5 pl-2.5 pr-1 text-xs text-foreground"
+                  className={`inline-flex items-center gap-1 rounded-full border border-border bg-background py-0.5 text-xs text-foreground ${
+                    readOnly ? "px-2.5" : "pl-2.5 pr-1"
+                  }`}
                 >
                   {option}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    aria-label={`Xóa lựa chọn ${option}`}
-                    onClick={() => saveOptions(question.options.filter((o) => o !== option))}
-                    className="h-4 w-4 rounded-full p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3"
-                  >
-                    <X aria-hidden />
-                  </Button>
+                  {!readOnly && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      aria-label={`Xóa lựa chọn ${option}`}
+                      onClick={() => saveOptions(question.options.filter((o) => o !== option))}
+                      className="h-4 w-4 rounded-full p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3"
+                    >
+                      <X aria-hidden />
+                    </Button>
+                  )}
                 </span>
               ))}
             </div>
           )}
-          <div className="flex gap-1.5">
-            <AdminInput
-              className="h-8 min-w-0 flex-1 text-xs"
-              placeholder="Nhập lựa chọn rồi nhấn Enter… (hoặc dán danh sách nhiều dòng)"
-              value={draft}
-              aria-label="Thêm lựa chọn"
-              onChange={(e) => setDraft(e.target.value)}
-              onPaste={pasteOptions}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                e.preventDefault();
-                addOption();
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="admin-sm"
-              onClick={addOption}
-              className="shrink-0 [&_svg]:size-3"
-            >
-              <Plus aria-hidden /> Thêm
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="flex gap-1.5">
+              <AdminInput
+                className="h-8 min-w-0 flex-1 text-xs"
+                placeholder="Nhập lựa chọn rồi nhấn Enter… (hoặc dán danh sách nhiều dòng)"
+                value={draft}
+                aria-label="Thêm lựa chọn"
+                onChange={(e) => setDraft(e.target.value)}
+                onPaste={pasteOptions}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  addOption();
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="admin-sm"
+                onClick={addOption}
+                className="shrink-0 [&_svg]:size-3"
+              >
+                <Plus aria-hidden /> Thêm
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

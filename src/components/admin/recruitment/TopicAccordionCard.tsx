@@ -23,6 +23,7 @@ export function TopicAccordionCard({
   index,
   total,
   expanded,
+  readOnly = false,
   onToggle,
   onMove,
   onDeletePosition,
@@ -39,6 +40,7 @@ export function TopicAccordionCard({
   index: number;
   total: number;
   expanded: boolean;
+  readOnly?: boolean;
   onToggle: () => void;
   /** Moves this topic to another index inside the department's topic list. */
   onMove: (from: number, to: number) => void;
@@ -52,7 +54,10 @@ export function TopicAccordionCard({
   const save = (
     patch: Partial<Pick<StudioTopic, "title" | "description" | "position" | "visible">>,
     ok?: string,
-  ) => run(supabase.from("recruitment_topics").update(patch).eq("id", topic.id), ok);
+  ) => {
+    if (readOnly) return Promise.resolve(false);
+    return run(supabase.from("recruitment_topics").update(patch).eq("id", topic.id), ok);
+  };
   const filtered = questions.length !== totalQuestionsCount;
   // Optimistic list while the save round-trips, so rapid clicks never build on stale data.
   const positions = draftPositions ?? parseTopicPositions(topic.position);
@@ -63,6 +68,7 @@ export function TopicAccordionCard({
 
   /** Applies a position list immediately; reverts the optimistic list if the save fails. */
   const applyPositions = (next: string[]) => {
+    if (readOnly) return;
     setDraftPositions(next);
     void save({ position: formatTopicPositions(next) }, "Đã cập nhật vị trí.").then((ok) => {
       if (!ok) setDraftPositions(null);
@@ -71,6 +77,7 @@ export function TopicAccordionCard({
 
   /** Drops a custom position from every topic of the department after confirming. */
   const deletePosition = async (position: string) => {
+    if (readOnly) return;
     if (!availablePositions.includes(position)) return;
     const ok = await confirm({
       title: `Xóa vị trí "${position}"?`,
@@ -86,6 +93,7 @@ export function TopicAccordionCard({
 
   /** Answered topics are only hidden, so existing applications keep their question text. */
   const remove = async () => {
+    if (readOnly) return;
     setChecking(true);
     const { data: answered, error } = await supabase.rpc("recruitment_answer_count", {
       _topic: topic.id,
@@ -139,7 +147,9 @@ export function TopicAccordionCard({
             className="h-8 min-w-0 flex-1 font-semibold"
             defaultValue={topic.title}
             aria-label="Tên chủ đề"
+            readOnly={readOnly}
             onBlur={(e) => {
+              if (readOnly) return;
               const title = e.target.value.trim();
               if (title && title !== topic.title) void save({ title });
             }}
@@ -148,65 +158,74 @@ export function TopicAccordionCard({
 
         <div className="flex items-center justify-between gap-1.5 pl-10 md:justify-end md:pl-0">
           <div className="flex min-w-0 items-center gap-1.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  aria-label="Chỉnh sửa vị trí áp dụng"
-                  title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
-                  className="h-auto min-w-0 max-w-[160px] gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=open]:bg-primary/10 data-[state=open]:text-primary sm:max-w-[240px] [&_svg]:size-3"
-                >
-                  <span className="min-w-0 truncate">
-                    {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
-                  </span>
-                  <ChevronDown aria-hidden className="shrink-0 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[220px]">
-                <DropdownMenuCheckboxItem
-                  checked={positions.length === 0}
-                  onCheckedChange={() => applyPositions([])}
-                  onSelect={(e) => e.preventDefault()}
-                  className="text-xs"
-                >
-                  Mọi vị trí
-                </DropdownMenuCheckboxItem>
-                {positionOptions.map((p) => (
+            {readOnly ? (
+              <span
+                title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+                className="inline-flex h-auto min-w-0 max-w-[160px] truncate rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground sm:max-w-[240px]"
+              >
+                {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+              </span>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    aria-label="Chỉnh sửa vị trí áp dụng"
+                    title={positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+                    className="h-auto min-w-0 max-w-[160px] gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=open]:bg-primary/10 data-[state=open]:text-primary sm:max-w-[240px] [&_svg]:size-3"
+                  >
+                    <span className="min-w-0 truncate">
+                      {positions.length > 0 ? positions.join(", ") : "Mọi vị trí"}
+                    </span>
+                    <ChevronDown aria-hidden className="shrink-0 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[220px]">
                   <DropdownMenuCheckboxItem
-                    key={p}
-                    checked={positions.includes(p)}
-                    onCheckedChange={(checked) => {
-                      const next = checked
-                        ? [...positions, p]
-                        : positions.filter((item) => item !== p);
-                      applyPositions(next);
-                    }}
+                    checked={positions.length === 0}
+                    onCheckedChange={() => applyPositions([])}
                     onSelect={(e) => e.preventDefault()}
                     className="text-xs"
                   >
-                    <span className="min-w-0 flex-1 truncate">{p}</span>
-                    {!isDefaultPosition(topic.department, p) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-5 w-5 shrink-0 rounded p-0 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3"
-                        aria-label={`Xóa vị trí ${p}`}
-                        title={`Xóa vị trí ${p}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void deletePosition(p);
-                        }}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onPointerUp={(e) => e.stopPropagation()}
-                      >
-                        <Trash2 aria-hidden />
-                      </Button>
-                    )}
+                    Mọi vị trí
                   </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {positionOptions.map((p) => (
+                    <DropdownMenuCheckboxItem
+                      key={p}
+                      checked={positions.includes(p)}
+                      onCheckedChange={(checked) => {
+                        const next = checked
+                          ? [...positions, p]
+                          : positions.filter((item) => item !== p);
+                        applyPositions(next);
+                      }}
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-xs"
+                    >
+                      <span className="min-w-0 flex-1 truncate">{p}</span>
+                      {!isDefaultPosition(topic.department, p) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-5 w-5 shrink-0 rounded p-0 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3"
+                          aria-label={`Xóa vị trí ${p}`}
+                          title={`Xóa vị trí ${p}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void deletePosition(p);
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onPointerUp={(e) => e.stopPropagation()}
+                        >
+                          <Trash2 aria-hidden />
+                        </Button>
+                      )}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
@@ -221,66 +240,73 @@ export function TopicAccordionCard({
             </span>
           </div>
 
-          <div className="flex items-center gap-0.5">
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin-icon"
-              className="text-muted-foreground [&_svg]:size-3.5"
-              aria-label={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
-              title={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
-              onClick={() => void save({ visible: !topic.visible })}
-            >
-              {topic.visible ? <Eye aria-hidden /> : <EyeOff aria-hidden />}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin-icon"
-              className="text-muted-foreground [&_svg]:size-3.5"
-              aria-label="Đưa chủ đề lên"
-              disabled={index === 0}
-              onClick={() => onMove(index, index - 1)}
-            >
-              <ArrowUp aria-hidden />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin-icon"
-              className="text-muted-foreground [&_svg]:size-3.5"
-              aria-label="Đưa chủ đề xuống"
-              disabled={index === total - 1}
-              onClick={() => onMove(index, index + 1)}
-            >
-              <ArrowDown aria-hidden />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="admin-icon"
-              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-              aria-label="Xóa chủ đề"
-              disabled={checking}
-              onClick={() => void remove()}
-            >
-              <Trash2 aria-hidden />
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="flex items-center gap-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin-icon"
+                className="text-muted-foreground [&_svg]:size-3.5"
+                aria-label={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
+                title={topic.visible ? "Ẩn chủ đề" : "Hiện chủ đề"}
+                onClick={() => void save({ visible: !topic.visible })}
+              >
+                {topic.visible ? <Eye aria-hidden /> : <EyeOff aria-hidden />}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin-icon"
+                className="text-muted-foreground [&_svg]:size-3.5"
+                aria-label="Đưa chủ đề lên"
+                disabled={index === 0}
+                onClick={() => onMove(index, index - 1)}
+              >
+                <ArrowUp aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin-icon"
+                className="text-muted-foreground [&_svg]:size-3.5"
+                aria-label="Đưa chủ đề xuống"
+                disabled={index === total - 1}
+                onClick={() => onMove(index, index + 1)}
+              >
+                <ArrowDown aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="admin-icon"
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Xóa chủ đề"
+                disabled={checking}
+                onClick={() => void remove()}
+              >
+                <Trash2 aria-hidden />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {expanded && (
         <div className="mt-3 space-y-2.5">
-          <AdminInput
-            className="h-8 text-xs"
-            defaultValue={topic.description}
-            placeholder="Mô tả ngắn cho ứng viên"
-            aria-label="Mô tả chủ đề"
-            onBlur={(e) => {
-              if (e.target.value !== topic.description) void save({ description: e.target.value });
-            }}
-          />
+          {(!readOnly || !!topic.description?.trim()) && (
+            <AdminInput
+              className="h-8 text-xs"
+              defaultValue={topic.description}
+              placeholder="Mô tả ngắn cho ứng viên"
+              aria-label="Mô tả chủ đề"
+              readOnly={readOnly}
+              onBlur={(e) => {
+                if (readOnly) return;
+                if (e.target.value !== topic.description)
+                  void save({ description: e.target.value });
+              }}
+            />
+          )}
           <div className="space-y-2">
             {questions.length === 0 && (
               <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
@@ -294,29 +320,32 @@ export function TopicAccordionCard({
                 key={question.id}
                 question={question}
                 index={i}
+                readOnly={readOnly}
                 run={run}
                 confirm={confirm}
               />
             ))}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="admin-sm"
-            onClick={() =>
-              void run(
-                supabase.from("recruitment_questions").insert({
-                  topic_id: topic.id,
-                  prompt: "Câu hỏi mới",
-                  sort_order: totalQuestionsCount,
-                }),
-                "Đã thêm câu hỏi.",
-              )
-            }
-            className="w-full border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:text-primary [&_svg]:size-3.5"
-          >
-            <Plus aria-hidden /> Thêm câu hỏi vào chủ đề này
-          </Button>
+          {!readOnly && (
+            <Button
+              type="button"
+              variant="outline"
+              size="admin-sm"
+              onClick={() =>
+                void run(
+                  supabase.from("recruitment_questions").insert({
+                    topic_id: topic.id,
+                    prompt: "Câu hỏi mới",
+                    sort_order: totalQuestionsCount,
+                  }),
+                  "Đã thêm câu hỏi.",
+                )
+              }
+              className="w-full border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:text-primary [&_svg]:size-3.5"
+            >
+              <Plus aria-hidden /> Thêm câu hỏi vào chủ đề này
+            </Button>
+          )}
         </div>
       )}
     </article>

@@ -205,6 +205,7 @@ function RecruitmentAdmin() {
   const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
   const canCreate = can(perms, "recruitment.create");
   const canEdit = can(perms, "recruitment.edit");
+  const canEditQuestions = can(perms, "questions.edit");
 
   const { data } = useQuery({ queryKey: ["admin-recruitment"], queryFn: load });
   const refresh = () => {
@@ -292,6 +293,7 @@ function RecruitmentAdmin() {
           data={data}
           run={run}
           confirm={confirm}
+          readOnly={!canEditQuestions}
           previewOpen={previewOpen}
           onClosePreview={() => setPreviewOpen(false)}
         />

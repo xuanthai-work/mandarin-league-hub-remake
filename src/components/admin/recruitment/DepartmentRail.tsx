@@ -10,12 +10,14 @@ export function DepartmentRail({
   onSelect,
   onLoadBank,
   loadingBank,
+  readOnly = false,
 }: {
   data: StudioData;
   selected: string;
   onSelect: (id: string) => void;
   onLoadBank: (id: string) => void;
   loadingBank: string | null;
+  readOnly?: boolean;
 }) {
   const questionsByTopic = new Map<string, number>();
   for (const q of data.questions)
@@ -68,12 +70,15 @@ export function DepartmentRail({
                   </span>
                 </span>
               </Button>
-              {seedable && (
+              {seedable && !readOnly && (
                 <Button
                   type="button"
                   variant="outline"
                   disabled={loadingBank === item.id}
-                  onClick={() => onLoadBank(item.id)}
+                  onClick={() => {
+                    if (readOnly) return;
+                    onLoadBank(item.id);
+                  }}
                   className="ml-7 mt-1 mb-1.5 h-auto gap-1 rounded-lg border-dashed border-primary/40 px-2 py-1 text-[11px] font-medium text-primary shadow-none hover:bg-primary/5 hover:text-primary [&_svg]:size-3"
                 >
                   <ListPlus aria-hidden />
