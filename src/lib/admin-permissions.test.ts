@@ -73,6 +73,10 @@ describe("allowedSections", () => {
     expect(allowedSections(perms({ "recruitment.view": "all" }))).toEqual(["recruitment"]);
   });
 
+  it("opens candidates from candidates.edit alone", () => {
+    expect(allowedSections(perms({ "candidates.edit": "all" }))).toEqual(["candidates"]);
+  });
+
   it("does not open departments from departments.channels", () => {
     expect(allowedSections(perms({ "departments.channels": "own" }))).toEqual([]);
   });

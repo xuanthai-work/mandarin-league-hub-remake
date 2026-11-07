@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { positionsFor } from "@/lib/recruitment";
@@ -14,7 +14,7 @@ import {
 } from "./permission-catalog";
 
 describe("action catalog", () => {
-  it("has exactly 50 actions", () => expect(PERMISSION_ACTIONS).toHaveLength(50));
+  it("has exactly 48 actions", () => expect(PERMISSION_ACTIONS).toHaveLength(48));
 
   it("has unique codes matching the SQL pattern", () => {
     const codes = PERMISSION_ACTIONS.map((a) => a.code);
@@ -29,25 +29,24 @@ describe("action catalog", () => {
 
 describe("migration parity", () => {
   const migrationsDir = path.join(process.cwd(), "drizzle/migrations");
-  const sql50 = readFileSync(path.join(migrationsDir, "0050_permission_foundation.sql"), "utf8");
-  const start50 = sql50.indexOf("INSERT INTO public.permission_actions");
-  const block50 = sql50.slice(start50, sql50.indexOf(";", start50));
-  const codes = new Set(
-    (block50.match(/'[a-z]+(?:\.[a-z]+)+'/g) ?? []).map((quoted) => quoted.slice(1, -1)),
-  );
+  const files = readdirSync(migrationsDir)
+    .filter((f) => /^(\d{4})_.*\.sql$/.test(f) && Number(f.slice(0, 4)) >= 50)
+    .sort();
 
-  const sql64 = readFileSync(
-    path.join(migrationsDir, "0064_recruitment_view_create_edit.sql"),
-    "utf8",
-  );
-  const start64 = sql64.indexOf("INSERT INTO public.permission_actions");
-  const block64 = sql64.slice(start64, sql64.indexOf(";", start64));
-  for (const match of block64.match(/'[a-z]+(?:\.[a-z]+)+'/g) ?? []) {
-    codes.add(match.slice(1, -1));
-  }
-  const deleteMatch = sql64.match(/DELETE FROM public\.permission_actions WHERE code = '([^']+)';/);
-  if (deleteMatch?.[1]) {
-    codes.delete(deleteMatch[1]);
+  const codes = new Set<string>();
+  for (const file of files) {
+    const sql = readFileSync(path.join(migrationsDir, file), "utf8");
+    for (const insertMatch of sql.matchAll(/INSERT INTO public\.permission_actions[\s\S]*?;/g)) {
+      const block = insertMatch[0];
+      for (const quoted of block.matchAll(/'([a-z]+(?:\.[a-z]+)+)'/g)) {
+        if (quoted[1]) codes.add(quoted[1]);
+      }
+    }
+    for (const deleteMatch of sql.matchAll(
+      /DELETE FROM public\.permission_actions\s+WHERE\s+code\s*=\s*'([^']+)';/g,
+    )) {
+      if (deleteMatch[1]) codes.delete(deleteMatch[1]);
+    }
   }
 
   it("inserts exactly the catalog's action codes", () => {

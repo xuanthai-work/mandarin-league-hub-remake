@@ -203,7 +203,7 @@ export const submitApplication = createServerFn({ method: "POST" })
     return { ok: true as const, code: row.code };
   });
 
-/** AI screening summary for a stored application (candidates.ai for its wishes) or pasted text. */
+/** AI screening summary for a stored application or pasted text (candidates.edit). */
 export const analyzeApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
@@ -215,15 +215,9 @@ export const analyzeApplication = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: allowed, error: permError } = data.applicationId
-      ? await context.supabase.rpc("can_on_application", {
-          _action: "candidates.ai",
-          _app: data.applicationId,
-        })
-      : await context.supabase.rpc("perm_scope", { _action: "candidates.ai" }).then((r) => ({
-          data: r.data !== null,
-          error: r.error,
-        }));
+    const { data: allowed, error: permError } = await context.supabase.rpc("has_perm", {
+      _action: "candidates.edit",
+    });
     if (permError) throw new Error(permError.message);
     if (allowed !== true) throw new Error("Bạn không có quyền phân tích hồ sơ này.");
     let content = data.text?.trim() ?? "";

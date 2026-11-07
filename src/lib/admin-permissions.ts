@@ -8,7 +8,7 @@ import {
 /** Each admin section opens when the user holds at least one of these actions (any scope). */
 export const SECTION_ACTIONS: Record<string, readonly PermissionCode[]> = {
   recruitment: ["recruitment.view", "recruitment.create", "recruitment.edit", "questions.edit"],
-  candidates: ["candidates.view"],
+  candidates: ["candidates.view", "candidates.edit"],
   members: ["members.view"],
   tasks: ["tasks.view"],
   contributions: ["points.view", "points.attendance", "points.adjust"],

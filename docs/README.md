@@ -245,6 +245,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-183-RECRUITMENT-PERMS-VIEW-CREATE-EDIT`                       | Quyền Đợt tuyển & Câu hỏi: xem / tạo / sửa (thay recruitment.config)                                   | 2026-11-08     | **PASS** | [task-ge-183-recruitment-perms-view-create-edit.md](tasks/task-ge-183-recruitment-perms-view-create-edit.md)                                             |
 | `TASK-GE-184-RECRUITMENT-PERIODS-UI-BY-PERMISSION`                     | Tab Đợt tuyển ẩn nút theo quyền, drawer chỉ đọc cho người xem                                          | 2026-11-08     | **PASS** | [task-ge-184-recruitment-periods-ui-by-permission.md](tasks/task-ge-184-recruitment-periods-ui-by-permission.md)                                         |
 | `TASK-GE-185-QUESTION-BANK-READ-ONLY`                                  | Ngân hàng câu hỏi chỉ đọc khi không có questions.edit                                                  | 2026-11-08     | **PASS** | [task-ge-185-question-bank-read-only.md](tasks/task-ge-185-question-bank-read-only.md)                                                                   |
+| `TASK-GE-186-CANDIDATES-PERMS-VIEW-EDIT`                               | Quyền Ứng viên: xem / sửa / kết nạp (gộp files, review, ai)                                            | 2026-11-08     | **PASS** | [task-ge-186-candidates-perms-view-edit.md](tasks/task-ge-186-candidates-perms-view-edit.md)                                                             |
 
 ---
 

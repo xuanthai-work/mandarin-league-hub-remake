@@ -54,31 +54,19 @@ export const PERMISSION_ACTIONS = [
   {
     code: "candidates.view",
     module: "recruitment",
-    label: "Xem hồ sơ ứng viên và lịch sử trạng thái",
+    label: "Xem hồ sơ, câu trả lời, CV và tệp đính kèm của ứng viên",
     scoped: true,
   },
   {
-    code: "candidates.files",
+    code: "candidates.edit",
     module: "recruitment",
-    label: "Tải CV và tệp đính kèm của ứng viên",
-    scoped: true,
-  },
-  {
-    code: "candidates.review",
-    module: "recruitment",
-    label: "Đổi trạng thái ứng viên",
-    scoped: true,
-  },
-  {
-    code: "candidates.ai",
-    module: "recruitment",
-    label: "Phân tích hồ sơ ứng viên bằng AI",
-    scoped: true,
+    label: "Xem đầy đủ và xử lý ứng viên (AI, trạng thái, ghi chú, lịch sử)",
+    scoped: false,
   },
   {
     code: "candidates.convert",
     module: "recruitment",
-    label: "Chuyển ứng viên đậu thành thành viên và tạo tài khoản",
+    label: "Kết nạp ứng viên thành thành viên và tạo tài khoản",
     scoped: true,
   },
   {

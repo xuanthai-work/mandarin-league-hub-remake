@@ -2160,6 +2160,28 @@ export type Database = {
         Args: { _action: string; _app: string };
         Returns: boolean;
       };
+      candidate_profiles: {
+        Args: never;
+        Returns: {
+          id: string;
+          code: string;
+          period_id: string;
+          created_at: string;
+          status: string;
+          full_name: string;
+          email: string;
+          phone: string;
+          facebook_url: string;
+          date_of_birth: string | null;
+          organization: string;
+          chinese_level: string;
+          hsk_level: string;
+          intro: string;
+          answers: Json;
+          choices: Json;
+          cv_path: string | null;
+        }[];
+      };
       create_task: {
         Args: {
           _assignee: string;
