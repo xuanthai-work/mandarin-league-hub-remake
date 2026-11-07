@@ -824,8 +824,8 @@
   --pass-wine: #7d263a;
   --pass-purple: #514080;
   --pass-black: #242832;
-  --pass-glacier: #112638; /* Màu 3: Băng Chủng Lam Thủy — Trưởng Ban & Cố vấn */
-  --pass-lavender: #2c1c38; /* Màu 4: Tử La Lan Sẫm — Phó Ban */
+  --pass-peacock: #124e66; /* Lam Thủy Khổng Tước — Trưởng Ban & Cố vấn chuyên môn */
+  --pass-lavender: #2c1c38; /* Tử La Lan Sẫm — Phó Ban */
 }
 .tml-pass {
   --pass-c: var(--pass-blue);

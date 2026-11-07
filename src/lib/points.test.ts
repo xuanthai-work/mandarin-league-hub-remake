@@ -69,10 +69,10 @@ t2("tiers follow the real stored points, founders included", () => {
 });
 
 describe("getMemberCardTone", () => {
-  it("assigns glacier (#112638) to department heads and advisors", () => {
-    expect(getMemberCardTone({ position: "Trưởng Ban" }, [], false)).toBe("glacier");
-    expect(getMemberCardTone({ position: "Cố vấn chuyên môn" }, [], false)).toBe("glacier");
-    expect(getMemberCardTone({ position: "Thành viên" }, [], true)).toBe("glacier");
+  it("assigns peacock (#124e66) to department heads and advisors", () => {
+    expect(getMemberCardTone({ position: "Trưởng Ban" }, [], false)).toBe("peacock");
+    expect(getMemberCardTone({ position: "Cố vấn chuyên môn" }, [], false)).toBe("peacock");
+    expect(getMemberCardTone({ position: "Thành viên" }, [], true)).toBe("peacock");
   });
 
   it("assigns lavender (#2c1c38) to deputy heads", () => {
