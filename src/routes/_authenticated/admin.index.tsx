@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { accessLabel } from "@/lib/admin-nav";
+import { can as hasPerm } from "@/lib/permission-catalog";
 import { periodStatusLabel, deptName } from "@/lib/recruitment";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminAccess } from "./admin";
@@ -181,18 +182,27 @@ async function loadActivities(now: Date): Promise<ActivitiesBlock | null> {
   };
 }
 
-async function loadTasks(): Promise<TasksBlock | null> {
-  const { data, count, error } = await supabase
+async function loadTasks(scope: "all" | "mine"): Promise<TasksBlock | null> {
+  let query = supabase
     .from("tasks")
     .select("id, title, due_on, created_at", { count: "exact" })
-    .eq("status", "submitted")
-    .order("created_at", { ascending: false })
-    .limit(4);
+    .eq("status", "submitted");
+
+  if (scope === "mine") {
+    const userId = (await supabase.auth.getSession()).data.session?.user.id;
+    if (!userId) return null;
+    query = query.eq("created_by", userId);
+  }
+
+  const { data, count, error } = await query.order("created_at", { ascending: false }).limit(4);
   if (error) return null;
   return { awaitingReview: count ?? 0, rows: data ?? [] };
 }
 
-async function loadDashboardStats(allowed: string[] | "all"): Promise<DashboardStats> {
+async function loadDashboardStats(
+  allowed: string[] | "all",
+  taskScope: "all" | "mine" | null,
+): Promise<DashboardStats> {
   const can = (slug: string) => allowed === "all" || allowed.includes(slug);
   const now = new Date();
   const [members, recruitment, courses, activities, tasks] = await Promise.all([
@@ -200,7 +210,7 @@ async function loadDashboardStats(allowed: string[] | "all"): Promise<DashboardS
     can("candidates") || can("recruitment") ? loadRecruitment() : Promise.resolve(null),
     can("courses") ? loadCourses() : Promise.resolve(null),
     can("activities") ? loadActivities(now) : Promise.resolve(null),
-    can("tasks") ? loadTasks() : Promise.resolve(null),
+    taskScope ? loadTasks(taskScope) : Promise.resolve(null),
   ]);
 
   const actions: ActionItem[] = [];
@@ -386,10 +396,19 @@ function Panel({ title, meta, children }: { title: string; meta: ReactNode; chil
 function Overview() {
   const access = useAdminAccess();
   const allowed = access.data?.allowed;
+  const perms = access.data?.perms;
+  const taskScope = !perms
+    ? null
+    : perms.isAdmin
+      ? "all"
+      : hasPerm(perms, "tasks.review")
+        ? "mine"
+        : null;
+
   const stats = useQuery({
-    queryKey: ["admin-dashboard", allowed ?? []],
+    queryKey: ["admin-dashboard", allowed ?? [], taskScope],
     enabled: !!allowed,
-    queryFn: () => loadDashboardStats(allowed ?? []),
+    queryFn: () => loadDashboardStats(allowed ?? [], taskScope),
     staleTime: 60_000,
   });
 

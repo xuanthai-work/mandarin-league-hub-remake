@@ -129,3 +129,24 @@ export const getAssignableMembers = createServerFn({ method: "GET" })
     );
     return (members ?? []).filter((m) => withLogin.has(m.id));
   });
+
+/**
+ * Names of the assignees of every task the caller can read. Tasks stay RLS-scoped (own tasks, or
+ * whole departments with tasks.view); the admin client only resolves those assignees' names, so a
+ * member without members.view still sees who is responsible and never reads anyone else's profile.
+ */
+export const getTaskPeople = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: tasks, error } = await context.supabase.from("tasks").select("assignee_id");
+    if (error) throw new Error(error.message);
+    const ids = [...new Set((tasks ?? []).map((t) => t.assignee_id))];
+    if (ids.length === 0) return [];
+    const { data: people, error: peopleError } = await supabaseAdmin
+      .from("members")
+      .select("id, full_name, member_code, department")
+      .in("id", ids);
+    if (peopleError) throw new Error(peopleError.message);
+    return people ?? [];
+  });

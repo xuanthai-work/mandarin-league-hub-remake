@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, ClipboardList, Loader2, RotateCcw, Save, Trash2 } from "lucide-react";
+import {
+  Check,
+  ClipboardList,
+  Loader2,
+  PlayCircle,
+  RotateCcw,
+  Save,
+  Send,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
@@ -27,10 +36,12 @@ import {
   deptTag,
   deptTone,
   initials,
+  myActionLabel,
   parseAttachments,
   serializeDescription,
   submittedTasks,
   type GroupedTask,
+  type MyTaskAction,
   type TaskAttachment,
   type TaskMember,
   type TaskRights,
@@ -40,10 +51,13 @@ interface TaskDetailModalProps {
   group: GroupedTask;
   members: TaskMember[];
   rights: TaskRights;
+  myAction: MyTaskAction | null;
+  isMine: boolean;
   onClose: () => void;
   onUpdated: () => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
+  onMyAction: (group: GroupedTask, action: MyTaskAction) => void;
   onRemove: (group: GroupedTask) => void;
 }
 
@@ -51,10 +65,13 @@ export function TaskDetailModal({
   group,
   members,
   rights,
+  myAction,
+  isMine,
   onClose,
   onUpdated,
   onApprove,
   onRequestRevision,
+  onMyAction,
   onRemove,
 }: TaskDetailModalProps) {
   const update = useServerFn(updateTask);
@@ -153,7 +170,7 @@ export function TaskDetailModal({
           {err && (
             <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{err}</p>
           )}
-          {!rights.edit && (
+          {!rights.edit && (group.status === "done" || !isMine) && (
             <p className="text-xs text-muted-foreground">
               {group.status === "done"
                 ? "Nhiệm vụ đã hoàn thành nên không chỉnh sửa được."
@@ -174,6 +191,12 @@ export function TaskDetailModal({
             )}
 
             <div className="ml-auto flex flex-wrap items-center gap-2">
+              {myAction && (
+                <Button type="button" size="admin-lg" onClick={() => onMyAction(group, myAction)}>
+                  {myAction === "submit" ? <Send aria-hidden /> : <PlayCircle aria-hidden />}
+                  {myActionLabel(primary, myAction)}
+                </Button>
+              )}
               {pending.length > 0 && rights.review && (
                 <>
                   <Button

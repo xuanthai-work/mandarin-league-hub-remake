@@ -3,14 +3,22 @@ import type { ComponentType } from "react";
 
 import { cn } from "@/lib/utils";
 import { TaskKanbanCard } from "./TaskKanbanCard";
-import { BOARD_COLUMNS, dueDiff, type GroupedTask, type TaskRights } from "./shared";
+import {
+  BOARD_COLUMNS,
+  dueDiff,
+  type GroupedTask,
+  type MyTaskAction,
+  type TaskRights,
+} from "./shared";
 
 interface TaskKanbanBoardProps {
   groups: GroupedTask[];
   rightsOf: (group: GroupedTask) => TaskRights;
+  actionOf: (group: GroupedTask) => MyTaskAction | null;
   onSelectGroup: (group: GroupedTask) => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
+  onMyAction: (group: GroupedTask, action: MyTaskAction) => void;
   onRemove: (group: GroupedTask) => void;
   onFilterPerson: (memberId: string) => void;
 }
@@ -35,9 +43,11 @@ function byDeadline(a: GroupedTask, b: GroupedTask) {
 export function TaskKanbanBoard({
   groups,
   rightsOf,
+  actionOf,
   onSelectGroup,
   onApprove,
   onRequestRevision,
+  onMyAction,
   onRemove,
   onFilterPerson,
 }: TaskKanbanBoardProps) {
@@ -97,9 +107,11 @@ export function TaskKanbanBoard({
                     group={group}
                     inReview={column.key === "review"}
                     rights={rightsOf(group)}
+                    myAction={actionOf(group)}
                     onOpen={() => onSelectGroup(group)}
                     onApprove={onApprove}
                     onRequestRevision={onRequestRevision}
+                    onMyAction={onMyAction}
                     onRemove={onRemove}
                     onFilterPerson={onFilterPerson}
                   />

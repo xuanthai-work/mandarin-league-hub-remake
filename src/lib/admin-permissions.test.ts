@@ -81,31 +81,33 @@ describe("landsOnAdmin", () => {
   it("sends admins to the admin portal", () => expect(landsOnAdmin("all")).toBe(true));
   it("keeps member-only users on the dashboard", () =>
     expect(landsOnAdmin(["members", "settings"])).toBe(false));
+  it("sends users with tasks to admin", () => expect(landsOnAdmin(["tasks"])).toBe(true));
   it("sends users with a module section to admin", () =>
     expect(landsOnAdmin(["members", "news", "settings"])).toBe(true));
   it("keeps users without sections on the dashboard", () => expect(landsOnAdmin([])).toBe(false));
 });
 
 describe("withPersonalSections", () => {
-  it("keeps full access untouched and gives an empty list the personal settings", () => {
+  it("keeps full access untouched and gives an empty list the personal sections", () => {
     expect(withPersonalSections("all")).toBe("all");
-    expect(withPersonalSections([])).toEqual(["settings"]);
+    expect(withPersonalSections([])).toEqual(["tasks", "settings"]);
   });
 
-  it("adds settings once, keeping module sections intact", () => {
-    expect(withPersonalSections(["partners"])).toEqual(["partners", "settings"]);
-    expect(withPersonalSections(["partners", "settings"])).toEqual(["partners", "settings"]);
+  it("adds tasks and settings once, keeping module sections intact without duplicates", () => {
+    expect(withPersonalSections(["partners"])).toEqual(["partners", "tasks", "settings"]);
+    expect(withPersonalSections(["tasks", "settings"])).toEqual(["tasks", "settings"]);
   });
 });
 
 describe("onlyPersonalSections", () => {
   it("is true when the user has only personal sections or an empty list", () => {
+    expect(onlyPersonalSections(["tasks", "settings"])).toBe(true);
     expect(onlyPersonalSections(["settings"])).toBe(true);
     expect(onlyPersonalSections([])).toBe(true);
   });
 
   it("is false when the user has module sections or full access", () => {
-    expect(onlyPersonalSections(["partners", "settings"])).toBe(false);
+    expect(onlyPersonalSections(["partners", "tasks", "settings"])).toBe(false);
     expect(onlyPersonalSections("all")).toBe(false);
   });
 });

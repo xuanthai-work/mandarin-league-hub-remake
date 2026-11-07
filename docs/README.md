@@ -237,6 +237,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-174-PUBLIC-REGISTRATION-RECAPTCHA`                            | reCAPTCHA cho đăng ký hoạt động và khóa học                                                            | 2026-11-07     | **PASS** | [task-oc-174-public-registration-recaptcha.md](tasks/task-oc-174-public-registration-recaptcha.md)                                                       |
 | `TASK-GE-177-ENV-EXAMPLE-COMPLETE`                                     | Bổ sung đủ biến môi trường vào .env.example                                                            | 2026-11-07     | **PASS** | [task-ge-177-env-example-complete.md](tasks/task-ge-177-env-example-complete.md)                                                                         |
 | `TASK-GE-178-TASK-ASSIGNER-ONLY-RIGHTS`                                | Chỉ người giao (hoặc admin) sửa, xóa, duyệt nhiệm vụ                                                   | 2026-11-07     | **PASS** | [task-ge-178-task-assigner-only-rights.md](tasks/task-ge-178-task-assigner-only-rights.md)                                                               |
+| `TASK-GE-179-MEMBER-ACCEPT-SUBMIT-TASKS`                               | Thành viên xem việc của mình, Tiếp nhận / Nộp báo cáo                                                  | 2026-11-07     | **PASS** | [task-ge-179-member-accept-submit-tasks.md](tasks/task-ge-179-member-accept-submit-tasks.md)                                                             |
 
 ---
 

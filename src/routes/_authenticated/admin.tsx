@@ -383,7 +383,7 @@ function AdminLayout() {
     if (d.mustChange) navigate({ to: "/change-password", replace: true });
     else if (d.hasAccount && !hasAny) navigate({ to: "/member/dashboard", replace: true });
     else if (onlyPersonalSections(d.allowed) && pathname === "/admin")
-      navigate({ to: "/admin/settings", replace: true });
+      navigate({ to: "/admin/tasks", replace: true });
   }, [access.data, hasAny, navigate, pathname]);
 
   // Close the drawer on navigation; Escape closes it; body scroll stays locked while open.

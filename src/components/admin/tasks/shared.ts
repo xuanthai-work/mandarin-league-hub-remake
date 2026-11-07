@@ -366,6 +366,54 @@ export function groupRights(group: GroupedTask, viewer: TaskViewer | null): Task
   };
 }
 
+export type MyTaskAction = "start" | "submit";
+
+/** Next step the viewer can take on a task assigned to them (mirrors member_update_task). */
+export function myTaskAction(task: Task, viewer: TaskViewer | null): MyTaskAction | null {
+  if (!viewer?.memberId || task.assignee_id !== viewer.memberId) return null;
+  if (task.status === "assigned" || task.status === "revision") return "start";
+  if (task.status === "in_progress") return "submit";
+  return null;
+}
+
+/** Button label: a task sent back reads "Nhận làm lại" instead of "Tiếp nhận". */
+export function myActionLabel(task: Task, action: MyTaskAction): string {
+  if (action === "submit") return "Nộp báo cáo";
+  return task.status === "revision" ? "Nhận làm lại" : "Tiếp nhận";
+}
+
+export type EvidenceInput = {
+  mode: "zalo" | "link";
+  link: string;
+  to: string;
+  when: string;
+  note: string;
+};
+
+/**
+ * Evidence string member_update_task accepts: an http(s) link, or "zalo:<to> | <when>".
+ * Same rules as the database, so the member sees the error before the request.
+ */
+export function buildEvidence(
+  input: EvidenceInput,
+): { ok: true; evidence: string; note: string } | { ok: false; error: string } {
+  const note = input.note.trim();
+  if (note.length > 2000) return { ok: false, error: "Ghi chú tối đa 2.000 ký tự." };
+  if (input.mode === "link") {
+    const link = input.link.trim();
+    if (!/^https?:\/\/\S+$/i.test(link))
+      return { ok: false, error: "Link phải bắt đầu bằng http:// hoặc https://" };
+    if (link.length > 500) return { ok: false, error: "Link tối đa 500 ký tự." };
+    return { ok: true, evidence: link, note };
+  }
+  const to = input.to.trim().replace(/\|/g, "/");
+  if (to.length < 2) return { ok: false, error: "Vui lòng nhập nhóm Zalo hoặc người đã nhận." };
+  if (!note) return { ok: false, error: "Vui lòng ghi chú nội dung đã gửi để đối chiếu." };
+  const when = input.when.trim();
+  const evidence = `zalo:${to}${when ? ` | ${when}` : ""}`.slice(0, 500);
+  return { ok: true, evidence, note };
+}
+
 /* ------------------------------------------------------------------------- *
  * Visual tones
  * ------------------------------------------------------------------------- */

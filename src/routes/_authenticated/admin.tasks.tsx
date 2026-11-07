@@ -14,13 +14,16 @@ import { TaskDetailModal } from "@/components/admin/tasks/TaskDetailModal";
 import { TaskFilterToolbar } from "@/components/admin/tasks/TaskFilterToolbar";
 import { TaskKanbanBoard } from "@/components/admin/tasks/TaskKanbanBoard";
 import { TaskReviewDialog } from "@/components/admin/tasks/TaskReviewDialog";
+import { TaskSubmitDialog } from "@/components/admin/tasks/TaskSubmitDialog";
 import {
   EMPTY_TASK_FILTERS,
   groupRights,
   groupTasks,
+  myTaskAction,
   submittedTasks,
   taskRights,
   type GroupedTask,
+  type MyTaskAction,
   type Task,
   type TaskFilters,
   type TaskMember,
@@ -28,7 +31,7 @@ import {
 } from "@/components/admin/tasks/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { can } from "@/lib/permission-catalog";
-import { getAssignableMembers } from "@/lib/tasks.functions";
+import { getAssignableMembers, getTaskPeople } from "@/lib/tasks.functions";
 import { matchesSearch } from "@/lib/search";
 import { useAdminAccess } from "./admin";
 
@@ -50,10 +53,21 @@ function TasksPage() {
   const qc = useQueryClient();
   const { confirm, dialog } = useConfirm();
 
+  const access = useAdminAccess().data;
+  const canCreate = !!(access && can(access.perms, "tasks.create"));
+  const canViewAll = !!(access && can(access.perms, "tasks.view"));
+
   const fetchAssignableMembers = useServerFn(getAssignableMembers);
+  const fetchTaskPeople = useServerFn(getTaskPeople);
+
   const members = useQuery({
     queryKey: ["task-members"],
+    enabled: canCreate,
     queryFn: async () => (await fetchAssignableMembers()) as TaskMember[],
+  });
+  const taskPeople = useQuery({
+    queryKey: ["task-people"],
+    queryFn: async () => (await fetchTaskPeople()) as TaskMember[],
   });
   const tasks = useQuery({
     queryKey: ["admin-tasks"],
@@ -78,7 +92,6 @@ function TasksPage() {
       };
     },
   });
-  const access = useAdminAccess().data;
   const viewer: TaskViewer | null =
     access && me.data?.userId
       ? {
@@ -88,7 +101,6 @@ function TasksPage() {
           perms: access.perms,
         }
       : null;
-  const canCreate = !!(access && can(access.perms, "tasks.create"));
 
   const [filters, setFilters] = useState<TaskFilters>(EMPTY_TASK_FILTERS);
   const [person, setPerson] = useState("");
@@ -96,23 +108,31 @@ function TasksPage() {
   const [selectedGroup, setSelectedGroup] = useState<GroupedTask | null>(null);
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
+  const [submitTarget, setSubmitTarget] = useState<Task | null>(null);
+  const [submitBusy, setSubmitBusy] = useState(false);
   const [err, setErr] = useState("");
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-tasks"] });
     qc.invalidateQueries({ queryKey: ["task-members"] });
+    qc.invalidateQueries({ queryKey: ["task-people"] });
   };
 
   const all = useMemo(() => tasks.data ?? [], [tasks.data]);
   const memberList = useMemo(() => (members.data ?? []) as TaskMember[], [members.data]);
-  const memberById = useMemo(() => new Map(memberList.map((m) => [m.id, m])), [memberList]);
+  const people = useMemo(() => {
+    const map = new Map<string, TaskMember>();
+    for (const m of [...(taskPeople.data ?? []), ...memberList]) map.set(m.id, m);
+    return [...map.values()];
+  }, [taskPeople.data, memberList]);
+  const memberById = useMemo(() => new Map(people.map((m) => [m.id, m])), [people]);
 
   const depts = useMemo(
     () =>
-      [
-        ...new Set([...memberList.map((m) => m.department), ...all.map((t) => t.department)]),
-      ].filter(Boolean),
-    [memberList, all],
+      [...new Set([...people.map((m) => m.department), ...all.map((t) => t.department)])].filter(
+        Boolean,
+      ),
+    [people, all],
   );
   const givers = useMemo(
     () => [...new Set(all.map((t) => t.assigned_by_name).filter(Boolean))],
@@ -138,7 +158,46 @@ function TasksPage() {
   }, [all, filters, person, memberById]);
 
   /** Board cards: tasks fanned out to a team collapse into one card with stacked avatars. */
-  const groups = useMemo(() => groupTasks(scoped, memberList), [scoped, memberList]);
+  const groups = useMemo(() => groupTasks(scoped, people), [scoped, people]);
+
+  const startTask = async (task: Task) => {
+    const { error } = await supabase.rpc("member_update_task", {
+      _task: task.id,
+      _action: "start",
+      _evidence: "",
+      _note: "",
+    });
+    if (error) return void toast.error(error.message);
+    toast.success("Đã tiếp nhận nhiệm vụ");
+    refresh();
+  };
+
+  const submitReport = async (evidence: string, note: string) => {
+    if (!submitTarget) return;
+    setSubmitBusy(true);
+    const { error } = await supabase.rpc("member_update_task", {
+      _task: submitTarget.id,
+      _action: "submit",
+      _evidence: evidence,
+      _note: note,
+    });
+    setSubmitBusy(false);
+    if (error) return void toast.error(error.message);
+    toast.success("Đã nộp báo cáo, chờ người giao việc duyệt");
+    setSubmitTarget(null);
+    refresh();
+  };
+
+  const runMyAction = (group: GroupedTask, action: MyTaskAction) => {
+    const task = group.rawTasks[0];
+    if (!task) return;
+    if (action === "start") void startTask(task);
+    else setSubmitTarget(task);
+  };
+  const myActionFromModal = (group: GroupedTask, action: MyTaskAction) => {
+    setSelectedGroup(null);
+    runMyAction(group, action);
+  };
 
   const reviewTasks = async (targets: Task[], approve: boolean, note = "") => {
     setErr("");
@@ -253,7 +312,11 @@ function TasksPage() {
       {dialog}
       <AdminPageHeader
         title="Nhiệm vụ"
-        description="Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Chỉ người giao việc mới sửa, xóa hoặc duyệt được nhiệm vụ của mình."
+        description={
+          canViewAll
+            ? "Giao việc, nghiệm thu và tự động cộng điểm khi duyệt hoàn thành. Chỉ người giao việc mới sửa, xóa hoặc duyệt được nhiệm vụ của mình."
+            : "Nhiệm vụ được giao cho bạn. Bấm Tiếp nhận để bắt đầu, làm xong thì Nộp báo cáo để người giao việc duyệt và cộng điểm."
+        }
         actions={
           canCreate ? (
             <Button
@@ -298,9 +361,11 @@ function TasksPage() {
         <TaskKanbanBoard
           groups={groups}
           rightsOf={(g) => groupRights(g, viewer)}
+          actionOf={(g) => (g.rawTasks[0] ? myTaskAction(g.rawTasks[0], viewer) : null)}
           onSelectGroup={(group) => setSelectedGroup(group)}
           onApprove={approveGroup}
           onRequestRevision={reviseGroup}
+          onMyAction={runMyAction}
           onRemove={removeGroup}
           onFilterPerson={(id) => setPerson(id)}
         />
@@ -320,12 +385,17 @@ function TasksPage() {
           <TaskDetailModal
             key={`detail-${selectedGroup.key}`}
             group={selectedGroup}
-            members={memberList}
+            members={people}
             rights={groupRights(selectedGroup, viewer)}
+            myAction={
+              selectedGroup.rawTasks[0] ? myTaskAction(selectedGroup.rawTasks[0], viewer) : null
+            }
+            isMine={selectedGroup.rawTasks[0]?.assignee_id === viewer?.memberId}
             onClose={() => setSelectedGroup(null)}
             onUpdated={refresh}
             onApprove={approveFromModal}
             onRequestRevision={reviseFromModal}
+            onMyAction={myActionFromModal}
             onRemove={removeFromModal}
           />
         )}
@@ -336,6 +406,13 @@ function TasksPage() {
         busy={reviewBusy}
         onClose={() => setReviewTarget(null)}
         onConfirm={(note) => void confirmRevision(note)}
+      />
+
+      <TaskSubmitDialog
+        title={submitTarget?.title ?? null}
+        busy={submitBusy}
+        onClose={() => setSubmitTarget(null)}
+        onConfirm={(evidence, note) => void submitReport(evidence, note)}
       />
     </div>
   );

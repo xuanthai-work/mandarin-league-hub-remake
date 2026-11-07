@@ -33,15 +33,15 @@ export function allowedSections(p: MyPermissions): string[] | "all" {
     .map(([slug]) => slug);
 }
 
-/** Sections every admin-portal user gets once they can open at least one module. */
-export const PERSONAL_SECTIONS = ["settings"] as const;
+/** Sections every active member account gets: their own tasks and personal settings. */
+export const PERSONAL_SECTIONS = ["tasks", "settings"] as const;
 
 export function withPersonalSections(allowed: string[] | "all"): string[] | "all" {
   if (allowed === "all") return allowed;
   return [...allowed, ...PERSONAL_SECTIONS.filter((s) => !allowed.includes(s))];
 }
 
-/** true khi người dùng chỉ có các mục cá nhân (Cài đặt), không có module quản trị nào. */
+/** true khi người dùng chỉ có các mục cá nhân (Nhiệm vụ của mình + Cài đặt), không có module quản trị nào. */
 export function onlyPersonalSections(allowed: string[] | "all"): boolean {
   if (allowed === "all") return false;
   return allowed.every((s) => (PERSONAL_SECTIONS as readonly string[]).includes(s));
@@ -107,7 +107,5 @@ export function assignablePositions(
 /** Lands on /admin only when the user has real work there, not just the member list or settings. */
 export function landsOnAdmin(allowed: string[] | "all"): boolean {
   if (allowed === "all") return true;
-  return allowed.some(
-    (s) => s !== "members" && !(PERSONAL_SECTIONS as readonly string[]).includes(s),
-  );
+  return allowed.some((s) => s !== "members" && s !== "settings");
 }

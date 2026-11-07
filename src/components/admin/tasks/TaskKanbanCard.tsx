@@ -1,4 +1,12 @@
-import { Check, Clock, ExternalLink, MessageCircle, RotateCcw } from "lucide-react";
+import {
+  Check,
+  Clock,
+  ExternalLink,
+  MessageCircle,
+  PlayCircle,
+  RotateCcw,
+  Send,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,9 +17,11 @@ import {
   dueBadgeTone,
   dueLabel,
   initials,
+  myActionLabel,
   priorityLabel,
   submittedTasks,
   type GroupedTask,
+  type MyTaskAction,
   type TaskRights,
 } from "./shared";
 
@@ -20,9 +30,11 @@ interface TaskKanbanCardProps {
   /** True inside the "Chờ duyệt báo cáo" column: evidence + fast review actions. */
   inReview: boolean;
   rights: TaskRights;
+  myAction: MyTaskAction | null;
   onOpen: () => void;
   onApprove: (group: GroupedTask) => void;
   onRequestRevision: (group: GroupedTask) => void;
+  onMyAction: (group: GroupedTask, action: MyTaskAction) => void;
   /** Deletion now lives in TaskDetailModal; kept so the board can keep passing it. */
   onRemove: (group: GroupedTask) => void;
   onFilterPerson: (memberId: string) => void;
@@ -34,9 +46,11 @@ export function TaskKanbanCard({
   group,
   inReview,
   rights,
+  myAction,
   onOpen,
   onApprove,
   onRequestRevision,
+  onMyAction,
   onFilterPerson,
 }: TaskKanbanCardProps) {
   const tone = deptTone(group.department);
@@ -142,6 +156,20 @@ export function TaskKanbanCard({
               </Button>
             </div>
           )}
+        </div>
+      )}
+
+      {myAction && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <Button
+            type="button"
+            size="admin-sm"
+            onClick={() => onMyAction(group, myAction)}
+            className="mt-2 h-7 w-full gap-1 text-[11px] [&_svg]:size-3.5"
+          >
+            {myAction === "submit" ? <Send aria-hidden /> : <PlayCircle aria-hidden />}
+            {myActionLabel(group.rawTasks[0]!, myAction)}
+          </Button>
         </div>
       )}
 

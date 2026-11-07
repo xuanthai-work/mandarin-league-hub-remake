@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   NO_TASK_RIGHTS,
+  buildEvidence,
   groupTasks,
+  myActionLabel,
+  myTaskAction,
   taskRights,
   type Task,
   type TaskMember,
@@ -238,5 +241,169 @@ describe("taskRights", () => {
       created_at: "2026-01-01T10:00:00Z",
     });
     expect(taskRights(t, null)).toEqual(NO_TASK_RIGHTS);
+  });
+});
+
+describe("myTaskAction", () => {
+  const viewer: TaskViewer = {
+    userId: "u1",
+    memberId: "m1",
+    department: "comms",
+    perms: { isAdmin: false, actions: {} },
+  };
+
+  it("returns null when task belongs to another member or viewer is missing memberId", () => {
+    const tOther = task({ id: "t1", assignee_id: "m2", created_at: "2026-01-01T00:00:00Z" });
+    expect(myTaskAction(tOther, viewer)).toBeNull();
+    expect(myTaskAction(tOther, null)).toBeNull();
+    expect(myTaskAction(tOther, { ...viewer, memberId: null })).toBeNull();
+  });
+
+  it("returns start for assigned or revision", () => {
+    const tAssigned = task({
+      id: "t1",
+      assignee_id: "m1",
+      status: "assigned",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+    const tRevision = task({
+      id: "t2",
+      assignee_id: "m1",
+      status: "revision",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+    expect(myTaskAction(tAssigned, viewer)).toBe("start");
+    expect(myTaskAction(tRevision, viewer)).toBe("start");
+  });
+
+  it("returns submit for in_progress", () => {
+    const tProgress = task({
+      id: "t1",
+      assignee_id: "m1",
+      status: "in_progress",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+    expect(myTaskAction(tProgress, viewer)).toBe("submit");
+  });
+
+  it("returns null for submitted or done", () => {
+    const tSubmitted = task({
+      id: "t1",
+      assignee_id: "m1",
+      status: "submitted",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+    const tDone = task({
+      id: "t2",
+      assignee_id: "m1",
+      status: "done",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+    expect(myTaskAction(tSubmitted, viewer)).toBeNull();
+    expect(myTaskAction(tDone, viewer)).toBeNull();
+  });
+});
+
+describe("myActionLabel", () => {
+  it("labels action correctly depending on status and action", () => {
+    const tAssigned = task({
+      id: "t1",
+      assignee_id: "m1",
+      status: "assigned",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+    const tRevision = task({
+      id: "t2",
+      assignee_id: "m1",
+      status: "revision",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+    const tProgress = task({
+      id: "t3",
+      assignee_id: "m1",
+      status: "in_progress",
+      created_at: "2026-01-01T00:00:00Z",
+    });
+
+    expect(myActionLabel(tAssigned, "start")).toBe("Tiếp nhận");
+    expect(myActionLabel(tRevision, "start")).toBe("Nhận làm lại");
+    expect(myActionLabel(tProgress, "submit")).toBe("Nộp báo cáo");
+  });
+});
+
+describe("buildEvidence", () => {
+  it("accepts valid link mode", () => {
+    const res = buildEvidence({
+      mode: "link",
+      link: "https://drive.google.com/file/d/123",
+      to: "",
+      when: "",
+      note: "Đã hoàn thành báo cáo",
+    });
+    expect(res).toEqual({
+      ok: true,
+      evidence: "https://drive.google.com/file/d/123",
+      note: "Đã hoàn thành báo cáo",
+    });
+  });
+
+  it("rejects link missing http/https", () => {
+    const res = buildEvidence({
+      mode: "link",
+      link: "drive.google.com/file/d/123",
+      to: "",
+      when: "",
+      note: "note",
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toContain("http");
+  });
+
+  it("rejects zalo mode with missing recipient or note", () => {
+    const noTo = buildEvidence({
+      mode: "zalo",
+      link: "",
+      to: " ",
+      when: "",
+      note: "Nội dung",
+    });
+    expect(noTo.ok).toBe(false);
+
+    const noNote = buildEvidence({
+      mode: "zalo",
+      link: "",
+      to: "Nhóm Ban Thiết Kế",
+      when: "",
+      note: " ",
+    });
+    expect(noNote.ok).toBe(false);
+  });
+
+  it("formats zalo evidence replacing | with / and appending when", () => {
+    const res = buildEvidence({
+      mode: "zalo",
+      link: "",
+      to: "A|B",
+      when: "20h 7/11",
+      note: "Đã gửi file ảnh qua Zalo",
+    });
+    expect(res).toEqual({
+      ok: true,
+      evidence: "zalo:A/B | 20h 7/11",
+      note: "Đã gửi file ảnh qua Zalo",
+    });
+  });
+
+  it("rejects note longer than 2000 characters", () => {
+    const longNote = "a".repeat(2001);
+    const res = buildEvidence({
+      mode: "link",
+      link: "https://example.com",
+      to: "",
+      when: "",
+      note: longNote,
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toContain("2.000");
   });
 });
