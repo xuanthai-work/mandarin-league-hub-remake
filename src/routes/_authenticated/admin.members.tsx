@@ -41,7 +41,6 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MemberPermissionsSection } from "@/components/admin/members/MemberPermissionsSection";
 import { deptName } from "@/lib/recruitment";
 import { csvCell } from "@/lib/csv";
-import { LEADER_DEFAULT_POINTS, isFounder } from "@/lib/points";
 import { matchesSearch } from "@/lib/search";
 import {
   createAccount,
@@ -1535,8 +1534,7 @@ function NewMemberDrawer({
           position: v.position,
           // Every new profile starts active; the login account is granted separately.
           status: UNIFIED_MEMBER_STATUS.active,
-          // Only founders / co-founders start at the 400-point floor.
-          contribution_points: isFounder(v.position) ? LEADER_DEFAULT_POINTS : 0,
+          contribution_points: 0,
         });
         if (error) throw new Error(error.message);
         toast.success("Đã thêm hồ sơ thành viên");
