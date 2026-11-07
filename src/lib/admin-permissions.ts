@@ -18,7 +18,7 @@ export const SECTION_ACTIONS: Record<string, readonly PermissionCode[]> = {
   hsk: ["hsk.view", "hsk.edit"],
   certificates: ["certificates.view", "certificates.edit"],
   activities: ["activities.view", "activities.edit"],
-  news: ["news.write", "news.review"],
+  news: ["news.view", "news.edit"],
   photos: ["photos.view", "photos.edit"],
   partners: ["partners.view", "partners.edit"],
   departments: ["departments.advisors"],

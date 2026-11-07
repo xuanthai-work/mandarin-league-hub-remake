@@ -188,8 +188,18 @@ export const PERMISSION_ACTIONS = [
     label: "Tạo, sửa, đăng, hủy, xóa hoạt động và cập nhật người đăng ký",
     scoped: false,
   },
-  { code: "news.write", module: "news", label: "Viết bài và gửi duyệt", scoped: false },
-  { code: "news.review", module: "news", label: "Xem mọi bài, duyệt và đăng tin", scoped: false },
+  {
+    code: "news.view",
+    module: "news",
+    label: "Xem mọi bài viết tin tức (kể cả nháp, chờ duyệt)",
+    scoped: false,
+  },
+  {
+    code: "news.edit",
+    module: "news",
+    label: "Viết, sửa bài của mình; duyệt, đăng, gỡ bài của người chức thấp hơn",
+    scoped: false,
+  },
   {
     code: "photos.view",
     module: "photos",

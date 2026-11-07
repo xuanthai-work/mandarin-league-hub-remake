@@ -64,7 +64,22 @@ function NewsAdmin() {
   const qc = useQueryClient();
   const access = useAdminAccess().data;
   const perms = access?.perms ?? NO_PERMISSIONS;
-  const reviewer = can(perms, "news.review");
+  const canWrite = can(perms, "news.edit");
+  const me = useQuery({
+    queryKey: ["auth-user-id"],
+    queryFn: async () => (await supabase.auth.getSession()).data.session?.user.id ?? null,
+  });
+  const reviewable = useQuery({
+    queryKey: ["admin-news-reviewable"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("news_reviewable_ids");
+      if (error) throw new Error(error.message);
+      return new Set(data ?? []);
+    },
+  });
+  /** Rank rule: only someone above the author (or an admin) reviews, publishes or archives. */
+  const canReview = (a: NewsRow) => !!reviewable.data?.has(a.id);
+  const isMine = (a: NewsRow) => !!me.data && a.author_id === me.data;
   const canPurge = can(perms, "trash.purge");
   const { confirm, dialog } = useConfirm();
 
@@ -87,6 +102,7 @@ function NewsAdmin() {
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-news"] });
+    qc.invalidateQueries({ queryKey: ["admin-news-reviewable"] });
     qc.invalidateQueries({ queryKey: ["public-news"] });
   };
 
@@ -114,7 +130,7 @@ function NewsAdmin() {
   };
 
   const editable = (a: NewsRow) =>
-    reviewer || ["draft", "pending_review", "needs_revision"].includes(a.status);
+    canReview(a) || (isMine(a) && ["draft", "pending_review", "needs_revision"].includes(a.status));
 
   const allRows = list.data ?? [];
   const countPublished = allRows.filter((a) => a.status === "published").length;
@@ -159,8 +175,8 @@ function NewsAdmin() {
       label: "Chờ duyệt",
       icon: Clock,
       count: countPending,
-      sub: "Cần Trưởng/Phó Ban duyệt",
-      highlightGold: reviewer && countPending > 0,
+      sub: "Cần người chức cao hơn tác giả duyệt",
+      highlightGold: allRows.some((a) => a.status === "pending_review" && canReview(a)),
     },
     {
       key: "needs_revision",
@@ -183,18 +199,16 @@ function NewsAdmin() {
       {dialog}
       <AdminPageHeader
         title="Tin tức"
-        description={
-          reviewer
-            ? "Bạn có quyền duyệt & xuất bản bài viết của Ban Truyền thông – Marketing."
-            : "Soạn bài, lưu nháp và gửi duyệt. Trưởng/Phó Ban sẽ duyệt trước khi bài được đăng."
-        }
+        description="Viết bài và gửi duyệt. Bài được duyệt và đăng bởi người có chức vụ cao hơn tác giả."
         actions={
-          <Button
-            size="admin"
-            onClick={() => navigate({ to: "/admin/news/$id", params: { id: "new" } })}
-          >
-            <Plus /> Viết bài mới
-          </Button>
+          canWrite ? (
+            <Button
+              size="admin"
+              onClick={() => navigate({ to: "/admin/news/$id", params: { id: "new" } })}
+            >
+              <Plus /> Viết bài mới
+            </Button>
+          ) : null
         }
       />
 
@@ -274,7 +288,7 @@ function NewsAdmin() {
           </SelectContent>
         </Select>
 
-        {(reviewer || canPurge) && (
+        {(canWrite || canPurge) && (
           <Button
             type="button"
             size="admin"
@@ -416,7 +430,7 @@ function NewsAdmin() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Nút chính */}
-                  {reviewer && a.status === "pending_review" ? (
+                  {canReview(a) && a.status === "pending_review" ? (
                     <Button
                       size="admin-sm"
                       onClick={() => navigate({ to: "/admin/news/$id", params: { id: a.id } })}
@@ -455,7 +469,7 @@ function NewsAdmin() {
                         Mở trang soạn
                       </DropdownMenuItem>
 
-                      {reviewer && a.status === "published" && (
+                      {canReview(a) && a.status === "published" && (
                         <>
                           <DropdownMenuItem
                             onClick={() =>
@@ -472,7 +486,7 @@ function NewsAdmin() {
                         </>
                       )}
 
-                      {(reviewer || a.status === "draft") && (
+                      {(canReview(a) || (isMine(a) && a.status === "draft")) && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

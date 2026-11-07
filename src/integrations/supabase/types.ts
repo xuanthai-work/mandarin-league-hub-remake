@@ -2160,6 +2160,7 @@ export type Database = {
         Args: { _action: string; _app: string };
         Returns: boolean;
       };
+      can_review_news: { Args: { _author: string }; Returns: boolean };
       candidate_profiles: {
         Args: never;
         Returns: {
@@ -2282,6 +2283,7 @@ export type Database = {
         }[];
       };
       my_permissions: { Args: never; Returns: Json };
+      news_reviewable_ids: { Args: never; Returns: string[] };
       outranks: { Args: { _member: string }; Returns: boolean };
       perm_on_choices: { Args: { _action: string; _choices: Json }; Returns: boolean };
       perm_scope: { Args: { _action: string }; Returns: string };

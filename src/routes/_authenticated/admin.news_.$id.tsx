@@ -70,7 +70,12 @@ function NewsEditor({ id }: { id: string }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const access = useAdminAccess().data;
-  const reviewer = !!access && can(access.perms, "news.review");
+  const isAdmin = !!access?.perms.isAdmin;
+  const canWrite = !!access && can(access.perms, "news.edit");
+  const me = useQuery({
+    queryKey: ["auth-user-id"],
+    queryFn: async () => (await supabase.auth.getSession()).data.session?.user.id ?? null,
+  });
   const { confirm, dialog } = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -103,6 +108,20 @@ function NewsEditor({ id }: { id: string }) {
   });
 
   const row = articleQuery.data ?? null;
+
+  const reviewQuery = useQuery({
+    queryKey: ["news-can-review", row?.author_id ?? null],
+    enabled: !isNew && !!row,
+    queryFn: async () => {
+      // An article without a member author can only be reviewed by an admin.
+      if (!row?.author_id) return isAdmin;
+      const { data } = await supabase.rpc("can_review_news", { _author: row.author_id });
+      return data === true;
+    },
+  });
+  /** Rank rule: a new article can only be published straight away by an admin. */
+  const reviewer = isNew ? isAdmin : reviewQuery.data === true;
+  const isMine = !!row && !!me.data && row.author_id === me.data;
 
   useEffect(() => {
     return () => {
@@ -140,9 +159,11 @@ function NewsEditor({ id }: { id: string }) {
     }
   }, [isNew, row, initialized]);
 
-  const editable =
-    isNew || reviewer || ["draft", "pending_review", "needs_revision"].includes(row?.status ?? "");
-  const canDelete = !isNew && row && (reviewer || row.status === "draft");
+  const editable = isNew
+    ? canWrite
+    : reviewer ||
+      (isMine && ["draft", "pending_review", "needs_revision"].includes(row?.status ?? ""));
+  const canDelete = !isNew && !!row && (reviewer || (isMine && row.status === "draft"));
   const dirty =
     JSON.stringify(form) !== JSON.stringify(baseline) ||
     (reviewer && row?.status === "pending_review" && reviewNote !== (row.review_note ?? ""));
@@ -212,6 +233,7 @@ function NewsEditor({ id }: { id: string }) {
 
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["admin-news"] }),
+        qc.invalidateQueries({ queryKey: ["admin-news-reviewable"] }),
         qc.invalidateQueries({ queryKey: ["public-news"] }),
         qc.invalidateQueries({ queryKey: ["admin-news-article", savedId] }),
       ]);
@@ -303,6 +325,7 @@ function NewsEditor({ id }: { id: string }) {
       toast.success("Đã chuyển vào Thùng rác");
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["admin-news"] }),
+        qc.invalidateQueries({ queryKey: ["admin-news-reviewable"] }),
         qc.invalidateQueries({ queryKey: ["public-news"] }),
       ]);
       skipBlock.current = true;
@@ -571,9 +594,8 @@ function NewsEditor({ id }: { id: string }) {
           <div className="space-y-5">
             {!editable && (
               <div className="rounded-xl border border-warning-foreground/25 bg-warning-soft p-3.5 text-sm text-warning-foreground">
-                {row?.status === "archived"
-                  ? "Bài đã lưu trữ. Chỉ Trưởng/Phó Ban Truyền thông hoặc admin được chỉnh sửa."
-                  : "Bài đã xuất bản. Chỉ Trưởng/Phó Ban Truyền thông hoặc admin được chỉnh sửa."}
+                Bạn chỉ xem được bài này. Tác giả sửa được khi bài chưa đăng; người có chức vụ cao
+                hơn tác giả hoặc admin duyệt, đăng và sửa bài đã đăng.
               </div>
             )}
 

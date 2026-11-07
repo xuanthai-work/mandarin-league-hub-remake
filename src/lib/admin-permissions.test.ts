@@ -29,7 +29,7 @@ describe("allowedSections", () => {
   it("opens sections for a communications member", () => {
     const p = perms({
       "activities.view": "all",
-      "news.write": "all",
+      "news.view": "all",
       "partners.view": "all",
       "members.view": "own",
     });
@@ -97,7 +97,7 @@ describe("allowedSections", () => {
 
   it("keeps SECTION_ACTIONS key order", () => {
     const allowed = allowedSections(
-      perms({ "news.write": "all", "members.view": "own", "content.edit": "all" }),
+      perms({ "news.view": "all", "members.view": "own", "content.edit": "all" }),
     );
     expect(allowed).toEqual(["members", "news", "content"]);
   });
