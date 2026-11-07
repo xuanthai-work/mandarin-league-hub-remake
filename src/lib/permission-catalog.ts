@@ -28,9 +28,27 @@ export type PermissionScope = "own" | "all";
 
 export const PERMISSION_ACTIONS = [
   {
-    code: "recruitment.config",
+    code: "recruitment.view",
     module: "recruitment",
-    label: "Quản lý đợt tuyển, vị trí, chủ đề, câu hỏi",
+    label: "Xem đợt tuyển và ngân hàng câu hỏi",
+    scoped: false,
+  },
+  {
+    code: "recruitment.create",
+    module: "recruitment",
+    label: "Tạo đợt tuyển",
+    scoped: false,
+  },
+  {
+    code: "recruitment.edit",
+    module: "recruitment",
+    label: "Sửa đợt tuyển và vị trí tuyển (mở, đóng, xóa)",
+    scoped: false,
+  },
+  {
+    code: "questions.edit",
+    module: "recruitment",
+    label: "Thêm, sửa, xóa chủ đề và câu hỏi tuyển dụng",
     scoped: false,
   },
   {

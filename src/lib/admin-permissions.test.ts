@@ -65,6 +65,14 @@ describe("allowedSections", () => {
     expect(allowedSections(perms({ "enrollments.view": "all" }))).toEqual(["courses"]);
   });
 
+  it("opens recruitment from questions.edit alone", () => {
+    expect(allowedSections(perms({ "questions.edit": "all" }))).toEqual(["recruitment"]);
+  });
+
+  it("opens recruitment from recruitment.view alone", () => {
+    expect(allowedSections(perms({ "recruitment.view": "all" }))).toEqual(["recruitment"]);
+  });
+
   it("does not open departments from departments.channels", () => {
     expect(allowedSections(perms({ "departments.channels": "own" }))).toEqual([]);
   });

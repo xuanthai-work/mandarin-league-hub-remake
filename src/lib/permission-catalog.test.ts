@@ -14,7 +14,7 @@ import {
 } from "./permission-catalog";
 
 describe("action catalog", () => {
-  it("has exactly 47 actions", () => expect(PERMISSION_ACTIONS).toHaveLength(47));
+  it("has exactly 50 actions", () => expect(PERMISSION_ACTIONS).toHaveLength(50));
 
   it("has unique codes matching the SQL pattern", () => {
     const codes = PERMISSION_ACTIONS.map((a) => a.code);
@@ -28,15 +28,27 @@ describe("action catalog", () => {
 });
 
 describe("migration parity", () => {
-  const sql = readFileSync(
-    path.join(process.cwd(), "drizzle/migrations/0050_permission_foundation.sql"),
+  const migrationsDir = path.join(process.cwd(), "drizzle/migrations");
+  const sql50 = readFileSync(path.join(migrationsDir, "0050_permission_foundation.sql"), "utf8");
+  const start50 = sql50.indexOf("INSERT INTO public.permission_actions");
+  const block50 = sql50.slice(start50, sql50.indexOf(";", start50));
+  const codes = new Set(
+    (block50.match(/'[a-z]+(?:\.[a-z]+)+'/g) ?? []).map((quoted) => quoted.slice(1, -1)),
+  );
+
+  const sql64 = readFileSync(
+    path.join(migrationsDir, "0064_recruitment_view_create_edit.sql"),
     "utf8",
   );
-  const start = sql.indexOf("INSERT INTO public.permission_actions");
-  const block = sql.slice(start, sql.indexOf(";", start));
-  const codes = new Set(
-    (block.match(/'[a-z]+(?:\.[a-z]+)+'/g) ?? []).map((quoted) => quoted.slice(1, -1)),
-  );
+  const start64 = sql64.indexOf("INSERT INTO public.permission_actions");
+  const block64 = sql64.slice(start64, sql64.indexOf(";", start64));
+  for (const match of block64.match(/'[a-z]+(?:\.[a-z]+)+'/g) ?? []) {
+    codes.add(match.slice(1, -1));
+  }
+  const deleteMatch = sql64.match(/DELETE FROM public\.permission_actions WHERE code = '([^']+)';/);
+  if (deleteMatch?.[1]) {
+    codes.delete(deleteMatch[1]);
+  }
 
   it("inserts exactly the catalog's action codes", () => {
     expect(codes).toEqual(new Set(PERMISSION_ACTIONS.map((a) => a.code)));
@@ -127,7 +139,7 @@ describe("can", () => {
   });
 
   it("ignores department for actions that are not scoped", () => {
-    const p = withActions({ "recruitment.config": "own" });
-    expect(can(p, "recruitment.config", "comms", "hr")).toBe(true);
+    const p = withActions({ "recruitment.view": "own" });
+    expect(can(p, "recruitment.view", "comms", "hr")).toBe(true);
   });
 });
