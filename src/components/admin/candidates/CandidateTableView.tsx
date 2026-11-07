@@ -11,12 +11,12 @@ import {
   formatDateTime,
   initials,
   statusLabel,
-  type CandidateApp,
+  type CandidateProfile,
 } from "./shared";
 
 interface CandidateTableViewProps {
-  apps: CandidateApp[];
-  onOpen: (app: CandidateApp) => void;
+  apps: CandidateProfile[];
+  onOpen: (app: CandidateProfile) => void;
   onOpenCv: (path: string) => void;
 }
 

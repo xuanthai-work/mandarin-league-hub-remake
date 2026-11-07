@@ -18,11 +18,14 @@ import {
   openStorageFile,
   type CandidateApp,
   type CandidateFilters,
+  type CandidateProfile,
 } from "@/components/admin/candidates/shared";
 import { supabase } from "@/integrations/supabase/client";
+import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
 import { APP_STATUS, deptName } from "@/lib/recruitment";
 import { matchesSearch } from "@/lib/search";
 import { csvCell } from "@/lib/csv";
+import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({
   staticData: { sitemap: false },
@@ -30,6 +33,30 @@ export const Route = createFileRoute("/_authenticated/admin/candidates")({
 });
 
 const PAGE_SIZE = 1000;
+
+/** View-only users read safe columns through candidate_profiles(), already scoped to their department. */
+async function loadProfiles() {
+  const rows: CandidateProfile[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .rpc("candidate_profiles")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+    if (!data || data.length < PAGE_SIZE) return rows;
+  }
+}
+
+/** Editors keep the full rows (for the AI, decision and history tabs); everyone shares the profile list. */
+async function loadApps(
+  canEdit: boolean,
+): Promise<{ apps: CandidateProfile[]; records: Map<string, CandidateApp> | null }> {
+  if (!canEdit) return { apps: await loadProfiles(), records: null };
+  const records = await loadAllApplications();
+  return { apps: records, records: new Map(records.map((r) => [r.id, r])) };
+}
 
 /** Supabase trả tối đa 1000 dòng mỗi lần, nên tải lần lượt từng trang đến khi hết. */
 async function loadAllApplications() {
@@ -47,21 +74,31 @@ async function loadAllApplications() {
   }
 }
 
-async function load() {
-  const [apps, p, q] = await Promise.all([
-    loadAllApplications(),
+async function load(canEdit: boolean) {
+  const [appsData, p, q] = await Promise.all([
+    loadApps(canEdit),
     supabase.from("recruitment_periods").select("id, name"),
     supabase.from("recruitment_questions").select("id, prompt, kind"),
   ]);
   if (p.error) throw new Error(p.error.message);
   if (q.error) throw new Error(q.error.message);
-  return { apps, periods: p.data ?? [], questions: q.data ?? [] };
+  return {
+    apps: appsData.apps,
+    records: appsData.records,
+    periods: p.data ?? [],
+    questions: q.data ?? [],
+  };
 }
 
 function Candidates() {
+  const access = useAdminAccess();
+  const perms = access.data?.perms ?? NO_PERMISSIONS;
+  const canEdit = can(perms, "candidates.edit");
+  const canConvert = can(perms, "candidates.convert");
   const { data, isError, refetch, isFetching } = useQuery({
-    queryKey: ["admin-candidates"],
-    queryFn: load,
+    queryKey: ["admin-candidates", canEdit],
+    queryFn: () => load(canEdit),
+    enabled: !!access.data,
   });
   const [filters, setFilters] = useState<CandidateFilters>(EMPTY_FILTERS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -174,17 +211,19 @@ function Candidates() {
       <AdminPageHeader
         actions={
           <>
-            <Button
-              type="button"
-              size="admin"
-              variant="outline"
-              onClick={() => setFreeOpen(true)}
-              aria-label="Phân tích nội dung dán vào"
-              title="Phân tích nội dung dán vào"
-            >
-              <Sparkles aria-hidden className="text-gold" />
-              <span className="hidden sm:inline">Phân tích nội dung dán vào</span>
-            </Button>
+            {canEdit && (
+              <Button
+                type="button"
+                size="admin"
+                variant="outline"
+                onClick={() => setFreeOpen(true)}
+                aria-label="Phân tích nội dung dán vào"
+                title="Phân tích nội dung dán vào"
+              >
+                <Sparkles aria-hidden className="text-gold" />
+                <span className="hidden sm:inline">Phân tích nội dung dán vào</span>
+              </Button>
+            )}
             <Button
               type="button"
               size="admin"
@@ -220,13 +259,15 @@ function Candidates() {
           <CandidateDossierDrawer
             key={current.id}
             app={current}
+            record={data.records?.get(current.id) ?? null}
+            canConvert={canConvert}
             questions={data.questions}
             onClose={() => setSelectedId(null)}
           />
         )}
       </AnimatePresence>
 
-      <FreeTextAnalyzeModal open={freeOpen} onClose={() => setFreeOpen(false)} />
+      {canEdit && <FreeTextAnalyzeModal open={freeOpen} onClose={() => setFreeOpen(false)} />}
     </section>
   );
 }

@@ -1,13 +1,13 @@
 import { BadgeCheck, CalendarClock, Clock3, Inbox } from "lucide-react";
 
 import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
-import type { CandidateApp } from "./shared";
+import type { CandidateProfile } from "./shared";
 
 /**
  * Recruitment funnel at a glance: each card answers "how many dossiers sit at this stage",
  * so a head can read the pipeline before touching the table.
  */
-export function CandidateMetricsStrip({ apps }: { apps: CandidateApp[] }) {
+export function CandidateMetricsStrip({ apps }: { apps: CandidateProfile[] }) {
   const total = apps.length;
   const pending = apps.filter((a) => a.status === "submitted" || a.status === "needs_info").length;
   const interviewing = apps.filter((a) => a.status === "interview").length;

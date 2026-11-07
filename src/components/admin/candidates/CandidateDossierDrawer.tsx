@@ -57,11 +57,16 @@ import {
   statusLabel,
   type CandidateApp,
   type CandidateHistory,
+  type CandidateProfile,
   type CandidateQuestion,
 } from "./shared";
 
 interface CandidateDossierDrawerProps {
-  app: CandidateApp;
+  /** Safe profile, always present. */
+  app: CandidateProfile;
+  /** Full row, only for holders of candidates.edit; null means view-only. */
+  record: CandidateApp | null;
+  canConvert: boolean;
   questions: CandidateQuestion[];
   onClose: () => void;
 }
@@ -74,13 +79,20 @@ const isUploadPath = (v: unknown): v is string =>
 
 const contactBtn = "max-w-full font-medium [&_svg]:size-3.5";
 
-export function CandidateDossierDrawer({ app, questions, onClose }: CandidateDossierDrawerProps) {
+export function CandidateDossierDrawer({
+  app,
+  record,
+  canConvert,
+  questions,
+  onClose,
+}: CandidateDossierDrawerProps) {
   const [tab, setTab] = useState("profile");
   const [copied, setCopied] = useState(false);
   const qc = useQueryClient();
 
   const history = useQuery({
     queryKey: ["candidate-history", app.id],
+    enabled: record !== null,
     queryFn: async () =>
       (
         await supabase
@@ -163,53 +175,63 @@ export function CandidateDossierDrawer({ app, questions, onClose }: CandidateDos
         )}
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <div className="sticky top-0 z-10 -mx-4 bg-card px-4 pb-3 sm:-mx-6 sm:px-6">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
-            <TabsTrigger value="profile" className="text-xs">
-              Hồ sơ & Trả lời
-            </TabsTrigger>
-            <TabsTrigger value="ai" className="text-xs">
-              Trợ lý AI
-            </TabsTrigger>
-            <TabsTrigger value="decision" className="text-xs">
-              Xử lý & Kết nạp
-            </TabsTrigger>
-            <TabsTrigger value="history" className="text-xs">
-              Lịch sử
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="profile" forceMount className="mt-0 data-[state=inactive]:hidden">
+      {record === null ? (
+        <>
+          <p className="rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+            Bạn đang xem hồ sơ ở chế độ chỉ đọc. Ban Nhân sự sẽ xử lý và kết nạp.
+          </p>
           <ProfileTab app={app} questions={questions} />
-        </TabsContent>
-        <TabsContent value="ai" forceMount className="mt-0 data-[state=inactive]:hidden">
-          <AiTab
-            app={app}
-            onUpdated={() => qc.invalidateQueries({ queryKey: ["admin-candidates"] })}
-          />
-        </TabsContent>
-        <TabsContent value="decision" forceMount className="mt-0 data-[state=inactive]:hidden">
-          <DecisionTab
-            app={app}
-            onSaved={() => {
-              qc.invalidateQueries({ queryKey: ["admin-candidates"] });
-              qc.invalidateQueries({ queryKey: ["candidate-history", app.id] });
-            }}
-          />
-        </TabsContent>
-        <TabsContent value="history" forceMount className="mt-0 data-[state=inactive]:hidden">
-          <HistoryTab items={history.data ?? []} loading={history.isLoading} />
-        </TabsContent>
-      </Tabs>
+        </>
+      ) : (
+        <Tabs value={tab} onValueChange={setTab}>
+          <div className="sticky top-0 z-10 -mx-4 bg-card px-4 pb-3 sm:-mx-6 sm:px-6">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
+              <TabsTrigger value="profile" className="text-xs">
+                Hồ sơ & Trả lời
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="text-xs">
+                Trợ lý AI
+              </TabsTrigger>
+              <TabsTrigger value="decision" className="text-xs">
+                {canConvert ? "Xử lý & Kết nạp" : "Xử lý"}
+              </TabsTrigger>
+              <TabsTrigger value="history" className="text-xs">
+                Lịch sử
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="profile" forceMount className="mt-0 data-[state=inactive]:hidden">
+            <ProfileTab app={app} questions={questions} />
+          </TabsContent>
+          <TabsContent value="ai" forceMount className="mt-0 data-[state=inactive]:hidden">
+            <AiTab
+              app={record}
+              onUpdated={() => qc.invalidateQueries({ queryKey: ["admin-candidates"] })}
+            />
+          </TabsContent>
+          <TabsContent value="decision" forceMount className="mt-0 data-[state=inactive]:hidden">
+            <DecisionTab
+              app={record}
+              canConvert={canConvert}
+              onSaved={() => {
+                qc.invalidateQueries({ queryKey: ["admin-candidates"] });
+                qc.invalidateQueries({ queryKey: ["candidate-history", app.id] });
+              }}
+            />
+          </TabsContent>
+          <TabsContent value="history" forceMount className="mt-0 data-[state=inactive]:hidden">
+            <HistoryTab items={history.data ?? []} loading={history.isLoading} />
+          </TabsContent>
+        </Tabs>
+      )}
     </AdminDrawer>
   );
 }
 
 // ---------------------------------------------------------------- profile tab
 
-function ProfileTab({ app, questions }: { app: CandidateApp; questions: CandidateQuestion[] }) {
+function ProfileTab({ app, questions }: { app: CandidateProfile; questions: CandidateQuestion[] }) {
   const choices = choicesOf(app);
   const answers = answersOf(app);
   const info: [string, string][] = [
@@ -417,7 +439,15 @@ function AiSummary({ summary }: { summary: string }) {
 
 // ---------------------------------------------------------------- decision tab
 
-function DecisionTab({ app, onSaved }: { app: CandidateApp; onSaved: () => void }) {
+function DecisionTab({
+  app,
+  canConvert,
+  onSaved,
+}: {
+  app: CandidateApp;
+  canConvert: boolean;
+  onSaved: () => void;
+}) {
   const qc = useQueryClient();
   const [status, setStatus] = useState(app.status);
   const [msg, setMsg] = useState(app.candidate_message ?? "");
@@ -560,14 +590,16 @@ function DecisionTab({ app, onSaved }: { app: CandidateApp; onSaved: () => void 
         )}
       </section>
 
-      <AdmissionBlock
-        app={app}
-        onApproved={() => {
-          setStatus("approved");
-          qc.invalidateQueries({ queryKey: ["candidate-history", app.id] });
-          onSaved();
-        }}
-      />
+      {canConvert && (
+        <AdmissionBlock
+          app={app}
+          onApproved={() => {
+            setStatus("approved");
+            qc.invalidateQueries({ queryKey: ["candidate-history", app.id] });
+            onSaved();
+          }}
+        />
+      )}
 
       {app.status === "approved" && (
         <p className="rounded-lg bg-success/10 px-3 py-2 text-xs text-success">

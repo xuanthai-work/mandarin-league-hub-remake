@@ -246,6 +246,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-184-RECRUITMENT-PERIODS-UI-BY-PERMISSION`                     | Tab Đợt tuyển ẩn nút theo quyền, drawer chỉ đọc cho người xem                                          | 2026-11-08     | **PASS** | [task-ge-184-recruitment-periods-ui-by-permission.md](tasks/task-ge-184-recruitment-periods-ui-by-permission.md)                                         |
 | `TASK-GE-185-QUESTION-BANK-READ-ONLY`                                  | Ngân hàng câu hỏi chỉ đọc khi không có questions.edit                                                  | 2026-11-08     | **PASS** | [task-ge-185-question-bank-read-only.md](tasks/task-ge-185-question-bank-read-only.md)                                                                   |
 | `TASK-GE-186-CANDIDATES-PERMS-VIEW-EDIT`                               | Quyền Ứng viên: xem / sửa / kết nạp (gộp files, review, ai)                                            | 2026-11-08     | **PASS** | [task-ge-186-candidates-perms-view-edit.md](tasks/task-ge-186-candidates-perms-view-edit.md)                                                             |
+| `TASK-GE-187-CANDIDATES-UI-BY-PERMISSION`                              | Trang Ứng viên theo quyền: chỉ xem qua candidate_profiles, ẩn AI / xử lý / kết nạp                     | 2026-11-08     | **PASS** | [task-ge-187-candidates-ui-by-permission.md](tasks/task-ge-187-candidates-ui-by-permission.md)                                                           |
 
 ---
 

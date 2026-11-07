@@ -5,6 +5,9 @@ import { APP_STATUS, type Choice } from "@/lib/recruitment";
 
 /** Row types are taken from the generated Supabase schema so the UI never drifts from the table. */
 export type CandidateApp = Database["public"]["Tables"]["candidate_applications"]["Row"];
+/** Safe profile columns from candidate_profiles(): no internal note, candidate message or AI summary. */
+export type CandidateProfile =
+  Database["public"]["Functions"]["candidate_profiles"]["Returns"][number];
 export type CandidateHistory = Database["public"]["Tables"]["application_status_history"]["Row"];
 export type CandidateQuestion = { id: string; prompt: string; kind: string };
 export type CandidatePeriod = { id: string; name: string };
@@ -35,9 +38,9 @@ export const POSITION_FILTERS = [
   "Cố vấn chuyên môn",
 ];
 
-export const choicesOf = (app: CandidateApp): Choice[] => (app.choices ?? []) as Choice[];
+export const choicesOf = (app: CandidateProfile): Choice[] => (app.choices ?? []) as Choice[];
 
-export const answersOf = (app: CandidateApp): Record<string, string | string[]> =>
+export const answersOf = (app: CandidateProfile): Record<string, string | string[]> =>
   (app.answers ?? {}) as Record<string, string | string[]>;
 
 export function statusLabel(status: string | null | undefined) {
