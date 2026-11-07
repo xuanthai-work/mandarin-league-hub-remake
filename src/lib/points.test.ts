@@ -26,7 +26,7 @@ t2("professional advisors are left off the leaderboard", () => {
   e2(isLeader2({ department: "media", position: "Thành viên" }, [], false)).toBe(false);
 });
 
-import { getMemberCardTone, isFounder, tierOf } from "./points";
+import { getMemberCardTone, isFounder, TIERS, tierOf } from "./points";
 
 describe("isFounder", () => {
   it("recognises co-founders and founders", () => {
@@ -69,22 +69,34 @@ t2("tiers follow the real stored points, founders included", () => {
 });
 
 describe("getMemberCardTone", () => {
-  it("assigns sapphire (#103b70) to department heads and advisors", () => {
-    expect(getMemberCardTone({ position: "Trưởng Ban" }, [], false)).toBe("sapphire");
-    expect(getMemberCardTone({ position: "Cố vấn chuyên môn" }, [], false)).toBe("sapphire");
-    expect(getMemberCardTone({ position: "Thành viên" }, [], true)).toBe("sapphire");
-  });
-
-  it("assigns lavender (#2c1c38) to deputy heads", () => {
-    expect(getMemberCardTone({ position: "Phó Ban" }, [], false)).toBe("lavender");
-  });
-
-  it("assigns black to founders and co-founders", () => {
+  it("only founders and co-founders keep the obsidian card", () => {
     expect(getMemberCardTone({ position: "Co-founder" }, [], false)).toBe("black");
     expect(getMemberCardTone({ position: "Founder" }, [], false)).toBe("black");
   });
 
+  it("gives heads, advisors and deputies their real tier tone", () => {
+    expect(getMemberCardTone({ position: "Trưởng Ban" }, [], false, "sapphire")).toBe("sapphire");
+    expect(getMemberCardTone({ position: "Cố vấn chuyên môn" }, [], false, "green")).toBe("green");
+    expect(getMemberCardTone({ position: "Thành viên" }, [], true, "purple")).toBe("purple");
+    expect(getMemberCardTone({ position: "Phó Ban" }, [], false, "lavender")).toBe("lavender");
+  });
+
   it("assigns tier tone to regular members", () => {
     expect(getMemberCardTone({ position: "Thành viên" }, [], false, "green")).toBe("green");
+  });
+});
+
+describe("tier palette", () => {
+  it("maps each tier to its new colour", () => {
+    const palette = Object.fromEntries(TIERS.map((t) => [t.key, [t.className, t.tone]]));
+    expect(palette).toEqual({
+      honor: ["tier-wine", "wine"],
+      platinum: ["tier-lavender", "lavender"],
+      excellent: ["tier-purple", "purple"],
+      gold: ["tier-sapphire", "sapphire"],
+      silver: ["tier-blue", "blue"],
+      official: ["tier-green", "green"],
+      bronze: ["tier-bronze", "bronze"],
+    });
   });
 });
