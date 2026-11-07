@@ -7,12 +7,12 @@ export type Tier = { key: string; label: string; min: number; className: string;
  * see and hold it.
  */
 export const TIERS: Tier[] = [
-  { key: "honor", label: "Danh dự", min: 401, className: "tier-honor", tone: "honor" },
-  { key: "platinum", label: "Ưu tú", min: 351, className: "tier-purple", tone: "purple" },
+  { key: "honor", label: "Danh dự", min: 401, className: "tier-wine", tone: "wine" },
+  { key: "platinum", label: "Ưu tú", min: 351, className: "tier-carnelian", tone: "carnelian" },
   { key: "excellent", label: "Xuất sắc", min: 201, className: "tier-pink", tone: "pink" },
-  { key: "gold", label: "Nòng cốt", min: 151, className: "tier-wine", tone: "wine" },
-  { key: "silver", label: "Tích cực", min: 101, className: "tier-green", tone: "green" },
-  { key: "official", label: "Chính thức", min: 51, className: "tier-blue", tone: "blue" },
+  { key: "gold", label: "Nòng cốt", min: 151, className: "tier-purple", tone: "purple" },
+  { key: "silver", label: "Tích cực", min: 101, className: "tier-blue", tone: "blue" },
+  { key: "official", label: "Chính thức", min: 51, className: "tier-green", tone: "green" },
   { key: "bronze", label: "Tập sự", min: 0, className: "tier-bronze", tone: "bronze" },
 ];
 
@@ -28,15 +28,16 @@ export const LEADER_TIER: Tier = {
   key: "leader",
   label: "Lãnh đạo",
   min: 9999,
-  className: "border-gold/40 bg-[color:var(--enamel-obsidian,#0b0f19)] text-gold",
+  className: "tier-leader",
   tone: "black",
 };
 
-export const LEADER_TONE = { key: "black", label: "Lãnh đạo / Cố vấn" } as const;
+export const LEADER_TONE = { key: "black", label: "Nhà sáng lập" } as const;
 
 /**
- * Card colour by position: founders keep the obsidian leader card, department heads and
- * advisors get sapphire blue, deputies get lavender, everyone else follows their tier.
+ * Card colour: only founders/co-founders keep the obsidian leader card. Every other
+ * position (department heads, deputies, advisors included) follows the member's own
+ * contribution tier tone.
  */
 export const getMemberCardTone = (
   m: { department?: string; position: string | null },
@@ -45,17 +46,7 @@ export const getMemberCardTone = (
   defaultTierTone = "blue",
 ): string => {
   const pos = m.position ?? "";
-  // 1. Founder / Co-founder luôn dùng thẻ Đen Obsidian
   if (isFounder(pos)) return "black";
-  // 2. Trưởng Ban & Cố vấn dùng màu Lam Bảo Thạch
-  if (/trưởng/i.test(pos) || isAdvisor || /cố vấn/i.test(pos)) {
-    return "sapphire";
-  }
-  // 3. Phó Ban dùng màu Tử La Lan
-  if (/phó/i.test(pos)) {
-    return "lavender";
-  }
-  // 4. Thành viên thường dùng màu theo cấp bậc điểm
   return defaultTierTone;
 };
 

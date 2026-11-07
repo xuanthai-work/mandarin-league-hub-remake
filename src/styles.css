@@ -583,6 +583,23 @@
   --metal-emerald-hi: oklch(0.88 0.08 165);
   --metal-emerald: oklch(0.6 0.12 165);
   --metal-emerald-lo: oklch(0.38 0.09 165);
+  /* Lam Bảo Thạch */
+  --metal-sapphire-hi: #3b82f6; /* Lam hoàng gia sáng, tạo vệt sáng đá quý */
+  --metal-sapphire: #1d4ed8; /* Sắc lam ngọc đậm đà */
+  --metal-sapphire-lo: #0f2b5c; /* Đổ bóng sâu */
+  /* Tử La Lan */
+  --metal-lavender-hi: #4a3358;
+  --metal-lavender: #2c1c38;
+  --metal-lavender-lo: #170d1e;
+  /* Đỏ vang */
+  --metal-wine-hi: #a03a4f;
+  --metal-wine: #7d263a;
+  --metal-wine-lo: #4b1420;
+  /* Cam Đỏ Mã Não (Ưu tú) */
+  --metal-carnelian-hi: #e06844;
+  --metal-carnelian: #c84824;
+  --metal-carnelian-lo: #8c2e14;
+  --enamel-carnelian: #9e3416;
   --metal-amber-hi: oklch(0.9 0.1 75);
   --metal-amber: oklch(0.7 0.15 60);
   --metal-amber-lo: oklch(0.45 0.12 50);
@@ -615,9 +632,9 @@
   border-color: var(--metal-emerald);
 }
 .tier-wine {
-  background: var(--gold);
-  color: var(--foreground);
-  border-color: var(--gold);
+  background: var(--pass-wine);
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
 }
 .tier-amber {
   background: linear-gradient(135deg, var(--metal-amber-hi), var(--metal-amber));
@@ -638,6 +655,26 @@
   background: linear-gradient(135deg, var(--metal-purple), var(--metal-purple-lo));
   color: var(--metal-gold-hi);
   border-color: var(--metal-gold);
+}
+.tier-carnelian {
+  background: var(--pass-carnelian);
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
+}
+.tier-sapphire {
+  background: var(--pass-sapphire);
+  color: var(--metal-gold-hi);
+  border-color: var(--metal-gold);
+}
+.tier-lavender {
+  background: var(--pass-lavender);
+  color: var(--metal-gold-hi);
+  border-color: var(--metal-gold);
+}
+.tier-leader {
+  background: var(--enamel-obsidian, #0b0f19);
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
 }
 .badge-sheen {
   animation: badge-sheen 4.5s ease-in-out infinite;
@@ -824,8 +861,9 @@
   --pass-wine: #7d263a;
   --pass-purple: #514080;
   --pass-black: #242832;
-  --pass-sapphire: #103b70; /* Lam Bảo Thạch (Royal Sapphire) — Trưởng Ban & Cố vấn chuyên môn */
-  --pass-lavender: #2c1c38; /* Tử La Lan Sẫm — Phó Ban */
+  --pass-sapphire: #1e40af; /* Lam Bảo Thạch (Royal Sapphire) */
+  --pass-lavender: #2c1c38; /* Tử La Lan Sẫm */
+  --pass-carnelian: #c84824; /* Cam Đỏ Mã Não — Ưu tú */
 }
 .tml-pass {
   --pass-c: var(--pass-blue);
@@ -993,6 +1031,19 @@
 }
 .tml-pass .text-gold {
   color: color-mix(in oklab, var(--gold) 75%, oklch(0.35 0.08 70)) !important;
+}
+.tml-pass .tier-wine,
+.tml-pass .tier-leader {
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
+}
+.tml-pass .tier-sapphire {
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
+}
+.tml-pass .tier-carnelian {
+  color: var(--metal-gold-hi) !important;
+  border-color: var(--metal-gold) !important;
 }
 .tml-pass .tml-banner {
   background: linear-gradient(90deg, transparent, var(--pass-c) 28%, var(--pass-deep));

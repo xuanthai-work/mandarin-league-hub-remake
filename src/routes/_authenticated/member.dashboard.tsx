@@ -320,12 +320,17 @@ function MemberDashboard() {
   const realTier = tierOf(effectivePoints);
   const isCoFounder = isFounder(m.position);
   const isAdvisorMember = (advisor.data ?? []).length > 0;
-  const previewTier =
-    previewTone && previewTone !== "black" ? TIERS.find((t) => t.tone === previewTone) : undefined;
-  const tier = isCoFounder ? LEADER_TIER : (previewTier ?? realTier);
-  // Founders keep obsidian, heads/advisors sapphire, deputies lavender, members their tier.
+  // Founders keep obsidian; every other position follows the real contribution tier.
   const defaultTone = getMemberCardTone(m, me.data?.roles ?? [], isAdvisorMember, realTier.tone);
   const tone = previewTone ?? defaultTone;
+  const previewTier =
+    previewTone === "black"
+      ? LEADER_TIER
+      : previewTone
+        ? TIERS.find((t) => t.tone === previewTone)
+        : undefined;
+  // The obsidian card always shows the leader tier label, never the raw points tier.
+  const tier = tone === "black" ? LEADER_TIER : (previewTier ?? realTier);
   const advNames = (advisor.data ?? []).map(
     (a) =>
       deptName(a.dept)
@@ -779,8 +784,17 @@ function MemberDashboard() {
                             {m.full_name}
                           </span>
                         </div>
-                        <p className="text-[8px] font-semibold uppercase tracking-wider opacity-60 md:text-[11px]">
-                          OFFICIAL MEMBER PASS · {tier.label}
+                        <p className="text-[8px] font-semibold uppercase tracking-wider md:text-[11px]">
+                          <span className="opacity-60">OFFICIAL MEMBER PASS · </span>
+                          <span
+                            className={
+                              tier.key === "leader" || tier.key === "honor"
+                                ? "font-bold text-gold"
+                                : "opacity-60"
+                            }
+                          >
+                            {tier.label}
+                          </span>
                         </p>
                       </div>
 
@@ -1093,8 +1107,6 @@ function MemberDashboard() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {[
                         ...[...TIERS].reverse().map((t) => [t.tone, t.label] as const),
-                        ["sapphire", "Trưởng Ban / Cố vấn (Lam Bảo Thạch)"] as const,
-                        ["lavender", "Phó Ban (Tử La Lan)"] as const,
                         [LEADER_TONE.key, "Nhà sáng lập (Obsidian)"] as const,
                       ].map(([k, l]) => (
                         <button

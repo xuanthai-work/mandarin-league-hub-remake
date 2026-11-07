@@ -5,12 +5,12 @@ import { LEADER_TIER, TIERS, tierOf } from "@/lib/points";
 
 const METAL: Record<string, string> = {
   bronze: "bronze",
-  official: "azure",
-  silver: "emerald",
-  gold: "gold",
+  official: "emerald",
+  silver: "azure",
+  gold: "purple",
   excellent: "pink",
-  platinum: "purple",
-  honor: "gold",
+  platinum: "carnelian",
+  honor: "wine",
   leader: "obsidian",
 };
 
@@ -58,13 +58,13 @@ export const TIER_INFO: Record<string, { zh: string; motto: string; perks: strin
 };
 const ENAMEL: Record<string, string> = {
   bronze: "var(--enamel-amber)",
-  official: "var(--enamel-azure)",
-  silver: "var(--enamel-emerald)",
-  gold: "var(--sapphire)",
+  official: "var(--enamel-emerald)",
+  silver: "var(--enamel-azure)",
+  gold: "var(--metal-purple-lo)",
   excellent: "var(--enamel-pink)",
   leader: "var(--enamel-obsidian)",
-  platinum: "var(--metal-purple-lo)",
-  honor: "var(--enamel-crimson)",
+  platinum: "var(--enamel-carnelian)",
+  honor: "var(--pass-wine)",
 };
 const GLYPH: Record<string, string> = {
   bronze: "习",
@@ -76,7 +76,7 @@ const GLYPH: Record<string, string> = {
   honor: "誉",
   leader: "领",
 };
-const GOLD_TRIM = ["platinum", "honor", "excellent", "leader"];
+const GOLD_TRIM = ["gold", "platinum", "honor", "excellent", "leader"];
 const HALO = ["gold", "excellent", "platinum", "honor", "leader"];
 const CROWN = ["platinum", "honor", "leader"];
 
@@ -117,10 +117,10 @@ const OBSIDIAN = "M50 4 L88 14 V46 C88 72 70 88 50 96 C30 88 12 72 12 46 V14 Z";
 /** Each tier owns a unique silhouette. */
 function Outer({ k, fill }: { k: string; fill: string }) {
   if (k === "bronze") return <path d={SHIELD} fill={fill} />;
-  if (k === "official") return <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill={fill} />;
-  if (k === "silver") return <polygon points={star(8, 49, 36)} fill={fill} />;
-  if (k === "gold") return <polygon points={CROSS12} fill={fill} />;
-  if (k === "excellent") return <path d={LOTUS} fill={fill} />;
+  if (k === "official") return <polygon points={star(8, 49, 36)} fill={fill} />;
+  if (k === "silver") return <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill={fill} />;
+  if (k === "gold") return <path d={LOTUS} fill={fill} />;
+  if (k === "excellent") return <polygon points={CROSS12} fill={fill} />;
   if (k === "platinum") return <polygon points={star(16, 50, 40)} fill={fill} />;
   if (k === "honor") return <polygon points={SUN} fill={fill} />;
   return <path d={OBSIDIAN} fill={fill} />;
@@ -514,8 +514,9 @@ export function TierProgress({
               </div>
               <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/60">
                 Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Cấp bậc Lãnh đạo chỉ
-                dành riêng cho Co-founder / Founder. Ban Quản trị, Trưởng/Phó Ban và Cố vấn chuyên
-                môn dùng thẻ màu Đen than chì riêng. Quyền lợi cụ thể do Ban Điều Hành cấu hình.
+                dành riêng cho Co-founder / Founder. Mọi vị trí khác (Ban Quản trị, Trưởng/Phó Ban,
+                Cố vấn chuyên môn) đều hiển thị thẻ theo bậc điểm cống hiến thực tế. Quyền lợi cụ
+                thể do Ban Điều Hành cấu hình.
               </p>
             </div>
           </div>,
