@@ -25,7 +25,6 @@ import {
   POINT_KIND,
   TIERS,
   getMemberCardTone,
-  isFounder,
   tierOf,
 } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
@@ -59,6 +58,7 @@ type Member = {
   contribution_points: number;
   avatar_path: string | null;
   status: string;
+  is_leader: boolean;
 };
 type Me = {
   email: string;
@@ -215,9 +215,9 @@ function MemberDashboard() {
   useEffect(() => {
     const mm = me.data?.member;
     if (!mm) return;
-    const founder = isFounder(mm.position);
-    const t = founder ? LEADER_TIER : tierOf(mm.contribution_points);
-    const idx = founder ? TIERS.length + 1 : TIERS.length - TIERS.indexOf(t);
+    const leader = !!mm.is_leader;
+    const t = leader ? LEADER_TIER : tierOf(mm.contribution_points);
+    const idx = leader ? TIERS.length + 1 : TIERS.length - TIERS.indexOf(t);
     const key = `tml_tier_seen_${mm.member_code}`;
     const prev = Number(localStorage.getItem(key) ?? 0);
     if (prev && idx > prev) setCongrats(t.label);
@@ -315,12 +315,12 @@ function MemberDashboard() {
     }
   };
 
-  /** Points shown are always the real stored value; founders get the tier, not a floor. */
+  /** Points shown are always the real stored value; leaders get the tier, not a floor. */
   const effectivePoints = m.contribution_points ?? 0;
   const realTier = tierOf(effectivePoints);
-  const isCoFounder = isFounder(m.position);
-  // Founders keep obsidian; every other position follows the real contribution tier.
-  const defaultTone = getMemberCardTone(m.position, realTier.tone);
+  const isLeaderCard = !!m.is_leader;
+  // Leaders keep obsidian; every other position follows the real contribution tier.
+  const defaultTone = getMemberCardTone(isLeaderCard, realTier.tone);
   const tone = previewTone ?? defaultTone;
   const previewTier =
     previewTone === "black"
@@ -1060,12 +1060,12 @@ function MemberDashboard() {
                 </button>
               </div>
               <div className="mt-4">
-                <TierProgress points={effectivePoints} isFounder={isCoFounder} />
+                <TierProgress points={effectivePoints} isLeader={isLeaderCard} />
                 <div className="mt-6">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="font-semibold text-white/90">Lịch sử điểm</h3>
                     <span className="rounded-full border border-gold/40 bg-gold/10 px-3 py-0.5 text-xs font-semibold text-gold">
-                      {isCoFounder ? LEADER_TIER.label : realTier.label} · {effectivePoints}
+                      {isLeaderCard ? LEADER_TIER.label : realTier.label} · {effectivePoints}
                     </span>
                   </div>
                   <ol className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/5">
@@ -1106,7 +1106,7 @@ function MemberDashboard() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {[
                         ...[...TIERS].reverse().map((t) => [t.tone, t.label] as const),
-                        [LEADER_TONE.key, "Nhà sáng lập (Obsidian)"] as const,
+                        [LEADER_TONE.key, "Lãnh đạo (Obsidian)"] as const,
                       ].map(([k, l]) => (
                         <button
                           key={k}

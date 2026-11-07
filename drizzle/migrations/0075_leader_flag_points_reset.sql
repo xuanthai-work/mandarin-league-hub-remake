@@ -2,8 +2,7 @@
 -- members.is_leader replaces the "founder in the position title" guess: only admins set it
 -- (set_member_leader or a direct admin write), it starts empty, and leaders earn no points
 -- (task approvals add nothing, bonus / penalty / attendance are refused) and stay off the
--- leaderboard. Every member's points go back to 0 with one 'reset' ledger row each; the reset
--- runs once, so re-running this file never wipes points earned afterwards.
+-- leaderboard. The league-wide points reset and history wipe live in 0076.
 
 -- a) Leader flag --------------------------------------------------------------
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS is_leader boolean NOT NULL DEFAULT false;
@@ -126,22 +125,5 @@ $$;
 REVOKE ALL ON FUNCTION public.points_leaderboard() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.points_leaderboard() TO authenticated;
 
--- d) One-time league-wide reset to 0 (kept in the ledger) -------------------------
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM public.point_transactions
-    WHERE kind = 'reset' AND reason = 'Reset điểm toàn hệ thống (TASK-GE-197)'
-  ) THEN
-    INSERT INTO public.point_transactions (member_id, delta, reason, kind, task_id, balance_after, created_by)
-    SELECT m.id, -m.contribution_points, 'Reset điểm toàn hệ thống (TASK-GE-197)', 'reset', NULL, 0, NULL
-    FROM public.members m
-    WHERE m.contribution_points <> 0;
-    UPDATE public.members SET contribution_points = 0 WHERE contribution_points <> 0;
-  END IF;
-END $$;
-
 -- Kiểm tra sau khi chạy:
--- SELECT count(*) FROM public.members WHERE contribution_points <> 0;          -- 0
 -- SELECT count(*) FROM public.members WHERE is_leader;                         -- 0 (admin tự gán sau)
--- SELECT count(*) FROM public.point_transactions WHERE kind = 'reset';         -- số người từng có điểm

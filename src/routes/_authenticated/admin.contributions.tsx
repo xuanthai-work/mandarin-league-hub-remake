@@ -24,7 +24,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
 import { canAdjustMember, hasAllScope } from "@/lib/admin-permissions";
 import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
-import { isFounder } from "@/lib/points";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({
@@ -75,7 +74,9 @@ function PointsPage() {
       ((
         await supabase
           .from("members")
-          .select("id, full_name, member_code, department, position, contribution_points, status")
+          .select(
+            "id, full_name, member_code, department, position, contribution_points, status, is_leader",
+          )
           .order("contribution_points", { ascending: false })
       ).data ?? []) as PointMember[],
   });
@@ -153,23 +154,21 @@ function PointsPage() {
   }, [leaderboard.data, memberList]);
 
   /**
-   * Only a member with an active profile AND an activated internal account joins the roster,
-   * podium, attendance and bonus/penalty pickers. Everyone else stays on /admin/members.
+   * Only a member with an active profile AND an activated internal account, and is not a leader,
+   * joins the roster, podium, attendance and bonus/penalty pickers. Everyone else stays on /admin/members.
    * Historical transactions remain in the ledger.
    */
   const activeMembers = useMemo(() => {
     const ids = activeAccountIds.data ?? new Set<string>();
-    return memberList.filter((m) => m.status === "active" && ids.has(m.id));
+    return memberList.filter((m) => m.status === "active" && !m.is_leader && ids.has(m.id));
   }, [memberList, activeAccountIds.data]);
 
   /**
-   * Founders hold the symbolic "Lãnh đạo" tier, not a contribution rank, so they stay off the
-   * leaderboard while advisors and heads keep competing with everyone else.
+   * Leaders hold the symbolic "Lãnh đạo" tier, not a contribution rank, so they stay off the
+   * leaderboard while advisors and heads keep competing with everyone else. points_leaderboard()
+   * already filters them out.
    */
-  const boardMembers = useMemo(
-    () => (leaderboard.data ?? []).filter((m) => !isFounder(m.position)),
-    [leaderboard.data],
-  );
+  const boardMembers = leaderboard.data ?? [];
 
   /** Bonus/penalty targets: same scope as points.adjust and strictly lower position. */
   const adjustableMembers = useMemo(

@@ -2338,7 +2338,6 @@ export type Database = {
         Args: { _app: string; _note: string; _status: string };
         Returns: undefined;
       };
-      set_member_leader: { Args: { _leader: boolean; _member: string }; Returns: undefined };
       set_member_visibility: {
         Args: { _member: string; _public: boolean };
         Returns: undefined;

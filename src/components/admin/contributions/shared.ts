@@ -9,6 +9,7 @@ export type PointMember = {
   position: string | null;
   contribution_points: number;
   status: string;
+  is_leader?: boolean;
 };
 
 /** One immutable row of `public.point_transactions`. */

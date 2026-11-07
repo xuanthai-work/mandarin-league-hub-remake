@@ -3,8 +3,7 @@ export type Tier = { key: string; label: string; min: number; className: string;
 /**
  * 7 contribution tiers (highest first) on the 0–450 scale.
  * Lowering the thresholds only promotes members, so nobody is demoted. The
- * exclusive "leader" tier is not part of this scale: only founders/co-founders
- * see and hold it.
+ * exclusive "leader" tier is not part of this scale: only members an admin flags as leaders (`members.is_leader`) hold it.
  */
 export const TIERS: Tier[] = [
   { key: "honor", label: "Danh dự", min: 401, className: "tier-wine", tone: "wine" },
@@ -16,14 +15,7 @@ export const TIERS: Tier[] = [
   { key: "bronze", label: "Tập sự", min: 0, className: "tier-bronze", tone: "bronze" },
 ];
 
-/** Founders and co-founders start at 400 points (Ưu tú floor). */
-export const LEADER_DEFAULT_POINTS = 400;
-
-/** Founder / co-founder detection by position title. */
-export const isFounder = (position: string | null | undefined): boolean =>
-  /co-founder|founder/i.test(position ?? "");
-
-/** Exclusive highest tier: visible only to founders/co-founders. */
+/** Exclusive highest tier: visible only to leaders. */
 export const LEADER_TIER: Tier = {
   key: "leader",
   label: "Lãnh đạo",
@@ -32,25 +24,14 @@ export const LEADER_TIER: Tier = {
   tone: "black",
 };
 
-export const LEADER_TONE = { key: "black", label: "Nhà sáng lập" } as const;
+export const LEADER_TONE = { key: "black", label: "Lãnh đạo" } as const;
 
-/** Card colour: founders and co-founders keep the obsidian card, everyone else shows their tier. */
-export const getMemberCardTone = (position: string | null, tierTone: string): string =>
-  isFounder(position ?? "") ? "black" : tierTone;
+/** Card colour: members flagged as leaders keep the obsidian card, everyone else shows their tier. */
+export const getMemberCardTone = (isLeader: boolean, tierTone: string): string =>
+  isLeader ? "black" : tierTone;
 
 export const tierOf = (points: number) =>
   TIERS.find((t) => points >= t.min) ?? TIERS[TIERS.length - 1]!;
-
-/** Leaders (Executive Board, heads/deputies by position, admins, advisors) keep their points but are left off the leaderboard. */
-export const isLeader = (
-  m: { department: string; position: string | null },
-  roles: string[] = [],
-  isAdvisor = false,
-) =>
-  isAdvisor ||
-  m.department === "executive" ||
-  /trưởng|phó|quản trị|cố vấn|co-founder|founder/i.test(m.position ?? "") ||
-  roles.includes("admin");
 
 export const TASK_STATUS: Record<string, { label: string; className: string }> = {
   assigned: { label: "Chờ tiếp nhận", className: "bg-secondary text-foreground" },

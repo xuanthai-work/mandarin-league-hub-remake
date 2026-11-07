@@ -266,6 +266,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-196-TIER-BENEFITS-CLEANUP`                                    | Sửa bỏ cấp quyền lợi hàng loạt, thêm màu Ưu tú, dọn code bậc thừa                                      | 2026-11-08     | **PASS** | [task-ge-196-tier-benefits-cleanup.md](tasks/task-ge-196-tier-benefits-cleanup.md)                                                                       |
 | `TASK-GE-197-LEADER-FLAG-DB`                                           | Cờ thẻ Lãnh đạo do admin gán, Lãnh đạo không nhận điểm, reset điểm về 0                                | 2026-11-08     | **PASS** | [task-ge-197-leader-flag-db.md](tasks/task-ge-197-leader-flag-db.md)                                                                                     |
 | `TASK-OC-183-HIDE-MEETING-ATTENDANCE`                                  | Tạm ẩn nút Điểm danh cuộc họp (cờ ATTENDANCE_ENABLED)                                                  | 2026-11-08     | **PASS** | [task-oc-183-hide-meeting-attendance.md](tasks/task-oc-183-hide-meeting-attendance.md)                                                                   |
+| `TASK-GE-198-LEADER-FLAG-UI`                                           | Thẻ Lãnh đạo theo is_leader, 0 điểm khởi đầu, reset trắng 6 bảng lịch sử                               | 2026-11-08     | **PASS** | [task-ge-198-leader-flag-ui.md](tasks/task-ge-198-leader-flag-ui.md)                                                                                     |
 
 ---
 

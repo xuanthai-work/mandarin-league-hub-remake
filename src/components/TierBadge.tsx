@@ -378,21 +378,15 @@ export function TierBadge({
   );
 }
 
-export function TierProgress({
-  points,
-  isFounder = false,
-}: {
-  points: number;
-  isFounder?: boolean;
-}) {
+export function TierProgress({ points, isLeader = false }: { points: number; isLeader?: boolean }) {
   const [open, setOpen] = useState(false);
   const realCur = tierOf(points);
-  const cur = isFounder ? LEADER_TIER : realCur;
-  // Founders see the exclusive 8th tier; everyone else only sees the 7 standard tiers.
-  const asc = isFounder ? [...[...TIERS].reverse(), LEADER_TIER] : [...TIERS].reverse();
+  const cur = isLeader ? LEADER_TIER : realCur;
+  // Leaders see the exclusive 8th tier; everyone else only sees the 7 standard tiers.
+  const asc = isLeader ? [...[...TIERS].reverse(), LEADER_TIER] : [...TIERS].reverse();
   const curIdx = asc.findIndex((t) => t.key === cur.key);
-  const next = isFounder ? null : asc[curIdx + 1];
-  const pct = isFounder
+  const next = isLeader ? null : asc[curIdx + 1];
+  const pct = isLeader
     ? 100
     : next
       ? Math.min(100, Math.round(((points - cur.min) / (next.min - cur.min)) * 100))
@@ -417,7 +411,7 @@ export function TierProgress({
         />
       </div>
       <p className="mt-2.5 text-xs text-white/80">
-        {isFounder ? (
+        {isLeader ? (
           <>
             Bạn đang nắm giữ cấp bậc tối cao của TML:{" "}
             <b className="font-bold text-gold">LÃNH ĐẠO</b>
@@ -453,9 +447,7 @@ export function TierProgress({
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <h3 className="text-xl font-bold text-gold">
-                  {isFounder
-                    ? "Thang bậc cống hiến & Vị trí Lãnh đạo"
-                    : "Thang 7 bậc cống hiến TML"}
+                  {isLeader ? "Thang bậc cống hiến & Vị trí Lãnh đạo" : "Thang 7 bậc cống hiến TML"}
                 </h3>
                 <button
                   type="button"
@@ -469,7 +461,7 @@ export function TierProgress({
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {asc.map((t, i) => {
                   const info = TIER_INFO[t.key]!;
-                  // Founders hold the leader card itself; the 7 contribution tiers stay tied to real points.
+                  // Leaders hold the leader card itself; the 7 contribution tiers stay tied to real points.
                   const reached = t.key === "leader" || points >= t.min;
                   const isCur = t.key === cur.key;
                   const rangeLabel =
@@ -513,9 +505,9 @@ export function TierProgress({
                 })}
               </div>
               <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/60">
-                Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Cấp bậc Lãnh đạo chỉ
-                dành riêng cho Co-founder / Founder. Mọi vị trí khác (Ban Quản trị, Trưởng/Phó Ban,
-                Cố vấn chuyên môn) đều hiển thị thẻ theo bậc điểm cống hiến thực tế. Quyền lợi cụ
+                Điểm tích lũy từ nhiệm vụ, điểm danh và thưởng do TML ghi nhận. Thẻ Lãnh đạo do Ban
+                Điều hành chỉ định; người giữ thẻ Lãnh đạo không tích điểm và không lên bảng xếp
+                hạng. Mọi thành viên khác hiển thị thẻ theo bậc điểm cống hiến thực tế. Quyền lợi cụ
                 thể do Ban Điều Hành cấu hình.
               </p>
             </div>
