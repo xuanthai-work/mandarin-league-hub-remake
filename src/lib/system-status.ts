@@ -42,10 +42,10 @@ export const INTEGRATIONS: Integration[] = [
     optional: ["RESEND_FROM"],
   },
   {
-    id: "ai_gateway",
-    label: "AI nội bộ",
+    id: "ai_internal",
+    label: "AI nội bộ (Gemini)",
     affects: "Tóm tắt ứng viên, soạn kế hoạch onboarding, đọc chứng nhận bằng AI.",
-    required: ["LOVABLE_API_KEY"],
+    required: ["GOOGLE_AI_INTERNAL_KEY"],
     optional: [],
   },
   {

@@ -11,9 +11,9 @@ importers:
 
   .:
     dependencies:
-      '@ai-sdk/openai':
-        specifier: ^4.0.84
-        version: 4.0.108(zod@3.25.76)
+      '@ai-sdk/google':
+        specifier: ^4.0.111
+        version: 4.0.111(zod@3.25.76)
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -315,8 +315,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/openai@4.0.108':
-    resolution: {integrity: sha512-XmCnCVnahoFs9VUWsSzn4LyONdDkFivBVs5t7YUWi74giDRwh8VRX4hnk/BtBKEhiBNGRQd80/QTWlf6GsVtng==}
+  '@ai-sdk/google@4.0.111':
+    resolution: {integrity: sha512-od/9ubTtYKEA/XVmla44fMZse3uB962VS8HiwZDhC0SxjWLGKKNcJW8vo3P8O40Fl/L0tZofPzi1t8NknY1f6w==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -4998,7 +4998,7 @@ snapshots:
       '@vercel/oidc': 3.2.0
       zod: 3.25.76
 
-  '@ai-sdk/openai@4.0.108(zod@3.25.76)':
+  '@ai-sdk/google@4.0.111(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 4.0.35
       '@ai-sdk/provider-utils': 5.0.74(zod@3.25.76)

@@ -39,4 +39,20 @@ describe("buildSystemStatus", () => {
     const status = buildSystemStatus(envWith(ALL_KEYS, "sk-SECRET-123"));
     expect(JSON.stringify(status)).not.toContain("SECRET");
   });
+
+  it("isolates internal AI from public Gemini and ignores retired key", () => {
+    const onlyPublic = buildSystemStatus({ GOOGLE_API_KEY: "ai-key" });
+    const aiInternal = onlyPublic.find((s) => s.id === "ai_internal");
+    const gemini = onlyPublic.find((s) => s.id === "gemini");
+    expect(aiInternal?.level).toBe("missing");
+    expect(aiInternal?.missing).toEqual(["GOOGLE_AI_INTERNAL_KEY"]);
+    expect(gemini?.level).toBe("ok");
+
+    // Retired Lovable key must no longer activate internal AI.
+    const retiredKeyName = ["LOVABLE", "API", "KEY"].join("_");
+    const withRetiredKey = buildSystemStatus({ [retiredKeyName]: "retired-key" });
+    const aiInternalRetired = withRetiredKey.find((s) => s.id === "ai_internal");
+    expect(aiInternalRetired?.level).toBe("missing");
+    expect(aiInternalRetired?.missing).toEqual(["GOOGLE_AI_INTERNAL_KEY"]);
+  });
 });

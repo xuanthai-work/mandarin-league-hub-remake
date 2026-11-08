@@ -76,7 +76,7 @@ Build và email đã tách khỏi nền tảng cũ: `vite.config.ts` dùng plugi
 4. `pnpm run build` rồi deploy lên Cloudflare Workers/Vercel/Node; trỏ DNS `themandarinleague.bond`.
 5. Cấu hình SMTP cho Supabase Auth (email xác nhận, reset mật khẩu).
 
-Thành phần còn phụ thuộc nền tảng cũ: AI Gateway (`LOVABLE_API_KEY`) dùng bởi trích xuất chứng nhận, onboarding và AI tuyển dụng — sẽ chuyển sang provider riêng khi có API key.
+AI nội bộ (trích xuất chứng nhận, onboarding, AI tuyển dụng) gọi thẳng Google Gemini API bằng `GOOGLE_AI_INTERNAL_KEY`, tách khỏi `GOOGLE_API_KEY` của TML AI công khai.
 
 ## Git workflow
 

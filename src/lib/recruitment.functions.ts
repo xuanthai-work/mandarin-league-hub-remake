@@ -295,12 +295,13 @@ export const analyzeApplication = createServerFn({ method: "POST" })
         [{ role: "user", content: cvPart ? [{ type: "text", text: content }, cvPart] : content }],
       );
     } catch (e) {
-      const status = (e as { statusCode?: number }).statusCode;
-      if (status === 402)
-        throw new Error(
-          "Hết hạn mức AI. Vui lòng nạp thêm credit trong Settings → Plans & credits.",
-        );
-      if (status === 429) throw new Error("AI đang quá tải, vui lòng thử lại sau ít phút.");
+      if ((e as Error).message === "AI chưa được cấu hình.")
+        throw new Error("AI chưa được cấu hình.");
+      const status =
+        (e as { statusCode?: number; status?: number }).statusCode ??
+        (e as { status?: number }).status;
+      if (status === 429)
+        throw new Error("AI đã hết hạn mức hoặc đang quá tải, vui lòng thử lại sau ít phút.");
       throw new Error("Không phân tích được bằng AI lúc này.");
     }
     if (data.applicationId)
