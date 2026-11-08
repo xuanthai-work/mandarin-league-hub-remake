@@ -1,0 +1,16 @@
+# pnpm is the only supported package manager for this repo.
+#
+# 24h supply-chain guard: skip package versions published less than a day ago.
+# Lives here instead of .npmrc because npm warns on pnpm-only keys and
+# pnpm 11 no longer reads its settings from .npmrc.
+minimumReleaseAge: 1440
+
+# Tooling that ships platform binaries with the framework packages we track
+# (a fresh tailwind release would otherwise block the whole install).
+minimumReleaseAgeExclude:
+  - "@tailwindcss/*"
+  - "@napi-rs/*"
+  - "@rolldown/*"
+  - "@esbuild/*"
+  - "@oxc-project/*"
+  - "lightningcss-*"
