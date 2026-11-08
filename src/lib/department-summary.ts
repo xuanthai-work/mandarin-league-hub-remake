@@ -7,6 +7,8 @@ export type DeptMember = {
   department: string;
   position: string;
   status: string; // "active" | "on_leave" | "left"
+  /** Storage path in the private `avatars` bucket; signed on read. */
+  avatar_path?: string | null;
 };
 export type DeptChannel = {
   department: string;

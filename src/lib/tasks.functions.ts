@@ -114,7 +114,7 @@ export const getAssignableMembers = createServerFn({ method: "GET" })
     const [{ data: members, error }, { data: accounts }] = await Promise.all([
       context.supabase
         .from("members")
-        .select("id, full_name, member_code, department")
+        .select("id, full_name, member_code, department, avatar_path")
         .eq("status", "active")
         .order("full_name"),
       supabaseAdmin.from("member_accounts").select("member_id, account_status"),

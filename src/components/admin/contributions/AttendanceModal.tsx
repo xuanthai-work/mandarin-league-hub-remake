@@ -3,6 +3,7 @@ import { AlertCircle, Check, CheckCheck, Clock3, Loader2, Search, Users, X } fro
 import { toast } from "sonner";
 
 import { DatePicker } from "@/components/ui/date-picker";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import {
   Select,
   SelectContent,
@@ -16,7 +17,6 @@ import { cn } from "@/lib/utils";
 import {
   POINT_LIMITS,
   dmyFromISO,
-  initials,
   isoDay,
   runInChunks,
   type ChunkResult,
@@ -28,6 +28,8 @@ type MeetingKind = "dept" | "club";
 
 interface AttendanceModalProps {
   members: PointMember[];
+  /** `avatar_path → signed URL` for the roster. */
+  avatarMap?: Map<string, string> | undefined;
   allDepts: boolean;
   ownDept: string | null;
   onClose: () => void;
@@ -68,6 +70,7 @@ const selectClass = "h-9 w-full rounded-xl border-input bg-background text-xs sh
  */
 export function AttendanceModal({
   members,
+  avatarMap,
   allDepts,
   ownDept,
   onClose,
@@ -480,12 +483,11 @@ export function AttendanceModal({
                         )}
                       >
                         <div className="flex min-w-0 items-center gap-2">
-                          <span
-                            aria-hidden
-                            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary"
-                          >
-                            {initials(member.full_name)}
-                          </span>
+                          <MemberAvatar
+                            src={member.avatar_path ? avatarMap?.get(member.avatar_path) : null}
+                            name={member.full_name}
+                            className="h-8 w-8 text-[10px]"
+                          />
                           <div className="min-w-0">
                             <p className="truncate text-xs font-semibold text-foreground">
                               {member.full_name}

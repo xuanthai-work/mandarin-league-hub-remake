@@ -2,35 +2,45 @@
 
 - **Ngày nghiệm thu**: 2026-11-08
 - **Kết quả**: PASS
-- **Migration**: `0077_leaderboard_avatar_path.sql` (mới)
+- **Migration**: `0077_leaderboard_avatar_path.sql`, `0078_my_department_avatar.sql` (mới)
 
 ## Bối cảnh & yêu cầu
 
-Thành viên đã cập nhật ảnh đại diện nhưng các trang quản trị vẫn vẽ chữ cái viết tắt, nên ảnh thật không bao giờ xuất hiện ngoài thẻ thành viên và trang Hồ sơ. User yêu cầu hiện ảnh thật ở:
+Thành viên đã cập nhật ảnh đại diện nhưng các trang quản trị vẫn vẽ chữ cái viết tắt, nên ảnh thật không bao giờ xuất hiện ngoài thẻ thành viên và trang Hồ sơ. User yêu cầu hiện ảnh thật ở **mọi chỗ có avatar thành viên**:
 
-- Bảng vinh danh (`/admin/contributions`): thẻ Top 1–2–3 và danh sách xếp hạng.
+- Bảng vinh danh (`/admin/contributions`): thẻ Top 1–2–3, danh sách xếp hạng, danh sách Thưởng/Trừ điểm và Điểm danh.
 - Danh sách thành viên (`/admin/members`): cột Họ tên và tiêu đề drawer chi tiết.
-- Bảng Kanban (`/admin/tasks`): avatar người phụ trách trên mỗi thẻ.
+- Bảng Kanban (`/admin/tasks`): avatar người phụ trách trên thẻ (kể cả khi kéo thả), modal chi tiết và bộ chọn người phụ trách khi tạo việc.
+- Danh sách Ban (`/admin/departments`): Trưởng Ban / Phó Ban trên mỗi thẻ.
+- Quyền lợi (`/admin/benefits`): danh sách cấp quyền.
+- Khung người dùng ở sidebar admin.
+- Trang chủ thành viên (`/member/dashboard`): thẻ "Ban của tôi".
 
 Người chưa có ảnh (hoặc ảnh lỗi) vẫn thấy chữ cái viết tắt như cũ.
 
 ## Thay đổi
 
-### Migration (`0077`)
+### Migration (`0077`, `0078`)
 
-- `points_leaderboard()` phải `DROP` rồi `CREATE` lại vì `RETURNS TABLE` không thay tại chỗ được; thêm cột `avatar_path`.
-- Nới policy đọc bucket `avatars`: mọi tài khoản thành viên đang hoạt động được đọc ảnh đại diện (`my_active_member()`), vì bảng vinh danh và Kanban mở cho mọi thành viên; ký URL đi qua RLS storage nên nếu không nới, người không có `members.view` chỉ thấy chữ cái. Quyền ghi vẫn chỉ của chủ ảnh.
+- `0077`: `points_leaderboard()` phải `DROP` rồi `CREATE` lại vì `RETURNS TABLE` không thay tại chỗ được; thêm cột `avatar_path`.
+- `0077`: nới policy đọc bucket `avatars` cho mọi tài khoản thành viên đang hoạt động (`my_active_member()`), vì bảng vinh danh, Kanban và trang chủ thành viên mở cho mọi thành viên; ký URL đi qua RLS storage nên nếu không nới, người không có `members.view` chỉ thấy chữ cái. Quyền ghi vẫn chỉ của chủ ảnh.
+- `0078`: `my_department()` trả thêm `avatar_path` cho đồng nghiệp trong Ban.
 
 ### Code
 
 - **`src/lib/avatars.ts`** (mới): ký batch `createSignedUrls` qua `createSignedUrlCache` (TTL 6 giờ, còn dưới 1 giờ thì ký lại) + hook `useAvatarUrls`, `forgetAvatarUrl`.
 - **`src/components/admin/kit/MemberAvatar.tsx`** (mới): ảnh tròn, fallback initials (kể cả khi `onError`), giữ nguyên kích thước nên layout không nhảy; kèm `MemberAvatar.test.tsx`.
 - **`admin.members.tsx`**: `Row.avatar_path`, ký batch theo danh sách đang hiển thị, truyền map vào bảng theo Ban và drawer chi tiết; bỏ helper `initials`.
-- **`contributions/shared.ts`**, **`admin.contributions.tsx`**: `PointMember.avatar_path` và select `avatar_path`.
-- **`contributions/LeaderboardPanel.tsx`**: giữ khung viền/hiệu ứng hạng, đặt ảnh tròn bên trong khung cho podium; `MemberRow` dùng `MemberAvatar`.
-- **`tasks.functions.ts`**: `getTaskPeople` trả thêm `avatar_path`.
+- **`contributions/shared.ts`**, **`admin.contributions.tsx`**: `PointMember.avatar_path`, select `avatar_path`, và **một** batch ký ảnh cho cả bảng vinh danh + danh sách thưởng/trừ + điểm danh (truyền `avatarMap` xuống).
+- **`contributions/LeaderboardPanel.tsx`**: giữ khung viền/hiệu ứng hạng, đặt ảnh tròn bên trong khung cho podium; `MemberRow` dùng `MemberAvatar`; nhận `avatarMap` từ trang thay vì tự ký.
+- **`contributions/AdjustmentModal.tsx`**, **`AttendanceModal.tsx`**: avatar trong danh sách chọn người.
+- **`tasks.functions.ts`**: `getTaskPeople` và `getAssignableMembers` trả thêm `avatar_path`.
 - **`tasks/shared.ts`**: `TaskMember.avatar_path`, `groupTasks` chép sang assignee.
-- **`tasks/TaskKanbanBoard.tsx`** + **`admin.tasks.tsx`**: ký batch toàn bộ người phụ trách một lần, truyền `avatarMap` xuống card; **`TaskKanbanCard.tsx`** hiện ảnh trong nút lọc người, fallback initials.
+- **`tasks/TaskKanbanBoard.tsx`** + **`admin.tasks.tsx`**: ký batch toàn bộ người phụ trách một lần, truyền `avatarMap` xuống card, modal chi tiết và modal tạo việc; **`TaskKanbanCard.tsx`** hiện ảnh trong nút lọc người, fallback initials.
+- **`lib/department-summary.ts`**, **`admin.departments.tsx`**, **`departments/DepartmentCard.tsx`**: `DeptMember.avatar_path` và avatar Trưởng/Phó Ban trên thẻ.
+- **`admin.benefits.tsx`**: `GrantMember.avatar_path`, avatar trong danh sách cấp quyền.
+- **`admin.tsx`**: `useAdminAccess` trả `avatarPath` (từ `my_account`), khung người dùng ở sidebar dùng `MemberAvatar`.
+- **`components/portal/MyDepartment.tsx`**: thẻ đồng nghiệp dùng ảnh thật từ `my_department()`.
 - **`types.ts`**: `points_leaderboard` trả thêm `avatar_path`.
 
 ## Verification gates
@@ -42,7 +52,8 @@ Người chưa có ảnh (hoặc ảnh lỗi) vẫn thấy chữ cái viết t�
 
 ## Cần User tự kiểm
 
-- Chạy `0077` trên Supabase.
-- Người có ảnh: kiểm tra podium, danh sách xếp hạng, cột Họ tên và drawer thành viên, avatar trên thẻ Kanban.
+- Chạy `0077` và `0078` trên Supabase (0077 là điều kiện để bảng vinh danh có `avatar_path`; 0078 cho thẻ đồng nghiệp ở trang chủ thành viên).
+- Người có ảnh: kiểm tra podium, danh sách xếp hạng, Thưởng/Trừ điểm, Điểm danh, cột Họ tên và drawer thành viên, thẻ Kanban + modal công việc, thẻ Ban, danh sách Quyền lợi, khung người dùng sidebar, thẻ "Ban của tôi".
 - Người chưa có ảnh hoặc ảnh hỏng: vẫn hiện chữ cái viết tắt.
 - Đăng nhập bằng một thành viên **không** có `members.view` để xác nhận vẫn thấy ảnh trên bảng vinh danh (policy đọc bucket đã nới).
+- Nếu bảng vinh danh vẫn chỉ có chữ cái: kiểm tra `select avatar_path from public.points_leaderboard() limit 5;` — rỗng nghĩa là 0077 chưa chạy hoặc thành viên đó chưa có ảnh.

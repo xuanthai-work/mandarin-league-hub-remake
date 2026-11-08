@@ -25,7 +25,9 @@ import {
   withPersonalSections,
 } from "@/lib/admin-permissions";
 import { NO_PERMISSIONS, parseMyPermissions } from "@/lib/permission-catalog";
+import { useAvatarUrls } from "@/lib/avatars";
 import { AdminHeaderProvider } from "@/components/admin/AdminHeaderProvider";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { useAdminHeader } from "@/components/admin/admin-header-context";
 import { Button } from "@/components/ui/button";
 
@@ -135,7 +137,12 @@ export function useAdminAccess() {
           account_status: string;
           must_change_password: boolean;
         } | null;
-        member: { department: string; full_name: string; position: string | null } | null;
+        member: {
+          department: string;
+          full_name: string;
+          position: string | null;
+          avatar_path?: string | null;
+        } | null;
       };
       const blocked = !!me.account && me.account.account_status !== "active";
       const roles = blocked ? [] : me.roles.filter((r) => r === "admin");
@@ -146,6 +153,7 @@ export function useAdminAccess() {
       return {
         email: me.email ?? "",
         name: blocked ? "" : (me.member?.full_name ?? ""),
+        avatarPath: blocked ? null : (me.member?.avatar_path ?? null),
         roles,
         department,
         position: blocked ? null : (me.member?.position ?? null),
@@ -186,6 +194,7 @@ function readCollapsedGroups(): Record<string, boolean> {
 function SidebarPanel({
   email,
   name,
+  avatarPath,
   roleLabel,
   groups,
   currentSlug,
@@ -197,6 +206,7 @@ function SidebarPanel({
 }: {
   email: string;
   name: string;
+  avatarPath?: string | null | undefined;
   roleLabel: string;
   groups: AdminNavGroup[];
   currentSlug: string;
@@ -206,11 +216,7 @@ function SidebarPanel({
   onSignOut: () => void;
   onClose?: () => void;
 }) {
-  const initials =
-    (email.split("@")[0] ?? "")
-      .replace(/[^a-z0-9]/gi, "")
-      .slice(0, 2)
-      .toUpperCase() || "TML";
+  const { data: avatarMap } = useAvatarUrls([avatarPath]);
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
       <div className="relative flex h-[73px] shrink-0 items-center gap-3 border-b border-border/60 px-4">
@@ -308,9 +314,12 @@ function SidebarPanel({
 
       <div className="shrink-0 p-3">
         <div className="flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card p-2.5 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] transition-all hover:border-border hover:shadow-md">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-[11px] font-bold text-primary ring-1 ring-primary/25 shadow-2xs">
-            {initials}
-          </span>
+          <MemberAvatar
+            src={avatarPath ? avatarMap?.get(avatarPath) : null}
+            name={name || email}
+            className="h-9 w-9 text-[11px]"
+            fallbackClassName="h-9 w-9 text-[11px] bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-primary/25 shadow-2xs"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-foreground">{name || email}</p>
             <p className="truncate text-[10px] text-muted-foreground">
@@ -430,6 +439,7 @@ function AdminLayout() {
 
   const email = access.data?.email ?? "";
   const name = access.data?.name ?? "";
+  const avatarPath = access.data?.avatarPath ?? null;
 
   return (
     <AdminHeaderProvider>
@@ -440,6 +450,7 @@ function AdminLayout() {
             <SidebarPanel
               email={email}
               name={name}
+              avatarPath={avatarPath}
               roleLabel={roleLabel}
               groups={groups}
               currentSlug={current}
@@ -465,6 +476,7 @@ function AdminLayout() {
                 <SidebarPanel
                   email={email}
                   name={name}
+                  avatarPath={avatarPath}
                   roleLabel={roleLabel}
                   groups={groups}
                   currentSlug={current}

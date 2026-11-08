@@ -10,16 +10,26 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import type { DeptMember, DeptSummary } from "@/lib/department-summary";
 
-const initial = (name: string) => name.trim().charAt(0).toUpperCase() || "?";
-
-function LeaderRow({ member, role }: { member: DeptMember; role: string }) {
+function LeaderRow({
+  member,
+  role,
+  avatarUrl,
+}: {
+  member: DeptMember;
+  role: string;
+  avatarUrl?: string | undefined;
+}) {
   return (
     <div className="flex items-center gap-2">
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold">
-        {initial(member.full_name)}
-      </span>
+      <MemberAvatar
+        src={avatarUrl}
+        name={member.full_name}
+        className="h-7 w-7 text-[11px]"
+        fallbackClassName="h-7 w-7 text-[11px] bg-muted text-foreground"
+      />
       <span className="truncate text-sm font-medium text-foreground">{member.full_name}</span>
       <span className="ml-auto shrink-0 text-xs text-muted-foreground">{role}</span>
     </div>
@@ -48,10 +58,13 @@ function StatusCell({
 
 export function DepartmentCard({
   summary,
+  avatarMap,
   canEdit,
   onConfigure,
 }: {
   summary: DeptSummary;
+  /** `avatar_path → signed URL` for the leaders shown on the card. */
+  avatarMap?: Map<string, string> | undefined;
   canEdit: boolean;
   onConfigure: () => void;
 }) {
@@ -78,7 +91,13 @@ export function DepartmentCard({
 
       <div className="mt-4 space-y-2">
         {summary.head ? (
-          <LeaderRow member={summary.head} role="Trưởng Ban" />
+          <LeaderRow
+            member={summary.head}
+            role="Trưởng Ban"
+            avatarUrl={
+              summary.head.avatar_path ? avatarMap?.get(summary.head.avatar_path) : undefined
+            }
+          />
         ) : (
           <p className="flex items-center gap-1.5 text-sm text-warning-foreground">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -86,7 +105,12 @@ export function DepartmentCard({
           </p>
         )}
         {summary.deputies.slice(0, 2).map((m) => (
-          <LeaderRow key={m.id} member={m} role="Phó Ban" />
+          <LeaderRow
+            key={m.id}
+            member={m}
+            role="Phó Ban"
+            avatarUrl={m.avatar_path ? avatarMap?.get(m.avatar_path) : undefined}
+          />
         ))}
         {extraDeputies > 0 && (
           <p className="pl-9 text-xs text-muted-foreground">+{extraDeputies} Phó Ban</p>

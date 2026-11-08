@@ -27,6 +27,7 @@ import {
 } from "@/lib/benefits";
 import { ACCOUNT_DEPTS } from "@/lib/accounts";
 import { matchesSearch } from "@/lib/search";
+import { useAvatarUrls } from "@/lib/avatars";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useConfirm } from "@/components/admin/Trash";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import { StatFilterCard } from "@/components/admin/kit/StatFilterCard";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
 import { AdminModal } from "@/components/admin/kit/AdminModal";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { DangerZone } from "@/components/admin/kit/DangerZone";
 import { FormField } from "@/components/admin/kit/FormField";
 import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
@@ -99,13 +101,6 @@ const randomPassword = () =>
     (n) => SECRET_CHARS[n % SECRET_CHARS.length],
   ).join("");
 const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
-const initials = (name: string) =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(-2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
 
 function BenefitsAdmin() {
   const qc = useQueryClient();
@@ -795,16 +790,19 @@ type GrantMember = {
   member_code: string;
   department: string;
   contribution_points: number;
+  avatar_path: string | null;
 };
 
 function GrantMemberRow({
   member,
+  avatarUrl,
   active,
   grant,
   onToggle,
   onEndsOn,
 }: {
   member: GrantMember;
+  avatarUrl?: string | undefined;
   active: boolean;
   grant: Grant | undefined;
   onToggle: (active: boolean) => void;
@@ -813,9 +811,7 @@ function GrantMemberRow({
   const dept = ACCOUNT_DEPTS.find((d) => d.id === member.department)?.name ?? member.department;
   return (
     <li className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-sm">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-        {initials(member.full_name)}
-      </span>
+      <MemberAvatar src={avatarUrl} name={member.full_name} className="h-9 w-9 text-xs" />
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{member.full_name}</p>
         <p className="truncate text-xs text-muted-foreground">
@@ -862,7 +858,7 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
       const [m, g] = await Promise.all([
         supabase
           .from("members")
-          .select("id,full_name,member_code,department,contribution_points")
+          .select("id,full_name,member_code,department,contribution_points,avatar_path")
           .eq("status", "active")
           .order("full_name"),
         supabase.from("member_benefits").select("*").eq("benefit_id", benefit.id),
@@ -872,6 +868,7 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
   });
 
   const today = new Date().toISOString().slice(0, 10);
+  const { data: avatarMap } = useAvatarUrls((data.data?.members ?? []).map((m) => m.avatar_path));
   const grants = data.data?.grants ?? [];
   const overrideOf = (memberId: string) => grants.find((x) => x.member_id === memberId);
   /** Shared rule: the benefit is open to everyone or to members with enough contribution points. */
@@ -1073,6 +1070,7 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
               <GrantMemberRow
                 key={m.id}
                 member={m}
+                avatarUrl={m.avatar_path ? avatarMap?.get(m.avatar_path) : undefined}
                 active
                 grant={overrideOf(m.id)}
                 onToggle={(v) => void toggleAccess(m, v)}
@@ -1114,6 +1112,7 @@ function GrantDialog({ benefit, onClose }: { benefit: Row; onClose: () => void }
               <GrantMemberRow
                 key={m.id}
                 member={m}
+                avatarUrl={m.avatar_path ? avatarMap?.get(m.avatar_path) : undefined}
                 active={false}
                 grant={overrideOf(m.id)}
                 onToggle={(v) => void toggleAccess(m, v)}

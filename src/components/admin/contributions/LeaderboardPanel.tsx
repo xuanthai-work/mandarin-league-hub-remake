@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/select";
 import { deptName } from "@/lib/recruitment";
 import { cn } from "@/lib/utils";
-import { useAvatarUrls } from "@/lib/avatars";
 import { initials, tierStep, type PointMember } from "./shared";
 
 interface LeaderboardPanelProps {
   members: PointMember[];
+  /** `avatar_path → signed URL`, signed once for the whole panel. */
+  avatarMap?: Map<string, string> | undefined;
   loading: boolean;
 }
 
@@ -197,11 +198,10 @@ function MemberRow({
  * Leaderboard 2.0: a Top-3 podium for identity and a searchable ranking list
  * with live tier-progress so every member can see their next milestone.
  */
-export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
+export function LeaderboardPanel({ members, avatarMap, loading }: LeaderboardPanelProps) {
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
-  const { data: avatarMap } = useAvatarUrls(members.map((m) => m.avatar_path));
 
   const depts = useMemo(
     () => [...new Set(members.map((m) => m.department).filter(Boolean))].sort(),

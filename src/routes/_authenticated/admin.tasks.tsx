@@ -402,6 +402,7 @@ function TasksPage() {
           <TaskCreateModal
             key="create-task"
             members={memberList}
+            avatarMap={avatarMap}
             meLabel={me.data?.label ?? ""}
             onClose={() => setCreating(false)}
             onCreated={refresh}
@@ -412,6 +413,7 @@ function TasksPage() {
             key={`detail-${selectedGroup.key}`}
             group={selectedGroup}
             members={people}
+            avatarMap={avatarMap}
             rights={groupRights(selectedGroup, viewer)}
             myAction={
               selectedGroup.rawTasks[0] ? myTaskAction(selectedGroup.rawTasks[0], viewer) : null

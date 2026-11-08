@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
 import { canAdjustMember, hasAllScope } from "@/lib/admin-permissions";
 import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAvatarUrls } from "@/lib/avatars";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({
@@ -170,6 +171,14 @@ function PointsPage() {
    */
   const boardMembers = leaderboard.data ?? [];
 
+  /** One signed batch for everyone shown on the board, the adjust and the attendance lists. */
+  const { data: avatarMap } = useAvatarUrls(
+    useMemo(
+      () => [...(leaderboard.data ?? []), ...memberList].map((m) => m.avatar_path),
+      [leaderboard.data, memberList],
+    ),
+  );
+
   /** Bonus/penalty targets: same scope as points.adjust and strictly lower position. */
   const adjustableMembers = useMemo(
     () => activeMembers.filter((m) => canAdjustMember(perms, me, m)),
@@ -230,7 +239,11 @@ function PointsPage() {
         />
       )}
 
-      <LeaderboardPanel members={boardMembers} loading={leaderboard.isLoading} />
+      <LeaderboardPanel
+        members={boardMembers}
+        avatarMap={avatarMap}
+        loading={leaderboard.isLoading}
+      />
 
       <TransactionLedger
         rows={history.data ?? []}
@@ -244,6 +257,7 @@ function PointsPage() {
       {attendanceOpen && canAttend && (
         <AttendanceModal
           members={activeMembers}
+          avatarMap={avatarMap}
           allDepts={attendAllDepts}
           ownDept={ownDept}
           onClose={() => setAttendanceOpen(false)}
@@ -255,6 +269,7 @@ function PointsPage() {
         {adjustOpen && canAdjust && (
           <AdjustmentModal
             members={adjustableMembers}
+            avatarMap={avatarMap}
             onClose={() => setAdjustOpen(false)}
             onDone={refresh}
           />
