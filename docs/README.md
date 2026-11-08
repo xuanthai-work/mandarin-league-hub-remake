@@ -273,6 +273,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-185-GOOGLE-ACCOUNT-LINK`                                      | Thành viên tự liên kết tài khoản Google trong Cài đặt (bước 1 điểm danh Meet)                          | 2026-11-08     | **PASS** | [task-oc-185-google-account-link.md](tasks/task-oc-185-google-account-link.md)                                                                           |
 | `TASK-OC-186-MEET-ATTENDANCE-DB`                                       | Điểm danh Google Meet theo buổi họp: bảng, RPC ghi điểm (2/10 điểm, ≥ 30 phút)                         | 2026-11-08     | **PASS** | [task-oc-186-meet-attendance-db.md](tasks/task-oc-186-meet-attendance-db.md)                                                                             |
 | `TASK-OC-187-MEET-ATTENDANCE-UI`                                       | Điểm danh từ Google Meet ở trang Điểm đóng góp (server đọc Meet, xác nhận chấm)                        | 2026-11-08     | **PASS** | [task-oc-187-meet-attendance-ui.md](tasks/task-oc-187-meet-attendance-ui.md)                                                                             |
+| `TASK-OC-188-PRIVACY-AND-TERMS-PAGES`                                  | Trang Chính sách quyền riêng tư và Điều khoản sử dụng (vi/zh/en), link ở footer                        | 2026-11-08     | **PASS** | [task-oc-188-privacy-and-terms-pages.md](tasks/task-oc-188-privacy-and-terms-pages.md)                                                                   |
 
 ---
 

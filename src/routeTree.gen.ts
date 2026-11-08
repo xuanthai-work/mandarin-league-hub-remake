@@ -22,8 +22,10 @@ import { Route as LibraryAccessRouteImport } from './routes/library-access'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
@@ -134,6 +136,11 @@ const PartnersRoute = PartnersRouteImport.update({
   path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -142,6 +149,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -403,8 +415,10 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/change-password': typeof AuthenticatedChangePasswordRoute
@@ -463,8 +477,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
@@ -524,8 +540,10 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/organization': typeof OrganizationRoute
   '/partners': typeof PartnersRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
@@ -587,8 +605,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/organization'
     | '/partners'
+    | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/terms'
     | '/welcome'
     | '/admin'
     | '/change-password'
@@ -647,8 +667,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/organization'
     | '/partners'
+    | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/terms'
     | '/welcome'
     | '/change-password'
     | '/activities/$activityId'
@@ -707,8 +729,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/organization'
     | '/partners'
+    | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/terms'
     | '/welcome'
     | '/_authenticated/admin'
     | '/_authenticated/change-password'
@@ -770,8 +794,10 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OrganizationRoute: typeof OrganizationRoute
   PartnersRoute: typeof PartnersRoute
+  PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   WelcomeRoute: typeof WelcomeRoute
   AdminLoginRoute: typeof AdminLoginRoute
   CoursesSlugRoute: typeof CoursesSlugRoute
@@ -883,6 +909,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -895,6 +928,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/welcome': {
@@ -1325,8 +1365,10 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OrganizationRoute: OrganizationRoute,
   PartnersRoute: PartnersRoute,
+  PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   WelcomeRoute: WelcomeRoute,
   AdminLoginRoute: AdminLoginRoute,
   CoursesSlugRoute: CoursesSlugRoute,

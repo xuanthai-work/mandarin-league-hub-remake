@@ -82,7 +82,12 @@ describe("isScorableMeeting", () => {
 describe("splitParticipants", () => {
   it("splits matched, leaders, inactive and unrecognised people", () => {
     const split = splitParticipants(
-      [signed("Long Jin"), signed("Thi Le", "12345"), signed("Boss", "22222"), signed("Anon", "55555")],
+      [
+        signed("Long Jin"),
+        signed("Thi Le", "12345"),
+        signed("Boss", "22222"),
+        signed("Anon", "55555"),
+      ],
       [
         link(),
         link({ google_sub: "12345", id: "m2", full_name: "Lê Thị", status: "inactive" }),

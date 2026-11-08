@@ -31,6 +31,8 @@ export const DICT = {
   "footer.contact": { vi: "Liên hệ", zh: "联系", en: "Contact" },
   "footer.online": { vi: "Hoạt động trực tuyến", zh: "线上运营", en: "Operating online" },
   "footer.portal": { vi: "Cổng thành viên", zh: "会员门户", en: "Member Portal" },
+  "footer.privacy": { vi: "Chính sách quyền riêng tư", zh: "隐私政策", en: "Privacy Policy" },
+  "footer.terms": { vi: "Điều khoản sử dụng", zh: "使用条款", en: "Terms of Service" },
   "footer.rights": {
     vi: "The Mandarin League. All rights reserved.",
     zh: "The Mandarin League. 版权所有。",

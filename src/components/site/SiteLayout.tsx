@@ -288,6 +288,20 @@ function Footer() {
               © {new Date().getFullYear()} {site.footer_note || t("footer.rights")}
             </p>
             <p className="opacity-55">{t("footer.tagline")}</p>
+            <p className="flex flex-wrap justify-center gap-x-3 sm:justify-start">
+              <Link
+                to="/privacy"
+                className="opacity-70 underline-offset-2 hover:opacity-100 hover:underline"
+              >
+                {t("footer.privacy")}
+              </Link>
+              <Link
+                to="/terms"
+                className="opacity-70 underline-offset-2 hover:opacity-100 hover:underline"
+              >
+                {t("footer.terms")}
+              </Link>
+            </p>
           </div>
           <Link
             to="/login"
