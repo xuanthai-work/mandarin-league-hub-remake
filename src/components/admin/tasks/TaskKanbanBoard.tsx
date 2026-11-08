@@ -29,6 +29,8 @@ import {
 
 interface TaskKanbanBoardProps {
   groups: GroupedTask[];
+  /** `avatar_path → signed URL` for every assignee on the board, signed in one batch. */
+  avatarMap?: Map<string, string> | undefined;
   rightsOf: (group: GroupedTask) => TaskRights;
   actionOf: (group: GroupedTask) => MyTaskAction | null;
   dropActionOf: (group: GroupedTask, targetColumn: string) => DropAction | null;
@@ -158,6 +160,7 @@ function DraggableCard({
 
 export function TaskKanbanBoard({
   groups,
+  avatarMap,
   rightsOf,
   actionOf,
   dropActionOf,
@@ -234,6 +237,11 @@ export function TaskKanbanBoard({
                     <DraggableCard key={group.key} group={group} draggable={draggable}>
                       <TaskKanbanCard
                         group={group}
+                        avatarUrl={
+                          group.assignees[0]?.avatar_path
+                            ? avatarMap?.get(group.assignees[0].avatar_path)
+                            : undefined
+                        }
                         inReview={column.key === "review"}
                         rights={rightsOf(group)}
                         myAction={actionOf(group)}
@@ -258,6 +266,11 @@ export function TaskKanbanBoard({
           <div className="pointer-events-none rotate-1 rounded-2xl shadow-xl">
             <TaskKanbanCard
               group={activeGroup}
+              avatarUrl={
+                activeGroup.assignees[0]?.avatar_path
+                  ? avatarMap?.get(activeGroup.assignees[0].avatar_path)
+                  : undefined
+              }
               inReview={false}
               rights={NO_TASK_RIGHTS}
               myAction={null}

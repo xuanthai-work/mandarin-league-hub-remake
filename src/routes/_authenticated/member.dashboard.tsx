@@ -695,7 +695,9 @@ function MemberDashboard() {
                             </div>
                             <div className="min-w-0">
                               <dt className={labelCls}>入会 · Gia nhập</dt>
-                              <dd className="font-mono text-[8px] font-semibold text-foreground md:text-[14px]">{joined}</dd>
+                              <dd className="font-mono text-[8px] font-semibold text-foreground md:text-[14px]">
+                                {joined}
+                              </dd>
                             </div>
                           </dl>
                         </div>

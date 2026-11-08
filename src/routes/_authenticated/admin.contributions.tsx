@@ -75,7 +75,7 @@ function PointsPage() {
         await supabase
           .from("members")
           .select(
-            "id, full_name, member_code, department, position, contribution_points, status, is_leader",
+            "id, full_name, member_code, department, position, contribution_points, status, is_leader, avatar_path",
           )
           .order("contribution_points", { ascending: false })
       ).data ?? []) as PointMember[],

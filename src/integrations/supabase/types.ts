@@ -2299,6 +2299,7 @@ export type Database = {
           department: string;
           position: string | null;
           contribution_points: number;
+          avatar_path: string | null;
         }[];
       };
       position_rank: { Args: { _position: string }; Returns: number };

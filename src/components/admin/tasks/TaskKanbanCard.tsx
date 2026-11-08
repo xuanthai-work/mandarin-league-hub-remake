@@ -27,6 +27,8 @@ import {
 
 interface TaskKanbanCardProps {
   group: GroupedTask;
+  /** Signed URL of the single assignee's avatar, when they have one. */
+  avatarUrl?: string | undefined;
   /** True inside the "Chờ duyệt báo cáo" column: evidence + fast review actions. */
   inReview: boolean;
   rights: TaskRights;
@@ -44,6 +46,7 @@ const MAX_AVATARS = 3;
 
 export function TaskKanbanCard({
   group,
+  avatarUrl,
   inReview,
   rights,
   myAction,
@@ -201,9 +204,13 @@ export function TaskKanbanCard({
                 onClick={() => onFilterPerson(assignee.id)}
                 aria-label={`Lọc nhiệm vụ của ${assignee.full_name}`}
                 title={`${assignee.full_name} · ${assignee.member_code}`}
-                className="h-6 w-6 rounded-full bg-primary/15 p-0 text-[10px] font-bold text-primary ring-2 ring-card transition-transform hover:-translate-y-0.5 hover:bg-primary/25 hover:text-primary"
+                className="h-6 w-6 overflow-hidden rounded-full bg-primary/15 p-0 text-[10px] font-bold text-primary ring-2 ring-card transition-transform hover:-translate-y-0.5 hover:bg-primary/25 hover:text-primary"
               >
-                {initials(assignee.full_name)}
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials(assignee.full_name)
+                )}
               </Button>
             ))}
             {overflow > 0 && (

@@ -145,7 +145,7 @@ export const getTaskPeople = createServerFn({ method: "GET" })
     if (ids.length === 0) return [];
     const { data: people, error: peopleError } = await supabaseAdmin
       .from("members")
-      .select("id, full_name, member_code, department")
+      .select("id, full_name, member_code, department, avatar_path")
       .in("id", ids);
     if (peopleError) throw new Error(peopleError.message);
     return people ?? [];
