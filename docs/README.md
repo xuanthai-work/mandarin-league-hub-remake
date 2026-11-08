@@ -269,6 +269,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-198-LEADER-FLAG-UI`                                           | Thẻ Lãnh đạo theo is_leader, 0 điểm khởi đầu, reset trắng 6 bảng lịch sử                               | 2026-11-08     | **PASS** | [task-ge-198-leader-flag-ui.md](tasks/task-ge-198-leader-flag-ui.md)                                                                                     |
 | `TASK-GE-199-INTERNAL-AI-GOOGLE`                                       | AI nội bộ chuyển từ Lovable Gateway sang Google Gemini (GOOGLE_AI_INTERNAL_KEY)                        | 2026-11-08     | **PASS** | [task-ge-199-internal-ai-google.md](tasks/task-ge-199-internal-ai-google.md)                                                                             |
 | `TASK-OC-184-MOVE-PNPM-SETTINGS-TO-WORKSPACE-YAML`                     | Chuyển cấu hình pnpm từ .npmrc sang pnpm-workspace.yaml (hết warning npm)                              | 2026-11-08     | **PASS** | [task-oc-184-move-pnpm-settings-to-workspace-yaml.md](tasks/task-oc-184-move-pnpm-settings-to-workspace-yaml.md)                                         |
+| `TASK-GE-200-DROP-DRIZZLE-MOVE-MIGRATIONS`                             | Gỡ Drizzle, chuyển migration sang supabase/migrations                                                  | 2026-11-08     | **PASS** | [task-ge-200-drop-drizzle-move-migrations.md](tasks/task-ge-200-drop-drizzle-move-migrations.md)                                                         |
 
 ---
 

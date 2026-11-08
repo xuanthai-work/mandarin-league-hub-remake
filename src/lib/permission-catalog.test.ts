@@ -28,7 +28,7 @@ describe("action catalog", () => {
 });
 
 describe("migration parity", () => {
-  const migrationsDir = path.join(process.cwd(), "drizzle/migrations");
+  const migrationsDir = path.join(process.cwd(), "supabase/migrations");
   const files = readdirSync(migrationsDir)
     .filter((f) => /^(\d{4})_.*\.sql$/.test(f) && Number(f.slice(0, 4)) >= 50)
     .sort();

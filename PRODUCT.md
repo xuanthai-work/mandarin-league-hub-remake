@@ -41,7 +41,7 @@ Mandarin League Hub không phải là một dashboard mẫu thông thường (ge
 ## Operating Context
 
 - **Hạ tầng công nghệ**: TanStack Start (SSR + Vite), React 19, TypeScript, Tailwind CSS v4, Nitro Engine deploy trên Cloudflare Workers.
-- **Cơ sở dữ liệu**: PostgreSQL / Supabase với hệ thống Row Level Security (RLS) nghiêm ngặt và Drizzle ORM.
+- **Cơ sở dữ liệu**: PostgreSQL / Supabase với hệ thống Row Level Security (RLS) nghiêm ngặt.
 - **Đa cổng truy cập (Multi-portal Architecture)**:
   - Cổng Chính (Main Portal): Tin tức, Khóa học, Hoạt động, Tra cứu.
   - Cổng Tuyển Dụng (Join Portal): Nộp đơn, xem kết quả phỏng vấn.
@@ -64,7 +64,7 @@ Mandarin League Hub không phải là một dashboard mẫu thông thường (ge
 
 ## Evidence on Hand
 
-- Hệ thống mã nguồn hoàn chỉnh với 44 migrations Supabase schema thực tế (`drizzle/full_schema.sql`).
+- Hệ thống mã nguồn hoàn chỉnh với các migration Supabase schema thực tế (`supabase/migrations/`).
 - Bộ icon và asset chính thức của TML (`public/assets/`, logo vector, huy hiệu Đông Sơn, thẻ thành viên SVG/CSS).
 - Bộ từ điển đa ngôn ngữ chuẩn (`src/lib/i18n.ts`: Tiếng Việt, Tiếng Trung, Tiếng Anh).
 
