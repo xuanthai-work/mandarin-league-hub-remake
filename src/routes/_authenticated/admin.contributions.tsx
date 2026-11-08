@@ -169,13 +169,24 @@ function PointsPage() {
    * leaderboard while advisors and heads keep competing with everyone else. points_leaderboard()
    * already filters them out.
    */
-  const boardMembers = leaderboard.data ?? [];
+  const boardMembers = useMemo(() => {
+    /**
+     * `points_leaderboard()` only returns avatar_path once migration 0077 is applied.
+     * Managers can read the members table too, so fill the gap by id: the board still
+     * shows faces on a database that has not run 0077 yet.
+     */
+    const readablePaths = new Map(memberList.map((m) => [m.id, m.avatar_path ?? null]));
+    return (leaderboard.data ?? []).map((m) => ({
+      ...m,
+      avatar_path: m.avatar_path ?? readablePaths.get(m.id) ?? null,
+    }));
+  }, [leaderboard.data, memberList]);
 
   /** One signed batch for everyone shown on the board, the adjust and the attendance lists. */
   const { data: avatarMap } = useAvatarUrls(
     useMemo(
-      () => [...(leaderboard.data ?? []), ...memberList].map((m) => m.avatar_path),
-      [leaderboard.data, memberList],
+      () => [...boardMembers, ...memberList].map((m) => m.avatar_path),
+      [boardMembers, memberList],
     ),
   );
 

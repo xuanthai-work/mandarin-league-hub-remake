@@ -31,7 +31,7 @@ Người chưa có ảnh (hoặc ảnh lỗi) vẫn thấy chữ cái viết t�
 - **`src/lib/avatars.ts`** (mới): ký batch `createSignedUrls` qua `createSignedUrlCache` (TTL 6 giờ, còn dưới 1 giờ thì ký lại) + hook `useAvatarUrls`, `forgetAvatarUrl`.
 - **`src/components/admin/kit/MemberAvatar.tsx`** (mới): ảnh tròn, fallback initials (kể cả khi `onError`), giữ nguyên kích thước nên layout không nhảy; kèm `MemberAvatar.test.tsx`.
 - **`admin.members.tsx`**: `Row.avatar_path`, ký batch theo danh sách đang hiển thị, truyền map vào bảng theo Ban và drawer chi tiết; bỏ helper `initials`.
-- **`contributions/shared.ts`**, **`admin.contributions.tsx`**: `PointMember.avatar_path`, select `avatar_path`, và **một** batch ký ảnh cho cả bảng vinh danh + danh sách thưởng/trừ + điểm danh (truyền `avatarMap` xuống).
+- **`contributions/shared.ts`**, **`admin.contributions.tsx`**: `PointMember.avatar_path`, select `avatar_path`, và **một** batch ký ảnh cho cả bảng vinh danh + danh sách thưởng/trừ + điểm danh (truyền `avatarMap` xuống). Nếu DB chưa chạy 0077 (RPC chưa trả `avatar_path`), trang tự lấp `avatar_path` từ bảng `members` mà người quản lý đọc được, nên avatar vẫn hiện với admin/Trưởng/Phó Ban ngay cả trước khi migrate.
 - **`contributions/LeaderboardPanel.tsx`**: giữ khung viền/hiệu ứng hạng, đặt ảnh tròn bên trong khung cho podium; `MemberRow` dùng `MemberAvatar`; nhận `avatarMap` từ trang thay vì tự ký.
 - **`contributions/AdjustmentModal.tsx`**, **`AttendanceModal.tsx`**: avatar trong danh sách chọn người.
 - **`tasks.functions.ts`**: `getTaskPeople` và `getAssignableMembers` trả thêm `avatar_path`.
