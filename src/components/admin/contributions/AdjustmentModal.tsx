@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AdminModal } from "@/components/admin/kit/AdminModal";
 import { AdminTextarea } from "@/components/admin/kit/AdminInput";
 import { FormField } from "@/components/admin/kit/FormField";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,12 +18,14 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
 import { cn } from "@/lib/utils";
-import { POINT_LIMITS, initials, runInChunks, type ChunkResult, type PointMember } from "./shared";
+import { POINT_LIMITS, runInChunks, type ChunkResult, type PointMember } from "./shared";
 
 type AdjustMode = "bonus" | "penalty";
 
 interface AdjustmentModalProps {
   members: PointMember[];
+  /** `avatar_path → signed URL` for the picker list. */
+  avatarMap?: Map<string, string> | undefined;
   onClose: () => void;
   onDone: () => void;
 }
@@ -54,7 +57,7 @@ const fmtSize = (bytes: number) =>
  * the permission, rank, the fixed ±5/10/20 levels and the sign rule; the UI requires a
  * 10-character audit reason.
  */
-export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalProps) {
+export function AdjustmentModal({ members, avatarMap, onClose, onDone }: AdjustmentModalProps) {
   const [mode, setMode] = useState<AdjustMode>("bonus");
   const [selected, setSelected] = useState<string[]>([]);
   const [q, setQ] = useState("");
@@ -417,9 +420,11 @@ export function AdjustmentModal({ members, onClose, onDone }: AdjustmentModalPro
                   >
                     <Check aria-hidden className="h-3 w-3" />
                   </span>
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
-                    {initials(member.full_name)}
-                  </span>
+                  <MemberAvatar
+                    src={member.avatar_path ? avatarMap?.get(member.avatar_path) : null}
+                    name={member.full_name}
+                    className="h-6 w-6 text-[9px]"
+                  />
                   <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                     {member.full_name}
                   </span>

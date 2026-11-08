@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { can } from "@/lib/permission-catalog";
 import { getAssignableMembers, getTaskPeople } from "@/lib/tasks.functions";
 import { matchesSearch } from "@/lib/search";
+import { useAvatarUrls } from "@/lib/avatars";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/tasks")({
@@ -128,6 +129,8 @@ function TasksPage() {
     return [...map.values()];
   }, [taskPeople.data, memberList]);
   const memberById = useMemo(() => new Map(people.map((m) => [m.id, m])), [people]);
+  // Every assignee's avatar is signed in one batch so a busy board never fans out requests.
+  const { data: avatarMap } = useAvatarUrls(people.map((m) => m.avatar_path));
 
   const depts = useMemo(
     () =>
@@ -380,6 +383,7 @@ function TasksPage() {
       ) : (
         <TaskKanbanBoard
           groups={groups}
+          avatarMap={avatarMap}
           rightsOf={(g) => groupRights(g, viewer)}
           actionOf={(g) => (g.rawTasks[0] ? myTaskAction(g.rawTasks[0], viewer) : null)}
           dropActionOf={(g, col) => dropAction(g, col, viewer)}
@@ -398,6 +402,7 @@ function TasksPage() {
           <TaskCreateModal
             key="create-task"
             members={memberList}
+            avatarMap={avatarMap}
             meLabel={me.data?.label ?? ""}
             onClose={() => setCreating(false)}
             onCreated={refresh}
@@ -408,6 +413,7 @@ function TasksPage() {
             key={`detail-${selectedGroup.key}`}
             group={selectedGroup}
             members={people}
+            avatarMap={avatarMap}
             rights={groupRights(selectedGroup, viewer)}
             myAction={
               selectedGroup.rawTasks[0] ? myTaskAction(selectedGroup.rawTasks[0], viewer) : null

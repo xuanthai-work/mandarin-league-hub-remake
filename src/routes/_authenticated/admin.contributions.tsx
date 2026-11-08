@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
 import { canAdjustMember } from "@/lib/admin-permissions";
 import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAvatarUrls } from "@/lib/avatars";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/contributions")({
@@ -70,7 +71,7 @@ function PointsPage() {
         await supabase
           .from("members")
           .select(
-            "id, full_name, member_code, department, position, contribution_points, status, is_leader",
+            "id, full_name, member_code, department, position, contribution_points, status, is_leader, avatar_path",
           )
           .order("contribution_points", { ascending: false })
       ).data ?? []) as PointMember[],
@@ -163,7 +164,26 @@ function PointsPage() {
    * leaderboard while advisors and heads keep competing with everyone else. points_leaderboard()
    * already filters them out.
    */
-  const boardMembers = leaderboard.data ?? [];
+  const boardMembers = useMemo(() => {
+    /**
+     * `points_leaderboard()` only returns avatar_path once migration 0079 is applied.
+     * Managers can read the members table too, so fill the gap by id: the board still
+     * shows faces on a database that has not run 0079 yet.
+     */
+    const readablePaths = new Map(memberList.map((m) => [m.id, m.avatar_path ?? null]));
+    return (leaderboard.data ?? []).map((m) => ({
+      ...m,
+      avatar_path: m.avatar_path ?? readablePaths.get(m.id) ?? null,
+    }));
+  }, [leaderboard.data, memberList]);
+
+  /** One signed batch for everyone shown on the board, the adjust and the attendance lists. */
+  const { data: avatarMap } = useAvatarUrls(
+    useMemo(
+      () => [...boardMembers, ...memberList].map((m) => m.avatar_path),
+      [boardMembers, memberList],
+    ),
+  );
 
   /** Bonus/penalty targets: same scope as points.adjust and strictly lower position. */
   const adjustableMembers = useMemo(
@@ -225,7 +245,11 @@ function PointsPage() {
         />
       )}
 
-      <LeaderboardPanel members={boardMembers} loading={leaderboard.isLoading} />
+      <LeaderboardPanel
+        members={boardMembers}
+        avatarMap={avatarMap}
+        loading={leaderboard.isLoading}
+      />
 
       <TransactionLedger
         rows={history.data ?? []}
@@ -246,6 +270,7 @@ function PointsPage() {
         {adjustOpen && canAdjust && (
           <AdjustmentModal
             members={adjustableMembers}
+            avatarMap={avatarMap}
             onClose={() => setAdjustOpen(false)}
             onDone={refresh}
           />

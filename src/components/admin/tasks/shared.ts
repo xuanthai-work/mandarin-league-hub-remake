@@ -26,6 +26,8 @@ export type TaskMember = {
   full_name: string;
   member_code: string;
   department: string;
+  /** Storage path in the private `avatars` bucket; signed on read. */
+  avatar_path?: string | null;
 };
 
 export type TaskFilters = {
@@ -294,6 +296,7 @@ export function groupTasks(tasks: Task[], members: TaskMember[]): GroupedTask[] 
         full_name: member?.full_name ?? "Thành viên",
         member_code: member?.member_code ?? "—",
         department: member?.department ?? task.department,
+        avatar_path: member?.avatar_path ?? null,
         taskId: task.id,
         status: task.status,
         evidenceUrl: task.evidence_url,

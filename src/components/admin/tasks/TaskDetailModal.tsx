@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 
 import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { AdminModal } from "@/components/admin/kit/AdminModal";
 import { FormField } from "@/components/admin/kit/FormField";
 import { TaskEvidence } from "@/components/portal/TaskEvidence";
@@ -35,7 +36,6 @@ import {
 import {
   deptTag,
   deptTone,
-  initials,
   myActionLabel,
   parseAttachments,
   serializeDescription,
@@ -50,6 +50,8 @@ import {
 interface TaskDetailModalProps {
   group: GroupedTask;
   members: TaskMember[];
+  /** `avatar_path → signed URL` for the assignee list. */
+  avatarMap?: Map<string, string> | undefined;
   rights: TaskRights;
   myAction: MyTaskAction | null;
   isMine: boolean;
@@ -64,6 +66,7 @@ interface TaskDetailModalProps {
 export function TaskDetailModal({
   group,
   members,
+  avatarMap,
   rights,
   myAction,
   isMine,
@@ -308,9 +311,11 @@ export function TaskDetailModal({
                 key={person.taskId}
                 className="flex items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/5 p-2.5"
               >
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {initials(person.full_name)}
-                </span>
+                <MemberAvatar
+                  src={person.avatar_path ? avatarMap?.get(person.avatar_path) : null}
+                  name={person.full_name}
+                  className="h-10 w-10 text-xs"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">
                     {person.full_name}

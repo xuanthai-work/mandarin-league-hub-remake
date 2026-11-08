@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
 import { AdminModal } from "@/components/admin/kit/AdminModal";
 import { FormField } from "@/components/admin/kit/FormField";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -26,10 +27,12 @@ import {
   type TaskPriority,
   useAutoGrow,
 } from "./TaskFormParts";
-import { initials, serializeDescription, type TaskAttachment, type TaskMember } from "./shared";
+import { serializeDescription, type TaskAttachment, type TaskMember } from "./shared";
 
 interface TaskCreateModalProps {
   members: TaskMember[];
+  /** `avatar_path → signed URL` for the assignee picker. */
+  avatarMap?: Map<string, string> | undefined;
   meLabel: string;
   onClose: () => void;
   onCreated: () => void;
@@ -38,7 +41,13 @@ interface TaskCreateModalProps {
 /** Selects must float above the z-[70] dialog (their default content layer is z-50). */
 const SELECT_CONTENT = "z-[95] rounded-xl";
 
-export function TaskCreateModal({ members, meLabel, onClose, onCreated }: TaskCreateModalProps) {
+export function TaskCreateModal({
+  members,
+  avatarMap,
+  meLabel,
+  onClose,
+  onCreated,
+}: TaskCreateModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
@@ -267,9 +276,11 @@ export function TaskCreateModal({ members, meLabel, onClose, onCreated }: TaskCr
                   >
                     <Check aria-hidden />
                   </span>
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                    {initials(m.full_name)}
-                  </span>
+                  <MemberAvatar
+                    src={m.avatar_path ? avatarMap?.get(m.avatar_path) : null}
+                    name={m.full_name}
+                    className="h-7 w-7 text-[10px]"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-foreground">{m.full_name}</p>
                     <p className="flex items-center gap-1.5 text-[10px] text-muted-foreground">

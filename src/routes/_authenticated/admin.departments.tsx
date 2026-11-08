@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DepartmentCard } from "@/components/admin/departments/DepartmentCard";
 import { DepartmentDrawer } from "@/components/admin/departments/DepartmentDrawer";
 import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
+import { useAvatarUrls } from "@/lib/avatars";
 import { useAdminAccess } from "./admin";
 import {
   summarizeDepartments,
@@ -32,7 +33,7 @@ async function load() {
   const [m, c, s, a] = await Promise.all([
     supabase
       .from("members")
-      .select("id, member_code, full_name, department, position, status")
+      .select("id, member_code, full_name, department, position, status, avatar_path")
       .order("member_code"),
     supabase
       .from("department_channels")
@@ -61,6 +62,8 @@ function DepartmentsPage() {
 
   const q = useQuery({ queryKey: ["admin-departments"], queryFn: load });
   const [openId, setOpenId] = useState<string | null>(null);
+  // Leaders' avatars are signed in one batch for every card.
+  const { data: avatarMap } = useAvatarUrls((q.data?.members ?? []).map((m) => m.avatar_path));
 
   const summaries = q.data ? summarizeDepartments(q.data) : [];
   const open = summaries.find((d) => d.id === openId) ?? null;
@@ -99,6 +102,7 @@ function DepartmentsPage() {
               <DepartmentCard
                 key={s.id}
                 summary={s}
+                avatarMap={avatarMap}
                 canEdit={canEditDept(s.id)}
                 onConfigure={() => setOpenId(s.id)}
               />

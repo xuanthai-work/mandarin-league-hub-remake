@@ -33,6 +33,7 @@ import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { AdminDrawer } from "@/components/admin/kit/AdminDrawer";
 import { AdminInput, AdminTextarea } from "@/components/admin/kit/AdminInput";
 import { FormField } from "@/components/admin/kit/FormField";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ import { MemberPermissionsSection } from "@/components/admin/members/MemberPermi
 import { deptName } from "@/lib/recruitment";
 import { csvCell } from "@/lib/csv";
 import { matchesSearch } from "@/lib/search";
+import { useAvatarUrls } from "@/lib/avatars";
 import {
   createAccount,
   deleteAccount,
@@ -107,16 +109,9 @@ type Row = {
   leave_until: string | null;
   left_on: string | null;
   status_note: string;
+  avatar_path: string | null;
 };
 type MemberRow = Row & { account: AccountInfo | null };
-
-/** Short avatar label: first letter of the first and last name words. */
-const initials = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
-  return (first + last).toUpperCase() || "TML";
-};
 
 // ---------------------------------------------------------------- unified status
 
@@ -288,6 +283,7 @@ const MEMBER_COLS: AdminColumn[] = [
 function DepartmentSection({
   deptId,
   members,
+  avatarMap,
   showAccounts,
   canGrant,
   canRotate,
@@ -296,6 +292,7 @@ function DepartmentSection({
 }: {
   deptId: string;
   members: MemberRow[];
+  avatarMap: Map<string, string> | undefined;
   showAccounts: boolean;
   canGrant: (m: MemberRow) => boolean;
   canRotate: boolean;
@@ -325,9 +322,11 @@ function DepartmentSection({
             </td>
             <td className="p-3">
               <div className="flex min-w-0 items-center gap-2.5">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                  {initials(m.full_name)}
-                </span>
+                <MemberAvatar
+                  src={m.avatar_path ? avatarMap?.get(m.avatar_path) : null}
+                  name={m.full_name}
+                  className="h-7 w-7 text-[10px]"
+                />
                 <span className="min-w-0 truncate font-medium text-foreground" title={m.full_name}>
                   {m.full_name}
                 </span>
@@ -454,6 +453,8 @@ function MembersPage() {
     (m) =>
       unifiedStatus(m) === tab && (!deptFilter || m.department === deptFilter) && matchesQuery(m),
   );
+  // Signed avatar links for the whole visible roster, signed in one batch.
+  const { data: avatarMap } = useAvatarUrls(rows.map((m) => m.avatar_path));
   /** Every department the org knows about, plus any legacy id still present in member rows. */
   const deptList = [
     ...ACCOUNT_DEPTS,
@@ -638,6 +639,7 @@ function MembersPage() {
               key={d.id}
               deptId={d.id}
               members={rows.filter((m) => m.department === d.id)}
+              avatarMap={avatarMap}
               showAccounts={canSeeAccounts}
               canGrant={(m) =>
                 canActOnMember(perms, "members.edit", me, {
@@ -659,6 +661,7 @@ function MembersPage() {
           <MemberDrawer
             key={selected.id}
             m={selected}
+            avatarMap={avatarMap}
             isAdmin={isAdmin}
             canEditProfile={canActOnMember(perms, "members.edit", me, target)}
             canEditPosition={canActOnMember(perms, "members.edit", me, target)}
@@ -699,6 +702,7 @@ function MembersPage() {
 
 function MemberDrawer({
   m,
+  avatarMap,
   isAdmin,
   canEditProfile,
   canEditPosition,
@@ -713,6 +717,7 @@ function MemberDrawer({
   onChanged,
 }: {
   m: MemberRow;
+  avatarMap: Map<string, string> | undefined;
   isAdmin: boolean;
   canEditProfile: boolean;
   canEditPosition: boolean;
@@ -882,9 +887,11 @@ function MemberDrawer({
     <AdminDrawer
       title={m.full_name}
       leading={
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-          {initials(m.full_name)}
-        </span>
+        <MemberAvatar
+          src={m.avatar_path ? avatarMap?.get(m.avatar_path) : null}
+          name={m.full_name}
+          className="h-10 w-10 text-xs"
+        />
       }
       subtitle={
         <span className="flex items-center gap-1.5">

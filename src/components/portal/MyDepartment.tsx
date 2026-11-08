@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Crown, FolderOpen, MessageCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
+import { useAvatarUrls } from "@/lib/avatars";
 import { OnboardingPlans } from "./OnboardingPlans";
 
 type Peer = {
@@ -9,6 +10,7 @@ type Peer = {
   full_name: string;
   member_code: string;
   position: string;
+  avatar_path?: string | null;
   is_me: boolean;
 };
 type Dept = {
@@ -17,15 +19,27 @@ type Dept = {
   members: Peer[];
 } | null;
 
-function PeerCard({ p, lead }: { p: Peer; lead?: boolean }) {
+function PeerCard({
+  p,
+  lead,
+  avatarUrl,
+}: {
+  p: Peer;
+  lead?: boolean;
+  avatarUrl?: string | undefined;
+}) {
   return (
     <div
       className={`flex items-center gap-3 rounded-xl border p-3 ${lead ? "border-gold bg-gold/10" : "border-border bg-card/40"}`}
     >
       <span
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 font-bold ${lead ? "border-gold text-gold" : "border-primary/40"}`}
+        className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 font-bold ${lead ? "border-gold text-gold" : "border-primary/40"}`}
       >
-        {p.full_name.charAt(0)}
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={p.full_name} className="h-full w-full object-cover" />
+        ) : (
+          p.full_name.charAt(0)
+        )}
       </span>
       <div className="min-w-0">
         <p className="truncate font-semibold">
@@ -49,6 +63,8 @@ export function MyDepartment({ canManage = false }: { canManage?: boolean }) {
     queryKey: ["my-department"],
     queryFn: async () => (await supabase.rpc("my_department")).data as unknown as Dept,
   });
+  // One signed batch for every peer card on the panel.
+  const { data: avatarMap } = useAvatarUrls((q.data?.members ?? []).map((p) => p.avatar_path));
   if (q.isLoading)
     return <p className="mt-6 text-center text-sm text-muted-foreground">Đang tải…</p>;
   const d = q.data;
@@ -108,7 +124,12 @@ export function MyDepartment({ canManage = false }: { canManage?: boolean }) {
         {leaders.length ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {leaders.map((p) => (
-              <PeerCard key={p.id} p={p} lead />
+              <PeerCard
+                key={p.id}
+                p={p}
+                lead
+                avatarUrl={p.avatar_path ? avatarMap?.get(p.avatar_path) : undefined}
+              />
             ))}
           </div>
         ) : (
@@ -120,7 +141,11 @@ export function MyDepartment({ canManage = false }: { canManage?: boolean }) {
         {rest.length ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {rest.map((p) => (
-              <PeerCard key={p.id} p={p} />
+              <PeerCard
+                key={p.id}
+                p={p}
+                avatarUrl={p.avatar_path ? avatarMap?.get(p.avatar_path) : undefined}
+              />
             ))}
           </div>
         ) : (

@@ -10,6 +10,8 @@ export type PointMember = {
   contribution_points: number;
   status: string;
   is_leader?: boolean;
+  /** Storage path in the private `avatars` bucket; signed on read. */
+  avatar_path?: string | null;
 };
 
 /** One immutable row of `public.point_transactions`. */

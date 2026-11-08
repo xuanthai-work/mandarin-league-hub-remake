@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Crown, Medal, Trophy, UserRound } from "lucide-react";
 
 import { SearchInput } from "@/components/admin/kit/SearchInput";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { TierBadge } from "@/components/TierBadge";
 import {
   Select,
@@ -16,6 +17,8 @@ import { initials, tierStep, type PointMember } from "./shared";
 
 interface LeaderboardPanelProps {
   members: PointMember[];
+  /** `avatar_path → signed URL`, signed once for the whole panel. */
+  avatarMap?: Map<string, string> | undefined;
   loading: boolean;
 }
 
@@ -47,7 +50,15 @@ const RANK_STYLE: Record<
   },
 };
 
-function PodiumCard({ member, rank }: { member: PointMember; rank: number }) {
+function PodiumCard({
+  member,
+  rank,
+  avatarUrl,
+}: {
+  member: PointMember;
+  rank: number;
+  avatarUrl?: string | undefined;
+}) {
   const style = RANK_STYLE[rank] ?? RANK_STYLE[3]!;
   const Icon = style.icon;
   const step = tierStep(member.contribution_points);
@@ -68,14 +79,21 @@ function PodiumCard({ member, rank }: { member: PointMember; rank: number }) {
         {rank}
       </span>
       <span
-        aria-hidden
         className={cn(
-          "mt-1.5 grid h-9 w-9 place-items-center rounded-full border text-xs font-bold sm:mt-2 sm:h-14 sm:w-14 sm:border-2 sm:text-sm",
+          "mt-1.5 grid h-9 w-9 place-items-center overflow-hidden rounded-full border text-xs font-bold sm:mt-2 sm:h-14 sm:w-14 sm:border-2 sm:text-sm",
           style.avatar,
           rank === 1 && "ring-2 ring-gold/15 sm:ring-4",
         )}
       >
-        {initials(member.full_name)}
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={member.full_name}
+            className="h-full w-full rounded-full object-cover"
+          />
+        ) : (
+          <span aria-hidden>{initials(member.full_name)}</span>
+        )}
       </span>
       <p className="mt-1 line-clamp-1 text-xs font-bold leading-tight text-foreground sm:mt-2 sm:line-clamp-2 sm:text-sm">
         {member.full_name}
@@ -107,7 +125,15 @@ function PodiumCard({ member, rank }: { member: PointMember; rank: number }) {
   );
 }
 
-function MemberRow({ member, rank }: { member: PointMember; rank: number }) {
+function MemberRow({
+  member,
+  rank,
+  avatarUrl,
+}: {
+  member: PointMember;
+  rank: number;
+  avatarUrl?: string | undefined;
+}) {
   const step = tierStep(member.contribution_points);
   return (
     <li className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent/35">
@@ -119,12 +145,7 @@ function MemberRow({ member, rank }: { member: PointMember; rank: number }) {
       >
         {rank}
       </span>
-      <span
-        aria-hidden
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-bold text-primary"
-      >
-        {initials(member.full_name)}
-      </span>
+      <MemberAvatar src={avatarUrl} name={member.full_name} className="h-8 w-8 text-[11px]" />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-1.5">
           <p className="truncate text-sm font-semibold text-foreground">{member.full_name}</p>
@@ -177,7 +198,7 @@ function MemberRow({ member, rank }: { member: PointMember; rank: number }) {
  * Leaderboard 2.0: a Top-3 podium for identity and a searchable ranking list
  * with live tier-progress so every member can see their next milestone.
  */
-export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
+export function LeaderboardPanel({ members, avatarMap, loading }: LeaderboardPanelProps) {
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
@@ -299,7 +320,13 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
               >
                 {top.map(({ member, rank }) => (
                   <div key={member.id} className="h-full">
-                    <PodiumCard member={member} rank={rank} />
+                    <PodiumCard
+                      member={member}
+                      rank={rank}
+                      avatarUrl={
+                        member.avatar_path ? avatarMap?.get(member.avatar_path) : undefined
+                      }
+                    />
                   </div>
                 ))}
               </div>
@@ -316,7 +343,12 @@ export function LeaderboardPanel({ members, loading }: LeaderboardPanelProps) {
               className="custom-scrollbar min-h-0 flex-1 divide-y divide-border/60 overflow-y-auto rounded-xl border border-border/60"
             >
               {rest.map(({ member, rank }) => (
-                <MemberRow key={member.id} member={member} rank={rank} />
+                <MemberRow
+                  key={member.id}
+                  member={member}
+                  rank={rank}
+                  avatarUrl={member.avatar_path ? avatarMap?.get(member.avatar_path) : undefined}
+                />
               ))}
               {rest.length === 0 && (
                 <li className="px-4 py-6 text-center text-xs text-muted-foreground">
