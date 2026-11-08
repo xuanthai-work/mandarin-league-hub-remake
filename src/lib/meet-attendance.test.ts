@@ -19,6 +19,7 @@ const link = (over: Partial<LinkedMember> = {}): LinkedMember => ({
   position: "Thành viên",
   status: "active",
   is_leader: false,
+  avatar_path: null,
   ...over,
 });
 
@@ -89,12 +90,13 @@ describe("splitParticipants", () => {
         signed("Anon", "55555"),
       ],
       [
-        link(),
+        link({ avatar_path: "u1/a.png" }),
         link({ google_sub: "12345", id: "m2", full_name: "Lê Thị", status: "inactive" }),
         link({ google_sub: "22222", id: "m3", full_name: "Trần B", is_leader: true }),
       ],
     );
     expect(split.matched.map((m) => m.id)).toEqual(["m1"]);
+    expect(split.matched[0]?.avatar_path).toBe("u1/a.png");
     expect(split.leaders.map((m) => m.id)).toEqual(["m3"]);
     expect(split.unlinked).toEqual([
       { display_name: "Thi Le", kind: "inactive" },

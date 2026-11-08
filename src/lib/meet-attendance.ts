@@ -68,6 +68,7 @@ export type LinkedMember = {
   position: string | null;
   status: string;
   is_leader: boolean;
+  avatar_path: string | null;
 };
 
 export type MeetMember = {
@@ -76,6 +77,7 @@ export type MeetMember = {
   member_code: string;
   department: string;
   position: string | null;
+  avatar_path: string | null;
   /** Name shown in Google Meet (only for matched / leader rows). */
   display_name?: string;
 };
@@ -108,6 +110,7 @@ export function splitParticipants(
           member_code: link.member_code,
           department: link.department,
           position: link.position,
+          avatar_path: link.avatar_path,
           display_name: p.displayName,
         };
         if (link.status !== "active")

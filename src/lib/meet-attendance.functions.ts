@@ -109,7 +109,7 @@ async function linkedMembers(subs: string[]): Promise<LinkedMember[]> {
   const { data, error } = await supabaseAdmin
     .from("member_google_accounts")
     .select(
-      "google_sub, members!inner(id, full_name, member_code, department, position, status, is_leader)",
+      "google_sub, members!inner(id, full_name, member_code, department, position, status, is_leader, avatar_path)",
     )
     .in("google_sub", subs);
   if (error) throw new Error(error.message);
@@ -159,6 +159,16 @@ async function recordedSessions(
   return data ?? [];
 }
 
+const toRecorded = (row: RecordedSession | null | undefined): RecordedSession | null =>
+  row
+    ? {
+        meeting_kind: row.meeting_kind,
+        present_count: row.present_count,
+        created_by_label: row.created_by_label,
+        created_at: row.created_at,
+      }
+    : null;
+
 export const listMeetConferences = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ accessToken }).parse(d))
@@ -182,14 +192,7 @@ export const listMeetConferences = createServerFn({ method: "POST" })
           end,
           minutes: meetingMinutes(start, end),
           scorable: isScorableMeeting(start, end),
-          recorded: hit
-            ? {
-                meeting_kind: hit.meeting_kind,
-                present_count: hit.present_count,
-                created_by_label: hit.created_by_label,
-                created_at: hit.created_at,
-              }
-            : null,
+          recorded: toRecorded(hit),
         };
       })
       .sort((a, b) => b.start.localeCompare(a.start));
@@ -215,7 +218,7 @@ export const previewMeetAttendance = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       let q = supabaseAdmin
         .from("members")
-        .select("id, full_name, member_code, department, position")
+        .select("id, full_name, member_code, department, position, avatar_path")
         .eq("status", "active")
         .eq("is_leader", false);
       if (scope === "own") q = q.eq("department", myDept!);
@@ -225,7 +228,7 @@ export const previewMeetAttendance = createServerFn({ method: "POST" })
       for (const m of rows ?? []) if (!matchedIds.has(m.id)) candidates.push(m);
     }
 
-    const recorded = (await recordedSessions(context.supabase, [data.conferenceRecord]))[0] ?? null;
+    const rows = await recordedSessions(context.supabase, [data.conferenceRecord]);
 
     return {
       conferenceRecord: data.conferenceRecord,
@@ -233,14 +236,7 @@ export const previewMeetAttendance = createServerFn({ method: "POST" })
       end,
       minutes: meetingMinutes(start, end),
       scorable: isScorableMeeting(start, end),
-      recorded: recorded
-        ? {
-            meeting_kind: recorded.meeting_kind,
-            present_count: recorded.present_count,
-            created_by_label: recorded.created_by_label,
-            created_at: recorded.created_at,
-          }
-        : null,
+      recorded: toRecorded(rows[0]),
       canClub: scope === "all",
       matched: split.matched,
       leaders: split.leaders,

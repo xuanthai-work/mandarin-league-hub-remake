@@ -274,6 +274,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-186-MEET-ATTENDANCE-DB`                                       | Điểm danh Google Meet theo buổi họp: bảng, RPC ghi điểm (2/10 điểm, ≥ 30 phút)                         | 2026-11-08     | **PASS** | [task-oc-186-meet-attendance-db.md](tasks/task-oc-186-meet-attendance-db.md)                                                                             |
 | `TASK-OC-187-MEET-ATTENDANCE-UI`                                       | Điểm danh từ Google Meet ở trang Điểm đóng góp (server đọc Meet, xác nhận chấm)                        | 2026-11-08     | **PASS** | [task-oc-187-meet-attendance-ui.md](tasks/task-oc-187-meet-attendance-ui.md)                                                                             |
 | `TASK-OC-188-PRIVACY-AND-TERMS-PAGES`                                  | Trang Chính sách quyền riêng tư và Điều khoản sử dụng (vi/zh/en), link ở footer                        | 2026-11-08     | **PASS** | [task-oc-188-privacy-and-terms-pages.md](tasks/task-oc-188-privacy-and-terms-pages.md)                                                                   |
+| `TASK-OC-189-MEET-ATTENDANCE-TIDY-AVATARS`                             | Làm gọn code điểm danh Meet, thêm ảnh đại diện vào cửa sổ điểm danh                                    | 2026-11-08     | **PASS** | [task-oc-189-meet-attendance-tidy-avatars.md](tasks/task-oc-189-meet-attendance-tidy-avatars.md)                                                         |
 
 ---
 

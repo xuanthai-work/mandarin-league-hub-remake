@@ -8,11 +8,13 @@ import { AdminModal } from "@/components/admin/kit/AdminModal";
 import { AdminInput } from "@/components/admin/kit/AdminInput";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
 import { FormField } from "@/components/admin/kit/FormField";
+import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
 import { StatusPill } from "@/components/admin/kit/StatusPill";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAvatarUrls } from "@/lib/avatars";
 import { loadGoogleIdentity } from "@/lib/google-identity";
 import { getGoogleClientId } from "@/lib/google-link.functions";
 import {
@@ -41,9 +43,9 @@ const UNLINKED_LABEL: Record<UnlinkedKind, string> = {
 
 const two = (n: number) => String(n).padStart(2, "0");
 
-/** `Thứ Hai, 09/11/2026 · 08:00–09:15` in local time. */
-function dayLabel(iso: string) {
-  const d = new Date(iso);
+/** `Thứ Hai, 09/11/2026 · 08:00–09:15` (local time); no end while the meeting is running. */
+function meetingRange(start: string, end: string | null) {
+  const d = new Date(start);
   const day = new Intl.DateTimeFormat("vi-VN", {
     weekday: "long",
     day: "2-digit",
@@ -51,7 +53,8 @@ function dayLabel(iso: string) {
     year: "numeric",
   }).format(d);
   const time = `${two(d.getHours())}:${two(d.getMinutes())}`;
-  return { day: day.charAt(0).toUpperCase() + day.slice(1), time };
+  const tail = end ? `–${two(new Date(end).getHours())}:${two(new Date(end).getMinutes())}` : "";
+  return `${day.charAt(0).toUpperCase() + day.slice(1)} · ${time}${tail}`;
 }
 
 interface Props {
@@ -138,6 +141,17 @@ export function MeetAttendanceModal({ onClose, onDone }: Props) {
   });
 
   const p = preview.data;
+
+  // One signed-URL batch for every face shown in the modal.
+  const { data: avatarMap } = useAvatarUrls(
+    useMemo(
+      () =>
+        [...(p?.matched ?? []), ...(p?.leaders ?? []), ...(p?.candidates ?? [])].map(
+          (m) => m.avatar_path,
+        ),
+      [p],
+    ),
+  );
 
   // Default reason follows the chosen kind until the user edits it.
   useEffect(() => {
@@ -237,15 +251,22 @@ export function MeetAttendanceModal({ onClose, onDone }: Props) {
     ) : undefined;
 
   const memberRow = (m: MeetMember) => (
-    <li key={m.id} className="flex flex-col gap-0.5 px-3 py-2 text-xs">
-      <span className="font-medium text-foreground">
-        {m.full_name}{" "}
-        <span className="font-mono text-[10px] text-muted-foreground">{m.member_code}</span>
+    <li key={m.id} className="flex items-center gap-2 px-3 py-2 text-xs">
+      <MemberAvatar
+        src={m.avatar_path ? avatarMap?.get(m.avatar_path) : null}
+        name={m.full_name}
+        className="h-8 w-8 text-[10px]"
+      />
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="font-medium text-foreground">
+          {m.full_name}{" "}
+          <span className="font-mono text-[10px] text-muted-foreground">{m.member_code}</span>
+        </span>
+        <span className="text-muted-foreground">{deptName(m.department)}</span>
+        {m.display_name && (
+          <span className="text-[11px] text-muted-foreground">Trên Meet: {m.display_name}</span>
+        )}
       </span>
-      <span className="text-muted-foreground">{deptName(m.department)}</span>
-      {m.display_name && (
-        <span className="text-[11px] text-muted-foreground">Trên Meet: {m.display_name}</span>
-      )}
     </li>
   );
 
@@ -302,8 +323,6 @@ export function MeetAttendanceModal({ onClose, onDone }: Props) {
             />
           ) : (
             list.data!.map((c) => {
-              const { day, time } = dayLabel(c.start);
-              const endTime = c.end ? dayLabel(c.end).time : null;
               return (
                 <Button
                   key={c.name}
@@ -316,8 +335,7 @@ export function MeetAttendanceModal({ onClose, onDone }: Props) {
                 >
                   <span className="flex w-full flex-wrap items-center justify-between gap-2">
                     <span className="text-sm font-medium text-foreground">
-                      {day} · {time}
-                      {endTime ? `–${endTime}` : ""}
+                      {meetingRange(c.start, c.end)}
                     </span>
                     {c.recorded ? (
                       <StatusPill tone="success">
@@ -360,8 +378,7 @@ export function MeetAttendanceModal({ onClose, onDone }: Props) {
               Chọn buổi khác
             </Button>
             <span className="text-xs text-muted-foreground">
-              {dayLabel(p.start).day} · {dayLabel(p.start).time}
-              {p.end ? `–${dayLabel(p.end).time}` : ""} ·{" "}
+              {meetingRange(p.start, p.end)} ·{" "}
               {p.minutes === null ? "đang diễn ra" : `${p.minutes} phút`}
             </span>
           </div>
@@ -467,6 +484,11 @@ export function MeetAttendanceModal({ onClose, onDone }: Props) {
                       checked={manual.includes(c.id)}
                       onCheckedChange={() => toggleManual(c.id)}
                       aria-label={`Thêm tay ${c.full_name}`}
+                    />
+                    <MemberAvatar
+                      src={c.avatar_path ? avatarMap?.get(c.avatar_path) : null}
+                      name={c.full_name}
+                      className="h-8 w-8 text-[10px]"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium text-foreground">{c.full_name}</span>
