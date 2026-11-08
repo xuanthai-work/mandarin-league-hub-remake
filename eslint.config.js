@@ -19,13 +19,8 @@ const ADMIN_KIT_FILES = [
   "src/components/courses/ReviewDrawer.tsx",
 ];
 
-// Không áp luật cho: chính bộ kit (được phép dựng từ thẻ thô), file test,
-// và modal Điểm danh (giữ nguyên, sẽ thay bằng điểm danh tự động).
-const ADMIN_KIT_IGNORES = [
-  "**/*.test.tsx",
-  "src/components/admin/kit/**",
-  "src/components/admin/contributions/AttendanceModal.tsx",
-];
+// Không áp luật cho: chính bộ kit (được phép dựng từ thẻ thô) và file test.
+const ADMIN_KIT_IGNORES = ["**/*.test.tsx", "src/components/admin/kit/**"];
 
 export default tseslint.config(
   {

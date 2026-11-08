@@ -7,9 +7,9 @@ import { AnimatePresence } from "motion/react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdjustmentModal } from "@/components/admin/contributions/AdjustmentModal";
-import { AttendanceModal } from "@/components/admin/contributions/AttendanceModal";
 import { ContributionsMetrics } from "@/components/admin/contributions/ContributionsMetrics";
 import { LeaderboardPanel } from "@/components/admin/contributions/LeaderboardPanel";
+import { MeetAttendanceModal } from "@/components/admin/contributions/MeetAttendanceModal";
 import { TransactionLedger } from "@/components/admin/contributions/TransactionLedger";
 import {
   monthStart,
@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveAccountMemberIds } from "@/lib/accounts.functions";
-import { canAdjustMember, hasAllScope } from "@/lib/admin-permissions";
+import { canAdjustMember } from "@/lib/admin-permissions";
 import { can, NO_PERMISSIONS } from "@/lib/permission-catalog";
 import { useAdminAccess } from "./admin";
 
@@ -36,9 +36,6 @@ export const Route = createFileRoute("/_authenticated/admin/contributions")({
 
 const LEDGER_LIMIT = 500;
 
-/** Meeting attendance is paused until automatic attendance ships; set to true to bring it back. */
-const ATTENDANCE_ENABLED: boolean = false;
-
 function PointsPage() {
   const qc = useQueryClient();
   const access = useAdminAccess();
@@ -50,10 +47,8 @@ function PointsPage() {
     }),
     [access.data?.department, access.data?.position],
   );
-  const canAttend = ATTENDANCE_ENABLED && can(perms, "points.attendance");
-  const attendAllDepts = hasAllScope(perms, "points.attendance");
+  const canAttend = can(perms, "points.attendance");
   const canAdjust = can(perms, "points.adjust");
-  const ownDept = me.department;
   const canViewHistory = can(perms, "points.view");
   const canPick = canAttend || canAdjust;
   const manages = canViewHistory || canPick;
@@ -185,11 +180,11 @@ function PointsPage() {
             size="admin"
             variant="outline"
             onClick={() => setAttendanceOpen(true)}
-            aria-label="Điểm danh cuộc họp"
-            title="Điểm danh cuộc họp"
+            aria-label="Điểm danh từ Google Meet"
+            title="Điểm danh từ Google Meet"
           >
             <ClipboardCheck aria-hidden />
-            <span className="hidden sm:inline">Điểm danh cuộc họp</span>
+            <span className="hidden sm:inline">Điểm danh từ Google Meet</span>
           </Button>
         )}
         {canAdjust && (
@@ -215,7 +210,7 @@ function PointsPage() {
         title="Điểm đóng góp"
         description={
           manages
-            ? "Điều hành điểm cống hiến: bảng vinh danh, điểm danh hàng loạt và sổ cái kiểm toán đầy đủ."
+            ? "Điều hành điểm cống hiến: bảng vinh danh, điểm danh từ Google Meet và sổ cái kiểm toán đầy đủ."
             : "Bảng vinh danh điểm cống hiến của cả Liên đoàn và lịch sử điểm của riêng bạn."
         }
         actions={headerActions}
@@ -241,15 +236,11 @@ function PointsPage() {
         appliedFilter={appliedFilter}
       />
 
-      {attendanceOpen && canAttend && (
-        <AttendanceModal
-          members={activeMembers}
-          allDepts={attendAllDepts}
-          ownDept={ownDept}
-          onClose={() => setAttendanceOpen(false)}
-          onDone={refresh}
-        />
-      )}
+      <AnimatePresence>
+        {attendanceOpen && canAttend && (
+          <MeetAttendanceModal onClose={() => setAttendanceOpen(false)} onDone={refresh} />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {adjustOpen && canAdjust && (

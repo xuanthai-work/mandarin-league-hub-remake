@@ -272,6 +272,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-200-DROP-DRIZZLE-MOVE-MIGRATIONS`                             | Gỡ Drizzle, chuyển migration sang supabase/migrations                                                  | 2026-11-08     | **PASS** | [task-ge-200-drop-drizzle-move-migrations.md](tasks/task-ge-200-drop-drizzle-move-migrations.md)                                                         |
 | `TASK-OC-185-GOOGLE-ACCOUNT-LINK`                                      | Thành viên tự liên kết tài khoản Google trong Cài đặt (bước 1 điểm danh Meet)                          | 2026-11-08     | **PASS** | [task-oc-185-google-account-link.md](tasks/task-oc-185-google-account-link.md)                                                                           |
 | `TASK-OC-186-MEET-ATTENDANCE-DB`                                       | Điểm danh Google Meet theo buổi họp: bảng, RPC ghi điểm (2/10 điểm, ≥ 30 phút)                         | 2026-11-08     | **PASS** | [task-oc-186-meet-attendance-db.md](tasks/task-oc-186-meet-attendance-db.md)                                                                             |
+| `TASK-OC-187-MEET-ATTENDANCE-UI`                                       | Điểm danh từ Google Meet ở trang Điểm đóng góp (server đọc Meet, xác nhận chấm)                        | 2026-11-08     | **PASS** | [task-oc-187-meet-attendance-ui.md](tasks/task-oc-187-meet-attendance-ui.md)                                                                             |
 
 ---
 
