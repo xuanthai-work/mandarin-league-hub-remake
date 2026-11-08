@@ -363,12 +363,12 @@ function MemberDashboard() {
     >
       <span
         key={tier.key}
-        className="tml-pass-pop inline-flex transition group-hover/tier:scale-110 group-active/tier:scale-95 [&_svg]:h-[22px] [&_svg]:w-[22px] md:[&_svg]:h-8 md:[&_svg]:w-8"
+        className="tml-pass-pop inline-flex transition group-hover/tier:scale-110 group-active/tier:scale-95 [&_svg]:h-[17px] [&_svg]:w-[17px] md:[&_svg]:h-8 md:[&_svg]:w-8"
       >
         <TierBadge tierKey={tone === "black" ? "leader" : tier.key} size={22} />
       </span>
       <span
-        className={`inline-block rounded-full border px-1.5 text-[9px] font-semibold md:text-[13px] ${tier.className}`}
+        className={`inline-block rounded-full border px-1.5 py-0 text-[8px] font-semibold md:px-1.5 md:py-0.5 md:text-[13px] ${tier.className}`}
       >
         {tier.label}
       </span>
@@ -644,7 +644,7 @@ function MemberDashboard() {
                           Liên Đoàn Hán Ngữ
                         </p>
                       </div>
-                      <div className="tml-banner ml-auto flex h-9 flex-1 flex-col items-end justify-center pb-1.5 pr-2.5 pt-1 md:h-16 md:pb-3 md:pr-5 md:pt-2">
+                      <div className="tml-banner ml-auto flex h-8 flex-1 flex-col items-end justify-center pb-1 pr-2 pt-0.5 md:h-16 md:pb-3 md:pr-5 md:pt-2">
                         <p className="text-sm font-bold leading-none tracking-[0.1em] text-primary-foreground md:text-2xl">
                           会员证
                         </p>
@@ -654,7 +654,7 @@ function MemberDashboard() {
                       </div>
                     </div>
                     {/* body — info left, portrait right */}
-                    <div className="relative flex min-h-0 flex-1 px-3 pb-1 pt-0.5 md:px-6 md:pb-3 md:pt-2">
+                    <div className="relative flex min-h-0 flex-1 px-3 pb-0.5 pt-0 md:px-6 md:pb-3 md:pt-2">
                       <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2.5 md:gap-6">
                         <div className="flex min-w-0 flex-col">
                           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 md:gap-x-2">
@@ -670,17 +670,17 @@ function MemberDashboard() {
                               {m.member_code}
                             </button>
                           </div>
-                          <div className="mt-1 flex flex-col md:mt-3">
-                            <p className="mt-1 text-[7px] uppercase tracking-wider opacity-60 md:text-[12px]">
+                          <div className="mt-0.5 flex flex-col md:mt-3">
+                            <p className="text-[7px] uppercase tracking-wider opacity-60 md:text-[12px]">
                               姓名 · Họ và tên
                             </p>
                             <div className="flex items-center">
-                              <span className="min-w-0 whitespace-normal break-words hyphens-none text-[14px] font-bold uppercase leading-tight tracking-tight text-primary md:text-[26px]">
+                              <span className="min-w-0 whitespace-normal break-words hyphens-none text-[13.5px] font-bold uppercase leading-tight tracking-tight text-primary md:text-[26px]">
                                 {m.full_name}
                               </span>
                             </div>
                           </div>
-                          <dl className="mt-2 flex flex-col gap-y-0.5 pb-0.5 text-[8.5px] leading-tight md:mt-4 md:gap-y-1.5 md:text-[15px]">
+                          <dl className="mt-1 flex flex-col gap-y-0.5 text-[8.5px] leading-tight md:mt-4 md:gap-y-1.5 md:text-[15px]">
                             <div className="min-w-0">
                               <dt className={labelCls}>部门 · Ban</dt>
                               <dd className="max-w-full truncate font-semibold">{deptLabel}</dd>
@@ -693,9 +693,9 @@ function MemberDashboard() {
                               <dt className={labelCls}>等级 · Hạng</dt>
                               <dd className="flex items-center gap-1 md:gap-1.5">{tierEl}</dd>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <dt className={labelCls}>入会 · Gia nhập</dt>
-                              <dd className="font-mono text-[8px] md:text-[14px]">{joined}</dd>
+                              <dd className="font-mono text-[8px] font-semibold text-foreground md:text-[14px]">{joined}</dd>
                             </div>
                           </dl>
                         </div>
