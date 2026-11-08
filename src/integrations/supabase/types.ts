@@ -255,6 +255,48 @@ export type Database = {
           },
         ];
       };
+      attendance_sessions: {
+        Row: {
+          conference_record: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          manual_ids: string[];
+          meeting_end: string;
+          meeting_kind: string;
+          meeting_start: string;
+          member_ids: string[];
+          points: number;
+          reason: string;
+        };
+        Insert: {
+          conference_record: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          manual_ids?: string[];
+          meeting_end: string;
+          meeting_kind: string;
+          meeting_start: string;
+          member_ids?: string[];
+          points: number;
+          reason: string;
+        };
+        Update: {
+          conference_record?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          manual_ids?: string[];
+          meeting_end?: string;
+          meeting_kind?: string;
+          meeting_start?: string;
+          member_ids?: string[];
+          points?: number;
+          reason?: string;
+        };
+        Relationships: [];
+      };
       benefits: {
         Row: {
           access_type: string;
@@ -2254,6 +2296,16 @@ export type Database = {
       hsk_class_seats: { Args: { _class: string }; Returns: number };
       is_admin: { Args: never; Returns: boolean };
       mark_password_changed: { Args: never; Returns: undefined };
+      meet_recorded_sessions: {
+        Args: { _records: string[] };
+        Returns: {
+          conference_record: string;
+          created_at: string;
+          created_by_label: string;
+          meeting_kind: string;
+          present_count: number;
+        }[];
+      };
       member_permissions: {
         Args: { _member: string };
         Returns: {
@@ -2354,6 +2406,19 @@ export type Database = {
         }[];
       };
       record_login: { Args: never; Returns: undefined };
+      record_meet_attendance: {
+        Args: {
+          _actor: string;
+          _conference_record: string;
+          _manual: string[];
+          _matched: string[];
+          _meeting_end: string;
+          _meeting_kind: string;
+          _meeting_start: string;
+          _reason: string;
+        };
+        Returns: string;
+      };
       recruitment_answer_count: {
         Args: { _question?: string; _topic?: string };
         Returns: number;
