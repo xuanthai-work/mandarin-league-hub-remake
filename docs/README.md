@@ -270,6 +270,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-199-INTERNAL-AI-GOOGLE`                                       | AI nội bộ chuyển từ Lovable Gateway sang Google Gemini (GOOGLE_AI_INTERNAL_KEY)                        | 2026-11-08     | **PASS** | [task-ge-199-internal-ai-google.md](tasks/task-ge-199-internal-ai-google.md)                                                                             |
 | `TASK-OC-184-MOVE-PNPM-SETTINGS-TO-WORKSPACE-YAML`                     | Chuyển cấu hình pnpm từ .npmrc sang pnpm-workspace.yaml (hết warning npm)                              | 2026-11-08     | **PASS** | [task-oc-184-move-pnpm-settings-to-workspace-yaml.md](tasks/task-oc-184-move-pnpm-settings-to-workspace-yaml.md)                                         |
 | `TASK-GE-200-DROP-DRIZZLE-MOVE-MIGRATIONS`                             | Gỡ Drizzle, chuyển migration sang supabase/migrations                                                  | 2026-11-08     | **PASS** | [task-ge-200-drop-drizzle-move-migrations.md](tasks/task-ge-200-drop-drizzle-move-migrations.md)                                                         |
+| `TASK-OC-185-GOOGLE-ACCOUNT-LINK`                                      | Thành viên tự liên kết tài khoản Google trong Cài đặt (bước 1 điểm danh Meet)                          | 2026-11-08     | **PASS** | [task-oc-185-google-account-link.md](tasks/task-oc-185-google-account-link.md)                                                                           |
 
 ---
 

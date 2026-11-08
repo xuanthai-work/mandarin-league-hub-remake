@@ -55,6 +55,13 @@ export const INTEGRATIONS: Integration[] = [
     required: ["GOOGLE_API_KEY"],
     optional: [],
   },
+  {
+    id: "google_oauth",
+    label: "Đăng nhập Google (điểm danh Meet)",
+    affects: "Thành viên liên kết tài khoản Google và trưởng ban lấy điểm danh từ Google Meet.",
+    required: ["GOOGLE_OAUTH_CLIENT_ID"],
+    optional: [],
+  },
 ];
 
 const isSet = (env: Record<string, string | undefined>, key: string) =>

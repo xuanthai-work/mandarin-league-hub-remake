@@ -1197,6 +1197,35 @@ export type Database = {
           },
         ];
       };
+      member_google_accounts: {
+        Row: {
+          google_email: string;
+          google_sub: string;
+          linked_at: string;
+          member_id: string;
+        };
+        Insert: {
+          google_email?: string;
+          google_sub: string;
+          linked_at?: string;
+          member_id: string;
+        };
+        Update: {
+          google_email?: string;
+          google_sub?: string;
+          linked_at?: string;
+          member_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "member_google_accounts_member_id_fkey";
+            columns: ["member_id"];
+            isOneToOne: true;
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       member_library_sessions: {
         Row: {
           auth_session_id: string;
@@ -2276,6 +2305,10 @@ export type Database = {
         }[];
       };
       my_department: { Args: never; Returns: Json };
+      my_google_link: {
+        Args: never;
+        Returns: { google_email: string; linked_at: string }[];
+      };
       my_member_id: { Args: never; Returns: string };
       my_pass: {
         Args: never;
@@ -2346,6 +2379,7 @@ export type Database = {
       suggest_certificate_code: { Args: never; Returns: string };
       suggest_hsk_code: { Args: never; Returns: string };
       suggest_hsk_code_v2: { Args: { _prefix?: string }; Returns: string };
+      unlink_my_google: { Args: never; Returns: undefined };
       update_my_profile: {
         Args: { _avatar_path: string; _full_name: string };
         Returns: undefined;

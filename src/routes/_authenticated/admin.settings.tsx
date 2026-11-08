@@ -1,11 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowUpRight, Eye, Globe, Palette, ServerCog, ShieldCheck, UserRound } from "lucide-react";
+import {
+  ArrowUpRight,
+  Eye,
+  Globe,
+  Palette,
+  ServerCog,
+  ShieldCheck,
+  UserRound,
+  Video,
+} from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { HomeLink } from "@/components/site/HomeLink";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppearanceSection } from "@/components/admin/settings/AppearanceSection";
+import { GoogleLinkSection } from "@/components/admin/settings/GoogleLinkSection";
 import { PrivacySection } from "@/components/admin/settings/PrivacySection";
 import { ProfileSection } from "@/components/admin/settings/ProfileSection";
 import { SecuritySection } from "@/components/admin/settings/SecuritySection";
@@ -41,6 +51,7 @@ function AdminSettings() {
         { id: "security", label: "Bảo mật", icon: ShieldCheck },
         { id: "appearance", label: "Giao diện", icon: Palette },
         ...(me.data?.member ? [{ id: "privacy", label: "Riêng tư", icon: Eye }] : []),
+        ...(me.data?.member ? [{ id: "google", label: "Google Meet", icon: Video }] : []),
         ...(isAdmin ? [{ id: "system", label: "Hệ thống", icon: ServerCog }] : []),
       ];
   const itemsKey = items.map((i) => i.id).join(",");
@@ -159,6 +170,7 @@ function AdminSettings() {
               <SecuritySection me={me.data} />
               <AppearanceSection />
               {me.data.member && <PrivacySection member={me.data.member} />}
+              {me.data.member && <GoogleLinkSection />}
               {isAdmin && <SystemSection />}
             </>
           ) : (
