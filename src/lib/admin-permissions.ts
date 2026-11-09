@@ -103,9 +103,3 @@ export function assignablePositions(
   if (p.isAdmin) return [...positions];
   return positions.filter((x) => outranksPosition(me.position ?? "Thành viên", x));
 }
-
-/** Lands on /admin only when the user has real work there, not just pages every member can read. */
-export function landsOnAdmin(allowed: string[] | "all"): boolean {
-  if (allowed === "all") return true;
-  return allowed.some((s) => s !== "members" && s !== "departments" && s !== "settings");
-}

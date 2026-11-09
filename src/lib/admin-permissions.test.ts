@@ -7,7 +7,6 @@ import {
   departmentsFor,
   allowedSections,
   hasAllScope,
-  landsOnAdmin,
   onlyPersonalSections,
   withPersonalSections,
 } from "./admin-permissions";
@@ -101,20 +100,6 @@ describe("allowedSections", () => {
     );
     expect(allowed).toEqual(["members", "news", "content"]);
   });
-});
-
-describe("landsOnAdmin", () => {
-  it("sends admins to the admin portal", () => expect(landsOnAdmin("all")).toBe(true));
-  it("keeps member-only users on the dashboard", () =>
-    expect(landsOnAdmin(["members", "settings"])).toBe(false));
-  it("keeps users who only read members and departments on the dashboard", () =>
-    expect(landsOnAdmin(["members", "departments", "settings"])).toBe(false));
-  it("sends users with tasks to admin", () => expect(landsOnAdmin(["tasks"])).toBe(true));
-  it("sends users with contributions to admin", () =>
-    expect(landsOnAdmin(["contributions"])).toBe(true));
-  it("sends users with a module section to admin", () =>
-    expect(landsOnAdmin(["members", "news", "settings"])).toBe(true));
-  it("keeps users without sections on the dashboard", () => expect(landsOnAdmin([])).toBe(false));
 });
 
 describe("withPersonalSections", () => {

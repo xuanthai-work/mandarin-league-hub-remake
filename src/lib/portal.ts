@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { allowedSections, landsOnAdmin } from "@/lib/admin-permissions";
 import { NO_PERMISSIONS, parseMyPermissions } from "@/lib/permission-catalog";
 
 type Me = {
@@ -8,7 +7,7 @@ type Me = {
 };
 
 export async function routeAfterLogin(): Promise<
-  "/admin" | "/member/dashboard" | "/change-password" | "blocked" | "none"
+  "/admin" | "/change-password" | "blocked" | "none"
 > {
   await supabase.rpc("record_login");
   const { data } = await supabase.rpc("my_account");
@@ -19,6 +18,5 @@ export async function routeAfterLogin(): Promise<
   if (me.account && me.account.account_status !== "active") return "blocked";
   if (!me.account && !isAdmin) return "none";
   if (me.account?.must_change_password) return "/change-password";
-  if (isAdmin) return "/admin";
-  return landsOnAdmin(allowedSections(perms)) ? "/admin" : "/member/dashboard";
+  return "/admin";
 }
