@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrlCache } from "@/lib/signed-url-cache";
 
 /** Private bucket that holds every member avatar under `<user_id>/…`. */
-export const AVATAR_BUCKET = "avatars";
+const AVATAR_BUCKET = "avatars";
 
 const SIGN_TTL_SEC = 60 * 60 * 6; // 6 giờ
 const urlCache = createSignedUrlCache({
@@ -16,7 +16,7 @@ const urlCache = createSignedUrlCache({
  * Ký nhiều `avatar_path` trong một request (`createSignedUrls`) và dùng lại link
  * đã ký qua cache, nên danh sách thành viên chỉ tốn một lượt gọi storage.
  */
-export async function resolveAvatarUrls(
+async function resolveAvatarUrls(
   paths: (string | null | undefined)[],
 ): Promise<Map<string, string>> {
   const cleanPaths = Array.from(new Set(paths.filter(Boolean) as string[]));
@@ -40,11 +40,6 @@ export async function resolveAvatarUrls(
   }
 
   return hits;
-}
-
-/** Signed URL cho một `avatar_path` đã đổi ảnh (bỏ link cũ trong cache). */
-export function forgetAvatarUrl(path: string | null | undefined) {
-  if (path) urlCache.forget(path);
 }
 
 /** Hook lấy map `avatar_path → signed URL` cho một danh sách thành viên. */

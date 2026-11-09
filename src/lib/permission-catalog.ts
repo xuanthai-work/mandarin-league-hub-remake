@@ -11,8 +11,6 @@ export const DEPARTMENT_IDS = [
   "finance",
   "tech",
 ] as const;
-/** "All departments" tab of the matrix: applies the same position in every ordinary department. */
-export const ALL_DEPARTMENTS = "*" as const;
 
 export const POSITIONS = [
   { name: "Co-founder", rank: 4, executive: true },

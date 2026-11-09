@@ -1,6 +1,6 @@
 /** Google scope needed to read Meet conference records and participants. */
 export const MEET_SCOPE = "https://www.googleapis.com/auth/meetings.space.readonly";
-export const MEET_MIN_MINUTES = 30;
+const MEET_MIN_MINUTES = 30;
 export const MEET_POINTS = { work: 2, club: 10 } as const;
 export type MeetKind = keyof typeof MEET_POINTS;
 export const MEET_KIND_LABEL: Record<MeetKind, string> = {

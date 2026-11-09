@@ -45,20 +45,15 @@ export function actionGroups(): ActionGroup[] {
 }
 
 export const ALL_DEPARTMENTS_KEY = "*";
-export const ORDINARY_POSITIONS = [
-  "Trưởng Ban",
-  "Phó Ban",
-  "Thành viên",
-  "Cố vấn chuyên môn",
-] as const;
-export const EXECUTIVE_POSITIONS = ["Co-founder", "Thư ký"] as const;
+const ORDINARY_POSITIONS = ["Trưởng Ban", "Phó Ban", "Thành viên", "Cố vấn chuyên môn"] as const;
+const EXECUTIVE_POSITIONS = ["Co-founder", "Thư ký"] as const;
 
 /** Matrix columns of a department tab (mirrors the CHECK constraint of position_permissions). */
 export function positionsFor(department: string): readonly string[] {
   return department === "executive" ? EXECUTIVE_POSITIONS : ORDINARY_POSITIONS;
 }
 
-export function departmentLabel(department: string): string {
+function departmentLabel(department: string): string {
   return department === ALL_DEPARTMENTS_KEY ? "Tất cả các ban" : deptName(department);
 }
 

@@ -1,8 +1,8 @@
 /** Maps the 3 TML hostnames to the paths each portal serves. Other hosts (preview, localhost) never redirect. */
-export const ROOT_DOMAIN = "themandarinleague.bond";
-export const MAIN_ORIGIN = `https://${ROOT_DOMAIN}`;
-export const JOIN_ORIGIN = `https://join.${ROOT_DOMAIN}`;
-export const MEMBER_ORIGIN = `https://member.${ROOT_DOMAIN}`;
+const ROOT_DOMAIN = "themandarinleague.bond";
+const MAIN_ORIGIN = `https://${ROOT_DOMAIN}`;
+const JOIN_ORIGIN = `https://join.${ROOT_DOMAIN}`;
+const MEMBER_ORIGIN = `https://member.${ROOT_DOMAIN}`;
 
 export type Portal = "main" | "join" | "member" | "other";
 

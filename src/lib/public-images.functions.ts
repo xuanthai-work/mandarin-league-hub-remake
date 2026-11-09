@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 /** Signs images only for content that is publicly published; storage itself is not readable by visitors. */
-export const signPublicImages = createServerFn({ method: "POST" })
+const signPublicImages = createServerFn({ method: "POST" })
   .validator((d) =>
     z
       .object({

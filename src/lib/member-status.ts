@@ -1,9 +1,4 @@
 export type MemberStatus = "active" | "on_leave" | "left";
-export const MEMBER_STATUS_LABEL: Record<MemberStatus, string> = {
-  active: "Đang hoạt động",
-  on_leave: "Tạm dừng hoạt động",
-  left: "Đã rời",
-};
 
 /** Whole days from `today` until `until` (negative = overdue). */
 export function leaveDaysLeft(until: string | null | undefined, today = new Date()) {

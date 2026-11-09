@@ -32,7 +32,7 @@ export type AdminSection = { slug: string; label: string; icon: LucideIcon };
 /** A named block of the admin sidebar; groups keep 18 modules scannable. */
 export type AdminNavGroup = { title?: string; sections: AdminSection[] };
 
-export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     title: "Nhân sự & Tổ chức",
     sections: [

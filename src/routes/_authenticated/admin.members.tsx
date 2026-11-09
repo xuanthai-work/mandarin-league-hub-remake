@@ -36,7 +36,6 @@ import { FormField } from "@/components/admin/kit/FormField";
 import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MemberPermissionsSection } from "@/components/admin/members/MemberPermissionsSection";

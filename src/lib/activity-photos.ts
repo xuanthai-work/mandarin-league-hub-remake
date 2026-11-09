@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrlCache } from "@/lib/signed-url-cache";
 
-export const PHOTO_BUCKET = "activity-photos";
+const PHOTO_BUCKET = "activity-photos";
 
 const SIGN_TTL_SEC = 60 * 60 * 6; // giữ nguyên 6 giờ như hiện tại
 const urlCache = createSignedUrlCache({

@@ -37,8 +37,6 @@ export const UNCONFIRMED =
   "Thông tin này chưa được xác nhận trong tài liệu công khai đã duyệt. Vui lòng liên hệ community@themandarinleague.bond để được hỗ trợ.";
 export const QUOTA_MESSAGE =
   "Đã chạm hạn mức Gemini của Google (429). Vui lòng thử lại khi hạn mức được khôi phục; hệ thống không tự gửi lại câu hỏi.";
-export const TUTOR_NOTICE =
-  "Nội dung do AI tạo để hỗ trợ học tập, có thể có sai sót; không phải đề thi hay chứng chỉ chính thức.";
 
 const normalize = (text: string) =>
   text

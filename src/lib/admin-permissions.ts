@@ -34,7 +34,7 @@ export function allowedSections(p: MyPermissions): string[] | "all" {
 }
 
 /** Sections every active member account gets: own tasks, the league leaderboard, settings. */
-export const PERSONAL_SECTIONS = ["tasks", "contributions", "settings"] as const;
+const PERSONAL_SECTIONS = ["tasks", "contributions", "settings"] as const;
 
 export function withPersonalSections(allowed: string[] | "all"): string[] | "all" {
   if (allowed === "all") return allowed;

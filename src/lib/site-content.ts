@@ -25,7 +25,7 @@ export const SITE_DEFAULTS: SiteSettings = {
   footer_note: "",
 };
 
-export const HOME_SECTIONS = {
+const HOME_SECTIONS = {
   about: "Giới thiệu",
   carousel: "Khoảnh khắc TML",
   courses: "Khóa học HSK",
@@ -82,7 +82,7 @@ const DEFAULTS = { site: SITE_DEFAULTS, home: HOME_DEFAULTS };
 
 /** Ô chữ: chữ tùy chỉnh chỉ dùng khi khách xem tiếng Việt; zh/en rơi về bản dịch có sẵn.
  *  Liên kết, email, mạng xã hội KHÔNG nằm ở đây vì áp dụng cho mọi ngôn ngữ. */
-export const VI_ONLY_KEYS = {
+const VI_ONLY_KEYS = {
   home: [
     "hero_badge",
     "hero_title",

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { BookOpen, CalendarDays, Users, Video, Wallet } from "lucide-react";
+import { CalendarDays, Users, Video, Wallet } from "lucide-react";
 import { ProgramCard } from "@/components/courses/ProgramCard";
 import { EnrollmentDialog } from "@/components/courses/EnrollmentDialog";
 import {
@@ -14,13 +14,7 @@ import { PageHero } from "@/components/site/SiteLayout";
 import { EmptyState } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 import { useTr } from "@/lib/i18n";
-import {
-  programFee,
-  STATUS_LABEL,
-  TYPE_LABEL,
-  usePublishedPrograms,
-  type Program,
-} from "@/lib/programs";
+import { STATUS_LABEL, usePublishedPrograms } from "@/lib/programs";
 
 export const Route = createFileRoute("/courses/")({
   staticData: { sitemap: true },

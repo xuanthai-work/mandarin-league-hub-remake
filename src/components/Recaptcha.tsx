@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
-export const RECAPTCHA_SITE_KEY = "6LeuDeUtAAAAAFaxBcOMSkdRwnwaIXawor3dQwXI";
+const RECAPTCHA_SITE_KEY = "6LeuDeUtAAAAAFaxBcOMSkdRwnwaIXawor3dQwXI";
 
 type G = {
   render: (el: HTMLElement, o: Record<string, unknown>) => number;

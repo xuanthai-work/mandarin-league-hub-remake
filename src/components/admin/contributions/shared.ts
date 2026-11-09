@@ -123,12 +123,6 @@ export const POINT_LIMITS = {
   adjustmentReasonMin: 10,
 } as const;
 
-/** `YYYY-MM-DD` → `DD/MM/YYYY` without timezone drift. */
-export function dmyFromISO(value: string) {
-  const [year, month, day] = value.split("-");
-  return year && month && day ? `${day}/${month}/${year}` : value;
-}
-
 export type ChunkResult<T> = { item: T; error: string | null };
 
 /**

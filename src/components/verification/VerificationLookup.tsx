@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import {
   findVerificationRecord,
   formatVerificationDate,
@@ -298,12 +297,10 @@ function ResultHeader({
   title,
   subtitle,
   danger = false,
-  demo = true,
 }: {
   title: string;
   subtitle: string;
   danger?: boolean;
-  demo?: boolean;
 }) {
   const tr = useTr();
   return (
@@ -647,7 +644,6 @@ function RevokedResult({ record }: { record: VerificationRecord }) {
         title={record.kind === "hsk" ? "Kết quả đã thu hồi" : "Chứng nhận đã thu hồi"}
         subtitle="REVOKED"
         danger
-        demo={(record as { isDemo?: boolean }).isDemo !== false}
       />
       <div className="grid gap-5 p-5 sm:grid-cols-2 md:p-8">
         <Detail icon={ShieldAlert} label="Mã xác minh" value={record.verificationId} mono />

@@ -31,23 +31,12 @@ export const TEACHER_TYPE_LABEL: Record<TeacherType, string> = {
   collaborator: "Giáo viên cộng tác",
   guest: "Khách mời giảng dạy",
 };
-export const TEACHER_STATUS_LABEL: Record<TeacherStatus, string> = {
-  draft: "Bản nháp",
-  visible: "Đang hiển thị",
-  hidden: "Đã ẩn",
-};
 export const COURSE_ROLE_LABEL: Record<CourseTeacherRole, string> = {
   lead: "Giáo viên phụ trách",
   instructor: "Giáo viên giảng dạy",
   assistant: "Giáo viên trợ giảng",
   guest: "Giáo viên khách mời",
 };
-export const PROGRAM_OPTIONS = [
-  "HSKK",
-  "Giao tiếp tiếng Trung",
-  "Luyện thi HSK",
-  "Văn hóa Trung Hoa",
-];
 
 const PUBLIC_COLS =
   "id, full_name, chinese_name, title, avatar_url, bio, bio_zh, specialty, chinese_level, certificates, experience, teaching_levels, programs, teacher_type, show_on_home, is_featured, sort_order";
@@ -76,7 +65,7 @@ const withPhoto = async <T extends { avatar_url: string }>(rows: T[]) =>
   );
 
 /** Featured first, then admin order. */
-export const sortTeachers = <T extends { is_featured: boolean; sort_order: number }>(list: T[]) =>
+const sortTeachers = <T extends { is_featured: boolean; sort_order: number }>(list: T[]) =>
   [...list].sort(
     (a, b) => Number(b.is_featured) - Number(a.is_featured) || a.sort_order - b.sort_order,
   );

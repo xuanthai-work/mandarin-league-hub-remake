@@ -1,12 +1,5 @@
 import type { Course, CourseStatus } from "./types";
 
-export const COURSE_STATUSES: CourseStatus[] = [
-  "Đang tuyển sinh",
-  "Sắp khai giảng",
-  "Đã đủ lớp",
-  "Đã kết thúc",
-];
-
 const NAMES = [
   "Nhập môn tiếng Trung",
   "Giao tiếp cơ bản",

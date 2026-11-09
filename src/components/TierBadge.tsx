@@ -14,7 +14,7 @@ const METAL: Record<string, string> = {
   leader: "obsidian",
 };
 
-export const TIER_INFO: Record<string, { zh: string; motto: string; perks: string[] }> = {
+const TIER_INFO: Record<string, { zh: string; motto: string; perks: string[] }> = {
   bronze: {
     zh: "见习",
     motto: "Khởi đầu hành trình học hỏi và hòa nhập cùng Liên Đoàn.",

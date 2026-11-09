@@ -28,7 +28,7 @@ import { CrystalParticles } from "./CrystalParticles";
 import { useSiteContent } from "@/lib/site-content";
 import { HomeLink } from "./HomeLink";
 
-export const NAV = [
+const NAV = [
   { to: "/", label: "Trang chủ" },
   { to: "/about", label: "Giới thiệu" },
   { to: "/organization", label: "Cơ cấu tổ chức" },
@@ -41,8 +41,6 @@ export const NAV = [
 
 // Items collapsed into the "More" menu on narrow desktop widths (1024–1279px).
 const NAV_MORE: readonly string[] = ["/organization", "/verify", "/contact"];
-
-export const TAGLINE = "Connecting learners, educators & opportunities across Vietnam and China.";
 
 const FOOTER_EXTRA = [
   { to: "/join", label: "Tuyển thành viên" },
@@ -347,27 +345,5 @@ export function PageHero({
         {desc && <p className="mt-4 max-w-2xl text-muted-foreground">{tr(desc)}</p>}
       </div>
     </section>
-  );
-}
-
-export function ComingSoon({
-  eyebrow,
-  title,
-  desc,
-}: {
-  eyebrow: string;
-  title: string;
-  desc: string;
-}) {
-  const { t } = useT();
-  return (
-    <>
-      <PageHero eyebrow={eyebrow} title={title} desc={desc} />
-      <div className="mx-auto max-w-7xl px-4 py-16 md:px-6">
-        <div className="rounded-2xl border border-dashed border-primary/40 bg-accent/40 p-10 text-center">
-          <p className="text-base font-semibold text-primary-deep">{t("soon.text")}</p>
-        </div>
-      </div>
-    </>
   );
 }

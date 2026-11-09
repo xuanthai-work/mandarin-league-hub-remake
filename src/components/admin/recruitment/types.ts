@@ -43,7 +43,7 @@ export type Confirm = (opts: {
 }) => Promise<boolean>;
 
 /** Question kinds that carry a list of options the applicant picks from. */
-export const CHOICE_KINDS = ["single", "multi"];
+const CHOICE_KINDS = ["single", "multi"];
 export const isChoiceKind = (kind: string) => CHOICE_KINDS.includes(canonicalKind(kind));
 
 /** Swaps `sort_order` of two rows of the same table (topics or questions). */

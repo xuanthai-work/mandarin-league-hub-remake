@@ -52,7 +52,7 @@ export function useT() {
 
 import { PHRASES } from "./phrases";
 /** Translate a Vietnamese source phrase; falls back to the original text. */
-export function trPhrase(lang: Lang, vi: string): string {
+function trPhrase(lang: Lang, vi: string): string {
   if (lang === "vi") return vi;
   const p = PHRASES[vi];
   return p ? (lang === "zh" ? p[0] : p[1]) : vi;

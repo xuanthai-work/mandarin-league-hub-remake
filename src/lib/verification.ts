@@ -62,7 +62,7 @@ export interface HskRecord {
 
 export type VerificationRecord = CertificateRecord | HskRecord;
 
-export const DEMO_CODES = {
+const DEMO_CODES = {
   certificate: "TML-CERT-2026-000128",
   hsk: "HSK-TML-2026-000128",
 } as const;

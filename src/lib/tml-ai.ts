@@ -25,8 +25,6 @@ export type ChatMessage = {
 };
 
 export const HSK_LEVELS: HskLevel[] = ["general", 1, 2, 3, 4, 5, 6];
-export const levelLabel = (level: HskLevel) =>
-  level === "general" ? "Tiếng Trung tổng quát" : `HSK ${level}`;
 
 export function suggestedPrompts(mode: AssistantMode, level: HskLevel): string[] {
   if (mode === "community")

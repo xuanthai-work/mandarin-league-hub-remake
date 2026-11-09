@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HOME_DEFAULTS, SITE_DEFAULTS, localizeContent, mergeContent } from "./site-content";
+import { localizeContent, mergeContent } from "./site-content";
 
 describe("site content fallback", () => {
   it("blank fields fall back to the default email", () => {

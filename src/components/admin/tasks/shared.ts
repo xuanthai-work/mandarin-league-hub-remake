@@ -95,7 +95,7 @@ export function initials(name: string) {
  * ------------------------------------------------------------------------- */
 
 /** Trim leftover `[Nhiệm vụ nhóm cùng: …]` tail so legacy card descriptions read cleanly. */
-export function cleanDescription(text: string) {
+function cleanDescription(text: string) {
   return text
     .replace(/\[Nhiệm vụ nhóm cùng:[^\]]*\]/gi, "")
     .replace(/\n{3,}/g, "\n\n")
@@ -226,9 +226,6 @@ export function serializeDescription(description: string, attachments: TaskAttac
 
   return `${body ? `${body}\n\n` : ""}📎 Tài liệu liên quan:\n${lines.join("\n")}`;
 }
-
-/** Description without the document block, for Kanban card previews. */
-export const descriptionBody = (raw: string) => parseAttachments(raw).description;
 
 /** Column definition: the first column also catches tasks sent back for rework. */
 export const BOARD_COLUMNS: {
@@ -462,7 +459,7 @@ export type DeptTone = {
  * Fixed pastel identity for the nine official TML departments, so no two Ban ever
  * share a colour no matter how the hash falls.
  */
-export const EXPLICIT_DEPT_TONE: Record<string, DeptTone> = {
+const EXPLICIT_DEPT_TONE: Record<string, DeptTone> = {
   // Ban Điều hành — royal indigo
   executive: {
     card: "border-indigo-200/70 bg-indigo-50/80 dark:border-indigo-400/20 dark:bg-indigo-400/10",
