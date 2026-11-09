@@ -277,6 +277,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-189-MEET-ATTENDANCE-TIDY-AVATARS`                             | Làm gọn code điểm danh Meet, thêm ảnh đại diện vào cửa sổ điểm danh                                    | 2026-11-08     | **PASS** | [task-oc-189-meet-attendance-tidy-avatars.md](tasks/task-oc-189-meet-attendance-tidy-avatars.md)                                                         |
 | `TASK-GE-201-LOGIN-LANDS-ON-ADMIN-FOR-ALL-MEMBERS`                     | Đăng nhập xong mọi thành viên vào /admin (bỏ landsOnAdmin)                                             | 2026-11-10     | **PASS** | [task-ge-201-login-lands-on-admin-for-all-members.md](tasks/task-ge-201-login-lands-on-admin-for-all-members.md)                                         |
 | `TASK-GE-202-DEAD-CODE-CLEANUP`                                        | Dọn code chết: 11 file, export và import thừa                                                          | 2026-11-10     | **PASS** | [task-ge-202-dead-code-cleanup.md](tasks/task-ge-202-dead-code-cleanup.md)                                                                               |
+| `TASK-GE-203-REMOVE-STALE-I18N-KEY-AND-AGENTS-NOTE`                    | Xóa key soon.text, cập nhật AGENTS.md (routeAfterLogin)                                                | 2026-11-10     | **PASS** | [task-ge-203-remove-stale-i18n-key-and-agents-note.md](tasks/task-ge-203-remove-stale-i18n-key-and-agents-note.md)                                       |
 
 ---
 

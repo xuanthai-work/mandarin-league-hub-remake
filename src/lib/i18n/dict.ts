@@ -48,11 +48,6 @@ export const DICT = {
     zh: "面向越南人的线上中文学习社区——系统学习 HSK、交流文化、共同成长。",
     en: "An online Chinese learning community for Vietnamese learners — structured HSK study, cultural exchange and growing together.",
   },
-  "soon.text": {
-    vi: "Trang này đang được xây dựng và sẽ ra mắt trong giai đoạn tiếp theo.",
-    zh: "本页面正在建设中，将在下一阶段上线。",
-    en: "This page is under construction and will launch in the next phase.",
-  },
   "pref.settings": { vi: "Ngôn ngữ & giao diện", zh: "语言与主题", en: "Language & theme" },
 } satisfies Record<string, Entry>;
 
