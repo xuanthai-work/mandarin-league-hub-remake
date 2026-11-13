@@ -105,7 +105,7 @@ describe("allowedSections", () => {
 describe("withPersonalSections", () => {
   it("keeps full access untouched and gives an empty list the personal sections", () => {
     expect(withPersonalSections("all")).toBe("all");
-    expect(withPersonalSections([])).toEqual(["tasks", "contributions", "settings"]);
+    expect(withPersonalSections([])).toEqual(["tasks", "contributions", "settings", "feedback"]);
   });
 
   it("adds personal sections once, keeping module sections intact without duplicates", () => {
@@ -114,11 +114,13 @@ describe("withPersonalSections", () => {
       "tasks",
       "contributions",
       "settings",
+      "feedback",
     ]);
-    expect(withPersonalSections(["tasks", "contributions", "settings"])).toEqual([
+    expect(withPersonalSections(["tasks", "contributions", "settings", "feedback"])).toEqual([
       "tasks",
       "contributions",
       "settings",
+      "feedback",
     ]);
   });
 });
@@ -128,6 +130,7 @@ describe("onlyPersonalSections", () => {
     expect(onlyPersonalSections(["tasks", "contributions", "settings"])).toBe(true);
     expect(onlyPersonalSections(["contributions"])).toBe(true);
     expect(onlyPersonalSections(["settings"])).toBe(true);
+    expect(onlyPersonalSections(["feedback"])).toBe(true);
     expect(onlyPersonalSections([])).toBe(true);
   });
 

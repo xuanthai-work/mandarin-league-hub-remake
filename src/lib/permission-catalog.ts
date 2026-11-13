@@ -224,6 +224,12 @@ export const PERMISSION_ACTIONS = [
     label: "Xuất bản Trang và Nội dung",
     scoped: false,
   },
+  {
+    code: "feedback.review",
+    module: "feedback",
+    label: "Xem và xử lý mọi đơn nhận xét (trạng thái, phản hồi)",
+    scoped: false,
+  },
   { code: "trash.purge", module: "trash", label: "Xóa vĩnh viễn trong Thùng rác", scoped: false },
 ] as const;
 export type PermissionCode = (typeof PERMISSION_ACTIONS)[number]["code"];

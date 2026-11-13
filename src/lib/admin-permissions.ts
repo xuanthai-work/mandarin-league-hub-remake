@@ -33,15 +33,15 @@ export function allowedSections(p: MyPermissions): string[] | "all" {
     .map(([slug]) => slug);
 }
 
-/** Sections every active member account gets: own tasks, the league leaderboard, settings. */
-const PERSONAL_SECTIONS = ["tasks", "contributions", "settings"] as const;
+/** Sections every active member account gets: own tasks, the league leaderboard, settings, feedback. */
+const PERSONAL_SECTIONS = ["tasks", "contributions", "settings", "feedback"] as const;
 
 export function withPersonalSections(allowed: string[] | "all"): string[] | "all" {
   if (allowed === "all") return allowed;
   return [...allowed, ...PERSONAL_SECTIONS.filter((s) => !allowed.includes(s))];
 }
 
-/** true khi người dùng chỉ có các mục cá nhân (Nhiệm vụ của mình + Điểm đóng góp + Cài đặt), không có module quản trị nào. */
+/** true khi người dùng chỉ có các mục cá nhân (Nhiệm vụ của mình + Điểm đóng góp + Cài đặt + Nhận xét), không có module quản trị nào. */
 export function onlyPersonalSections(allowed: string[] | "all"): boolean {
   if (allowed === "all") return false;
   return allowed.every((s) => (PERSONAL_SECTIONS as readonly string[]).includes(s));

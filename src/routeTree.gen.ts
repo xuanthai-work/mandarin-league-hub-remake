@@ -51,6 +51,7 @@ import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminContributionsRouteImport } from './routes/_authenticated/admin.contributions'
 import { Route as AuthenticatedAdminCoursesRouteImport } from './routes/_authenticated/admin.courses'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin.departments'
+import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authenticated/admin.feedback'
 import { Route as AuthenticatedAdminHskRouteImport } from './routes/_authenticated/admin.hsk'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
 import { Route as AuthenticatedAdminNewsRouteImport } from './routes/_authenticated/admin.news'
@@ -291,6 +292,12 @@ const AuthenticatedAdminDepartmentsRoute =
     path: '/departments',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminFeedbackRoute =
+  AuthenticatedAdminFeedbackRouteImport.update({
+    id: '/feedback',
+    path: '/feedback',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminHskRoute = AuthenticatedAdminHskRouteImport.update({
   id: '/hsk',
   path: '/hsk',
@@ -443,6 +450,7 @@ export interface FileRoutesByFullPath {
   '/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/admin/hsk': typeof AuthenticatedAdminHskRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/news': typeof AuthenticatedAdminNewsRoute
@@ -503,6 +511,7 @@ export interface FileRoutesByTo {
   '/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/admin/hsk': typeof AuthenticatedAdminHskRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/news': typeof AuthenticatedAdminNewsRoute
@@ -568,6 +577,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/contributions': typeof AuthenticatedAdminContributionsRoute
   '/_authenticated/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/_authenticated/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/_authenticated/admin/hsk': typeof AuthenticatedAdminHskRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/news': typeof AuthenticatedAdminNewsRoute
@@ -633,6 +643,7 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/courses'
     | '/admin/departments'
+    | '/admin/feedback'
     | '/admin/hsk'
     | '/admin/members'
     | '/admin/news'
@@ -693,6 +704,7 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/courses'
     | '/admin/departments'
+    | '/admin/feedback'
     | '/admin/hsk'
     | '/admin/members'
     | '/admin/news'
@@ -757,6 +769,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/contributions'
     | '/_authenticated/admin/courses'
     | '/_authenticated/admin/departments'
+    | '/_authenticated/admin/feedback'
     | '/_authenticated/admin/hsk'
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/news'
@@ -1112,6 +1125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDepartmentsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/feedback': {
+      id: '/_authenticated/admin/feedback'
+      path: '/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/hsk': {
       id: '/_authenticated/admin/hsk'
       path: '/hsk'
@@ -1265,6 +1285,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminContributionsRoute: typeof AuthenticatedAdminContributionsRoute
   AuthenticatedAdminCoursesRoute: typeof AuthenticatedAdminCoursesRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
+  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute
   AuthenticatedAdminHskRoute: typeof AuthenticatedAdminHskRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminNewsRoute: typeof AuthenticatedAdminNewsRoute
@@ -1289,6 +1310,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminContributionsRoute: AuthenticatedAdminContributionsRoute,
   AuthenticatedAdminCoursesRoute: AuthenticatedAdminCoursesRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
+  AuthenticatedAdminFeedbackRoute: AuthenticatedAdminFeedbackRoute,
   AuthenticatedAdminHskRoute: AuthenticatedAdminHskRoute,
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminNewsRoute: AuthenticatedAdminNewsRoute,

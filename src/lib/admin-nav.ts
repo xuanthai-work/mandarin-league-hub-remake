@@ -19,6 +19,7 @@ import {
   Settings,
   Megaphone,
   Gift,
+  MessageSquarePlus,
 } from "lucide-react";
 
 /** Badge text for the signed-in user: the admin flag first, then the real position from `members`. */
@@ -69,6 +70,7 @@ const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { slug: "content", label: "Trang & Nội dung", icon: FileText },
       { slug: "permissions", label: "Phân quyền", icon: KeyRound },
       { slug: "settings", label: "Cài đặt", icon: Settings },
+      { slug: "feedback", label: "Nhận xét", icon: MessageSquarePlus },
     ],
   },
 ];

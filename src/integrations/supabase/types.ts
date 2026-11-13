@@ -913,6 +913,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      feedbacks: {
+        Row: {
+          admin_note: string;
+          content: string;
+          created_at: string;
+          id: string;
+          member_id: string;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          screenshot_url: string;
+          status: string;
+          title: string;
+          type: string;
+          updated_at: string;
+        };
+        Insert: {
+          admin_note?: string;
+          content: string;
+          created_at?: string;
+          id?: string;
+          member_id: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          screenshot_url?: string;
+          status?: string;
+          title: string;
+          type: string;
+          updated_at?: string;
+        };
+        Update: {
+          admin_note?: string;
+          content?: string;
+          created_at?: string;
+          id?: string;
+          member_id?: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          screenshot_url?: string;
+          status?: string;
+          title?: string;
+          type?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feedbacks_member_id_fkey";
+            columns: ["member_id"];
+            isOneToOne: false;
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feedbacks_resolved_by_fkey";
+            columns: ["resolved_by"];
+            isOneToOne: false;
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       hsk_classes: {
         Row: {
           created_at: string;
