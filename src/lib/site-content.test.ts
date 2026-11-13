@@ -58,4 +58,39 @@ describe("localizeContent", () => {
     expect(result.email).toBe("hello@test.com");
     expect(result.facebook).toBe("https://fb.com/custom");
   });
+
+  it("uses the per-language custom text when the admin filled it in", () => {
+    const raw = mergeContent("home", {
+      hero_lead: "Lời dẫn Việt",
+      hero_lead_en: "English lead",
+      hero_lead_zh: "中文导语",
+      btn1_url: "/join-us",
+    });
+    expect(localizeContent("home", raw, "vi").hero_lead).toBe("Lời dẫn Việt");
+    expect(localizeContent("home", raw, "en").hero_lead).toBe("English lead");
+    expect(localizeContent("home", raw, "zh").hero_lead).toBe("中文导语");
+    expect(localizeContent("home", raw, "en").btn1_url).toBe("/join-us");
+  });
+
+  it("falls back to component defaults when a language variant is empty", () => {
+    const raw = mergeContent("home", { hero_lead: "Lời dẫn Việt", about_title: "Về chúng tôi" });
+    const en = localizeContent("home", raw, "en");
+    expect(en.hero_lead).toBe("");
+    expect(en.about_title).toBe("");
+    expect(en.hero_lead_en).toBe("");
+  });
+
+  it("localizes the site tagline and footer note independently", () => {
+    const raw = mergeContent("site", {
+      tagline: "Khẩu hiệu Việt",
+      tagline_en: "English tagline",
+      tagline_zh: "中文标语",
+      footer_note: "Bản quyền Việt",
+      footer_note_en: "English rights",
+    });
+    expect(localizeContent("site", raw, "en").tagline).toBe("English tagline");
+    expect(localizeContent("site", raw, "en").footer_note).toBe("English rights");
+    expect(localizeContent("site", raw, "zh").tagline).toBe("中文标语");
+    expect(localizeContent("site", raw, "zh").footer_note).toBe("");
+  });
 });

@@ -54,7 +54,7 @@ export const DICT = {
   "menu.open": { vi: "Mở menu", zh: "打开菜单", en: "Open menu" },
   "brand.sub": {
     vi: "Liên Đoàn Hán Ngữ · 普通话联盟",
-    zh: "普通话联盟 · Liên Đoàn Hán Ngữ",
+    zh: "普通话联盟",
     en: "Mandarin League · 普通话联盟",
   },
   tagline: {
@@ -100,7 +100,7 @@ export const DICT = {
   "footer.tagline": {
     vi: "Liên Đoàn Hán Ngữ · Online Learning Community",
     zh: "普通话联盟 · 线上学习社区",
-    en: "Liên Đoàn Hán Ngữ · Online Learning Community",
+    en: "The Mandarin League · Online Learning Community",
   },
   "home.lead": {
     vi: "Cộng đồng học tiếng Trung trực tuyến dành cho người Việt – nơi học HSK bài bản, giao lưu văn hóa và cùng nhau phát triển.",

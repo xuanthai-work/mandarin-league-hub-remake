@@ -12,6 +12,8 @@ const EVT = "tml-lang-change";
 
 function readLang(): Lang {
   try {
+    const param = new URLSearchParams(window.location.search).get("lang");
+    if (param === "vi" || param === "en" || param === "zh") return param;
     const v = localStorage.getItem(KEY);
     if (v === "vi" || v === "zh" || v === "en") return v;
   } catch {
@@ -52,7 +54,7 @@ export function useT() {
 
 import { PHRASES } from "./phrases";
 /** Translate a Vietnamese source phrase; falls back to the original text. */
-function trPhrase(lang: Lang, vi: string): string {
+export function trPhrase(lang: Lang, vi: string): string {
   if (lang === "vi") return vi;
   const p = PHRASES[vi];
   return p ? (lang === "zh" ? p[0] : p[1]) : vi;

@@ -3,8 +3,46 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, type Lang } from "@/lib/i18n";
 
+/** Text fields admins can customize per language (vi / en / zh). */
+export const HOME_TEXT_KEYS = [
+  "hero_badge",
+  "hero_title",
+  "hero_lead",
+  "btn1_label",
+  "btn2_label",
+  "about_title",
+  "about_p1",
+  "about_p2",
+  "stat1_value",
+  "stat1_label",
+  "stat2_value",
+  "stat2_label",
+  "stat3_value",
+  "stat3_label",
+  "cta_title",
+  "cta_body",
+] as const;
+export type HomeTextFieldKey = (typeof HOME_TEXT_KEYS)[number];
+
+export const SITE_TEXT_KEYS = ["tagline", "footer_note"] as const;
+export type SiteTextFieldKey = (typeof SITE_TEXT_KEYS)[number];
+
+/** Flattened translations keep the existing JSON backwards compatible. */
+type Translations<T extends string> = {
+  [K in T as `${K}_en` | `${K}_zh`]: string;
+};
+
+function blankTranslations<T extends string>(keys: readonly T[]): Translations<T> {
+  const out: Record<string, string> = {};
+  for (const key of keys) {
+    out[`${key}_en`] = "";
+    out[`${key}_zh`] = "";
+  }
+  return out as Translations<T>;
+}
+
 /** Site-wide settings (footer, contact, social). Empty string = use built-in default. */
-export type SiteSettings = {
+type SiteSettingsBase = {
   email: string;
   facebook: string;
   instagram: string;
@@ -14,7 +52,9 @@ export type SiteSettings = {
   tagline: string;
   footer_note: string;
 };
+export type SiteSettings = SiteSettingsBase & Translations<SiteTextFieldKey>;
 export const SITE_DEFAULTS: SiteSettings = {
+  ...blankTranslations(SITE_TEXT_KEYS),
   email: "community@themandarinleague.bond",
   facebook: "https://www.facebook.com/themandarinleague/",
   instagram: "https://www.instagram.com/liendoanhanngu?stkn=MXJzbXhkY3kyNDc2aw==",
@@ -34,7 +74,7 @@ const HOME_SECTIONS = {
 } as const;
 export type HomeSectionKey = keyof typeof HOME_SECTIONS;
 
-export type HomeContent = {
+type HomeContentBase = {
   hero_badge: string;
   hero_title: string;
   hero_lead: string;
@@ -55,7 +95,9 @@ export type HomeContent = {
   cta_body: string;
   show: Record<HomeSectionKey, boolean>;
 };
+export type HomeContent = HomeContentBase & Translations<HomeTextFieldKey>;
 export const HOME_DEFAULTS: HomeContent = {
+  ...blankTranslations(HOME_TEXT_KEYS),
   hero_badge: "",
   hero_title: "",
   hero_lead: "",
@@ -80,42 +122,26 @@ export const HOME_DEFAULTS: HomeContent = {
 export type ContentKey = "site" | "home";
 const DEFAULTS = { site: SITE_DEFAULTS, home: HOME_DEFAULTS };
 
-/** Ô chữ: chữ tùy chỉnh chỉ dùng khi khách xem tiếng Việt; zh/en rơi về bản dịch có sẵn.
- *  Liên kết, email, mạng xã hội KHÔNG nằm ở đây vì áp dụng cho mọi ngôn ngữ. */
-const VI_ONLY_KEYS = {
-  home: [
-    "hero_badge",
-    "hero_title",
-    "hero_lead",
-    "btn1_label",
-    "btn2_label",
-    "about_title",
-    "about_p1",
-    "about_p2",
-    "stat1_value",
-    "stat1_label",
-    "stat2_value",
-    "stat2_label",
-    "stat3_value",
-    "stat3_label",
-    "cta_title",
-    "cta_body",
-  ],
-  site: ["tagline", "footer_note"],
-} as const satisfies {
-  home: readonly (keyof HomeContent)[];
-  site: readonly (keyof SiteSettings)[];
-};
+const LANG_SUFFIX: Record<Lang, "" | "_en" | "_zh"> = { vi: "", en: "_en", zh: "_zh" };
 
-/** Ngoài tiếng Việt thì xóa các ô chữ về "" để giao diện dùng chữ mặc định đã dịch. */
+/**
+ * Custom text is stored per language as `field`, `field_en`, `field_zh`.
+ * Visitors get the localized custom text; blank fields fall back to the
+ * translated defaults inside the components. Shared settings (links, socials,
+ * visibility) stay identical for every language.
+ */
 export function localizeContent<K extends ContentKey>(
   key: K,
   data: (typeof DEFAULTS)[K],
   lang: Lang,
 ): (typeof DEFAULTS)[K] {
   if (lang === "vi") return data;
+  const suffix = LANG_SUFFIX[lang];
   const out = { ...data } as Record<string, unknown>;
-  for (const k of VI_ONLY_KEYS[key]) out[k] = "";
+  const textKeys = key === "home" ? HOME_TEXT_KEYS : SITE_TEXT_KEYS;
+  for (const base of textKeys) {
+    out[base] = (data as unknown as Record<string, unknown>)[`${base}${suffix}`] ?? "";
+  }
   return out as (typeof DEFAULTS)[K];
 }
 

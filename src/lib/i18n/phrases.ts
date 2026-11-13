@@ -59,7 +59,7 @@ export const PHRASES: Record<string, [string, string]> = {
   "Công nghệ giáo dục": ["教育科技", "EdTech"],
   "Hỗ trợ kỹ thuật": ["技术支持", "Tech support"],
   // Home
-  "Liên Đoàn Hán Ngữ": ["Liên Đoàn Hán Ngữ", "The Mandarin League"],
+  "Liên Đoàn Hán Ngữ": ["普通话联盟", "The Mandarin League"],
   "Về TML": ["关于 TML", "About TML"],
   "Học tiếng Trung cùng một cộng đồng thực thụ": [
     "与真正的社区一起学中文",
@@ -85,6 +85,7 @@ export const PHRASES: Record<string, [string, string]> = {
     ],
   "Xem tất cả giáo viên": ["查看全部教师", "View all teachers"],
   "Xem hồ sơ": ["查看简介", "View profile"],
+  "Xem chi tiết hồ sơ": ["查看详细简介", "View full profile"],
   "Nổi bật": ["精选", "Featured"],
   "Giảng viên": ["讲师", "Teacher"],
   "Tìm giáo viên theo tên…": ["按姓名搜索教师…", "Search teachers by name…"],
@@ -142,6 +143,88 @@ export const PHRASES: Record<string, [string, string]> = {
   ],
   "Tham gia TML": ["加入 TML", "Join TML"],
   "Liên hệ": ["联系我们", "Contact"],
+  "Giá trị cốt lõi": ["核心价值观", "Core Values"],
+  "Cộng đồng TML": ["TML 社区", "TML Community"],
+  "Những con người cùng tạo nên TML": ["共同塑造 TML 的人们", "The People Who Build TML Together"],
+  "Khám phá cộng đồng": ["探索社区", "Explore Community"],
+  "Bản tin & kiến thức": ["资讯与知识", "News & Knowledge"],
+  "Tin tức & kiến thức HSK": ["HSK 资讯与知识", "HSK News & Insights"],
+  "Nội dung chính thức do The Mandarin League biên soạn.": [
+    "由 The Mandarin League 官方编制的内容。",
+    "Official content compiled by The Mandarin League.",
+  ],
+  "Xem tất cả tin tức": ["查看全部资讯", "View All News"],
+  "Đối tác đồng hành": ["合作伙伴", "Partners"],
+  "Xem tất cả đối tác": ["查看全部合作伙伴", "View All Partners"],
+  "Liên hệ hợp tác": ["商务合作", "Contact for Partnership"],
+  "Tra cứu chứng nhận & điểm HSK": ["证书与 HSK 成绩查询", "Verify Certificates & HSK Scores"],
+  "Kết nối & Ứng tuyển": ["联络与加入", "Connect & Join"],
+  "Mở trang liên hệ đầy đủ": ["打开完整联系页面", "Open Full Contact Page"],
+  "Chương trình học": ["学习项目", "Programs"],
+  "HSK 1–6": ["HSK 1–6", "HSK 1–6"],
+  "Lộ trình chuẩn": ["标准学习路线", "Standard roadmap"],
+  "Lộ trình & giáo trình": ["学习路线与教材", "Roadmap & curriculum"],
+  "Kết quả đạt được": ["学习成果", "Learning outcomes"],
+  "Đăng ký lớp học": ["课程报名", "Class enrollment"],
+  "Xem lớp đang mở": ["查看开放班级", "View open classes"],
+  "Xem chi tiết & đăng ký": ["查看详情并报名", "View details & enroll"],
+  "Mỗi cấp độ có lớp đang mở theo từng đợt tuyển sinh — xem lịch khai giảng và đăng ký tại trang khóa học.":
+    [
+      "每个级别都有按批次开放的班级——请在课程页面查看开课时间并报名。",
+      "Each level opens classes in batches — see the schedule and enroll on the courses page.",
+    ],
+  "Chọn một lớp đang mở để đăng ký trực tiếp, hoặc xem toàn bộ lớp đang tuyển sinh.": [
+    "选择正在开放的班级直接报名，或查看全部招生中的班级。",
+    "Choose an open class to enroll directly, or view all enrolling classes.",
+  ],
+  "Lớp hiện không mở đăng ký trực tuyến. Vui lòng xem các lớp đang tuyển sinh.": [
+    "该班级暂未开放线上报名，请查看正在招生的班级。",
+    "This class is not open for online enrollment. Please view the classes currently enrolling.",
+  ],
+  "Hồ sơ giảng viên": ["教师简介", "Teacher profile"],
+  "Mở trang bài viết": ["打开文章页面", "Open article page"],
+  "Đọc bài viết": ["阅读文章", "Read article"],
+  "Mở trang xác minh đầy đủ": ["打开完整验证页面", "Open full verification page"],
+  "Nhập mã xác minh kèm họ tên thí sinh để tra cứu kết quả được TML ghi nhận.": [
+    "输入验证码和考生姓名，查询 TML 记录的成绩。",
+    "Enter the verification code and candidate name to look up results recorded by TML.",
+  ],
+  "Nhập mã chứng nhận kèm họ tên người nhận để kiểm tra tính xác thực.": [
+    "输入证书编号和持有人姓名以核验真实性。",
+    "Enter the certificate code and holder name to verify authenticity.",
+  ],
+  "Trang cơ cấu tổ chức": ["组织架构页面", "Organization page"],
+  "Đội ngũ giảng viên sẽ sớm được giới thiệu.": [
+    "教师团队即将公布。",
+    "Our faculty will be introduced soon.",
+  ],
+  "Gửi lời nhắn": ["发送留言", "Send a message"],
+  "Điền thông tin bên dưới, TML sẽ phản hồi qua email của bạn.": [
+    "请填写以下信息，TML 将通过电子邮件回复您。",
+    "Fill in the details below and TML will reply by email.",
+  ],
+  "Online Chinese Learning Community": ["在线中文学习社区", "Online Chinese Learning Community"],
+  "The Mandarin League": ["The Mandarin League", "The Mandarin League"],
+  "Cộng đồng học tiếng Trung trực tuyến dành cho người Việt – nơi học HSK bài bản, giao lưu văn hóa và cùng nhau phát triển.":
+    [
+      "面向越南人的线上中文学习社区——系统学习 HSK、交流文化、共同成长。",
+      "An online Chinese community for Vietnamese learners — structured HSK study, cultural exchange and growing together.",
+    ],
+  "Xem khóa học HSK": ["查看 HSK 课程", "View HSK courses"],
+  "Kết nối người học, nhà giáo dục và cơ hội giữa Việt Nam và Trung Quốc.": [
+    "连接越南与中国的学习者、教育者与机遇。",
+    "Connecting learners, educators & opportunities across Vietnam and China.",
+  ],
+  "The Mandarin League. All rights reserved.": [
+    "The Mandarin League. 版权所有。",
+    "The Mandarin League. All rights reserved.",
+  ],
+  "Đóng góp cho hoạt động của TML.": ["为 TML 的活动做出贡献。", "Contribute to TML's activities."],
+  "Hỗ trợ học tập và phát triển.": ["支持学习与成长。", "Support learning and growth."],
+  "Lan tỏa hình ảnh và hoạt động TML.": [
+    "传播 TML 的形象与活动。",
+    "Spread TML's image and activities.",
+  ],
   // About
   "Giới thiệu": ["关于我们", "About"],
   "Liên Đoàn Hán Ngữ · 普通话联盟 — Online Chinese Learning Community.": [

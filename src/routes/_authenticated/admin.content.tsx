@@ -25,6 +25,7 @@ import {
 import { useConfirm } from "@/components/admin/Trash";
 import { can } from "@/lib/permission-catalog";
 import { useAdminAccess } from "./admin";
+import { trPhrase, type Lang } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ContentOutline } from "@/components/admin/content/ContentOutline";
@@ -49,8 +50,20 @@ function useRow(key: ContentKey) {
   });
 }
 
+const LANG_OPTIONS: { value: Lang; label: string }[] = [
+  { value: "vi", label: "Tiếng Việt" },
+  { value: "en", label: "English (EN)" },
+  { value: "zh", label: "中文 (ZH)" },
+];
+
+/** Text fields are stored per language; link/social/email fields are shared. */
+function valueKeys(kind: string, key: string): string[] {
+  return kind === "text" || kind === "area" ? [key, `${key}_en`, `${key}_zh`] : [key];
+}
+
 function ContentAdmin() {
   const [tab, setTab] = useState<"home" | "site" | "log">("home");
+  const [editLang, setEditLang] = useState<Lang>("vi");
   const qc = useQueryClient();
   const { confirm, dialog } = useConfirm();
   const access = useAdminAccess();
@@ -109,13 +122,15 @@ function ContentAdmin() {
 
   const homeDirtyIds = useMemo(() => {
     const ids = new Set<string>();
+    const form = homeForm as unknown as Record<string, string | undefined>;
+    const saved = homeSaved as unknown as Record<string, string | undefined>;
     for (const b of HOME_BLOCKS) {
       if (b.toggle && homeForm.show[b.toggle] !== homeSaved.show[b.toggle]) {
         ids.add(b.id);
       }
       for (const f of b.fields) {
-        if ((homeForm[f.key] ?? "").trim() !== (homeSaved[f.key] ?? "").trim()) {
-          ids.add(b.id);
+        for (const key of valueKeys(f.kind, f.key)) {
+          if ((form[key] ?? "").trim() !== (saved[key] ?? "").trim()) ids.add(b.id);
         }
       }
     }
@@ -124,10 +139,12 @@ function ContentAdmin() {
 
   const siteDirtyIds = useMemo(() => {
     const ids = new Set<string>();
+    const form = siteForm as unknown as Record<string, string | undefined>;
+    const saved = siteSaved as unknown as Record<string, string | undefined>;
     for (const b of SITE_BLOCKS) {
       for (const f of b.fields) {
-        if ((siteForm[f.key] ?? "").trim() !== (siteSaved[f.key] ?? "").trim()) {
-          ids.add(b.id);
+        for (const key of valueKeys(f.kind, f.key)) {
+          if ((form[key] ?? "").trim() !== (saved[key] ?? "").trim()) ids.add(b.id);
         }
       }
     }
@@ -237,9 +254,9 @@ function ContentAdmin() {
     }
 
     if (w) {
-      w.location.href = "/?preview=1";
+      w.location.href = `/?preview=1&lang=${editLang}`;
     } else {
-      window.open("/?preview=1", "_blank");
+      window.open(`/?preview=1&lang=${editLang}`, "_blank");
     }
   };
 
@@ -325,6 +342,18 @@ function ContentAdmin() {
           />
         </div>
 
+        {tab !== "log" && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Ngôn ngữ nội dung</span>
+            <SegmentedControl
+              label="Ngôn ngữ nội dung"
+              value={editLang}
+              onChange={setEditLang}
+              options={LANG_OPTIONS}
+            />
+          </div>
+        )}
+
         {/* Status Line + Action Buttons */}
         {tab !== "log" && (
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -351,9 +380,9 @@ function ContentAdmin() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Ô để trống sẽ dùng chữ mặc định. Chữ tùy chỉnh chỉ hiện khi khách xem tiếng Việt;
-                tiếng Trung và tiếng Anh dùng bản dịch có sẵn. Lưu nháp chỉ người quản trị xem được
-                khi xem trước; Xuất bản mới hiện cho khách.
+                Mỗi ngôn ngữ có bản tùy chỉnh riêng; ô để trống sẽ dùng bản dịch mặc định của ngôn
+                ngữ đó. Liên kết, mạng xã hội và bật/tắt hiển thị dùng chung cho cả 3 ngôn ngữ. Lưu
+                nháp chỉ người quản trị xem được khi xem trước; Xuất bản mới hiện cho khách.
               </p>
             </div>
 
@@ -404,9 +433,10 @@ function ContentAdmin() {
             activeId={activeHomeId}
             onSelectId={setActiveHomeId}
             title="Cấu trúc Trang chủ"
+            lang={editLang}
             form={homeForm}
             saved={homeSaved}
-            onFieldChange={(k, v) => setHomeForm((prev) => ({ ...prev, [k]: v }))}
+            onFieldChange={(k, v) => setHomeForm((prev) => ({ ...prev, [k]: v }) as HomeContent)}
             show={homeForm.show}
             onToggle={(k, v) =>
               setHomeForm((prev) => ({
@@ -428,9 +458,10 @@ function ContentAdmin() {
             activeId={activeSiteId}
             onSelectId={setActiveSiteId}
             title="Liên hệ & Chân trang"
+            lang={editLang}
             form={siteForm}
             saved={siteSaved}
-            onFieldChange={(k, v) => setSiteForm((prev) => ({ ...prev, [k]: v }))}
+            onFieldChange={(k, v) => setSiteForm((prev) => ({ ...prev, [k]: v }) as SiteSettings)}
             dirtyIds={siteDirtyIds}
             errors={siteErrors}
           />
@@ -446,6 +477,7 @@ function BlockEditor<K extends string>({
   activeId,
   onSelectId,
   title,
+  lang,
   form,
   saved,
   onFieldChange,
@@ -458,9 +490,10 @@ function BlockEditor<K extends string>({
   activeId: string;
   onSelectId: (id: string) => void;
   title: string;
+  lang: Lang;
   form: Record<string, unknown>;
   saved: Record<string, unknown>;
-  onFieldChange: (k: K, v: string) => void;
+  onFieldChange: (key: string, v: string) => void;
   show?: Record<HomeSectionKey, boolean>;
   onToggle?: (k: HomeSectionKey, v: boolean) => void;
   dirtyIds: Set<string>;
@@ -468,8 +501,12 @@ function BlockEditor<K extends string>({
 }) {
   const activeBlock = blocks.find((b) => b.id === activeId) ?? blocks[0]!;
   const isOff = activeBlock.toggle && show ? show[activeBlock.toggle] === false : false;
-  const customizedCount = activeBlock.fields.filter(
-    (f) => ((form[f.key] as string | undefined) ?? "").trim().length > 0,
+  const textFields = activeBlock.fields.filter((f) => f.kind === "text" || f.kind === "area");
+  const sharedFields = activeBlock.fields.filter((f) => f.kind !== "text" && f.kind !== "area");
+  const suffix = lang === "vi" ? "" : `_${lang}`;
+  const valueKey = (key: K) => `${key}${suffix}`;
+  const customizedCount = textFields.filter(
+    (f) => ((form[valueKey(f.key)] as string | undefined) ?? "").trim().length > 0,
   ).length;
 
   return (
@@ -490,9 +527,9 @@ function BlockEditor<K extends string>({
         <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border">
           <div className="flex items-baseline gap-2">
             <h2 className="text-base font-bold text-primary-deep">{activeBlock.label}</h2>
-            {activeBlock.fields.length > 0 && (
+            {textFields.length > 0 && (
               <span className="text-xs text-muted-foreground">
-                {customizedCount}/{activeBlock.fields.length} ô đã tùy chỉnh
+                {customizedCount}/{textFields.length} ô đã tùy chỉnh
               </span>
             )}
           </div>
@@ -532,21 +569,56 @@ function BlockEditor<K extends string>({
             )}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {activeBlock.fields.map((f) => (
-              <div key={f.key} className={f.kind === "area" ? "sm:col-span-2" : undefined}>
-                <ContentFieldInput
-                  field={f}
-                  value={(form[f.key] as string | undefined) ?? ""}
-                  onChange={(v) => onFieldChange(f.key, v)}
-                  changed={
-                    ((form[f.key] as string | undefined) ?? "").trim() !==
-                    ((saved[f.key] as string | undefined) ?? "").trim()
-                  }
-                  error={errors[f.key] ?? null}
-                />
+          <div className="space-y-5">
+            {textFields.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {textFields.map((f) => {
+                  const key = valueKey(f.key);
+                  const fallback = lang === "vi" ? f.fallback : trPhrase(lang, f.fallback);
+                  return (
+                    <div key={key} className={f.kind === "area" ? "sm:col-span-2" : undefined}>
+                      <ContentFieldInput
+                        field={{ ...f, fallback }}
+                        value={(form[key] as string | undefined) ?? ""}
+                        onChange={(v) => onFieldChange(key, v)}
+                        changed={
+                          ((form[key] as string | undefined) ?? "").trim() !==
+                          ((saved[key] as string | undefined) ?? "").trim()
+                        }
+                        error={null}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
+
+            {sharedFields.length > 0 && (
+              <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold">Liên kết & cài đặt chung</h3>
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    Dùng chung cho cả 3 ngôn ngữ
+                  </span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {sharedFields.map((f) => (
+                    <div key={f.key} className={f.kind === "area" ? "sm:col-span-2" : undefined}>
+                      <ContentFieldInput
+                        field={f}
+                        value={(form[f.key] as string | undefined) ?? ""}
+                        onChange={(v) => onFieldChange(f.key, v)}
+                        changed={
+                          ((form[f.key] as string | undefined) ?? "").trim() !==
+                          ((saved[f.key] as string | undefined) ?? "").trim()
+                        }
+                        error={errors[f.key] ?? null}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

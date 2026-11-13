@@ -6,6 +6,7 @@ import {
   type HomeSectionKey,
   type SiteSettings,
 } from "@/lib/site-content";
+import { trPhrase, type Lang } from "@/lib/i18n";
 
 const EMPTY_SITE = Object.fromEntries(
   Object.keys(SITE_DEFAULTS).map((k) => [k, ""]),
@@ -31,8 +32,8 @@ export function toSiteForm(raw: unknown): SiteSettings {
 
 /** text = 1 dòng, area = nhiều dòng, link = "/đường-dẫn" hoặc http(s), url = chỉ http(s), email */
 export type FieldKind = "text" | "area" | "link" | "url" | "email";
-export type HomeTextKey = Exclude<keyof HomeContent, "show">;
-export type SiteKey = keyof SiteSettings;
+export type HomeTextKey = Exclude<keyof HomeContent, "show" | `${string}_en` | `${string}_zh`>;
+export type SiteKey = Exclude<keyof SiteSettings, `${string}_en` | `${string}_zh`>;
 
 export type ContentField<K extends string> = {
   key: K;
@@ -375,6 +376,12 @@ export type FieldChange = {
 
 const EMPTY_HIDDEN = "Để trống (ẩn)";
 
+const TEXT_LANGS: { lang: Lang; suffix: "" | "_en" | "_zh"; tag: string }[] = [
+  { lang: "vi", suffix: "", tag: "VI" },
+  { lang: "en", suffix: "_en", tag: "EN" },
+  { lang: "zh", suffix: "_zh", tag: "ZH" },
+];
+
 /** So hai bản (draft/published/old_data/new_data thô), trả danh sách thay đổi theo thứ tự khối/ô trên màn. */
 export function describeChanges(
   key: "home" | "site",
@@ -407,18 +414,38 @@ export function describeChanges(
       });
     }
     for (const f of blk.fields) {
-      if (!changed.has(f.key)) continue;
-      const va = String(a[f.key] ?? "").trim();
-      const vb = String(b[f.key] ?? "").trim();
-      out.push({
-        id: f.key,
-        block: blk.label,
-        label: f.label,
-        before: va || f.fallback || EMPTY_HIDDEN,
-        after: vb || f.fallback || EMPTY_HIDDEN,
-        beforeDefault: !va,
-        afterDefault: !vb,
-      });
+      const isText = f.kind === "text" || f.kind === "area";
+      if (!isText) {
+        if (!changed.has(f.key)) continue;
+        const va = String(a[f.key] ?? "").trim();
+        const vb = String(b[f.key] ?? "").trim();
+        out.push({
+          id: f.key,
+          block: blk.label,
+          label: f.label,
+          before: va || f.fallback || EMPTY_HIDDEN,
+          after: vb || f.fallback || EMPTY_HIDDEN,
+          beforeDefault: !va,
+          afterDefault: !vb,
+        });
+        continue;
+      }
+      for (const { lang, suffix, tag } of TEXT_LANGS) {
+        const id = `${f.key}${suffix}`;
+        if (!changed.has(id)) continue;
+        const va = String(a[id] ?? "").trim();
+        const vb = String(b[id] ?? "").trim();
+        const fallback = lang === "vi" ? f.fallback : trPhrase(lang, f.fallback);
+        out.push({
+          id,
+          block: blk.label,
+          label: `${f.label} · ${tag}`,
+          before: va || fallback || EMPTY_HIDDEN,
+          after: vb || fallback || EMPTY_HIDDEN,
+          beforeDefault: !va,
+          afterDefault: !vb,
+        });
+      }
     }
   }
   return out;

@@ -1,4 +1,4 @@
-import { useTr as useTrHero } from "@/lib/i18n";
+import { useT, useTr } from "@/lib/i18n";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
@@ -15,7 +15,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import logoClear from "@/assets/tml-logo-transparent.png";
-import { useT } from "@/lib/i18n";
 import type { DictKey } from "@/lib/i18n/dict";
 import { SitePreferences } from "./SitePreferences";
 import {
@@ -72,7 +71,12 @@ export const LANDING_NAV: LandingNavItem[] = [
       { to: "/partners", dict: "nav.child.partners" },
     ],
   },
-  { id: "organization", label: "Cơ cấu tổ chức", dict: "nav./organization", page: "/organization" },
+  {
+    id: "organization",
+    label: "Cơ cấu tổ chức",
+    dict: "nav./organization",
+    page: "/organization",
+  },
   {
     id: "courses",
     label: "Khóa học",
@@ -517,6 +521,7 @@ const FOOT_LINK =
 
 function Footer() {
   const { t } = useT();
+  const tr = useTr();
   const site = useSiteContent("site").data;
   return (
     <footer className="mt-24 bg-primary-deep text-primary-foreground">
@@ -529,8 +534,8 @@ function Footer() {
             </div>
             <div>
               <div className="font-bold">THE MANDARIN LEAGUE</div>
-              <div className="text-sm opacity-80">Liên Đoàn Hán Ngữ · 普通话联盟</div>
-              <div className="text-xs opacity-70">Online Chinese Learning Community</div>
+              <div className="text-sm opacity-80">{t("brand.sub")}</div>
+              <div className="text-xs opacity-70">{tr("Online Chinese Learning Community")}</div>
             </div>
           </div>
           <p className="mt-5 max-w-md text-sm leading-relaxed opacity-80">
@@ -743,7 +748,7 @@ export function PageHero({
   title: string;
   desc?: string;
 }) {
-  const tr = useTrHero();
+  const tr = useTr();
   return (
     <section className="grid-lines border-b border-border bg-secondary">
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-24">

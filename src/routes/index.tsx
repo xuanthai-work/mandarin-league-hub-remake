@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
-  UserRound,
   Users,
   Video,
   Wallet,
@@ -46,14 +45,10 @@ import {
   type ActivityCategory,
   type ActivityRow,
 } from "@/lib/activities";
-import { Chips, EmptyState, SectionLabel } from "@/components/site/ui";
-import { ContentCard } from "@/components/site/ContentCard";
-import {
-  usePublicTeachers,
-  teacherTags,
-  TEACHER_TYPE_LABEL,
-  type PublicTeacher,
-} from "@/lib/teachers";
+import { EmptyState, SectionLabel } from "@/components/site/ui";
+import { PhotoOverlayCard } from "@/components/site/PhotoOverlayCard";
+import { TeacherPhotoCard } from "@/components/site/TeacherPhotoCard";
+import { usePublicTeachers, type PublicTeacher } from "@/lib/teachers";
 import {
   fmtDate as fmtNewsDate,
   useActivePartners,
@@ -139,7 +134,7 @@ const VERIFY_OPTIONS = [
 ];
 
 function Home() {
-  const { t } = useT();
+  const { lang, t } = useT();
   const tr = useTr();
   const { data: h, preview } = useSiteContent("home");
   const site = useSiteContent("site").data;
@@ -194,14 +189,14 @@ function Home() {
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 md:grid-cols-[1.2fr_1fr] md:px-6 md:py-24">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-              {h.hero_badge || "Online Chinese Learning Community"}
+              {h.hero_badge || tr("Online Chinese Learning Community")}
             </div>
             <h1 className="mt-6 text-4xl font-extrabold leading-tight text-primary-deep md:text-6xl">
               {h.hero_title || "The Mandarin League"}
             </h1>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-4 text-2xl font-semibold text-primary md:text-3xl">
               <span>{tr("Liên Đoàn Hán Ngữ")}</span>
-              <span className="font-han">普通话联盟</span>
+              {lang !== "zh" && <span className="font-han">普通话联盟</span>}
             </div>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
               {h.hero_lead || t("home.lead")}
@@ -541,38 +536,9 @@ function Home() {
             </div>
           ) : (
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {faculty.map((x) => {
-                const tags = teacherTags(x).slice(0, 3);
-                return (
-                  <ContentCard
-                    key={x.id}
-                    image={x.avatar_url}
-                    imageAlt={x.full_name}
-                    imageClassName="object-[center_30%]"
-                    fallback={<UserRound className="h-12 w-12 text-primary/60" />}
-                    eyebrow={tr(TEACHER_TYPE_LABEL[x.teacher_type])}
-                    title={x.full_name}
-                    description={
-                      [x.title, x.chinese_name, x.specialty].filter(Boolean).join(" · ") || x.bio
-                    }
-                    meta={
-                      tags.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      ) : undefined
-                    }
-                    onClick={() => setSelectedTeacher(x)}
-                  />
-                );
-              })}
+              {faculty.map((x) => (
+                <TeacherPhotoCard key={x.id} teacher={x} onClick={() => setSelectedTeacher(x)} />
+              ))}
             </div>
           )}
         </div>
@@ -597,8 +563,27 @@ function Home() {
               </Link>
             </div>
 
-            <div className="mt-6">
-              <Chips items={ACTIVITY_CATEGORIES} value={activityCat} onChange={setActivityCat} />
+            <div className="mt-6 flex flex-wrap gap-2">
+              {[
+                { value: "all" as const, label: tr("Tất cả") },
+                ...ACTIVITY_CATEGORIES.map((c) => ({
+                  value: c,
+                  label: tr(CATEGORY_LABEL[c]),
+                })),
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setActivityCat(option.value)}
+                  className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                    activityCat === option.value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card hover:border-primary/50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
 
             <div className="mt-8 grid gap-5 md:grid-cols-3">
@@ -673,7 +658,7 @@ function Home() {
                   </div>
                 )}
                 {articles.map((n) => (
-                  <ContentCard
+                  <PhotoOverlayCard
                     key={n.id}
                     image={n.cover}
                     imageAlt={n.title}
@@ -683,8 +668,9 @@ function Home() {
                       n.is_featured ? <Star className="h-4 w-4 fill-gold text-gold" /> : undefined
                     }
                     title={n.title}
+                    subtitle={`${n.author_name} · ${fmtNewsDate(n.published_at)}`}
                     description={n.summary}
-                    meta={`${n.author_name} · ${fmtNewsDate(n.published_at)}`}
+                    actionLabel={tr("Đọc bài viết")}
                     onClick={() => setSelectedNews(n)}
                   />
                 ))}

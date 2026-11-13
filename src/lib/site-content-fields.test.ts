@@ -117,8 +117,10 @@ describe("changedKeys", () => {
 });
 
 describe("block definitions coverage", () => {
-  it("includes each non-show string key of HOME_DEFAULTS exactly once in HOME_BLOCKS", () => {
-    const defaultKeys = Object.keys(HOME_DEFAULTS).filter((k) => k !== "show");
+  it("includes each base string key of HOME_DEFAULTS exactly once in HOME_BLOCKS", () => {
+    const defaultKeys = Object.keys(HOME_DEFAULTS).filter(
+      (k) => k !== "show" && !k.endsWith("_en") && !k.endsWith("_zh"),
+    );
     const blockFields = HOME_BLOCKS.flatMap((b) => b.fields.map((f) => f.key));
 
     for (const key of defaultKeys) {
@@ -130,8 +132,10 @@ describe("block definitions coverage", () => {
     expect(blockFields.length).toBe(defaultKeys.length);
   });
 
-  it("includes each string key of SITE_DEFAULTS exactly once in SITE_BLOCKS", () => {
-    const defaultKeys = Object.keys(SITE_DEFAULTS);
+  it("includes each base string key of SITE_DEFAULTS exactly once in SITE_BLOCKS", () => {
+    const defaultKeys = Object.keys(SITE_DEFAULTS).filter(
+      (k) => !k.endsWith("_en") && !k.endsWith("_zh"),
+    );
     const blockFields = SITE_BLOCKS.flatMap((b) => b.fields.map((f) => f.key));
 
     for (const key of defaultKeys) {
@@ -159,6 +163,22 @@ describe("toHomeForm and toSiteForm", () => {
   it("returns empty diff for identical raw empty site forms", () => {
     expect(changedKeys(toSiteForm({ email: "" }), toSiteForm({ email: "" }))).toEqual([]);
   });
+
+  it("keeps per-language text fields in the admin forms", () => {
+    const home = toHomeForm({
+      hero_title: "Vi",
+      hero_title_en: "En",
+      hero_title_zh: "Zh",
+    });
+    expect(home.hero_title).toBe("Vi");
+    expect(home.hero_title_en).toBe("En");
+    expect(home.hero_title_zh).toBe("Zh");
+
+    const site = toSiteForm({ tagline: "Vi", tagline_en: "En", tagline_zh: "Zh" });
+    expect(site.tagline).toBe("Vi");
+    expect(site.tagline_en).toBe("En");
+    expect(site.tagline_zh).toBe("Zh");
+  });
 });
 
 describe("describeChanges", () => {
@@ -168,7 +188,7 @@ describe("describeChanges", () => {
       {
         id: "hero_title",
         block: "Banner đầu trang",
-        label: "Tiêu đề lớn",
+        label: "Tiêu đề lớn · VI",
         before: "Cũ",
         after: "Mới",
         beforeDefault: false,
@@ -183,13 +203,36 @@ describe("describeChanges", () => {
       {
         id: "hero_badge",
         block: "Banner đầu trang",
-        label: "Dòng nhỏ phía trên",
+        label: "Dòng nhỏ phía trên · VI",
         before: "Học tiếng Trung",
         after: "Online Chinese Learning Community",
         beforeDefault: false,
         afterDefault: true,
       },
     ]);
+  });
+
+  it("reports English/Chinese variants separately with translated fallbacks", () => {
+    const en = describeChanges("home", { hero_title_en: "Old" }, { hero_title_en: "New" });
+    expect(en).toEqual([
+      {
+        id: "hero_title_en",
+        block: "Banner đầu trang",
+        label: "Tiêu đề lớn · EN",
+        before: "Old",
+        after: "New",
+        beforeDefault: false,
+        afterDefault: false,
+      },
+    ]);
+
+    const cleared = describeChanges("home", { about_title_en: "Custom" }, { about_title_en: "" });
+    expect(cleared[0]).toMatchObject({
+      id: "about_title_en",
+      label: "Tiêu đề · EN",
+      after: "Learn Chinese with a real community",
+      afterDefault: true,
+    });
   });
 
   it("shows 'Để trống (ẩn)' for fields with empty fallback like threads", () => {
