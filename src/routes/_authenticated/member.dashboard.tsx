@@ -674,8 +674,8 @@ function MemberDashboard() {
                             <p className="text-[7px] uppercase tracking-wider opacity-60 md:text-[12px]">
                               姓名 · Họ và tên
                             </p>
-                            <div className="flex items-center">
-                              <span className="min-w-0 whitespace-normal break-words hyphens-none text-[13.5px] font-bold uppercase leading-tight tracking-tight text-primary md:text-[26px]">
+                            <div className="mt-0.5 flex items-center md:mt-1.5">
+                              <span className="min-w-0 whitespace-normal break-words hyphens-none text-[13.5px] font-bold uppercase leading-[1.35] tracking-tight text-primary md:text-[26px]">
                                 {m.full_name}
                               </span>
                             </div>
@@ -781,7 +781,7 @@ function MemberDashboard() {
                       {/* 2.2 Name + title */}
                       <div className="mt-2 w-full shrink-0 md:mt-4">
                         <div className="flex w-full items-center justify-center px-4">
-                          <span className="block truncate text-center text-[19px] font-bold uppercase tracking-tight text-primary md:text-[27px]">
+                          <span className="block truncate text-center text-[19px] font-bold uppercase leading-[1.3] tracking-tight text-primary md:text-[27px]">
                             {m.full_name}
                           </span>
                         </div>
