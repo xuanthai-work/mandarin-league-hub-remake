@@ -20,7 +20,6 @@ export function TeacherPhotoCard({
       image={teacher.avatar_url}
       imageAlt={teacher.full_name}
       imageClassName="object-[center_30%]"
-      aspectClassName="aspect-[3/4]"
       fallback={<UserRound className="h-16 w-16" />}
       eyebrow={tr(TEACHER_TYPE_LABEL[teacher.teacher_type])}
       title={teacher.full_name}
