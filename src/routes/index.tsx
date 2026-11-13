@@ -534,7 +534,7 @@ function Home() {
               />
             </div>
           ) : (
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-10 grid gap-5 sm:grid-cols-2">
               {faculty.map((x) => (
                 <TeacherCardMid key={x.id} t={x} onSelect={setSelectedTeacher} />
               ))}
@@ -888,14 +888,6 @@ function Home() {
                 </div>
               </div>
               <ContactForm />
-            </div>
-            <div className="mt-6 text-center">
-              <Link
-                to="/contact"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-              >
-                {tr("Mở trang liên hệ đầy đủ")} <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           </div>
         </section>
