@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Clock, Users, Video, CalendarDays, UserRound } from "lucide-react";
 import { PageHero } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { Chips, DemoBadge, EmptyState, SectionTitle, StatusBadge } from "@/components/site/ui";
 import { getCourses } from "@/lib/data/courses";
 import type { CourseStatus } from "@/lib/data/types";
@@ -37,6 +38,7 @@ function PCourses() {
 
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Khóa học" }, { label: "Khóa học HSK 1–6" }]} />
       <PageHero
         eyebrow="Khóa học HSK"
         title="Lộ trình HSK 1–6"

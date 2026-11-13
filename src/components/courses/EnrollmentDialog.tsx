@@ -14,21 +14,15 @@ const GOALS = [
   "Yêu thích ngôn ngữ & văn hóa",
 ];
 
-export function EnrollmentDialog({
-  level,
-  fee,
-  onClose,
-  courseId,
-  classId,
-  title,
-}: {
+type EnrollmentFormProps = {
   level: number;
-  fee: string;
   onClose: () => void;
   courseId?: string;
   classId?: string;
-  title: string;
-}) {
+};
+
+/** The enrollment form itself, reusable inside the landing-page course popup. */
+export function EnrollmentForm({ level, onClose, courseId, classId }: EnrollmentFormProps) {
   const tr = useTr();
   const submit = useServerFn(submitEnrollment);
   const [f, setF] = useState({
@@ -69,6 +63,139 @@ export function EnrollmentDialog({
     setBusy(false);
   };
 
+  if (done)
+    return (
+      <div className="mt-2 text-center">
+        <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
+        <p className="mt-3 font-semibold">{tr("Đăng ký thành công!")}</p>
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-secondary p-3 font-mono text-lg font-bold text-primary-deep">
+          {done.code}
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(done.code);
+              toast.success(tr("Đã sao chép mã"));
+            }}
+            aria-label={tr("Sao chép mã")}
+            className="rounded p-1 hover:bg-muted"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {tr("Tiếp nhận lúc")} {done.submittedAt}
+        </p>
+        <div className="mt-4 rounded-lg border border-primary/40 bg-accent px-3 py-2 text-sm font-bold text-primary-deep">
+          {tr("ĐÃ TIẾP NHẬN – ĐANG CHỜ XÉT DUYỆT")}
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {tr(
+            "The Mandarin League sẽ xét duyệt hồ sơ và gửi kết quả qua Email tới các học viên được lựa chọn. Vui lòng kiểm tra cả hộp thư Spam.",
+          )}
+        </p>
+        <button
+          onClick={onClose}
+          className="mt-6 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground"
+        >
+          {tr("Đóng")}
+        </button>
+      </div>
+    );
+
+  return (
+    <form onSubmit={send} className="mt-4 space-y-3">
+      <label className="block text-sm">
+        {tr("Họ và tên *")}
+        <input
+          required
+          minLength={2}
+          maxLength={120}
+          className={inp}
+          value={f.full_name}
+          onChange={set("full_name")}
+        />
+      </label>
+      <label className="block text-sm">
+        Email *{" "}
+        <span className="text-xs text-muted-foreground">{tr("(nhận kết quả xét duyệt)")}</span>
+        <input
+          required
+          type="email"
+          maxLength={255}
+          className={inp}
+          value={f.email}
+          onChange={set("email")}
+        />
+      </label>
+      <label className="block text-sm">
+        {tr("Số điện thoại (Zalo) *")}
+        <input
+          required
+          pattern="[0-9+ .()\-]{8,20}"
+          className={inp}
+          value={f.phone}
+          onChange={set("phone")}
+        />
+      </label>
+      <label className="block text-sm">
+        {tr("Trình độ tiếng Trung hiện tại")}
+        <input
+          maxLength={120}
+          placeholder={tr("VD: Mới bắt đầu, đã có HSK 2…")}
+          className={inp}
+          value={f.current_level}
+          onChange={set("current_level")}
+        />
+      </label>
+      <label className="block text-sm">
+        {tr("Mục tiêu học tập")}
+        <select className={inp} value={f.goal} onChange={set("goal")}>
+          {GOALS.map((g) => (
+            <option key={g}>{tr(g)}</option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-sm">
+        {tr("Lời nhắn / Khung giờ mong muốn")}
+        <textarea
+          rows={3}
+          maxLength={1500}
+          className={inp}
+          value={f.message}
+          onChange={set("message")}
+        />
+      </label>
+      <div className="flex justify-center overflow-hidden">
+        <Recaptcha ref={captchaRef} onChange={setCaptcha} />
+      </div>
+      <button
+        disabled={busy}
+        className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {busy ? tr("Đang gửi…") : tr("Gửi đăng ký")}
+      </button>
+      <p className="text-center text-xs text-muted-foreground">
+        {tr("Không thanh toán online. Lớp học có xét duyệt và giới hạn sĩ số.")}
+      </p>
+    </form>
+  );
+}
+
+export function EnrollmentDialog({
+  level,
+  fee,
+  onClose,
+  courseId,
+  classId,
+  title,
+}: {
+  level: number;
+  fee: string;
+  onClose: () => void;
+  courseId?: string;
+  classId?: string;
+  title: string;
+}) {
+  const tr = useTr();
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4"
@@ -95,120 +222,12 @@ export function EnrollmentDialog({
             <X className="h-5 w-5" />
           </button>
         </div>
-        {done ? (
-          <div className="mt-6 text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
-            <p className="mt-3 font-semibold">{tr("Đăng ký thành công!")}</p>
-            <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-secondary p-3 font-mono text-lg font-bold text-primary-deep">
-              {done.code}
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(done.code);
-                  toast.success(tr("Đã sao chép mã"));
-                }}
-                aria-label={tr("Sao chép mã")}
-                className="rounded p-1 hover:bg-muted"
-              >
-                <Copy className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {tr("Tiếp nhận lúc")} {done.submittedAt}
-            </p>
-            <div className="mt-4 rounded-lg border border-primary/40 bg-accent px-3 py-2 text-sm font-bold text-primary-deep">
-              {tr("ĐÃ TIẾP NHẬN – ĐANG CHỜ XÉT DUYỆT")}
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              {tr(
-                "The Mandarin League sẽ xét duyệt hồ sơ và gửi kết quả qua Email tới các học viên được lựa chọn. Vui lòng kiểm tra cả hộp thư Spam.",
-              )}
-            </p>
-            <button
-              onClick={onClose}
-              className="mt-6 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground"
-            >
-              {tr("Đóng")}
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={send} className="mt-5 space-y-3">
-            <label className="block text-sm">
-              {tr("Họ và tên *")}
-              <input
-                required
-                minLength={2}
-                maxLength={120}
-                className={inp}
-                value={f.full_name}
-                onChange={set("full_name")}
-              />
-            </label>
-            <label className="block text-sm">
-              Email *{" "}
-              <span className="text-xs text-muted-foreground">
-                {tr("(nhận kết quả xét duyệt)")}
-              </span>
-              <input
-                required
-                type="email"
-                maxLength={255}
-                className={inp}
-                value={f.email}
-                onChange={set("email")}
-              />
-            </label>
-            <label className="block text-sm">
-              {tr("Số điện thoại (Zalo) *")}
-              <input
-                required
-                pattern="[0-9+ .()\-]{8,20}"
-                className={inp}
-                value={f.phone}
-                onChange={set("phone")}
-              />
-            </label>
-            <label className="block text-sm">
-              {tr("Trình độ tiếng Trung hiện tại")}
-              <input
-                maxLength={120}
-                placeholder={tr("VD: Mới bắt đầu, đã có HSK 2…")}
-                className={inp}
-                value={f.current_level}
-                onChange={set("current_level")}
-              />
-            </label>
-            <label className="block text-sm">
-              {tr("Mục tiêu học tập")}
-              <select className={inp} value={f.goal} onChange={set("goal")}>
-                {GOALS.map((g) => (
-                  <option key={g}>{tr(g)}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              {tr("Lời nhắn / Khung giờ mong muốn")}
-              <textarea
-                rows={3}
-                maxLength={1500}
-                className={inp}
-                value={f.message}
-                onChange={set("message")}
-              />
-            </label>
-            <div className="flex justify-center overflow-hidden">
-              <Recaptcha ref={captchaRef} onChange={setCaptcha} />
-            </div>
-            <button
-              disabled={busy}
-              className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60"
-            >
-              {busy ? tr("Đang gửi…") : tr("Gửi đăng ký")}
-            </button>
-            <p className="text-center text-xs text-muted-foreground">
-              {tr("Không thanh toán online. Lớp học có xét duyệt và giới hạn sĩ số.")}
-            </p>
-          </form>
-        )}
+        <EnrollmentForm
+          level={level}
+          onClose={onClose}
+          {...(courseId ? { courseId } : {})}
+          {...(classId ? { classId } : {})}
+        />
       </div>
     </div>
   );

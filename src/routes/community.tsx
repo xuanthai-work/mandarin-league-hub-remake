@@ -2,6 +2,7 @@ import { useTr } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, GraduationCap, HandHeart, Megaphone, Sparkles, Users } from "lucide-react";
 import { PageHero } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { SectionTitle } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 
@@ -38,6 +39,7 @@ function PCommunity() {
   const tr = useTr();
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Giới thiệu" }, { label: "Cộng đồng TML" }]} />
       <PageHero
         eyebrow="Cộng đồng"
         title="Những con người của TML"
@@ -70,12 +72,20 @@ function PCommunity() {
               </div>
             ))}
           </div>
-          <Link
-            to="/join"
-            className="mt-10 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground hover:opacity-90"
-          >
-            {tr("THAM GIA TML")} <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="mt-10 flex flex-wrap items-center gap-3">
+            <Link
+              to="/join"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground hover:opacity-90"
+            >
+              {tr("THAM GIA TML")} <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              to="/courses/hsk"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-background px-6 py-3 font-semibold text-primary-deep transition hover:bg-accent"
+            >
+              {tr("Khám phá khóa học")} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
     </>

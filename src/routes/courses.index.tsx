@@ -11,6 +11,7 @@ import {
   type HskClass,
 } from "@/lib/hsk-classes";
 import { PageHero } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { EmptyState } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 import { useTr } from "@/lib/i18n";
@@ -59,6 +60,7 @@ function Programs() {
   );
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Khóa học" }, { label: "Tất cả khóa học & chuyên đề" }]} />
       <PageHero
         eyebrow="Khóa học"
         title="Học tiếng Trung cùng The Mandarin League"

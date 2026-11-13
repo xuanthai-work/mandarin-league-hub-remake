@@ -2,6 +2,7 @@ import { useTr } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Award, LockKeyhole, QrCode, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageBreadcrumb } from "@/components/site/PageBreadcrumb";
 
 export const Route = createFileRoute("/verify/")({
   staticData: { sitemap: true },
@@ -49,6 +50,11 @@ function VerificationCenter() {
   const tr = useTr();
   return (
     <>
+      <div className="border-b border-border bg-background">
+        <div className="mx-auto max-w-5xl px-4 py-3 md:px-6">
+          <PageBreadcrumb items={[{ label: "Xác minh" }, { label: "Trung tâm xác minh" }]} />
+        </div>
+      </div>
       <section className="verification-grid border-b border-border bg-secondary">
         <div className="mx-auto max-w-5xl px-4 py-16 text-center md:px-6 md:py-24">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/25 bg-background shadow-sm">

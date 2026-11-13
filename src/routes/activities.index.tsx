@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { CalendarDays, MapPin, Search } from "lucide-react";
 import { PageHero } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { EmptyState } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 import { usePublishedPrograms } from "@/lib/programs";
@@ -59,6 +60,7 @@ function PActivities() {
         );
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Hoạt động & Tin tức" }, { label: "Hoạt động & Sự kiện" }]} />
       <PageHero
         eyebrow="Hoạt động"
         title="Học qua trải nghiệm"

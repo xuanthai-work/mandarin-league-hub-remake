@@ -26,39 +26,57 @@ export function TeacherPhoto({
   );
 }
 
-/** Compact horizontal card for the homepage faculty strip. */
-export function TeacherCardCompact({ t }: { t: PublicTeacher }) {
+/** Medium homepage card: readable teacher portrait without the full directory size. */
+export function TeacherCardMid({
+  t,
+  onSelect,
+}: {
+  t: PublicTeacher;
+  onSelect?: (t: PublicTeacher) => void;
+}) {
   const tr = useTr();
-  const tags = teacherTags(t).slice(0, 2);
-  return (
-    <Link
-      to="/teachers/$teacherId"
-      params={{ teacherId: t.id }}
-      className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition duration-300 hover:border-gold/60 hover:shadow-md hover:shadow-primary/10"
-    >
-      <div className="h-[88px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-secondary ring-1 ring-gold/50 ring-offset-2 ring-offset-card">
+  const tags = teacherTags(t).slice(0, 3);
+  const body = (
+    <>
+      <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-secondary ring-1 ring-gold/50 ring-offset-2 ring-offset-card">
         <TeacherPhoto t={t} className="transition duration-500 group-hover:scale-[1.04]" />
       </div>
-      <div className="min-w-0 flex-1">
-        <h3 className="font-bold leading-snug text-primary-deep">{t.full_name}</h3>
-        {t.chinese_name && <div className="text-sm text-muted-foreground">{t.chinese_name}</div>}
-        <div className="mt-0.5 line-clamp-1 text-sm font-medium text-primary">
-          {t.title || tr("Giảng viên")}
-        </div>
-        {tags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {tags.map((x) => (
-              <span
-                key={x}
-                className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground"
-              >
-                {x}
-              </span>
-            ))}
-          </div>
-        )}
+      <h3 className="mt-4 text-lg font-bold leading-snug text-primary-deep">{t.full_name}</h3>
+      {t.chinese_name && <div className="text-sm text-muted-foreground">{t.chinese_name}</div>}
+      <div className="mt-1 line-clamp-1 text-sm font-medium text-primary">
+        {t.title || tr("Giảng viên")}
       </div>
-      <ArrowRight className="h-4 w-4 shrink-0 text-primary/60 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+      {t.specialty && (
+        <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">{t.specialty}</div>
+      )}
+      {tags.length > 0 && (
+        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+          {tags.map((x) => (
+            <span
+              key={x}
+              className="rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold text-accent-foreground"
+            >
+              {x}
+            </span>
+          ))}
+        </div>
+      )}
+      <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+        {tr("Xem hồ sơ")} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+      </span>
+    </>
+  );
+  const className =
+    "group flex flex-col items-center rounded-2xl border border-border bg-card p-5 text-center transition duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-lg hover:shadow-primary/10 md:p-6";
+  if (onSelect)
+    return (
+      <button type="button" onClick={() => onSelect(t)} className={`${className} w-full`}>
+        {body}
+      </button>
+    );
+  return (
+    <Link to="/teachers/$teacherId" params={{ teacherId: t.id }} className={className}>
+      {body}
     </Link>
   );
 }

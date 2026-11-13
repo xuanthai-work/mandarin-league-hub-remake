@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Star } from "lucide-react";
 import { PageHero } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { Chips, EmptyState } from "@/components/site/ui";
 import { NEWS_CATEGORIES } from "@/lib/data/news";
 import type { NewsCategory } from "@/lib/data/types";
@@ -27,6 +28,7 @@ function PNews() {
   const list = (news.data ?? []).filter((n) => cat === "all" || n.category === cat);
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Hoạt động & Tin tức" }, { label: "Tin tức & Kiến thức" }]} />
       <PageHero
         eyebrow="Tin tức"
         title="Tin tức & kiến thức"

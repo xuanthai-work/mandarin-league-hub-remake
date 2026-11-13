@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowUpRight, Handshake } from "lucide-react";
 import { PageHero, CONTACT } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { Chips, EmptyState } from "@/components/site/ui";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
 import type { PartnerCategory } from "@/lib/data/types";
@@ -27,6 +28,7 @@ function PPartners() {
   const list = (q.data ?? []).filter((p) => cat === "all" || p.category === cat);
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Giới thiệu" }, { label: "Đối tác" }]} />
       <PageHero
         eyebrow="Đối tác"
         title="Đồng hành cùng TML"

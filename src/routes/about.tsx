@@ -12,6 +12,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { PageHero } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { SectionTitle } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 
@@ -52,6 +53,7 @@ function PAbout() {
   const tr = useTr();
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Giới thiệu" }, { label: "Về TML" }]} />
       <PageHero
         eyebrow="Giới thiệu"
         title="The Mandarin League"
@@ -125,7 +127,7 @@ function PAbout() {
             ))}
           </div>
         </section>
-        <section className="grid gap-5 md:grid-cols-2">
+        <section className="grid gap-5 md:grid-cols-3">
           <Link
             to="/organization"
             className="group rounded-2xl bg-brand-gradient p-8 text-primary-foreground"
@@ -148,6 +150,18 @@ function PAbout() {
             </div>
             <span className="mt-4 inline-flex items-center gap-1 font-semibold text-primary">
               {tr("Tìm hiểu")} <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
+          <Link to="/community" className="group rounded-2xl border border-border bg-card p-8">
+            <Users className="h-6 w-6 text-primary" />
+            <div className="mt-2 text-sm font-semibold uppercase tracking-widest text-primary">
+              {tr("09 · Cộng đồng")}
+            </div>
+            <div className="mt-2 text-xl font-bold text-primary-deep">
+              {tr("Những con người cùng tạo nên TML")}
+            </div>
+            <span className="mt-4 inline-flex items-center gap-1 font-semibold text-primary">
+              {tr("Khám phá cộng đồng")} <ArrowRight className="h-4 w-4" />
             </span>
           </Link>
         </section>
