@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  UserRound,
   Users,
   Video,
   Wallet,
@@ -46,8 +47,13 @@ import {
   type ActivityRow,
 } from "@/lib/activities";
 import { Chips, EmptyState, SectionLabel } from "@/components/site/ui";
-import { TeacherCardMid } from "@/components/site/TeacherCard";
-import { usePublicTeachers, type PublicTeacher } from "@/lib/teachers";
+import { ContentCard } from "@/components/site/ContentCard";
+import {
+  usePublicTeachers,
+  teacherTags,
+  TEACHER_TYPE_LABEL,
+  type PublicTeacher,
+} from "@/lib/teachers";
 import {
   fmtDate as fmtNewsDate,
   useActivePartners,
@@ -534,10 +540,39 @@ function Home() {
               />
             </div>
           ) : (
-            <div className="mt-10 grid gap-5 sm:grid-cols-2">
-              {faculty.map((x) => (
-                <TeacherCardMid key={x.id} t={x} onSelect={setSelectedTeacher} />
-              ))}
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {faculty.map((x) => {
+                const tags = teacherTags(x).slice(0, 3);
+                return (
+                  <ContentCard
+                    key={x.id}
+                    image={x.avatar_url}
+                    imageAlt={x.full_name}
+                    imageClassName="object-[center_30%]"
+                    fallback={<UserRound className="h-12 w-12 text-primary/60" />}
+                    eyebrow={tr(TEACHER_TYPE_LABEL[x.teacher_type])}
+                    title={x.full_name}
+                    description={
+                      [x.title, x.chinese_name, x.specialty].filter(Boolean).join(" · ") || x.bio
+                    }
+                    meta={
+                      tags.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : undefined
+                    }
+                    onClick={() => setSelectedTeacher(x)}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -638,36 +673,20 @@ function Home() {
                   </div>
                 )}
                 {articles.map((n) => (
-                  <button
+                  <ContentCard
                     key={n.id}
-                    type="button"
+                    image={n.cover}
+                    imageAlt={n.title}
+                    fallback={<span className="font-han text-5xl text-primary/70">文</span>}
+                    eyebrow={n.category}
+                    badge={
+                      n.is_featured ? <Star className="h-4 w-4 fill-gold text-gold" /> : undefined
+                    }
+                    title={n.title}
+                    description={n.summary}
+                    meta={`${n.author_name} · ${fmtNewsDate(n.published_at)}`}
                     onClick={() => setSelectedNews(n)}
-                    className="overflow-hidden rounded-2xl border border-border bg-card text-left transition hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10"
-                  >
-                    {n.cover ? (
-                      <img
-                        src={n.cover}
-                        alt={n.title}
-                        loading="lazy"
-                        className="h-40 w-full object-cover"
-                      />
-                    ) : (
-                      <div className="grid-lines flex h-40 items-center justify-center bg-accent">
-                        <span className="font-han text-5xl text-primary/70">文</span>
-                      </div>
-                    )}
-                    <div className="p-5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-primary">{n.category}</span>
-                        {n.is_featured && <Star className="h-4 w-4 fill-gold text-gold" />}
-                      </div>
-                      <h3 className="mt-2 font-semibold">{n.title}</h3>
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{n.summary}</p>
-                      <div className="mt-3 text-xs text-muted-foreground">
-                        {n.author_name} · {fmtNewsDate(n.published_at)}
-                      </div>
-                    </div>
-                  </button>
+                  />
                 ))}
               </div>
             </div>
