@@ -51,12 +51,11 @@ export const Route = createFileRoute("/_authenticated/admin/feedback")({
 });
 
 const COLUMNS: AdminColumn[] = [
-  { key: "writer", label: "Người viết", className: "w-[22%]" },
-  { key: "type", label: "Phân loại", className: "w-[104px]" },
-  { key: "content", label: "Tiêu đề & Nội dung", className: "w-[30%]" },
-  { key: "created", label: "Ngày giờ viết", className: "w-[124px]" },
-  { key: "status", label: "Trạng thái", className: "w-[116px]" },
-  { key: "actions", label: "Thao tác", srOnly: true, className: "w-[76px] text-right" },
+  { key: "writer", label: "Người viết", className: "w-[26%]" },
+  { key: "type", label: "Phân loại", className: "w-[112px]" },
+  { key: "content", label: "Tiêu đề & Nội dung" },
+  { key: "created", label: "Ngày giờ viết", className: "w-[132px] whitespace-nowrap" },
+  { key: "status", label: "Trạng thái", className: "w-[112px]" },
 ];
 
 type DeptFilter = "all" | string;
@@ -235,7 +234,7 @@ function FeedbackPage() {
         <div className="space-y-3">
           <AdminTable
             columns={COLUMNS}
-            minWidth="min-w-[980px]"
+            minWidth="min-w-[860px]"
             isEmpty={rows.length === 0}
             emptyMessage="Không có đơn nhận xét."
           >
@@ -281,24 +280,13 @@ function FeedbackPage() {
                       {f.content}
                     </p>
                   </td>
-                  <td className="p-3 text-[11px] text-muted-foreground">
+                  <td className="p-3 text-[11px] whitespace-nowrap text-muted-foreground">
                     {formatFeedbackDate(f.created_at)}
                   </td>
                   <td className="p-3">
                     <StatusPill tone={FEEDBACK_STATUS_TONE[f.status]}>
                       {FEEDBACK_STATUS_LABEL[f.status]}
                     </StatusPill>
-                  </td>
-                  <td className="p-3 text-right">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="admin-sm"
-                      onClick={() => setSelectedId(f.id)}
-                      aria-label={`Xem đơn ${f.title}`}
-                    >
-                      Xem
-                    </Button>
                   </td>
                 </AdminTableRow>
               );
