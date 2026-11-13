@@ -51,11 +51,11 @@ export const Route = createFileRoute("/_authenticated/admin/feedback")({
 });
 
 const COLUMNS: AdminColumn[] = [
-  { key: "writer", label: "Người viết", className: "w-[26%]" },
-  { key: "type", label: "Phân loại", className: "w-[112px]" },
-  { key: "content", label: "Tiêu đề & Nội dung" },
-  { key: "created", label: "Ngày giờ viết", className: "w-[132px] whitespace-nowrap" },
-  { key: "status", label: "Trạng thái", className: "w-[112px]" },
+  { key: "writer", label: "Người viết", className: "w-[28%]" },
+  { key: "type", label: "Phân loại", className: "w-[15%]" },
+  { key: "content", label: "Tiêu đề & Nội dung", className: "w-[27%]" },
+  { key: "created", label: "Ngày giờ viết", className: "w-[15%] whitespace-nowrap" },
+  { key: "status", label: "Trạng thái", className: "w-[15%]" },
 ];
 
 type DeptFilter = "all" | string;
