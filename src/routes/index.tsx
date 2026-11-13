@@ -96,9 +96,14 @@ const VALUES = [
   { icon: HandHeart, t: "Trách nhiệm", d: "Minh bạch, tận tâm." },
 ];
 
-const COMMUNITY_GROUPS = [
-  { icon: Users, t: "Thành viên", d: "Những người đang tham gia TML." },
-  { icon: GraduationCap, t: "Giáo viên", d: "Đội ngũ giảng dạy và chuyên môn." },
+const COMMUNITY_GROUPS: {
+  icon: typeof Users;
+  t: string;
+  d: string;
+  to?: "/organization" | "/teachers";
+}[] = [
+  { icon: Users, t: "Thành viên", d: "Những người đang tham gia TML.", to: "/organization" },
+  { icon: GraduationCap, t: "Giáo viên", d: "Đội ngũ giảng dạy và chuyên môn.", to: "/teachers" },
   { icon: HandHeart, t: "Tình nguyện viên", d: "Đóng góp cho hoạt động của TML." },
   { icon: Sparkles, t: "Mentor", d: "Hỗ trợ học tập và phát triển." },
   { icon: Megaphone, t: "Đại sứ", d: "Lan tỏa hình ảnh và hoạt động TML." },
@@ -329,13 +334,35 @@ function Home() {
               </Link>
             </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {COMMUNITY_GROUPS.map((g) => (
-                <div key={g.t} className="rounded-xl bg-secondary p-4">
-                  <g.icon className="h-5 w-5 text-primary" />
-                  <div className="mt-2 font-semibold text-primary-deep">{tr(g.t)}</div>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{tr(g.d)}</p>
-                </div>
-              ))}
+              {COMMUNITY_GROUPS.map((g) => {
+                if (g.to)
+                  return (
+                    <Link
+                      key={g.t}
+                      to={g.to}
+                      className="group cursor-pointer rounded-xl border border-transparent bg-secondary p-4 transition duration-200 hover:border-primary/40 hover:bg-accent/60"
+                    >
+                      <div className="flex items-center justify-between">
+                        <g.icon className="h-5 w-5 text-primary" />
+                        <ArrowRight className="h-3.5 w-3.5 text-primary opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+                      </div>
+                      <div className="mt-2 font-semibold text-primary-deep group-hover:text-primary">
+                        {tr(g.t)}
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {tr(g.d)}
+                      </p>
+                    </Link>
+                  );
+
+                return (
+                  <div key={g.t} className="rounded-xl bg-secondary p-4">
+                    <g.icon className="h-5 w-5 text-primary" />
+                    <div className="mt-2 font-semibold text-primary-deep">{tr(g.t)}</div>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{tr(g.d)}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>

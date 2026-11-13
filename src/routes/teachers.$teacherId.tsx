@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Award, BookOpen, Briefcase, GraduationCap, Languages } from "lucide-react";
 import { EmptyState } from "@/components/site/ui";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { TeacherPhoto } from "@/components/site/TeacherCard";
 import { useTr } from "@/lib/i18n";
 import {
@@ -66,16 +67,14 @@ function TeacherProfile() {
     .filter(Boolean);
   return (
     <>
+      <BreadcrumbBar items={[{ label: "Giảng viên", to: "/teachers" }, { label: t.full_name }]} />
       <section className="grid-lines border-b border-border bg-secondary">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-[280px_1fr] md:items-center md:px-6">
           <div className="mx-auto aspect-[4/5] w-56 overflow-hidden rounded-2xl border-4 border-background shadow-xl ring-1 ring-gold/50 md:w-full">
             <TeacherPhoto t={t} />
           </div>
           <div>
-            <Link to="/teachers" className="text-sm font-medium text-primary">
-              ← {tr("Đội ngũ Giảng viên")}
-            </Link>
-            <h1 className="mt-3 text-3xl font-bold text-primary-deep md:text-5xl">{t.full_name}</h1>
+            <h1 className="text-3xl font-bold text-primary-deep md:text-5xl">{t.full_name}</h1>
             {t.chinese_name && (
               <div className="mt-1 text-xl text-muted-foreground">{t.chinese_name}</div>
             )}

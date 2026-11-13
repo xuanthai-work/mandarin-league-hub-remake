@@ -225,6 +225,8 @@ export const PHRASES: Record<string, [string, string]> = {
     "传播 TML 的形象与活动。",
     "Spread TML's image and activities.",
   ],
+  "Xem cơ cấu tổ chức": ["查看组织架构", "View organization chart"],
+  "Xem đội ngũ giảng viên": ["查看师资团队", "View faculty team"],
   // About
   "Giới thiệu": ["关于我们", "About"],
   "Liên Đoàn Hán Ngữ · 普通话联盟 — Online Chinese Learning Community.": [

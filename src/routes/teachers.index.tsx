@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { EmptyState, SectionTitle } from "@/components/site/ui";
+import { EmptyState } from "@/components/site/ui";
+import { PageHero } from "@/components/site/SiteLayout";
+import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { TeacherCard } from "@/components/site/TeacherCard";
 import { useTr } from "@/lib/i18n";
 import { teacherTags, usePublicTeachers } from "@/lib/teachers";
@@ -49,15 +51,12 @@ function TeachersDirectory() {
   );
   return (
     <>
-      <section className="grid-lines border-b border-border bg-secondary">
-        <div className="mx-auto max-w-7xl px-4 py-14 md:px-6">
-          <SectionTitle
-            label="师资团队 · Teaching Faculty"
-            title="Đội ngũ Giảng viên"
-            desc="Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập."
-          />
-        </div>
-      </section>
+      <BreadcrumbBar items={[{ label: "Giảng viên" }, { label: "Đội ngũ Giảng viên" }]} />
+      <PageHero
+        eyebrow="师资团队 · Teaching Faculty"
+        title="Đội ngũ Giảng viên"
+        desc="Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập."
+      />
       <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
         <div className="flex flex-wrap items-center gap-3">
           <label className="relative w-full max-w-xs">
