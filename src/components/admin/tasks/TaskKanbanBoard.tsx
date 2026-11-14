@@ -1,5 +1,6 @@
 import { useState, type ComponentType, type ReactNode } from "react";
 import { Eye, Inbox, Trophy, Zap } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   DndContext,
   DragOverlay,
@@ -78,6 +79,7 @@ function BoardColumn({
   needsAttention,
 }: BoardColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: column.key });
+  const [listRef] = useAutoAnimate<HTMLDivElement>();
   const Icon = ICONS[column.key] ?? Inbox;
 
   let highlightClass = "";
@@ -127,7 +129,10 @@ function BoardColumn({
         </span>
       </header>
 
-      <div className="custom-scrollbar max-h-[calc(100vh-230px)] space-y-3 overflow-x-hidden overflow-y-auto p-1">
+      <div
+        ref={listRef}
+        className="custom-scrollbar max-h-[calc(100vh-230px)] space-y-3 overflow-x-hidden overflow-y-auto p-1"
+      >
         {children}
       </div>
     </section>
