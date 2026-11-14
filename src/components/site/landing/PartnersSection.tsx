@@ -3,9 +3,9 @@ import { ArrowRight, ArrowUpRight, Handshake } from "lucide-react";
 import { useTr } from "@/lib/i18n";
 import { EmptyState, SectionLabel } from "@/components/site/ui";
 import { useActivePartners } from "@/lib/news-db";
-import { useSiteContent, type HomeContent } from "@/lib/site-content";
+import { useSiteContent } from "@/lib/site-content";
 
-export function PartnersSection({ h: _h }: { h?: HomeContent }) {
+export function PartnersSection() {
   const tr = useTr();
   const partnerQuery = useActivePartners();
   const partners = partnerQuery.data ?? [];

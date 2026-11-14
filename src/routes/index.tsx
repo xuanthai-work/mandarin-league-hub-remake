@@ -50,7 +50,6 @@ export const Route = createFileRoute("/")({
 function Home() {
   const tr = useTr();
   const { data: h, preview } = useSiteContent("home");
-  const site = useSiteContent("site").data;
 
   const [selectedCourse, setSelectedCourse] = useState<{
     course: Course;
@@ -82,7 +81,7 @@ function Home() {
       {h.show.courses && <CoursesSection h={h} onSelectCourse={setSelectedCourse} />}
 
       {/* Faculty — medium cards balance presence and page height */}
-      <TeachersSection h={h} onSelectTeacher={setSelectedTeacher} />
+      <TeachersSection onSelectTeacher={setSelectedTeacher} />
 
       {/* Activities: category chips, activity cards and the photo carousel */}
       {h.show.activities && (
@@ -94,13 +93,13 @@ function Home() {
       )}
 
       {/* Partners */}
-      <PartnersSection h={h} />
+      <PartnersSection />
 
       {/* Verification: the two large cards from /verify plus its trust strip */}
       <VerifySection h={h} onOpenVerify={setVerifyKind} />
 
       {/* Contact & join */}
-      {h.show.cta && <ContactSection h={h} site={site} />}
+      {h.show.cta && <ContactSection h={h} />}
 
       {selectedCourse && (
         <CourseDialog

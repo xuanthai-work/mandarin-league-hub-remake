@@ -2,13 +2,12 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, AtSign, Facebook, Instagram, Linkedin, Mail, Music2 } from "lucide-react";
 import { useT, useTr } from "@/lib/i18n";
 import { ContactForm } from "@/components/site/ContactForm";
-import { useSiteContent, type HomeContent, type SiteSettings } from "@/lib/site-content";
+import { useSiteContent, type HomeContent } from "@/lib/site-content";
 
-export function ContactSection({ h, site: propSite }: { h: HomeContent; site?: SiteSettings }) {
+export function ContactSection({ h }: { h: HomeContent }) {
   const { t } = useT();
   const tr = useTr();
-  const siteHook = useSiteContent("site").data;
-  const site = propSite ?? siteHook;
+  const site = useSiteContent("site").data;
 
   return (
     <section id="contact" className="scroll-mt-24 border-t border-border py-20">

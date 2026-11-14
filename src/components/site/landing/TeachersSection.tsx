@@ -4,12 +4,10 @@ import { useTr } from "@/lib/i18n";
 import { EmptyState, SectionLabel } from "@/components/site/ui";
 import { TeacherPhotoCard } from "@/components/site/TeacherPhotoCard";
 import { usePublicTeachers, type PublicTeacher } from "@/lib/teachers";
-import type { HomeContent } from "@/lib/site-content";
 
 export function TeachersSection({
   onSelectTeacher,
 }: {
-  h?: HomeContent;
   onSelectTeacher: (teacher: PublicTeacher) => void;
 }) {
   const tr = useTr();
