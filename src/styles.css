@@ -71,6 +71,10 @@
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
   --color-brand-red: var(--brand-red);
+
+  /* Motion easing (TASK-GE-209). Dùng: class `ease-soft`, `ease-spring`. */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :root {
@@ -129,6 +133,11 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  /* Motion durations (TASK-GE-209). Dùng: `duration-(--motion-fast)` hoặc `transition-duration: var(--motion-fast)`. */
+  --motion-fast: 150ms;
+  --motion-base: 250ms;
+  --motion-slow: 400ms;
 }
 
 .dark {
@@ -2052,4 +2061,22 @@
 
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/*
+ * Reduced motion for opt-in regions (TASK-GE-209).
+ * Mark an element with `data-motion` and every animation/transition inside it
+ * collapses to an instant change for people who ask for less motion.
+ * Existing per-class rules above stay as they are.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-motion],
+  [data-motion] *,
+  [data-motion] *::before,
+  [data-motion] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

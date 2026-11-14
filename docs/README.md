@@ -288,6 +288,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-206-LANDING-OVERHAUL`                                         | Đại tu trang công khai: landing một trang, header dropdown, CMS đa ngôn ngữ (ghi bổ sung)              | 2026-11-13     | **PASS** | [task-ge-206-landing-overhaul.md](tasks/task-ge-206-landing-overhaul.md)                                                                                 |
 | `TASK-GE-207-SPLIT-LANDING-AND-SITELAYOUT-SECTIONS`                    | Tách trang chủ thành 8 section và SiteLayout thành Header/Footer/nav                                   | 2026-11-14     | **PASS** | [task-ge-207-split-landing-and-sitelayout-sections.md](tasks/task-ge-207-split-landing-and-sitelayout-sections.md)                                       |
 | `TASK-GE-208-LANDING-SECTION-UNUSED-PROPS`                             | Bỏ prop thừa ở section Giảng viên, Đối tác, Liên hệ                                                    | 2026-11-14     | **PASS** | [task-ge-208-landing-section-unused-props.md](tasks/task-ge-208-landing-section-unused-props.md)                                                         |
+| `TASK-GE-209-MOTION-TOKENS-AND-REDUCED-MOTION`                         | Token chuyển động (easing, thời lượng) và hook reduced-motion cho hiệu ứng                             | 2026-11-15     | **PASS** | [task-ge-209-motion-tokens-and-reduced-motion.md](tasks/task-ge-209-motion-tokens-and-reduced-motion.md)                                                 |
 
 ---
 
