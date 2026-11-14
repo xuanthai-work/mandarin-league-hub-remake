@@ -73,6 +73,11 @@
 
 - **Phụ thuộc**: Phase 0 (đặc biệt 0.3, vì cùng chạm `AdminDrawer`, `AdminModal`).
 - **Rủi ro**: Kanban là vùng dễ lỗi nhất (kéo thả, cuộn ngang). Làm 2.2 sau cùng, test kéo thả bằng Playwright, và giữ test hiện có.
+- **Cập nhật 2026-11-15 sau khảo sát**:
+  - **2.1 làm bằng CSS, không dùng `layoutId`.** `layoutId` cần `domMax` của `motion`, trong khi khu admin đã chuyển sang `LazyMotion` với `domAnimation` (OC-196); đổi sang `domMax` sẽ tăng bundle chỉ vì một viên pill. Cách làm: hook `useSlidingIndicator` đo vị trí mục đang chọn rồi dùng CSS transition (`transform`, `width`, `height`) với token Phase 0. Phạm vi thật: `SegmentedControl` (14 chỗ dùng) và `TabsList` (1 chỗ dùng, `CandidateDossierDrawer`).
+  - **2.2 chuyển hướng sang `auto-animate` cho danh sách thẻ trong cột**, vì bảng dùng `useDraggable` + `DragOverlay` (không phải `@dnd-kit/sortable`), nên mối lo xung đột với `auto-animate` có khả năng không xảy ra. Task có điều kiện: nếu kéo thả lỗi thì gỡ và báo.
+  - **Bỏ task 2.3.** `AdminDrawer` và `AdminModal` đã có spring và ease phù hợp; thời lượng ở đó là số trong `motion`, không dùng token CSS, nên đổi sang token không đem lại thay đổi nhìn thấy được.
+  - **Đã giao**: 2.1 = `TASK-GE-212-SLIDING-PILL-TABS-SEGMENTED` (Gemini); 2.2 = `TASK-OC-198-KANBAN-AUTOANIMATE-COLUMNS` (OpenCode). Hai task không trùng file.
 
 ## Phase 3: Số liệu và khoảnh khắc ăn mừng (thêm 2 thư viện nhỏ)
 
