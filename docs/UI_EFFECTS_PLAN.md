@@ -88,7 +88,12 @@
 | 3.3 Cài `canvas-confetti` + hook `useCelebrate()` | Import động (lazy), chạy một lần, dọn canvas khi xong, tắt khi reduced-motion | `package.json`, `src/lib/celebrate.ts` (+ test) |
 | 3.4 Áp confetti | Duyệt nhiệm vụ xong, cấp tài khoản thành công, thăng hạng thẻ (chỉ ở khoảnh khắc người dùng chủ động tạo ra) | `admin.tasks.tsx`/`TaskDetailModal.tsx`, `admin.members.tsx`, nơi cấp hạng thẻ |
 
-- **Phụ thuộc**: Phase 0. 3.1 và 3.3 là hai task độc lập (cài gói), làm song song được hai làn; 3.2 và 3.4 sau khi gói đã vào `package.json`.
+- **Điều chỉnh 2026-11-15 (soạn Phase 3)**:
+  - **Gộp 3.1 + 3.3 thành một task nền**: `TASK-GE-213-NUMBERFLOW-CONFETTI-FOUNDATION` (Gemini). Task này cài cả `@number-flow/react` và `canvas-confetti` (+ `@types/canvas-confetti`) và dựng `AnimatedNumber` (`src/components/ui/animated-number.tsx`, đặt ở `ui/` vì dùng cả ở cổng thành viên) và `celebrate()` (`src/lib/celebrate.ts`). Lý do gộp: hai task cài gói riêng sẽ cùng sửa `package.json` và `pnpm-lock.yaml`.
+  - **`AnimatedNumber` an toàn SSR bằng cách in chữ tĩnh ở lần render đầu rồi mới chuyển sang NumberFlow** (không phụ thuộc việc thư viện có hỗ trợ SSR hay không).
+  - **`celebrate()` là hàm, không phải hook**; nạp `canvas-confetti` bằng `import()` động; không làm gì khi giảm chuyển động, ở server, hoặc khi gọi lặp trong 1 giây; `zIndex: 100` để nằm trên modal.
+  - **3.2 và 3.4 (áp vào trang) là hai task song song ở đợt sau**, sau khi GE-213 xong. Phạm vi pháo giấy bản đầu chỉ gồm khoảnh khắc người dùng chủ động tạo ra (duyệt nhiệm vụ, tạo tài khoản); **bỏ "thăng hạng thẻ"** vì cần biết điểm trước đó để phát hiện lên hạng, để dành khi có yêu cầu riêng.
+- **Phụ thuộc**: Phase 0. Sau task nền, 3.2 và 3.4 chạy song song được hai làn (khác file).
 - **Lưu ý `package.json`**: hai làn cùng sửa `package.json` và `pnpm-lock.yaml` sẽ xung đột. **Chỉ một làn cài gói tại một thời điểm.**
 - **Tiêu chí**: bundle route admin tăng không quá vài KB gzip (đo trước và sau); số cuộn đúng khi dữ liệu đổi (kiểm bằng cách cộng điểm thử trên dev); confetti không chặn thao tác.
 - **Kiểm**: Playwright cộng và trừ điểm (có xin phép ghi DB dev), quan sát số; kiểm bằng mắt confetti.
