@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Hiệu ứng UI theo phase (soạn 2026-11-14, chờ User duyệt thứ tự và chọn làn): chi tiết ở `docs/UI_EFFECTS_PLAN.md`, danh mục và lý do chọn ở `docs/UI_EFFECTS_CATALOG.md`. Phase 0 nền tảng (token, reduced-motion, LazyMotion admin) → 1 không tốn KB (View Transitions, reveal khi cuộn, `starting:`, auto-animate bảng) → 2 tab/Kanban/drawer → 3 NumberFlow + confetti → 4 thẻ thành viên (tilt 3D, Border Beam) → 5 trang công khai nâng cao (Lenis, Hanzi Writer, hero), chỉ khi User muốn.
+
 - [ ] TML Member Pass Chặng 2: đã thêm xác thực QR chính chủ và phiên Thư viện có hạn; còn kiểm thử đăng nhập/quét QR/làm mới mã thực tế và kiểm tra bảo mật (tạm dừng vì hết credits); kho tài liệu/CMS thuộc Chặng 3.
 - [x] Fix Home/logo navigation from recruitment and member portals; 13 domain tests passed, desktop/mobile join Home clicks reach main origin and preview Home stays local (production-host behavior verified through local proxy).
 - [x] Thu gọn TML AI thành hỏi đáp Liên Đoàn, bỏ AI Tutor và chọn trình độ theo xác nhận của Daniel; 28 tests đạt, giao diện/gợi ý/xóa được kiểm tra, build OK; chặn chế độ tutor cũ.

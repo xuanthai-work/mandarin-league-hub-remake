@@ -20,7 +20,7 @@
 
 | Gói | Phiên bản | Dùng ở đâu hiện nay | Nhận xét |
 | :-- | :-- | :-- | :-- |
-| `motion` | ^14.5.0 | 26 file import | Dùng nhiều, nhưng **chưa có `LazyMotion`** nên kéo bản đầy đủ |
+| `motion` | ^14.5.0 | 26 file import (hầu hết là admin: `AdminDrawer`, `AdminModal` và các trang admin; trang công khai chỉ có `ai-elements/shimmer`) | Chưa có `LazyMotion` nên kéo bản đầy đủ. Trang công khai hiện **không** tải `motion`, hiệu ứng ở đó là CSS keyframes trong `styles.css` |
 | `@formkit/auto-animate` | ^0.10.0 | 1 file | Gần như chưa tận dụng, hợp với bảng và Kanban |
 | `tw-animate-css` | ^1.3.4 | lớp tiện ích Tailwind | Keyframes nền (enter/exit cho Radix) |
 | `embla-carousel-react` | ^8.6.0 | 1 file (carousel) | Đủ dùng |
@@ -60,7 +60,7 @@ Các việc này dùng thứ đã có trong trình duyệt hoặc trong stack. L
 ### 2.4. Dùng đúng phần `motion` đã có
 
 - `layoutId` cho vệt sáng trượt theo tab, `AnimatePresence` cho drawer và modal, `useReducedMotion` cho người nhạy cảm chuyển động.
-- **Giảm bundle bằng `LazyMotion` với `domAnimation`**: bản React đầy đủ khoảng 32 KB gzip _(chưa kiểm số liệu)_. Chi phí cần tính: 26 file đang dùng `motion.xxx` phải đổi sang `m.xxx`, và nên bật chế độ `strict` để chặn dùng nhầm. Nên làm thành một task riêng, ưu tiên các trang công khai.
+- **Giảm bundle bằng `LazyMotion` với `domAnimation`**: bản React đầy đủ khoảng 32 KB gzip _(chưa kiểm số liệu)_. Chi phí cần tính: 26 file đang dùng `motion.xxx` phải đổi sang `m.xxx`, và nên bật chế độ `strict` để chặn dùng nhầm. Nên làm thành một task riêng. Vì `motion` hiện chỉ chạy ở admin, lợi ích là giảm bundle của khu admin; nếu sau này thêm `motion` vào trang công khai thì bắt buộc dùng `LazyMotion` ngay từ đầu để trang công khai không tăng nặng.
 - Dùng thêm `@formkit/auto-animate` (đã cài) cho bảng và Kanban trước khi nghĩ tới thư viện khác.
 
 ---
@@ -167,7 +167,7 @@ Mô hình giống shadcn/ui: **chép mã nguồn của đúng component cần d�
 ## 8. Thứ tự đề xuất
 
 1. **Nhóm 0 (0 KB)**: View Transitions, `starting:` cho dropdown và popover, dùng `auto-animate` cho bảng và Kanban.
-2. **Giảm bundle**: `LazyMotion` cho các trang công khai (task riêng, đổi `motion.` thành `m.`).
+2. **Giảm bundle admin**: `LazyMotion` cho khu admin (task riêng, đổi `motion.` thành `m.`). Trang công khai chưa tải `motion` nên chưa cần.
 3. **Nhóm 1 cho cổng thành viên và đóng góp**: NumberFlow, `canvas-confetti`.
 4. **Nhóm 2 cho giao diện nổi bật**: Border Beam, 3D Card cho thẻ thành viên (chép từng component, kiểm theme sáng).
 5. **`hanzi-writer`** cho trang HSK.

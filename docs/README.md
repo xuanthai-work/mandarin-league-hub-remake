@@ -295,3 +295,4 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 
 - **Archive Directory**: [docs/tasks/](tasks/)
 - **UI Animation & Effects Catalog**: [docs/UI_EFFECTS_CATALOG.md](UI_EFFECTS_CATALOG.md)
+- **UI Effects Rollout Plan**: [docs/UI_EFFECTS_PLAN.md](UI_EFFECTS_PLAN.md)
