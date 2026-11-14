@@ -101,7 +101,9 @@ export function TaskKanbanCard({
         </span>
       </div>
 
-      <h3 className="mt-2 text-[13px] font-semibold leading-snug text-foreground">{group.title}</h3>
+      <h3 className="mt-2 break-words text-[13px] font-semibold leading-snug text-foreground">
+        {group.title}
+      </h3>
 
       {group.status === "revision" && revisionNote && (
         <p className="mt-2 line-clamp-2 rounded-lg bg-destructive/5 px-2 py-1 text-[10px] text-destructive">
@@ -178,12 +180,12 @@ export function TaskKanbanCard({
 
       {/* Footer: due date (left) | points + assignees (right) */}
       <div
-        className="mt-3 flex items-center justify-between gap-2 border-t border-border/50 pt-2"
+        className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-t border-border/50 pt-2"
         onClick={(e) => e.stopPropagation()}
       >
         <span
           className={cn(
-            "inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px]",
+            "inline-flex min-w-0 items-center gap-1 whitespace-nowrap text-[11px]",
             dueBadgeTone(group.due_on),
           )}
         >
@@ -191,7 +193,7 @@ export function TaskKanbanCard({
           {dueLabel(group.due_on, group.status)}
         </span>
 
-        <div className="flex items-center gap-1.5">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <span className="shrink-0 rounded-md border border-gold/40 bg-gold-soft/40 px-1.5 py-0.5 text-[10px] font-bold text-primary-deep">
             +{group.points}đ
           </span>

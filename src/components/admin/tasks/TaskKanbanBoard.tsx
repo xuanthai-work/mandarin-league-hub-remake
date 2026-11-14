@@ -127,7 +127,7 @@ function BoardColumn({
         </span>
       </header>
 
-      <div className="custom-scrollbar max-h-[calc(100vh-230px)] space-y-3 overflow-y-auto p-1">
+      <div className="custom-scrollbar max-h-[calc(100vh-230px)] space-y-3 overflow-x-hidden overflow-y-auto p-1">
         {children}
       </div>
     </section>
