@@ -33,6 +33,7 @@ import {
 } from "@/components/admin/tasks/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { can } from "@/lib/permission-catalog";
+import { celebrate } from "@/lib/celebrate";
 import { getAssignableMembers, getTaskPeople } from "@/lib/tasks.functions";
 import { matchesSearch } from "@/lib/search";
 import { useAvatarUrls } from "@/lib/avatars";
@@ -291,7 +292,10 @@ function TasksPage() {
       confirmLabel: "Duyệt và cộng điểm",
     });
     if (!ok) return;
-    if (await reviewTasks(targets, true)) toast.success(`Đã duyệt và cộng ${points} điểm`);
+    if (await reviewTasks(targets, true)) {
+      toast.success(`Đã duyệt và cộng ${points} điểm`);
+      void celebrate();
+    }
   };
   const reviseGroup = (group: GroupedTask) =>
     openRevision(

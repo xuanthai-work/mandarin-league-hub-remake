@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MemberPermissionsSection } from "@/components/admin/members/MemberPermissionsSection";
 import { deptName } from "@/lib/recruitment";
+import { celebrate } from "@/lib/celebrate";
 import { csvCell } from "@/lib/csv";
 import { matchesSearch } from "@/lib/search";
 import { useAvatarUrls } from "@/lib/avatars";
@@ -1356,6 +1357,7 @@ function GrantAccount({
       set({ email });
       setDone(true);
       toast.success("Đã cấp tài khoản nội bộ");
+      void celebrate();
     } catch (e) {
       const msg = (e as Error).message;
       setErr(
@@ -1531,6 +1533,7 @@ function NewMemberDrawer({
         });
         set({ email });
         setDone(true);
+        void celebrate();
       } else {
         const { error } = await supabase.from("members").insert({
           full_name: v.full_name.trim(),
