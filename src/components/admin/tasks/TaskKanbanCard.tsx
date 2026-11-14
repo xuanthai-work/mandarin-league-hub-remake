@@ -76,7 +76,7 @@ export function TaskKanbanCard({
       aria-label={`Xem chi tiết nhiệm vụ ${group.title}${needsMyReview ? ", đang chờ bạn duyệt" : ""}`}
       className={cn(
         "cursor-pointer rounded-xl border border-border/80 bg-card p-3 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
-        needsMyReview && "border-l-[3px] border-l-warning-foreground/70",
+        needsMyReview && "border-l-[3px] border-l-gold",
       )}
     >
       {/* Top row: dept tag + priority */}
@@ -100,7 +100,7 @@ export function TaskKanbanCard({
             role="img"
             aria-label="Chờ bạn duyệt"
             title="Chờ bạn duyệt"
-            className="ml-auto h-2 w-2 shrink-0 rounded-full bg-warning-foreground"
+            className="ml-auto h-2 w-2 shrink-0 rounded-full bg-gold"
           />
         )}
       </div>
