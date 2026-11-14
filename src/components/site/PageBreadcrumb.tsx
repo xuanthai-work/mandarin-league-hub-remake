@@ -9,7 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useTr } from "@/lib/i18n";
+import { useT, useTr } from "@/lib/i18n";
 
 export type CrumbTo =
   | "/about"
@@ -38,13 +38,14 @@ export function PageBreadcrumb({
   items?: Crumb[];
   className?: string;
 }) {
+  const { t } = useT();
   const tr = useTr();
   return (
     <Breadcrumb className={className}>
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link to="/">{tr("Trang chủ")}</Link>
+            <Link to="/">{t("nav./")}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         {items.map((crumb, i) => (

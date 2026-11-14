@@ -33,7 +33,7 @@ import { lookupHsk } from "@/lib/hsk";
 import { Copy, Download, Printer } from "lucide-react";
 import { getCertificateFileUrl } from "@/lib/certificate-files.functions";
 import { toast } from "sonner";
-import { useTr } from "@/lib/i18n";
+import { useT, useTr } from "@/lib/i18n";
 import { PageBreadcrumb } from "@/components/site/PageBreadcrumb";
 
 interface VerificationLookupProps {
@@ -56,6 +56,7 @@ export function VerificationLookup({
   initialToken = "",
   compact = false,
 }: VerificationLookupProps) {
+  const { t } = useT();
   const tr = useTr();
   const isHsk = kind === "hsk";
   const [code, setCode] = useState(initialCode);
@@ -135,8 +136,8 @@ export function VerificationLookup({
             <div className="mb-7 flex justify-center">
               <PageBreadcrumb
                 items={[
-                  { label: "Xác minh", to: "/verify" },
-                  { label: isHsk ? "Tra cứu điểm HSK" : "Tra cứu chứng chỉ" },
+                  { label: t("nav./verify"), to: "/verify" },
+                  { label: isHsk ? t("footer.hskLookup") : t("footer.verifyCert") },
                 ]}
               />
             </div>
@@ -442,7 +443,7 @@ function HskResult({ record }: { record: HskRecord }) {
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="leading-tight">
-                        <div className="text-sm font-bold">{item.label}</div>
+                        <div className="text-sm font-bold">{tr(item.label)}</div>
                         <div className="font-han text-xs text-muted-foreground">{item.chinese}</div>
                       </div>
                     </div>

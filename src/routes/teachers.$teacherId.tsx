@@ -50,8 +50,8 @@ function TeacherProfile() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20">
         <EmptyState
-          title="Không tìm thấy hồ sơ"
-          desc="Hồ sơ không tồn tại hoặc chưa được công khai."
+          title={tr("Không tìm thấy hồ sơ")}
+          desc={tr("Hồ sơ không tồn tại hoặc chưa được công khai.")}
         />
         <div className="mt-6 text-center">
           <Link to="/teachers" className="font-semibold text-primary">

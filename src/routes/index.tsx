@@ -681,7 +681,7 @@ function Home() {
                 )}
                 {!news.isLoading && articles.length === 0 && (
                   <div className="sm:col-span-2 lg:col-span-3">
-                    <EmptyState desc="Tin tức mới sẽ sớm được cập nhật." />
+                    <EmptyState desc={tr("Tin tức mới sẽ sớm được cập nhật.")} />
                   </div>
                 )}
                 {articles.map((n) => (
@@ -726,7 +726,7 @@ function Home() {
           </div>
           {partners.length === 0 ? (
             <div className="mt-8">
-              <EmptyState desc="Danh sách đối tác sẽ được TML công bố chính thức." />
+              <EmptyState desc={tr("Danh sách đối tác sẽ được TML công bố chính thức.")} />
             </div>
           ) : (
             <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">

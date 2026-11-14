@@ -95,17 +95,20 @@ function TeachersDirectory() {
             ))}
           {isError && (
             <div className="col-span-full">
-              <EmptyState title="Không tải được danh sách" desc="Vui lòng thử lại sau." />
+              <EmptyState
+                title={tr("Không tải được danh sách")}
+                desc={tr("Vui lòng thử lại sau.")}
+              />
             </div>
           )}
           {!isLoading && !isError && rows.length === 0 && (
             <div className="col-span-full">
               <EmptyState
-                title={all.length ? "Không có giáo viên phù hợp" : "Đang cập nhật"}
+                title={all.length ? tr("Không có giáo viên phù hợp") : tr("Đang cập nhật")}
                 desc={
                   all.length
-                    ? "Thử từ khóa hoặc bộ lọc khác."
-                    : "Hồ sơ đội ngũ giảng viên sẽ sớm được công bố."
+                    ? tr("Thử từ khóa hoặc bộ lọc khác.")
+                    : tr("Hồ sơ đội ngũ giảng viên sẽ sớm được công bố.")
                 }
               />
             </div>

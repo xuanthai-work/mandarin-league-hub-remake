@@ -280,6 +280,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-203-REMOVE-STALE-I18N-KEY-AND-AGENTS-NOTE`                    | Xóa key soon.text, cập nhật AGENTS.md (routeAfterLogin)                                                | 2026-11-10     | **PASS** | [task-ge-203-remove-stale-i18n-key-and-agents-note.md](tasks/task-ge-203-remove-stale-i18n-key-and-agents-note.md)                                       |
 | `TASK-OC-191-KANBAN-CARD-FOOTER-OVERFLOW`                              | Sửa footer thẻ Kanban tràn ngang ở cột hẹp (cột Đã hoàn thành)                                         | 2026-11-14     | **PASS** | [task-oc-191-kanban-card-footer-overflow.md](tasks/task-oc-191-kanban-card-footer-overflow.md)                                                           |
 | `TASK-OC-192-KANBAN-SUBMIT-DONE-DATE-LABEL`                            | Thẻ Kanban hiện ngày nộp / ngày xong, đỏ khi trễ hạn, xanh khi đúng hạn                                | 2026-11-14     | **PASS** | [task-oc-192-kanban-submit-done-date-label.md](tasks/task-oc-192-kanban-submit-done-date-label.md)                                                       |
+| `TASK-GE-205-LANDING-I18N-MISSING-PHRASES`                             | Bổ sung bản dịch zh/en còn thiếu cho trang chủ, giảng viên, tra cứu xác minh                           | 2026-11-14     | **PASS** | [task-ge-205-landing-i18n-missing-phrases.md](tasks/task-ge-205-landing-i18n-missing-phrases.md)                                                         |
 
 ---
 

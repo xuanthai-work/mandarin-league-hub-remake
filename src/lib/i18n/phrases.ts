@@ -779,4 +779,28 @@ export const PHRASES: Record<string, [string, string]> = {
     "无法提交申请，请重试。",
     "Could not submit the application, please try again.",
   ],
+  // Landing & verification (TASK-GE-205)
+  "Tin tức mới sẽ sớm được cập nhật.": ["新动态即将更新。", "New updates will be published soon."],
+  "Danh sách đối tác sẽ được TML công bố chính thức.": [
+    "合作伙伴名单将由 TML 正式公布。",
+    "Partner list will be officially announced by TML.",
+  ],
+  "Tôi không phải là người máy": ["我不是机器人", "I'm not a robot"],
+  "Khám phá khóa học": ["探索课程", "Explore courses"],
+  "Không tải được danh sách": ["无法加载列表", "Failed to load list"],
+  "Vui lòng thử lại sau.": ["请稍后再试。", "Please try again later."],
+  "Không có giáo viên phù hợp": ["未找到符合条件的教师", "No matching teachers found"],
+  "Thử từ khóa hoặc bộ lọc khác.": [
+    "尝试其他关键词或筛选条件。",
+    "Try different keywords or filters.",
+  ],
+  "Hồ sơ đội ngũ giảng viên sẽ sớm được công bố.": [
+    "师资团队档案将很快公布。",
+    "Faculty profiles will be published soon.",
+  ],
+  "Không tìm thấy hồ sơ": ["未找到档案", "Profile not found"],
+  "Hồ sơ không tồn tại hoặc chưa được công khai.": [
+    "该档案不存在或尚未公开。",
+    "Profile does not exist or has not been made public.",
+  ],
 };
