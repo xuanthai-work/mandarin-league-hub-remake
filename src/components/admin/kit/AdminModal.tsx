@@ -1,5 +1,5 @@
 import { useEffect, useId, type FormEvent, type ReactNode } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminDialog } from "@/components/admin/kit/useAdminDialog";
@@ -102,7 +102,7 @@ export function AdminModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
-      <motion.div
+      <m.div
         data-slot="modal-overlay"
         aria-hidden
         initial={{ opacity: 0 }}
@@ -112,7 +112,7 @@ export function AdminModal({
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={dismissible ? onClose : undefined}
       />
-      <motion.div
+      <m.div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
@@ -161,7 +161,7 @@ export function AdminModal({
         ) : (
           content
         )}
-      </motion.div>
+      </m.div>
     </div>
   );
 }

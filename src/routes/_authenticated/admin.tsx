@@ -11,6 +11,7 @@ import {
   Home,
   ChevronRight,
 } from "lucide-react";
+import { LazyMotion, domAnimation } from "motion/react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ADMIN_SECTIONS,
@@ -442,96 +443,98 @@ function AdminLayout() {
   const avatarPath = access.data?.avatarPath ?? null;
 
   return (
-    <AdminHeaderProvider>
-      {/* Ambient canvas behind the floating islands; mobile stays edge-to-edge. */}
-      <div className="fixed inset-0 z-50 admin-shell text-foreground">
-        <div className="flex h-full min-h-0 overflow-hidden bg-muted/30 p-0 dark:bg-zinc-950 lg:gap-3 lg:p-3">
-          <aside className="hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs transition-shadow hover:shadow-sm lg:flex">
-            <SidebarPanel
-              email={email}
-              name={name}
-              avatarPath={avatarPath}
-              roleLabel={roleLabel}
-              groups={groups}
-              currentSlug={current}
-              collapsed={collapsedGroups}
-              onToggleGroup={toggleGroup}
-              onNavigate={() => setOpen(false)}
-              onSignOut={signOut}
-            />
-          </aside>
-
-          {open && (
-            <div className="fixed inset-0 z-50 lg:hidden">
-              <div
-                className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200"
-                onClick={() => setOpen(false)}
+    <LazyMotion features={domAnimation} strict>
+      <AdminHeaderProvider>
+        {/* Ambient canvas behind the floating islands; mobile stays edge-to-edge. */}
+        <div className="fixed inset-0 z-50 admin-shell text-foreground">
+          <div className="flex h-full min-h-0 overflow-hidden bg-muted/30 p-0 dark:bg-zinc-950 lg:gap-3 lg:p-3">
+            <aside className="hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs transition-shadow hover:shadow-sm lg:flex">
+              <SidebarPanel
+                email={email}
+                name={name}
+                avatarPath={avatarPath}
+                roleLabel={roleLabel}
+                groups={groups}
+                currentSlug={current}
+                collapsed={collapsedGroups}
+                onToggleGroup={toggleGroup}
+                onNavigate={() => setOpen(false)}
+                onSignOut={signOut}
               />
-              <aside
-                role="dialog"
-                aria-modal="true"
-                aria-label="Điều hướng quản trị"
-                className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
-              >
-                <SidebarPanel
-                  email={email}
-                  name={name}
-                  avatarPath={avatarPath}
-                  roleLabel={roleLabel}
-                  groups={groups}
-                  currentSlug={current}
-                  collapsed={collapsedGroups}
-                  onToggleGroup={toggleGroup}
-                  onNavigate={() => setOpen(false)}
-                  onSignOut={signOut}
-                  onClose={() => setOpen(false)}
+            </aside>
+
+            {open && (
+              <div className="fixed inset-0 z-50 lg:hidden">
+                <div
+                  className="absolute inset-0 animate-in fade-in bg-foreground/40 backdrop-blur-sm duration-200"
+                  onClick={() => setOpen(false)}
                 />
-              </aside>
+                <aside
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Điều hướng quản trị"
+                  className="absolute inset-y-0 left-0 w-[288px] animate-in slide-in-from-left shadow-2xl duration-200"
+                >
+                  <SidebarPanel
+                    email={email}
+                    name={name}
+                    avatarPath={avatarPath}
+                    roleLabel={roleLabel}
+                    groups={groups}
+                    currentSlug={current}
+                    collapsed={collapsedGroups}
+                    onToggleGroup={toggleGroup}
+                    onNavigate={() => setOpen(false)}
+                    onSignOut={signOut}
+                    onClose={() => setOpen(false)}
+                  />
+                </aside>
+              </div>
+            )}
+
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <main className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
+                {/* Header: inside <main> so it shares the exact scrollable width with the page content. */}
+                <header className="w-full px-0 pt-1 pb-1 sm:pt-2 sm:pb-1.5">
+                  <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+                    <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="admin-icon"
+                        aria-label="Mở menu"
+                        onClick={() => setOpen(true)}
+                        className="h-9 w-9 shrink-0 rounded-xl border border-border/60 bg-muted/40 text-muted-foreground shadow-2xs hover:bg-accent hover:text-foreground lg:hidden [&_svg]:size-5"
+                      >
+                        <Menu aria-hidden />
+                      </Button>
+
+                      {/* Breadcrumb capsule: [ home > current section (> nested crumbs) ] */}
+                      <HeaderBreadcrumb current={current} title={title} />
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <HeaderActions />
+                    </div>
+                  </div>
+                </header>
+
+                {blockedHere ? (
+                  <div className="mx-auto max-w-md px-4 py-20 text-center">
+                    <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
+                    <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.
+                    </p>
+                  </div>
+                ) : (
+                  <Outlet />
+                )}
+              </main>
             </div>
-          )}
-
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <main className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
-              {/* Header: inside <main> so it shares the exact scrollable width with the page content. */}
-              <header className="w-full px-0 pt-1 pb-1 sm:pt-2 sm:pb-1.5">
-                <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-                  <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="admin-icon"
-                      aria-label="Mở menu"
-                      onClick={() => setOpen(true)}
-                      className="h-9 w-9 shrink-0 rounded-xl border border-border/60 bg-muted/40 text-muted-foreground shadow-2xs hover:bg-accent hover:text-foreground lg:hidden [&_svg]:size-5"
-                    >
-                      <Menu aria-hidden />
-                    </Button>
-
-                    {/* Breadcrumb capsule: [ home > current section (> nested crumbs) ] */}
-                    <HeaderBreadcrumb current={current} title={title} />
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    <HeaderActions />
-                  </div>
-                </div>
-              </header>
-
-              {blockedHere ? (
-                <div className="mx-auto max-w-md px-4 py-20 text-center">
-                  <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
-                  <h1 className="mt-4 text-xl font-bold">Bạn chưa được cấp quyền cho mục này</h1>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Chỉ các mục hiển thị ở thanh bên trái thuộc phạm vi quyền của bạn.
-                  </p>
-                </div>
-              ) : (
-                <Outlet />
-              )}
-            </main>
           </div>
         </div>
-      </div>
-    </AdminHeaderProvider>
+      </AdminHeaderProvider>
+    </LazyMotion>
   );
 }

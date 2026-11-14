@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { RotateCcw, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -156,7 +156,7 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
       <AnimatePresence>
         {selectedItem && (
           <div className="fixed inset-0 z-[60] flex justify-end">
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -165,7 +165,7 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
               onClick={() => setSelectedItem(null)}
             />
 
-            <motion.div
+            <m.div
               role="dialog"
               aria-modal="true"
               aria-label="Chi tiết thay đổi"
@@ -237,7 +237,7 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
                   Chỉ nạp vào ô sửa, chưa lưu. Kiểm tra lại rồi bấm Lưu nháp hoặc Xuất bản.
                 </p>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

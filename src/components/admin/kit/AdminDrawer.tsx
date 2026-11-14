@@ -1,5 +1,5 @@
 import { useId, type FormEvent, type ReactNode } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminDialog } from "@/components/admin/kit/useAdminDialog";
@@ -82,7 +82,7 @@ export function AdminDrawer({
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
-      <motion.div
+      <m.div
         data-slot="drawer-overlay"
         aria-hidden
         initial={{ opacity: 0 }}
@@ -92,7 +92,7 @@ export function AdminDrawer({
         className="fixed inset-0 bg-black/20 backdrop-blur-sm"
         onClick={dismissible ? onClose : undefined}
       />
-      <motion.div
+      <m.div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
@@ -139,7 +139,7 @@ export function AdminDrawer({
         ) : (
           content
         )}
-      </motion.div>
+      </m.div>
     </div>
   );
 }
