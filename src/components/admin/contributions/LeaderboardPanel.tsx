@@ -4,6 +4,7 @@ import { Crown, Medal, Trophy, UserRound } from "lucide-react";
 import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { MemberAvatar } from "@/components/admin/kit/MemberAvatar";
 import { TierBadge } from "@/components/TierBadge";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import {
   Select,
   SelectContent,
@@ -108,7 +109,7 @@ function PodiumCard({
         <TierBadge tierKey={step.current.key} size={rank === 1 ? 44 : 36} />
       </div>
       <p className="mt-0.5 font-mono text-sm font-bold leading-none tabular-nums text-primary sm:mt-1 sm:text-xl">
-        {member.contribution_points.toLocaleString("vi-VN")}
+        <AnimatedNumber value={member.contribution_points} />
         <span className="ml-0.5 text-[9px] font-medium text-muted-foreground sm:ml-1 sm:text-[10px]">
           đ
         </span>
@@ -186,7 +187,7 @@ function MemberRow({
       </div>
       <div className="shrink-0 text-right">
         <p className="font-mono text-sm font-bold tabular-nums text-foreground">
-          {member.contribution_points.toLocaleString("vi-VN")}
+          <AnimatedNumber value={member.contribution_points} />
         </p>
         <p className="text-[9px] text-muted-foreground">điểm</p>
       </div>

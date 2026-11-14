@@ -1,11 +1,15 @@
 import { CalendarCheck2, ClipboardCheck, Coins, ShieldAlert, type LucideIcon } from "lucide-react";
+import type { Format } from "@number-flow/react";
 
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { cn } from "@/lib/utils";
 import { dayKey, monthStart, type LedgerFilters, type PointStatRow } from "./shared";
 
 interface MetricCardProps {
   label: string;
-  value: string;
+  value: number;
+  format?: Format;
+  suffix?: string;
   hint: string;
   icon: LucideIcon;
   tone: string;
@@ -13,7 +17,16 @@ interface MetricCardProps {
   onClick?: () => void;
 }
 
-function MetricCard({ label, value, hint, icon: Icon, tone, onClick }: MetricCardProps) {
+function MetricCard({
+  label,
+  value,
+  format,
+  suffix,
+  hint,
+  icon: Icon,
+  tone,
+  onClick,
+}: MetricCardProps) {
   return (
     <div
       role={onClick ? "button" : undefined}
@@ -41,7 +54,11 @@ function MetricCard({ label, value, hint, icon: Icon, tone, onClick }: MetricCar
             {label}
           </p>
           <p className="mt-1 font-mono text-2xl font-bold leading-none tabular-nums text-foreground">
-            {value}
+            <AnimatedNumber
+              value={value}
+              {...(format ? { format } : {})}
+              {...(suffix ? { suffix } : {})}
+            />
           </p>
         </div>
         <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-xl", tone)}>
@@ -104,7 +121,8 @@ export function ContributionsMetrics({
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <MetricCard
         label="Điểm đã cấp"
-        value={monthPlus > 0 ? `+${monthPlus.toLocaleString("vi-VN")}` : "0"}
+        value={monthPlus}
+        format={{ signDisplay: "exceptZero" }}
         hint="Tổng điểm đã cấp trong tháng này"
         icon={Coins}
         tone="bg-primary/10 text-primary"
@@ -112,7 +130,8 @@ export function ContributionsMetrics({
       />
       <MetricCard
         label="Chuyên cần điểm danh"
-        value={`${attendanceRate}%`}
+        value={attendanceRate}
+        suffix="%"
         hint={`${attendedMembers}/${totalMembers} thành viên · ${sessions} buổi ghi nhận`}
         icon={CalendarCheck2}
         tone="bg-success/10 text-success"
@@ -120,7 +139,8 @@ export function ContributionsMetrics({
       />
       <MetricCard
         label="Kỷ luật & trừ điểm"
-        value={monthMinus > 0 ? `-${monthMinus.toLocaleString("vi-VN")}` : "0"}
+        value={-monthMinus}
+        format={{ signDisplay: "exceptZero" }}
         hint={`${penaltyCases} trường hợp trừ điểm trong tháng`}
         icon={ShieldAlert}
         tone="bg-destructive/10 text-destructive"
@@ -128,7 +148,7 @@ export function ContributionsMetrics({
       />
       <MetricCard
         label="Nhiệm vụ nghiệm thu"
-        value={taskRows.length.toLocaleString("vi-VN")}
+        value={taskRows.length}
         hint={`+${taskPoints.toLocaleString("vi-VN")} điểm từ nhiệm vụ hoàn thành`}
         icon={ClipboardCheck}
         tone="bg-gold/15 text-primary-deep"

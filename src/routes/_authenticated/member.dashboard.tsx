@@ -28,6 +28,7 @@ import {
   tierOf,
 } from "@/lib/points";
 import { TierBadge, TierProgress } from "@/components/TierBadge";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { AvatarCropDialog } from "@/components/portal/AvatarCropDialog";
 import { AvatarLightbox } from "@/components/portal/AvatarLightbox";
 import { mainHomeUrl } from "@/lib/domain";
@@ -1067,7 +1068,8 @@ function MemberDashboard() {
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="font-semibold text-white/90">Lịch sử điểm</h3>
                     <span className="rounded-full border border-gold/40 bg-gold/10 px-3 py-0.5 text-xs font-semibold text-gold">
-                      {isLeaderCard ? LEADER_TIER.label : realTier.label} · {effectivePoints}
+                      {isLeaderCard ? LEADER_TIER.label : realTier.label} ·{" "}
+                      <AnimatedNumber value={effectivePoints} />
                     </span>
                   </div>
                   <ol className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/5">

@@ -4,14 +4,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const numberFlowMock = vi.fn();
 
+type MockProps = {
+  value?: number;
+  locales?: string;
+  prefix?: string;
+  suffix?: string;
+  [key: string]: unknown;
+};
+
 vi.mock("@number-flow/react", () => ({
-  default: (props: Record<string, unknown>) => {
+  default: (props: MockProps) => {
     numberFlowMock(props);
+    const { value, locales, prefix, suffix } = props;
     return (
-      <span data-testid="mock-number-flow" data-value={props.value} data-locales={props.locales}>
-        {props.prefix as string}
-        {props.value as number}
-        {props.suffix as string}
+      <span data-testid="mock-number-flow" data-value={value} data-locales={locales}>
+        {prefix}
+        {value}
+        {suffix}
       </span>
     );
   },

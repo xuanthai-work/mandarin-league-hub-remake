@@ -19,6 +19,7 @@ import { accessLabel } from "@/lib/admin-nav";
 import { can as hasPerm } from "@/lib/permission-catalog";
 import { periodStatusLabel, deptName } from "@/lib/recruitment";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { useAdminAccess } from "./admin";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -332,7 +333,7 @@ function StatCell({
           <Skeleton className="h-6 w-10" />
         ) : (
           <span className="font-mono text-2xl font-semibold leading-none tracking-tight tabular-nums text-foreground">
-            {value ?? "—"}
+            {value === null ? "—" : <AnimatedNumber value={value} />}
           </span>
         )}
         <span className="truncate text-xs text-muted-foreground">{unit}</span>
