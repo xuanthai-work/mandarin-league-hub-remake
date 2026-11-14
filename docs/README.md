@@ -294,6 +294,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-OC-197-AUTOANIMATE-ADMIN-TABLES`                                 | Áp auto-animate cho 6 bảng admin hay lọc (Ứng viên, Nhận xét, HSK, Chứng nhận, Hoạt động, Lịch sử điểm)| 2026-11-15     | **PASS** | [task-oc-197-autoanimate-admin-tables.md](tasks/task-oc-197-autoanimate-admin-tables.md)                                                                 |
 | `TASK-GE-211-VIEW-TRANSITIONS-SITE-PAGES`                              | View Transitions giữa các trang công khai, bỏ qua hash và cổng nội bộ, giữ header                      | 2026-11-15     | **PASS** | [task-ge-211-view-transitions-site-pages.md](tasks/task-ge-211-view-transitions-site-pages.md)                                                           |
 | `TASK-OC-198-KANBAN-AUTOANIMATE-COLUMNS`                               | Auto-animate cho danh sách thẻ trong cột Kanban nhiệm vụ                                               | 2026-11-15     | **PASS** | [task-oc-198-kanban-autoanimate-columns.md](tasks/task-oc-198-kanban-autoanimate-columns.md)                                                             |
+| `TASK-GE-212-SLIDING-PILL-TABS-SEGMENTED`                              | Viên pill trượt cho SegmentedControl và TabsList (CSS + đo vị trí, không dùng layoutId)                | 2026-11-15     | **PASS** | [task-ge-212-sliding-pill-tabs-segmented.md](tasks/task-ge-212-sliding-pill-tabs-segmented.md)                                                           |
 
 ---
 
