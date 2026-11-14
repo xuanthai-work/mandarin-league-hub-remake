@@ -38,7 +38,7 @@ export function AboutSection({ h }: { h: HomeContent }) {
 
   return (
     <section id="about" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 md:px-6">
-      <div className="grid gap-10 md:grid-cols-2">
+      <div className="grid gap-10 md:grid-cols-2 reveal-on-scroll">
         <div>
           <SectionLabel>{tr("Về TML")}</SectionLabel>
           <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
@@ -67,7 +67,7 @@ export function AboutSection({ h }: { h: HomeContent }) {
         </div>
       </div>
 
-      <div className="mt-12 grid gap-4 sm:grid-cols-3">
+      <div className="mt-12 grid gap-4 sm:grid-cols-3 reveal-on-scroll">
         {[
           {
             icon: BookOpen,
@@ -93,7 +93,7 @@ export function AboutSection({ h }: { h: HomeContent }) {
         ))}
       </div>
 
-      <div className="mt-12">
+      <div className="mt-12 reveal-on-scroll">
         <h3 className="text-xl font-bold text-primary-deep">{tr("Giá trị cốt lõi")}</h3>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {VALUES.map((v) => (
@@ -106,7 +106,7 @@ export function AboutSection({ h }: { h: HomeContent }) {
         </div>
       </div>
 
-      <div className="mt-12 rounded-3xl border border-border bg-card p-6 md:p-8">
+      <div className="mt-12 rounded-3xl border border-border bg-card p-6 md:p-8 reveal-on-scroll">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold uppercase tracking-widest text-primary">

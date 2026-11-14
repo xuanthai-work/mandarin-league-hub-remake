@@ -47,7 +47,7 @@ export function ActivitiesSection({
   return (
     <section id="activities" className="scroll-mt-24 bg-secondary py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 reveal-on-scroll">
           <div>
             <SectionLabel>{tr("Hoạt động tiêu biểu")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
@@ -62,7 +62,7 @@ export function ActivitiesSection({
           </Link>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-2 reveal-on-scroll">
           {[
             { value: "all" as const, label: tr("Tất cả") },
             ...ACTIVITY_CATEGORIES.map((c) => ({
@@ -85,7 +85,7 @@ export function ActivitiesSection({
           ))}
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-3 reveal-on-scroll">
           {acts.length === 0 && (
             <div className="md:col-span-3">
               <EmptyState
@@ -130,7 +130,7 @@ export function ActivitiesSection({
 
         {/* News lives inside the same section as activities (header item #activities) */}
         <div id="news" className="mt-16 scroll-mt-24 border-t border-border pt-12">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-4 reveal-on-scroll">
             <div>
               <SectionLabel>{tr("Bản tin & kiến thức")}</SectionLabel>
               <h3 className="mt-3 text-2xl font-bold text-primary-deep md:text-3xl">
@@ -147,7 +147,7 @@ export function ActivitiesSection({
               {tr("Xem tất cả tin tức")} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 reveal-on-scroll">
             {news.isLoading && <p className="text-sm text-muted-foreground">{tr("Đang tải…")}</p>}
             {!news.isLoading && articles.length === 0 && (
               <div className="sm:col-span-2 lg:col-span-3">

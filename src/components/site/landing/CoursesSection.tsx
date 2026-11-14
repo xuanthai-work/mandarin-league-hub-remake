@@ -41,7 +41,7 @@ export function CoursesSection({
 
   return (
     <section id="courses" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 md:px-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 reveal-on-scroll">
         <div>
           <SectionLabel>{tr("Khóa học HSK")}</SectionLabel>
           <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
@@ -56,7 +56,7 @@ export function CoursesSection({
         </Link>
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center gap-2">
+      <div className="mt-8 flex flex-wrap items-center gap-2 reveal-on-scroll">
         {[0, ...HSK_LEVELS].map((l) => (
           <button
             key={l}
@@ -70,7 +70,7 @@ export function CoursesSection({
       </div>
 
       {classes.length > 0 ? (
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 reveal-on-scroll">
           {classes.map((c) => {
             const full = (c.seats ?? 0) >= c.max_students;
             return (
@@ -145,7 +145,7 @@ export function CoursesSection({
           })}
         </div>
       ) : (
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 reveal-on-scroll">
           {roadmap.map((c) => (
             <button
               key={c.id}

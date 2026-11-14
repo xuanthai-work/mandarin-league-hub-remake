@@ -34,7 +34,7 @@ export function VerifySection({
   return (
     <section id="verify" className="scroll-mt-24 py-20">
       <div className="mx-auto max-w-5xl px-4 md:px-6">
-        <div className="text-center">
+        <div className="text-center reveal-on-scroll">
           <SectionLabel>{tr("Trung tâm xác minh")}</SectionLabel>
           <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
             {tr("Tra cứu chứng nhận & điểm HSK")}
@@ -45,7 +45,7 @@ export function VerifySection({
             )}
           </p>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
+        <div className="mt-10 grid gap-5 md:grid-cols-2 reveal-on-scroll">
           {VERIFY_OPTIONS.map((option) => (
             <article
               key={option.kind}
@@ -69,7 +69,7 @@ export function VerifySection({
             </article>
           ))}
         </div>
-        <div className="mt-8 grid gap-4 border-y border-border py-6 text-sm text-muted-foreground sm:grid-cols-2">
+        <div className="mt-8 grid gap-4 border-y border-border py-6 text-sm text-muted-foreground sm:grid-cols-2 reveal-on-scroll">
           <div className="flex items-center gap-3">
             <QrCode className="h-5 w-5 text-primary" />
             <span>{tr("Hỗ trợ đường dẫn xác minh riêng cho mã QR")}</span>

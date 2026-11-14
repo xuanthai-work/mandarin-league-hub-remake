@@ -14,7 +14,7 @@ export function PartnersSection() {
   return (
     <section id="partners" className="scroll-mt-24 bg-secondary py-16">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 reveal-on-scroll">
           <div>
             <SectionLabel>{tr("Đối tác đồng hành")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
@@ -29,11 +29,11 @@ export function PartnersSection() {
           </Link>
         </div>
         {partners.length === 0 ? (
-          <div className="mt-8">
+          <div className="mt-8 reveal-on-scroll">
             <EmptyState desc={tr("Danh sách đối tác sẽ được TML công bố chính thức.")} />
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 reveal-on-scroll">
             {partners.slice(0, 10).map((p) => {
               const logo = p.logo ? (
                 <img
@@ -70,7 +70,7 @@ export function PartnersSection() {
             })}
           </div>
         )}
-        <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-muted-foreground reveal-on-scroll">
           <Handshake className="h-5 w-5 text-primary" />
           <span>{tr("Bạn muốn hợp tác cùng TML?")}</span>
           <a

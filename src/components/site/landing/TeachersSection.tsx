@@ -18,7 +18,7 @@ export function TeachersSection({
   return (
     <section id="teachers" className="scroll-mt-24 border-t border-border py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 reveal-on-scroll">
           <div>
             <SectionLabel>师资团队 · {tr("Đội ngũ Giảng viên")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
@@ -38,14 +38,14 @@ export function TeachersSection({
           </Link>
         </div>
         {faculty.length === 0 ? (
-          <div className="mt-10">
+          <div className="mt-10 reveal-on-scroll">
             <EmptyState
               title={tr("Đang cập nhật")}
               desc={tr("Đội ngũ giảng viên sẽ sớm được giới thiệu.")}
             />
           </div>
         ) : (
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 reveal-on-scroll">
             {faculty.map((x) => (
               <TeacherPhotoCard key={x.id} teacher={x} onClick={() => onSelectTeacher(x)} />
             ))}

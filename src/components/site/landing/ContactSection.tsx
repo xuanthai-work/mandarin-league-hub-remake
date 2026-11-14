@@ -13,7 +13,7 @@ export function ContactSection({ h }: { h: HomeContent }) {
     <section id="contact" className="scroll-mt-24 border-t border-border py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
-          <div className="flex flex-col justify-between gap-8 rounded-3xl bg-brand-gradient p-8 text-primary-foreground md:p-12">
+          <div className="flex flex-col justify-between gap-8 rounded-3xl bg-brand-gradient p-8 text-primary-foreground md:p-12 reveal-on-scroll">
             <div>
               <div className="text-sm font-semibold uppercase tracking-widest opacity-80">
                 {tr("Kết nối & Ứng tuyển")}
@@ -92,7 +92,7 @@ export function ContactSection({ h }: { h: HomeContent }) {
               )}
             </div>
           </div>
-          <ContactForm />
+          <ContactForm className="reveal-on-scroll" />
         </div>
       </div>
     </section>
