@@ -106,6 +106,11 @@
 | 4.1 Tilt 3D theo chuột và ánh nghiêng | Thẻ nghiêng theo con trỏ trên desktop, tắt trên cảm ứng và khi reduced-motion; không lệch hydration | `TierBadge.tsx` hoặc component thẻ, `src/styles.css` |
 | 4.2 Viền sáng (Border Beam) cho hạng cao | Chép component từ Magic UI, chỉnh màu theo tone từng hạng; chỉ hạng cao nhất | cùng khu vực thẻ |
 
+- **Điều chỉnh 2026-11-15 sau khảo sát (soạn Phase 4)**:
+  - **Bỏ "nghiêng 3D theo chuột" (4.1 gốc).** Dự án đã chủ động bỏ 3D của thẻ để chữ luôn sắc nét: cuối mục "Interactive 3D flip pass" trong `styles.css` ép `transform: none !important` cho `.flip-inner` và thay lật 3D bằng cross-fade. Thay bằng **glare theo con trỏ** (đốm sáng mềm bám theo chuột, không dùng transform): chỉ chuột, tắt khi cảm ứng, giảm chuyển động hoặc xuất ảnh thẻ.
+  - **4.2 Border Beam chỉ cho hai hạng cao nhất**: Danh dự (`data-tone="wine"`) và Lãnh đạo (`data-tone="black"`), làm bằng CSS (`@property` + `conic-gradient` + mask), ẩn khi xuất ảnh thẻ và khi giảm chuyển động. Không chép component Magic UI vì thẻ không dùng Tailwind/`motion` cho lớp này.
+  - **Pháo giấy lên hạng** (việc đã hoãn ở Phase 3) nay làm được rất rẻ: trang đã có hộp chúc mừng `congrats` (phát hiện lên hạng qua `localStorage`) cùng nút "Thử hiệu ứng lên bậc"; chỉ cần gọi `celebrate()` khi `congrats` có giá trị.
+  - **Đã giao**: 4.2 = `TASK-GE-215-MEMBER-PASS-BORDER-BEAM` (Gemini, chỉ `styles.css`); 4.1 điều chỉnh + pháo giấy lên hạng = `TASK-OC-200-MEMBER-PASS-GLARE-AND-TIER-CONFETTI` (OpenCode, chỉ `member.dashboard.tsx`; glare dùng class Tailwind để không đụng `styles.css`). Hai task không trùng file.
 - **Phụ thuộc**: Phase 0. Không phụ thuộc phase 3.
 - **Rủi ro**: chạm mã thẻ đã có nhiều keyframes (`pass-shimmer`, `badge-sheen`). Làm theo hướng **thêm lớp**, không viết lại. Không giảm độ tương phản chữ trên thẻ.
 - **Kiểm**: chụp ảnh các hạng bằng Playwright, so trước sau.
