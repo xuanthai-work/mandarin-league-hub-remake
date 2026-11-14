@@ -5,6 +5,9 @@ import {
   canDragTask,
   columnOf,
   dropAction,
+  dueBadge,
+  dueBadgeTone,
+  dueLabel,
   groupTasks,
   myActionLabel,
   myTaskAction,
@@ -427,6 +430,75 @@ describe("buildEvidence", () => {
     });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toContain("2.000");
+  });
+});
+
+describe("dueBadge", () => {
+  const base = { id: "t-badge", assignee_id: "m-staff", created_at: "2026-11-01T09:00:00" };
+
+  it("marks a done task finished after the deadline in red", () => {
+    const badge = dueBadge(
+      task({
+        ...base,
+        status: "done",
+        due_on: "2026-11-09",
+        completed_at: "2026-11-14T12:00:00",
+      }),
+    );
+    expect(badge.label).toBe("Xong 14/11/2026");
+    expect(badge.tone).toContain("destructive");
+  });
+
+  it("marks a done task finished before the deadline in green", () => {
+    const badge = dueBadge(
+      task({
+        ...base,
+        status: "done",
+        due_on: "2026-11-20",
+        completed_at: "2026-11-14T12:00:00",
+      }),
+    );
+    expect(badge.tone).toContain("success");
+  });
+
+  it("treats finishing on the deadline day as on time", () => {
+    const badge = dueBadge(
+      task({
+        ...base,
+        status: "done",
+        due_on: "2026-11-14",
+        completed_at: "2026-11-14T12:00:00",
+      }),
+    );
+    expect(badge.tone).toContain("success");
+  });
+
+  it("keeps the plain label for a done task without a deadline", () => {
+    const badge = dueBadge(
+      task({ ...base, status: "done", due_on: null, completed_at: "2026-11-14T12:00:00" }),
+    );
+    expect(badge).toEqual({ label: "Hoàn thành", tone: "text-muted-foreground" });
+  });
+
+  it("shows the submission date of a submitted task", () => {
+    const badge = dueBadge(
+      task({
+        ...base,
+        status: "submitted",
+        due_on: "2026-11-09",
+        submitted_at: "2026-11-14T12:00:00",
+      }),
+    );
+    expect(badge.label).toBe("Nộp 14/11/2026");
+    expect(badge.tone).toContain("destructive");
+  });
+
+  it("falls back to the deadline label for open tasks", () => {
+    const open = task({ ...base, status: "todo", due_on: "2026-11-09" });
+    expect(dueBadge(open)).toEqual({
+      label: dueLabel("2026-11-09", "todo"),
+      tone: dueBadgeTone("2026-11-09"),
+    });
   });
 });
 

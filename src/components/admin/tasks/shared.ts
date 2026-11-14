@@ -19,6 +19,8 @@ export type Task = {
   assigned_by_note: string;
   created_by: string | null;
   created_at: string;
+  submitted_at?: string | null;
+  completed_at?: string | null;
 };
 
 export type TaskMember = {
@@ -81,6 +83,41 @@ export function dueLabel(due: string | null, status: string): string {
 }
 
 const formatISO = (iso: string) => iso.split("-").reverse().join("/");
+
+/** Local calendar day (YYYY-MM-DD) of a timestamptz, comparable with `due_on`. */
+function localDay(timestamp: string): string | null {
+  const d = new Date(timestamp);
+  if (Number.isNaN(d.getTime())) return null;
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+/**
+ * Footer date chip of a Kanban card. Review and done cards show when the work was actually
+ * submitted / finished, red when later than the deadline and green when on time; every other
+ * case (and any card without a deadline) falls back to the deadline label and tone.
+ */
+export function dueBadge(task: Task): { label: string; tone: string } {
+  const fallback = { label: dueLabel(task.due_on, task.status), tone: dueBadgeTone(task.due_on) };
+  const isDone = task.status === "done";
+  if (!isDone && task.status !== "submitted") return fallback;
+
+  if (!task.due_on) {
+    // No deadline: done keeps the plain "Hoàn thành" in grey, review keeps its old label.
+    return isDone ? { label: "Hoàn thành", tone: "text-muted-foreground" } : fallback;
+  }
+  const stamp = isDone ? task.completed_at : task.submitted_at;
+  const day = stamp ? localDay(stamp) : null;
+  if (!day) {
+    // Legacy row without a timestamp: no date to compare, stay neutral.
+    return isDone ? { label: "Hoàn thành", tone: "text-muted-foreground" } : fallback;
+  }
+  return {
+    label: `${isDone ? "Xong" : "Nộp"} ${formatISO(day)}`,
+    tone: day > task.due_on ? "font-medium text-destructive" : "font-medium text-success",
+  };
+}
 
 /** Two-letter monogram from the first and last word of a Vietnamese name. */
 export function initials(name: string) {

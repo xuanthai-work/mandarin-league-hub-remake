@@ -14,8 +14,7 @@ import {
   PRIORITY_TONE,
   deptTag,
   deptTone,
-  dueBadgeTone,
-  dueLabel,
+  dueBadge,
   initials,
   myActionLabel,
   priorityLabel,
@@ -63,6 +62,7 @@ export function TaskKanbanCard({
   const isZalo = evidence?.evidence_url.startsWith("zalo:") ?? false;
   const zaloTarget = isZalo ? evidence!.evidence_url.slice(5).split(" | ")[0] : "";
   const revisionNote = group.rawTasks.find((task) => task.review_note)?.review_note ?? "";
+  const badge = dueBadge(group.rawTasks[0]!);
 
   const names = group.assignees.map((a) => a.full_name);
   const visible = group.assignees.slice(0, MAX_AVATARS);
@@ -186,11 +186,11 @@ export function TaskKanbanCard({
         <span
           className={cn(
             "inline-flex min-w-0 items-center gap-1 whitespace-nowrap text-[11px]",
-            dueBadgeTone(group.due_on),
+            badge.tone,
           )}
         >
           <Clock aria-hidden className="h-3 w-3" />
-          {dueLabel(group.due_on, group.status)}
+          {badge.label}
         </span>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">

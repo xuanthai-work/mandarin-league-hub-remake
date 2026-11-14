@@ -279,6 +279,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-202-DEAD-CODE-CLEANUP`                                        | Dọn code chết: 11 file, export và import thừa                                                          | 2026-11-10     | **PASS** | [task-ge-202-dead-code-cleanup.md](tasks/task-ge-202-dead-code-cleanup.md)                                                                               |
 | `TASK-GE-203-REMOVE-STALE-I18N-KEY-AND-AGENTS-NOTE`                    | Xóa key soon.text, cập nhật AGENTS.md (routeAfterLogin)                                                | 2026-11-10     | **PASS** | [task-ge-203-remove-stale-i18n-key-and-agents-note.md](tasks/task-ge-203-remove-stale-i18n-key-and-agents-note.md)                                       |
 | `TASK-OC-191-KANBAN-CARD-FOOTER-OVERFLOW`                              | Sửa footer thẻ Kanban tràn ngang ở cột hẹp (cột Đã hoàn thành)                                         | 2026-11-14     | **PASS** | [task-oc-191-kanban-card-footer-overflow.md](tasks/task-oc-191-kanban-card-footer-overflow.md)                                                           |
+| `TASK-OC-192-KANBAN-SUBMIT-DONE-DATE-LABEL`                            | Thẻ Kanban hiện ngày nộp / ngày xong, đỏ khi trễ hạn, xanh khi đúng hạn                                | 2026-11-14     | **PASS** | [task-oc-192-kanban-submit-done-date-label.md](tasks/task-oc-192-kanban-submit-done-date-label.md)                                                       |
 
 ---
 
