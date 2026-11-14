@@ -298,6 +298,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-213-NUMBERFLOW-CONFETTI-FOUNDATION`                           | Cài NumberFlow, canvas-confetti; dựng AnimatedNumber và celebrate() dùng chung                         | 2026-11-15     | **PASS** | [task-ge-213-numberflow-confetti-foundation.md](tasks/task-ge-213-numberflow-confetti-foundation.md)                                                     |
 | `TASK-GE-214-APPLY-ANIMATED-NUMBER`                                    | Áp AnimatedNumber cho điểm xếp hạng, thẻ số liệu, Dashboard và cổng thành viên                         | 2026-11-15     | **PASS** | [task-ge-214-apply-animated-number.md](tasks/task-ge-214-apply-animated-number.md)                                                                       |
 | `TASK-OC-199-APPLY-CELEBRATE-CONFETTI`                                 | Pháo giấy khi duyệt nhiệm vụ, cấp tài khoản, thêm thành viên kèm tài khoản                             | 2026-11-15     | **PASS** | [task-oc-199-apply-celebrate-confetti.md](tasks/task-oc-199-apply-celebrate-confetti.md)                                                                 |
+| `TASK-GE-215-MEMBER-PASS-BORDER-BEAM`                                  | Vệt sáng chạy viền thẻ thành viên cho hạng Danh dự và Lãnh đạo (CSS)                                   | 2026-11-15     | **PASS** | [task-ge-215-member-pass-border-beam.md](tasks/task-ge-215-member-pass-border-beam.md)                                                                   |
 
 ---
 

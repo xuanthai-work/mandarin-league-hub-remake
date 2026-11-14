@@ -2130,3 +2130,58 @@
     animation: none !important;
   }
 }
+
+/*
+ * Border beam for the two top pass tiers (TASK-GE-215): a gold highlight orbits the
+ * card edge. Only Danh dự (wine) and Lãnh đạo (black); hidden while exporting the
+ * card image and for people who ask for reduced motion.
+ */
+@property --beam-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes beam-spin {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+.tml-pass[data-tone="wine"]::before,
+.tml-pass[data-tone="black"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  padding: 2px;
+  border-radius: 18px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0deg 290deg,
+    color-mix(in oklab, var(--gold-soft) 85%, white) 330deg,
+    var(--gold) 350deg,
+    transparent 360deg
+  );
+  /* Keep only the 2px ring: paint the gradient, then cut out the content box. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: beam-spin 6s linear infinite;
+}
+
+.tml-pass.is-exporting::before {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tml-pass[data-tone="wine"]::before,
+  .tml-pass[data-tone="black"]::before {
+    display: none;
+  }
+}
