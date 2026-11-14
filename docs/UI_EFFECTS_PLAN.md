@@ -35,10 +35,10 @@
 | 0.2 Reduced-motion toàn cục | Quy tắc `@media (prefers-reduced-motion: reduce)` ở mức global (rút animation/transition về gần 0 cho lớp hiệu ứng mới), kèm hook dùng chung `useMotionOk()` bọc `useReducedMotion` | `src/styles.css`, `src/lib/use-motion-ok.ts` (+ test) |
 | 0.3 `LazyMotion` cho admin | Bọc shell admin bằng `LazyMotion features={domAnimation} strict`, đổi `motion.` thành `m.` ở `AdminDrawer`, `AdminModal` và các file admin đang dùng | `src/components/admin/kit/*`, `src/routes/_authenticated/admin.tsx`, các trang admin có `motion.div` |
 
-- **Phụ thuộc**: không.
+- **Phụ thuộc**: không. Kiểm lại thực tế: 0.3 không phụ thuộc 0.1–0.2 (khác file), nên chạy song song.
 - **Tiêu chí**: không đổi giao diện; `strict` không báo lỗi; đo kích thước chunk admin trước và sau (ghi số vào hồ sơ).
-- **Rủi ro**: 0.3 chạm khoảng 26 file; làm thành task riêng, chạy sau 0.1–0.2, không chạy song song với phase khác ở admin.
-- **Làn gợi ý**: 0.1 + 0.2 một làn; 0.3 làn kia hoặc sau.
+- **Điều chỉnh sau khảo sát (2026-11-14)**: 0.3 chỉ phải đổi **3 file** (`AdminDrawer`, `AdminModal`, `ContentHistory`) sang `m.div`; khoảng 23 file còn lại chỉ dùng `AnimatePresence` nên không cần đổi.
+- **Đã giao**: 0.1 + 0.2 = `TASK-GE-209-MOTION-TOKENS-AND-REDUCED-MOTION` (làn Gemini); 0.3 = `TASK-OC-196-LAZYMOTION-ADMIN` (làn OpenCode). Hai task không trùng file.
 
 ## Phase 1: Không tốn KB (CSS và thứ có sẵn)
 
