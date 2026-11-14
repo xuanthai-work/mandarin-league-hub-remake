@@ -56,7 +56,7 @@
   - **1.2 không có phương án dự phòng JS**: trang công khai không tải `motion`, nên trình duyệt chưa hỗ trợ `animation-timeline` chỉ thấy nội dung hiện bình thường (chấp nhận được, không có ẩn nội dung).
   - **1.1 và 1.2 cùng sửa `src/styles.css`**, không chạy song song. 1.1 làm sau khi 1.2 xong.
   - **Đã giao**: 1.2 = `TASK-GE-210-LANDING-REVEAL-ON-SCROLL` (Gemini); 1.4 = `TASK-OC-197-AUTOANIMATE-ADMIN-TABLES` (OpenCode, áp 6 bảng; Kanban không áp).
-  - 1.1 View Transitions: API `defaultViewTransition` có trong router đã cài (`@tanstack/router-core` 1.171.34), cần thử với SSR.
+  - 1.1 View Transitions: API `defaultViewTransition` có trong router đã cài (`@tanstack/router-core` 1.171.34), cần thử với SSR. **Đã giao 2026-11-15** = `TASK-GE-211-VIEW-TRANSITIONS-SITE-PAGES` (Gemini). Phạm vi: chỉ giữa các trang công khai (bộ lọc `pickViewTransitionTypes`), bỏ qua đổi hash/search, header giữ nguyên chỗ, tắt khi reduced-motion. Giới hạn đã biết: trình duyệt có `startViewTransition` nhưng chưa có view-transition-types sẽ bỏ qua bộ lọc và vẫn mờ dần mọi lần điều hướng.
 - **Phụ thuộc**: Phase 0 (token, `useMotionOk`).
 - **Không trùng với**: 1.2 (site) chạy song song được với 1.4 (admin). 1.1 chạm `router.tsx` và `styles.css`, làm riêng sau 1.2.
 - **Tiêu chí**: không có lỗi hydration trong console; tắt khi reduced-motion; 1.2 không ẩn nội dung ở trình duyệt không hỗ trợ.
