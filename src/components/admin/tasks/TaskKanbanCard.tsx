@@ -55,6 +55,7 @@ export function TaskKanbanCard({
   const reportNote = pending.find((task) => task.report_note)?.report_note.trim() ?? "";
   const revisionNote = group.rawTasks.find((task) => task.review_note)?.review_note ?? "";
   const badge = dueBadge(group.rawTasks[0]!);
+  const needsMyReview = inReview && rights.review;
 
   const names = group.assignees.map((a) => a.full_name);
   const visible = group.assignees.slice(0, MAX_AVATARS);
@@ -72,8 +73,11 @@ export function TaskKanbanCard({
           onOpen();
         }
       }}
-      aria-label={`Xem chi tiết nhiệm vụ ${group.title}`}
-      className="cursor-pointer rounded-xl border border-border/80 bg-card p-3 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+      aria-label={`Xem chi tiết nhiệm vụ ${group.title}${needsMyReview ? ", đang chờ bạn duyệt" : ""}`}
+      className={cn(
+        "cursor-pointer rounded-xl border border-border/80 bg-card p-3 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
+        needsMyReview && "border-l-[3px] border-l-warning-foreground/70",
+      )}
     >
       {/* Top row: dept tag + priority */}
       <div className="flex flex-wrap items-center gap-1.5">
@@ -91,11 +95,13 @@ export function TaskKanbanCard({
         >
           {priorityLabel(group.priority)}
         </span>
-        {inReview && rights.review && (
-          <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md bg-warning-soft px-1.5 py-0.5 text-[10px] font-semibold text-warning-foreground">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning-foreground" />
-            Chờ bạn duyệt
-          </span>
+        {needsMyReview && (
+          <span
+            role="img"
+            aria-label="Chờ bạn duyệt"
+            title="Chờ bạn duyệt"
+            className="ml-auto h-2 w-2 shrink-0 rounded-full bg-warning-foreground"
+          />
         )}
       </div>
 
