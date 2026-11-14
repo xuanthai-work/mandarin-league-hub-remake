@@ -2106,3 +2106,27 @@
     }
   }
 }
+
+/*
+ * Page transitions (TASK-GE-211). The router starts a view transition only between
+ * public pages (see src/lib/view-transition.ts). The default is a cross-fade; here we
+ * pick the shared duration/easing tokens, keep the sticky site header in place, and
+ * turn everything off for people who ask for reduced motion.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--motion-base);
+  animation-timing-function: var(--ease-soft);
+}
+
+.site-header-vt {
+  view-transition-name: site-header;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
