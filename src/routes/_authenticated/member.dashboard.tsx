@@ -19,6 +19,7 @@ import JsBarcode from "jsbarcode";
 import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import { deptName } from "@/lib/recruitment";
+import { celebrate } from "@/lib/celebrate";
 import {
   LEADER_TIER,
   LEADER_TONE,
@@ -166,6 +167,20 @@ function MemberDashboard() {
     setIsFlipped(next);
   };
 
+  const glareRef = useRef<HTMLDivElement>(null);
+  /** Move the soft highlight under the mouse; ignores touch and pen. */
+  const moveGlare = (e: React.PointerEvent<HTMLDivElement>) => {
+    const glare = glareRef.current;
+    if (!glare || e.pointerType !== "mouse") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    glare.style.setProperty("--gx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+    glare.style.setProperty("--gy", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+    glare.dataset["on"] = "true";
+  };
+  const hideGlare = () => {
+    if (glareRef.current) glareRef.current.dataset["on"] = "false";
+  };
+
   const memberId = me.data?.member?.id;
   const advisor = useQuery({
     queryKey: ["my-advisor", memberId],
@@ -224,6 +239,10 @@ function MemberDashboard() {
     if (prev && idx > prev) setCongrats(t.label);
     if (idx !== prev) localStorage.setItem(key, String(Math.max(idx, prev ? idx : idx)));
   }, [me.data?.member]);
+
+  useEffect(() => {
+    if (congrats) void celebrate();
+  }, [congrats]);
 
   const signOut = async () => {
     await qc.cancelQueries();
@@ -597,6 +616,8 @@ function MemberDashboard() {
               <div
                 ref={cardRef}
                 data-tone={tone}
+                onPointerMove={moveGlare}
+                onPointerLeave={hideGlare}
                 style={
                   { "--pass-c": `var(--pass-${tone}, var(--pass-blue))` } as React.CSSProperties
                 }
@@ -610,6 +631,12 @@ function MemberDashboard() {
                 <div
                   aria-hidden
                   className="tml-pass-glow pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset ring-gold/40"
+                />
+                <div
+                  ref={glareRef}
+                  aria-hidden
+                  data-on="false"
+                  className="pointer-events-none absolute inset-0 z-[15] hidden rounded-[18px] bg-[radial-gradient(circle_at_var(--gx,50%)_var(--gy,50%),rgba(255,255,255,0.4),transparent_45%)] opacity-0 mix-blend-soft-light transition-opacity duration-200 data-[on=true]:opacity-100 pointer-fine:block motion-reduce:hidden [.is-exporting_&]:hidden"
                 />
                 {drumWatermark}
                 {layout === "h" && (

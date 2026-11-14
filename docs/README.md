@@ -299,6 +299,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-214-APPLY-ANIMATED-NUMBER`                                    | Áp AnimatedNumber cho điểm xếp hạng, thẻ số liệu, Dashboard và cổng thành viên                         | 2026-11-15     | **PASS** | [task-ge-214-apply-animated-number.md](tasks/task-ge-214-apply-animated-number.md)                                                                       |
 | `TASK-OC-199-APPLY-CELEBRATE-CONFETTI`                                 | Pháo giấy khi duyệt nhiệm vụ, cấp tài khoản, thêm thành viên kèm tài khoản                             | 2026-11-15     | **PASS** | [task-oc-199-apply-celebrate-confetti.md](tasks/task-oc-199-apply-celebrate-confetti.md)                                                                 |
 | `TASK-GE-215-MEMBER-PASS-BORDER-BEAM`                                  | Vệt sáng chạy viền thẻ thành viên cho hạng Danh dự và Lãnh đạo (CSS)                                   | 2026-11-15     | **PASS** | [task-ge-215-member-pass-border-beam.md](tasks/task-ge-215-member-pass-border-beam.md)                                                                   |
+| `TASK-OC-200-MEMBER-PASS-GLARE-AND-TIER-CONFETTI`                      | Glare theo chuột trên thẻ thành viên và pháo giấy khi lên hạng                                         | 2026-11-15     | **PASS** | [task-oc-200-member-pass-glare-and-tier-confetti.md](tasks/task-oc-200-member-pass-glare-and-tier-confetti.md)                                           |
 
 ---
 
