@@ -1,12 +1,4 @@
-import {
-  Check,
-  Clock,
-  ExternalLink,
-  MessageCircle,
-  PlayCircle,
-  RotateCcw,
-  Send,
-} from "lucide-react";
+import { Clock, ExternalLink, MessageCircle, PlayCircle, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,12 +20,14 @@ interface TaskKanbanCardProps {
   group: GroupedTask;
   /** Signed URL of the single assignee's avatar, when they have one. */
   avatarUrl?: string | undefined;
-  /** True inside the "Chờ duyệt báo cáo" column: evidence + fast review actions. */
+  /** True inside the "Chờ duyệt báo cáo" column: report, evidence and the review-needed hint. */
   inReview: boolean;
   rights: TaskRights;
   myAction: MyTaskAction | null;
   onOpen: () => void;
+  /** Review now happens in TaskDetailModal or by drag-drop; kept so the board can keep passing it. */
   onApprove: (group: GroupedTask) => void;
+  /** Review now happens in TaskDetailModal or by drag-drop; kept so the board can keep passing it. */
   onRequestRevision: (group: GroupedTask) => void;
   onMyAction: (group: GroupedTask, action: MyTaskAction) => void;
   /** Deletion now lives in TaskDetailModal; kept so the board can keep passing it. */
@@ -50,17 +44,15 @@ export function TaskKanbanCard({
   rights,
   myAction,
   onOpen,
-  onApprove,
-  onRequestRevision,
   onMyAction,
   onFilterPerson,
 }: TaskKanbanCardProps) {
   const tone = deptTone(group.department);
   const pending = submittedTasks(group);
-  const pendingPoints = pending.reduce((sum, task) => sum + (task.points || 0), 0);
   const evidence = pending.find((task) => task.evidence_url);
   const isZalo = evidence?.evidence_url.startsWith("zalo:") ?? false;
   const zaloTarget = isZalo ? evidence!.evidence_url.slice(5).split(" | ")[0] : "";
+  const reportNote = pending.find((task) => task.report_note)?.report_note.trim() ?? "";
   const revisionNote = group.rawTasks.find((task) => task.review_note)?.review_note ?? "";
   const badge = dueBadge(group.rawTasks[0]!);
 
@@ -84,7 +76,7 @@ export function TaskKanbanCard({
       className="cursor-pointer rounded-xl border border-border/80 bg-card p-3 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
     >
       {/* Top row: dept tag + priority */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span
           className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-medium", tone.tag)}
           title={group.department}
@@ -99,6 +91,12 @@ export function TaskKanbanCard({
         >
           {priorityLabel(group.priority)}
         </span>
+        {inReview && rights.review && (
+          <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md bg-warning-soft px-1.5 py-0.5 text-[10px] font-semibold text-warning-foreground">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning-foreground" />
+            Chờ bạn duyệt
+          </span>
+        )}
       </div>
 
       <h3 className="mt-2 break-words text-[13px] font-semibold leading-snug text-foreground">
@@ -112,18 +110,22 @@ export function TaskKanbanCard({
       )}
 
       {inReview && (
-        <div
-          className="mt-2.5 space-y-2 rounded-xl border border-warning-foreground/25 bg-warning-soft/40 p-2.5"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="mt-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+          {reportNote && (
+            <p className="line-clamp-2 break-words text-[12px] leading-snug text-muted-foreground">
+              {reportNote}
+            </p>
+          )}
           {evidence ? (
             isZalo ? (
-              <p className="flex items-center gap-1.5 text-[11px] text-foreground">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+              <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-foreground">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                   <MessageCircle aria-hidden className="h-3 w-3" />
                   Zalo
                 </span>
-                Đã gửi tới <b className="font-semibold">{zaloTarget || "Zalo"}</b>
+                <span className="truncate">
+                  Đã gửi tới <b className="font-semibold">{zaloTarget || "Zalo"}</b>
+                </span>
               </p>
             ) : (
               <a
@@ -138,28 +140,6 @@ export function TaskKanbanCard({
             )
           ) : (
             <p className="text-[11px] text-muted-foreground">Chưa đính kèm minh chứng.</p>
-          )}
-
-          {rights.review && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Button
-                type="button"
-                size="admin-sm"
-                onClick={() => onApprove(group)}
-                className="h-7 gap-1 bg-success px-2.5 text-[11px] text-success-foreground hover:bg-success/90 [&_svg]:size-3.5"
-              >
-                <Check aria-hidden /> Duyệt (+{pendingPoints}đ)
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="admin-sm"
-                onClick={() => onRequestRevision(group)}
-                className="h-7 gap-1 px-2.5 text-[11px] [&_svg]:size-3.5"
-              >
-                <RotateCcw aria-hidden /> Làm lại
-              </Button>
-            </div>
           )}
         </div>
       )}
