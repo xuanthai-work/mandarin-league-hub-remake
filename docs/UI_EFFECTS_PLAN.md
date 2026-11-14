@@ -51,8 +51,14 @@
 | 1.3 `starting:` cho popover, dropdown, toast | Hiệu ứng vào ra bằng `starting:` + `transition-discrete` cho phần tử chưa có enter/exit mượt (kiểm từng component `ui/*` trước, đa số đã có qua `tw-animate-css`) | `src/components/ui/*` cần thiết |
 | 1.4 AutoAnimate cho bảng admin | Áp `useAutoAnimate` qua `tbodyRef` của `AdminTable` cho các bảng lọc nhiều (Ứng viên, Nhiệm vụ dạng bảng, Hoạt động, Tuyển thành viên), theo mẫu trang Thành viên | các trang admin tương ứng |
 
+- **Cập nhật 2026-11-15 sau khảo sát**:
+  - **Bỏ task 1.3.** Mọi overlay trong `src/components/ui/*` (dropdown, popover, tooltip, select, dialog, sheet, hover-card, context-menu, menubar, navigation-menu) đã có hiệu ứng vào và ra qua `tw-animate-css`, nên `starting:` không đem lại thêm gì. Có thể xem lại nếu sau này thêm component overlay không đi qua Radix.
+  - **1.2 không có phương án dự phòng JS**: trang công khai không tải `motion`, nên trình duyệt chưa hỗ trợ `animation-timeline` chỉ thấy nội dung hiện bình thường (chấp nhận được, không có ẩn nội dung).
+  - **1.1 và 1.2 cùng sửa `src/styles.css`**, không chạy song song. 1.1 làm sau khi 1.2 xong.
+  - **Đã giao**: 1.2 = `TASK-GE-210-LANDING-REVEAL-ON-SCROLL` (Gemini); 1.4 = `TASK-OC-197-AUTOANIMATE-ADMIN-TABLES` (OpenCode, áp 6 bảng; Kanban không áp).
+  - 1.1 View Transitions: API `defaultViewTransition` có trong router đã cài (`@tanstack/router-core` 1.171.34), cần thử với SSR.
 - **Phụ thuộc**: Phase 0 (token, `useMotionOk`).
-- **Không trùng với**: 1.2 (site) chạy song song được với 1.4 (admin). 1.1 chạm `router.tsx`, làm riêng.
+- **Không trùng với**: 1.2 (site) chạy song song được với 1.4 (admin). 1.1 chạm `router.tsx` và `styles.css`, làm riêng sau 1.2.
 - **Tiêu chí**: không có lỗi hydration trong console; tắt khi reduced-motion; 1.2 không ẩn nội dung ở trình duyệt không hỗ trợ.
 - **Rủi ro**: 1.1 có thể xung đột với `scrollRestoration` và scroll spy; 1.4 phải kiểm chéo với `dnd-kit` ở Kanban (xem Phase 2), nên không áp cho Kanban ở phase này.
 - **Kiểm bằng Playwright**: chuyển trang, lọc bảng, console sạch, bật `prefers-reduced-motion` (Playwright có `emulateMedia`).
