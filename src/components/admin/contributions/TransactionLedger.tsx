@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, Paperclip, ReceiptText } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
@@ -161,6 +162,7 @@ export function TransactionLedger({
   title = "Sổ cái lịch sử điểm",
   appliedFilter,
 }: TransactionLedgerProps) {
+  const [tableBodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const [filters, setFilters] = useState<LedgerFilters>(EMPTY_LEDGER_FILTERS);
   const [page, setPage] = useState(1);
   const [flash, setFlash] = useState(false);
@@ -411,7 +413,12 @@ export function TransactionLedger({
         />
       ) : (
         <>
-          <AdminTable className="hidden md:block" columns={LEDGER_COLS} minWidth="min-w-[920px]">
+          <AdminTable
+            className="hidden md:block"
+            columns={LEDGER_COLS}
+            minWidth="min-w-[920px]"
+            bodyRef={tableBodyRef}
+          >
             {visible.map((txn) => {
               const member = memberById.get(txn.member_id);
               return (

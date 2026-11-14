@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   UploadCloud,
 } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,6 +160,7 @@ function initials(name: string) {
 }
 
 function HskAdminPage() {
+  const [tableBodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const qc = useQueryClient();
   const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
   const canEdit = can(perms, "hsk.edit");
@@ -661,6 +663,7 @@ function HskAdminPage() {
           minWidth="min-w-[980px]"
           isEmpty={isLoading}
           emptyMessage="Đang tải…"
+          bodyRef={tableBodyRef}
         >
           {rows.map((r) => (
             <AdminTableRow key={r.id} onOpen={() => openEdit(r)}>

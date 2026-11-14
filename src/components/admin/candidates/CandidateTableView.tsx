@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronRight, FileText, Search } from "lucide-react";
 
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
@@ -51,6 +52,8 @@ function AspirationList({ choices }: { choices: Choice[] }) {
 }
 
 export function CandidateTableView({ apps, onOpen, onOpenCv }: CandidateTableViewProps) {
+  const [tableBodyRef] = useAutoAnimate<HTMLTableSectionElement>();
+
   if (apps.length === 0) {
     return (
       <EmptyState
@@ -62,7 +65,7 @@ export function CandidateTableView({ apps, onOpen, onOpenCv }: CandidateTableVie
   }
 
   return (
-    <AdminTable columns={COLUMNS} minWidth="min-w-[1000px]">
+    <AdminTable columns={COLUMNS} minWidth="min-w-[1000px]" bodyRef={tableBodyRef}>
       {apps.map((app) => (
         <AdminTableRow key={app.id} onOpen={() => onOpen(app)}>
           <td className="px-4 py-3">

@@ -19,6 +19,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/programs";
 import { matchesSearch } from "@/lib/search";
@@ -315,6 +316,8 @@ function ActivityGroup({
   now: number;
   onEdit: (a: ActivityRow) => void;
 } & Omit<RowActionProps, "a">) {
+  const [tableBodyRef] = useAutoAnimate<HTMLTableSectionElement>();
+
   return (
     <section>
       <h3 className="mb-2 px-1">
@@ -337,7 +340,12 @@ function ActivityGroup({
       </h3>
       {open && (
         <>
-          <AdminTable className="hidden md:block" columns={ACT_COLS} minWidth="min-w-[860px]">
+          <AdminTable
+            className="hidden md:block"
+            columns={ACT_COLS}
+            minWidth="min-w-[860px]"
+            bodyRef={tableBodyRef}
+          >
             {rows.map((a) => (
               <AdminTableRow key={a.id} onOpen={() => onEdit(a)}>
                 <td className="p-3">

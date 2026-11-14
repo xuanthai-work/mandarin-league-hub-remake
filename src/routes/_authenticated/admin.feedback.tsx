@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Plus } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
@@ -66,6 +67,7 @@ type StatusFilter = "all" | FeedbackStatus;
 const PAGE_SIZE = 50;
 
 function FeedbackPage() {
+  const [tableBodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const qc = useQueryClient();
   const access = useAdminAccess().data;
   const canReview = !!access && can(access.perms, "feedback.review");
@@ -237,6 +239,7 @@ function FeedbackPage() {
             minWidth="min-w-[860px]"
             isEmpty={rows.length === 0}
             emptyMessage="Không có đơn nhận xét."
+            bodyRef={tableBodyRef}
           >
             {shown.map((f) => {
               const writer = f.member;

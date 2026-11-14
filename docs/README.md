@@ -291,6 +291,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-209-MOTION-TOKENS-AND-REDUCED-MOTION`                         | Token chuyển động (easing, thời lượng) và hook reduced-motion cho hiệu ứng                             | 2026-11-15     | **PASS** | [task-ge-209-motion-tokens-and-reduced-motion.md](tasks/task-ge-209-motion-tokens-and-reduced-motion.md)                                                 |
 | `TASK-OC-196-LAZYMOTION-ADMIN`                                         | LazyMotion cho khu admin: motion.div thành m.div ở Drawer, Modal, ContentHistory                       | 2026-11-15     | **PASS** | [task-oc-196-lazymotion-admin.md](tasks/task-oc-196-lazymotion-admin.md)                                                                                 |
 | `TASK-GE-210-LANDING-REVEAL-ON-SCROLL`                                 | Khối trang chủ hiện dần khi cuộn bằng CSS (animation-timeline), tôn trọng reduced-motion               | 2026-11-15     | **PASS** | [task-ge-210-landing-reveal-on-scroll.md](tasks/task-ge-210-landing-reveal-on-scroll.md)                                                                 |
+| `TASK-OC-197-AUTOANIMATE-ADMIN-TABLES`                                 | Áp auto-animate cho 6 bảng admin hay lọc (Ứng viên, Nhận xét, HSK, Chứng nhận, Hoạt động, Lịch sử điểm)| 2026-11-15     | **PASS** | [task-oc-197-autoanimate-admin-tables.md](tasks/task-oc-197-autoanimate-admin-tables.md)                                                                 |
 
 ---
 

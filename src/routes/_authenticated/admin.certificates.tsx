@@ -16,6 +16,7 @@ import {
   Wand2,
   X,
 } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,6 +114,7 @@ function initials(name: string) {
 }
 
 function CertificatesPage() {
+  const [tableBodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const qc = useQueryClient();
   const perms = useAdminAccess().data?.perms ?? NO_PERMISSIONS;
   const canEdit = can(perms, "certificates.edit");
@@ -494,6 +496,7 @@ function CertificatesPage() {
           minWidth="min-w-[1020px]"
           isEmpty={isLoading}
           emptyMessage="Đang tải…"
+          bodyRef={tableBodyRef}
         >
           {rows.map((c) => (
             <AdminTableRow
