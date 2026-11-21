@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VerificationLookup } from "@/components/verification/VerificationLookup";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/verify/hsk/")({
   staticData: { sitemap: true },
@@ -19,5 +20,10 @@ export const Route = createFileRoute("/verify/hsk/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => <VerificationLookup kind="hsk" />,
+  component: VerifyHskPage,
 });
+
+function VerifyHskPage() {
+  const h = useSiteContent("home").data;
+  return <VerificationLookup kind="hsk" title={h.verify_hsk_title} desc={h.verify_hsk_desc} />;
+}

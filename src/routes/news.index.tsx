@@ -9,6 +9,7 @@ import type { NewsCategory } from "@/lib/data/types";
 import { fmtDate, usePublishedNews } from "@/lib/news-db";
 import { pageMeta } from "@/lib/seo";
 import { useTr } from "@/lib/i18n";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/news/")({
   staticData: { sitemap: true },
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/news/")({
 
 function PNews() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   const [cat, setCat] = useState<NewsCategory | "all">("all");
   const news = usePublishedNews();
   const list = (news.data ?? []).filter((n) => cat === "all" || n.category === cat);
@@ -31,8 +33,8 @@ function PNews() {
       <BreadcrumbBar items={[{ label: "Hoạt động & Tin tức" }, { label: "Tin tức & Kiến thức" }]} />
       <PageHero
         eyebrow="Tin tức"
-        title="Tin tức & kiến thức"
-        desc="Nội dung chính thức do The Mandarin League biên soạn."
+        title={h.news_page_title || "Tin tức & kiến thức"}
+        desc={h.news_page_desc || "Nội dung chính thức do The Mandarin League biên soạn."}
       />
       <section className="mx-auto max-w-7xl px-4 py-14 md:px-6">
         <Chips items={NEWS_CATEGORIES} value={cat} onChange={setCat} />

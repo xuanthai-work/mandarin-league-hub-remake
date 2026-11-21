@@ -3,10 +3,34 @@ import {
   SITE_DEFAULTS,
   mergeContent,
   type HomeContent,
-  type HomeSectionKey,
   type SiteSettings,
 } from "@/lib/site-content";
 import { trPhrase, type Lang } from "@/lib/i18n";
+import { HOME_BLOCKS, HOME_SECTIONS, NAV_PAGES, SITE_BLOCKS } from "@/lib/site-content-structure";
+import type { ContentBlock, ContentField } from "@/lib/site-content-structure";
+
+export type {
+  ContentBlock,
+  ContentField,
+  FieldKind,
+  HomeSection,
+  HomeTextKey,
+  ManageRoute,
+  NavPage,
+  NavRoute,
+  SiteKey,
+} from "@/lib/site-content-structure";
+export {
+  HOME_BLOCKS,
+  HOME_SECTIONS,
+  NAV_PAGES,
+  SITE_BLOCKS,
+  blocksOfSection,
+  navPagesOfSection,
+  findBlock,
+  findNavPage,
+  isLocalizedField,
+} from "@/lib/site-content-structure";
 
 const EMPTY_SITE = Object.fromEntries(
   Object.keys(SITE_DEFAULTS).map((k) => [k, ""]),
@@ -30,283 +54,8 @@ export function toSiteForm(raw: unknown): SiteSettings {
   return pickStrings(EMPTY_SITE, raw);
 }
 
-/** text = 1 dòng, area = nhiều dòng, link = "/đường-dẫn" hoặc http(s), url = chỉ http(s), email */
-export type FieldKind = "text" | "area" | "link" | "url" | "email";
-export type HomeTextKey = Exclude<keyof HomeContent, "show" | `${string}_en` | `${string}_zh`>;
-export type SiteKey = Exclude<keyof SiteSettings, `${string}_en` | `${string}_zh`>;
-
-export type ContentField<K extends string> = {
-  key: K;
-  label: string;
-  kind: FieldKind;
-  /** Chữ khách thấy khi ô để trống. "" nghĩa là để trống thì mục đó bị ẩn. */
-  fallback: string;
-  max: number;
-};
-
-export type ContentBlock<K extends string> = {
-  id: string;
-  label: string;
-  /** Khối có công tắc ẩn/hiện (khóa trong HomeContent.show) */
-  toggle?: HomeSectionKey;
-  /** Khối luôn hiện, không tắt được */
-  always?: boolean;
-  /** Khối tự hiện theo dữ liệu nơi khác, không có công tắc */
-  auto?: boolean;
-  /** Dòng giải thích ngắn hiện trong cột phải */
-  note?: string;
-  /** Khối lấy dữ liệu từ module khác */
-  manage?: {
-    label: string;
-    to: "/admin/photos" | "/admin/courses" | "/admin/teachers" | "/admin/activities";
-  };
-  fields: ContentField<K>[];
-};
-
-const T = 300; // ô 1 dòng
-const A = 1000; // ô nhiều dòng
-
-export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
-  {
-    id: "hero",
-    label: "Banner đầu trang",
-    always: true,
-    fields: [
-      {
-        key: "hero_badge",
-        label: "Dòng nhỏ phía trên",
-        kind: "text",
-        fallback: "Online Chinese Learning Community",
-        max: T,
-      },
-      {
-        key: "hero_title",
-        label: "Tiêu đề lớn",
-        kind: "text",
-        fallback: "The Mandarin League",
-        max: T,
-      },
-      {
-        key: "hero_lead",
-        label: "Lời dẫn",
-        kind: "area",
-        fallback:
-          "Cộng đồng học tiếng Trung trực tuyến dành cho người Việt – nơi học HSK bài bản, giao lưu văn hóa và cùng nhau phát triển.",
-        max: A,
-      },
-      {
-        key: "btn1_label",
-        label: "Nút chính – chữ",
-        kind: "text",
-        fallback: "Tham gia TML",
-        max: T,
-      },
-      {
-        key: "btn1_url",
-        label: "Nút chính – liên kết",
-        kind: "link",
-        fallback: "/join",
-        max: T,
-      },
-      {
-        key: "btn2_label",
-        label: "Nút phụ – chữ",
-        kind: "text",
-        fallback: "Xem khóa học HSK",
-        max: T,
-      },
-      {
-        key: "btn2_url",
-        label: "Nút phụ – liên kết",
-        kind: "link",
-        fallback: "/courses/hsk",
-        max: T,
-      },
-    ],
-  },
-  {
-    id: "about",
-    label: "Giới thiệu",
-    toggle: "about",
-    fields: [
-      {
-        key: "about_title",
-        label: "Tiêu đề",
-        kind: "text",
-        fallback: "Học tiếng Trung cùng một cộng đồng thực thụ",
-        max: T,
-      },
-      {
-        key: "about_p1",
-        label: "Đoạn 1",
-        kind: "area",
-        fallback:
-          "The Mandarin League (TML) là tổ chức cộng đồng phi lợi nhuận, quy tụ các bạn trẻ yêu thích tiếng Trung và văn hóa Trung Hoa, hoạt động hoàn toàn trực tuyến.",
-        max: A,
-      },
-      {
-        key: "about_p2",
-        label: "Đoạn 2",
-        kind: "area",
-        fallback:
-          "Chúng tôi tổ chức khóa học HSK, workshop, cuộc thi và các dự án sáng tạo nội dung, giúp mỗi thành viên vừa học vừa trải nghiệm.",
-        max: A,
-      },
-      {
-        key: "stat1_value",
-        label: "Số liệu 1 – con số",
-        kind: "text",
-        fallback: "HSK 1–6",
-        max: 40,
-      },
-      {
-        key: "stat1_label",
-        label: "Số liệu 1 – chú thích",
-        kind: "text",
-        fallback: "Lộ trình học bài bản",
-        max: 80,
-      },
-      {
-        key: "stat2_value",
-        label: "Số liệu 2 – con số",
-        kind: "text",
-        fallback: "8 Ban",
-        max: 40,
-      },
-      {
-        key: "stat2_label",
-        label: "Số liệu 2 – chú thích",
-        kind: "text",
-        fallback: "Chuyên môn hoạt động",
-        max: 80,
-      },
-      {
-        key: "stat3_value",
-        label: "Số liệu 3 – con số",
-        kind: "text",
-        fallback: "Hàng tháng",
-        max: 40,
-      },
-      {
-        key: "stat3_label",
-        label: "Số liệu 3 – chú thích",
-        kind: "text",
-        fallback: "Workshop & sự kiện",
-        max: 80,
-      },
-    ],
-  },
-  {
-    id: "carousel",
-    label: "Khoảnh khắc TML",
-    toggle: "carousel",
-    note: "Ảnh lấy từ trang Hình ảnh (các ảnh đang bật hiển thị).",
-    manage: { label: "Hình ảnh", to: "/admin/photos" },
-    fields: [],
-  },
-  {
-    id: "courses",
-    label: "Khóa học HSK",
-    toggle: "courses",
-    note: "Hiện tối đa 4 lớp HSK đang mở đăng ký.",
-    manage: { label: "Khóa học", to: "/admin/courses" },
-    fields: [],
-  },
-  {
-    id: "faculty",
-    label: "Giảng viên",
-    auto: true,
-    note: "Tự hiện khi có giảng viên được bật “Hiện trên trang chủ” (tối đa 8 người).",
-    manage: { label: "Giáo viên", to: "/admin/teachers" },
-    fields: [],
-  },
-  {
-    id: "activities",
-    label: "Hoạt động tiêu biểu",
-    toggle: "activities",
-    note: "Hiện 3 hoạt động công khai mới nhất.",
-    manage: { label: "Hoạt động", to: "/admin/activities" },
-    fields: [],
-  },
-  {
-    id: "cta",
-    label: "Kêu gọi tham gia & Liên hệ",
-    toggle: "cta",
-    fields: [
-      {
-        key: "cta_title",
-        label: "Tiêu đề",
-        kind: "text",
-        fallback: "Sẵn sàng trở thành một phần của TML?",
-        max: T,
-      },
-      {
-        key: "cta_body",
-        label: "Lời dẫn",
-        kind: "area",
-        fallback:
-          "Ứng tuyển vào một trong 8 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.",
-        max: A,
-      },
-    ],
-  },
-];
-
-export const SITE_BLOCKS: ContentBlock<SiteKey>[] = [
-  {
-    id: "contact",
-    label: "Liên hệ & Mạng xã hội",
-    fields: [
-      {
-        key: "email",
-        label: "Email liên hệ",
-        kind: "email",
-        fallback: SITE_DEFAULTS.email,
-        max: T,
-      },
-      {
-        key: "facebook",
-        label: "Facebook",
-        kind: "url",
-        fallback: SITE_DEFAULTS.facebook,
-        max: T,
-      },
-      {
-        key: "instagram",
-        label: "Instagram",
-        kind: "url",
-        fallback: SITE_DEFAULTS.instagram,
-        max: T,
-      },
-      { key: "threads", label: "Threads", kind: "url", fallback: "", max: T },
-      { key: "tiktok", label: "TikTok", kind: "url", fallback: "", max: T },
-      { key: "linkedin", label: "LinkedIn", kind: "url", fallback: "", max: T },
-    ],
-  },
-  {
-    id: "footer",
-    label: "Chân trang",
-    fields: [
-      {
-        key: "tagline",
-        label: "Mô tả ngắn về TML",
-        kind: "area",
-        fallback: "Kết nối người học, nhà giáo dục và cơ hội giữa Việt Nam và Trung Quốc.",
-        max: A,
-      },
-      {
-        key: "footer_note",
-        label: "Dòng bản quyền",
-        kind: "text",
-        fallback: "The Mandarin League. All rights reserved.",
-        max: T,
-      },
-    ],
-  },
-];
-
 /** Trả về câu lỗi tiếng Việt, hoặc null nếu hợp lệ. Ô trống luôn hợp lệ. */
-export function fieldError(kind: FieldKind, value: string): string | null {
+export function fieldError(kind: string, value: string): string | null {
   const v = value.trim();
   if (!v) return null;
 
@@ -325,8 +74,7 @@ export function fieldError(kind: FieldKind, value: string): string | null {
       if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return null;
       return "Email không hợp lệ";
     }
-    case "text":
-    case "area":
+    default:
       return null;
   }
 }
@@ -382,7 +130,7 @@ const TEXT_LANGS: { lang: Lang; suffix: "" | "_en" | "_zh"; tag: string }[] = [
   { lang: "zh", suffix: "_zh", tag: "ZH" },
 ];
 
-/** So hai bản (draft/published/old_data/new_data thô), trả danh sách thay đổi theo thứ tự khối/ô trên màn. */
+/** So hai bản (draft/published/old_data/new_data thô), trả danh sách thay đổi theo thứ tự trên màn. */
 export function describeChanges(
   key: "home" | "site",
   beforeRaw: unknown,
@@ -397,15 +145,59 @@ export function describeChanges(
     unknown
   >;
   const changed = new Set(changedKeys(a, b));
-  const blocks = (key === "home" ? HOME_BLOCKS : SITE_BLOCKS) as ContentBlock<string>[];
   const out: FieldChange[] = [];
-  for (const blk of blocks) {
-    if (blk.toggle && changed.has(`show.${blk.toggle}`)) {
-      const sa = (a["show"] as Record<string, boolean> | undefined)?.[blk.toggle];
-      const sb = (b["show"] as Record<string, boolean> | undefined)?.[blk.toggle];
+
+  const push = (block: ContentBlock<string>, f: ContentField<string>) => {
+    const isText = f.kind === "text" || f.kind === "area";
+    if (!isText) {
+      if (!changed.has(f.key)) return;
+      const va = String(a[f.key] ?? "").trim();
+      const vb = String(b[f.key] ?? "").trim();
       out.push({
-        id: `show.${blk.toggle}`,
-        block: blk.label,
+        id: f.key,
+        block: block.label,
+        label: f.label,
+        before: va || f.fallback || EMPTY_HIDDEN,
+        after: vb || f.fallback || EMPTY_HIDDEN,
+        beforeDefault: !va,
+        afterDefault: !vb,
+      });
+      return;
+    }
+    for (const { lang, suffix, tag } of TEXT_LANGS) {
+      const id = `${f.key}${suffix}`;
+      if (!changed.has(id)) continue;
+      const va = String(a[id] ?? "").trim();
+      const vb = String(b[id] ?? "").trim();
+      const fallback = lang === "vi" ? f.fallback : trPhrase(lang, f.fallback);
+      out.push({
+        id,
+        block: block.label,
+        label: `${f.label} · ${tag}`,
+        before: va || fallback || EMPTY_HIDDEN,
+        after: vb || fallback || EMPTY_HIDDEN,
+        beforeDefault: !va,
+        afterDefault: !vb,
+      });
+    }
+  };
+
+  if (key === "site") {
+    for (const block of SITE_BLOCKS as ContentBlock<string>[]) {
+      for (const f of block.fields) push(block, f);
+    }
+    return out;
+  }
+
+  for (const block of HOME_BLOCKS as ContentBlock<string>[]) {
+    if (block.toggle && changed.has(`show.${block.toggle}`)) {
+      const section = HOME_SECTIONS.find((item) => item.id === block.sectionId);
+      const sectionOwnsToggle = section?.toggle === block.toggle;
+      const sa = (a["show"] as Record<string, boolean> | undefined)?.[block.toggle];
+      const sb = (b["show"] as Record<string, boolean> | undefined)?.[block.toggle];
+      out.push({
+        id: `show.${block.toggle}`,
+        block: sectionOwnsToggle ? section!.label : block.label,
         label: "Hiển thị trên trang chủ",
         before: sa ? "Hiện" : "Ẩn",
         after: sb ? "Hiện" : "Ẩn",
@@ -413,41 +205,18 @@ export function describeChanges(
         afterDefault: false,
       });
     }
-    for (const f of blk.fields) {
-      const isText = f.kind === "text" || f.kind === "area";
-      if (!isText) {
-        if (!changed.has(f.key)) continue;
-        const va = String(a[f.key] ?? "").trim();
-        const vb = String(b[f.key] ?? "").trim();
-        out.push({
-          id: f.key,
-          block: blk.label,
-          label: f.label,
-          before: va || f.fallback || EMPTY_HIDDEN,
-          after: vb || f.fallback || EMPTY_HIDDEN,
-          beforeDefault: !va,
-          afterDefault: !vb,
-        });
-        continue;
-      }
-      for (const { lang, suffix, tag } of TEXT_LANGS) {
-        const id = `${f.key}${suffix}`;
-        if (!changed.has(id)) continue;
-        const va = String(a[id] ?? "").trim();
-        const vb = String(b[id] ?? "").trim();
-        const fallback = lang === "vi" ? f.fallback : trPhrase(lang, f.fallback);
-        out.push({
-          id,
-          block: blk.label,
-          label: `${f.label} · ${tag}`,
-          before: va || fallback || EMPTY_HIDDEN,
-          after: vb || fallback || EMPTY_HIDDEN,
-          beforeDefault: !va,
-          afterDefault: !vb,
-        });
-      }
-    }
+    for (const f of block.fields) push(block, f);
   }
+
+  // Trang điều hướng được báo riêng để không lẫn với nội dung Section.
+  for (const page of NAV_PAGES as unknown as ContentBlock<string>[]) {
+    const pageBlock = {
+      ...page,
+      label: `Trang điều hướng · ${page.label}`,
+    } as ContentBlock<string>;
+    for (const f of page.fields) push(pageBlock, f);
+  }
+
   return out;
 }
 

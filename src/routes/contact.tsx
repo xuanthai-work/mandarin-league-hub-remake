@@ -5,6 +5,7 @@ import { PageHero, CONTACT } from "@/components/site/SiteLayout";
 import { ContactForm } from "@/components/site/ContactForm";
 import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { pageMeta } from "@/lib/seo";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/contact")({
   staticData: { sitemap: true },
@@ -24,13 +25,14 @@ const GROUPS = [
 
 function PContact() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   return (
     <>
       <BreadcrumbBar items={[{ label: "Liên hệ" }]} />
       <PageHero
         eyebrow="Liên hệ"
-        title="Kết nối với TML"
-        desc="Chúng tôi luôn sẵn lòng lắng nghe."
+        title={h.contact_page_title || "Kết nối với TML"}
+        desc={h.contact_page_desc || "Chúng tôi luôn sẵn lòng lắng nghe."}
       />
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:px-6 lg:grid-cols-[1fr_1.3fr]">
         <div>

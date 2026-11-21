@@ -15,6 +15,7 @@ import { PageHero } from "@/components/site/SiteLayout";
 import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { SectionTitle } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/about")({
   staticData: { sitemap: true },
@@ -51,34 +52,45 @@ const PROGRAMS = [
 
 function PAbout() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   return (
     <>
       <BreadcrumbBar items={[{ label: "Giới thiệu" }, { label: "Về TML" }]} />
       <PageHero
         eyebrow="Giới thiệu"
-        title="The Mandarin League"
-        desc="Liên Đoàn Hán Ngữ · 普通话联盟 — Online Chinese Learning Community."
+        title={h.about_page_title || "The Mandarin League"}
+        desc={
+          h.about_page_desc || "Liên Đoàn Hán Ngữ · 普通话联盟 — Online Chinese Learning Community."
+        }
       />
       <div className="mx-auto max-w-7xl space-y-20 px-4 py-16 md:px-6">
         <section className="grid gap-8 md:grid-cols-2">
-          <SectionTitle label="01 · TML là gì?" title="Cộng đồng giáo dục tiếng Trung trực tuyến" />
+          <SectionTitle
+            label={h.about_page_intro_label || "01 · TML là gì?"}
+            title={h.about_page_intro_title || "Cộng đồng giáo dục tiếng Trung trực tuyến"}
+          />
           <p className="text-muted-foreground">
-            {tr(
-              "TML là tổ chức cộng đồng dành cho thanh niên yêu tiếng Trung và văn hóa Trung Hoa, kết nối người học, giáo viên và cơ hội giữa Việt Nam và Trung Quốc.",
-            )}
+            {h.about_page_intro_body ||
+              tr(
+                "TML là tổ chức cộng đồng dành cho thanh niên yêu tiếng Trung và văn hóa Trung Hoa, kết nối người học, giáo viên và cơ hội giữa Việt Nam và Trung Quốc.",
+              )}
           </p>
         </section>
         <section className="grid gap-5 md:grid-cols-2">
           {[
             {
               icon: Target,
-              l: "02 · Sứ mệnh",
-              d: "Giúp người Việt học tiếng Trung hiệu quả, dễ tiếp cận và giàu trải nghiệm.",
+              l: h.about_page_mission_label || "02 · Sứ mệnh",
+              d:
+                h.about_page_mission ||
+                "Giúp người Việt học tiếng Trung hiệu quả, dễ tiếp cận và giàu trải nghiệm.",
             },
             {
               icon: Telescope,
-              l: "03 · Tầm nhìn",
-              d: "Trở thành cộng đồng học tiếng Trung trực tuyến uy tín, cầu nối giáo dục Việt – Trung.",
+              l: h.about_page_vision_label || "03 · Tầm nhìn",
+              d:
+                h.about_page_vision ||
+                "Trở thành cộng đồng học tiếng Trung trực tuyến uy tín, cầu nối giáo dục Việt – Trung.",
             },
           ].map((x) => (
             <div key={x.l} className="rounded-2xl border border-border bg-card p-8">
@@ -91,7 +103,10 @@ function PAbout() {
           ))}
         </section>
         <section>
-          <SectionTitle label="04 · Giá trị cốt lõi" title="Điều chúng tôi theo đuổi" />
+          <SectionTitle
+            label="04 · Giá trị cốt lõi"
+            title={h.about_page_values_title || "Điều chúng tôi theo đuổi"}
+          />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {VALUES.map((v) => (
               <div key={v.t} className="rounded-2xl border border-border bg-card p-6">
@@ -103,7 +118,10 @@ function PAbout() {
           </div>
         </section>
         <section>
-          <SectionTitle label="05 · Cách hoạt động" title="TML hoạt động như thế nào?" />
+          <SectionTitle
+            label="05 · Cách hoạt động"
+            title={h.about_page_steps_title || "TML hoạt động như thế nào?"}
+          />
           <ol className="mt-8 grid gap-4 md:grid-cols-4">
             {STEPS.map((s, i) => (
               <li key={s} className="relative rounded-2xl bg-secondary p-6">
@@ -114,7 +132,10 @@ function PAbout() {
           </ol>
         </section>
         <section>
-          <SectionTitle label="06 · Chương trình" title="Các chương trình chính" />
+          <SectionTitle
+            label="06 · Chương trình"
+            title={h.about_page_programs_title || "Các chương trình chính"}
+          />
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {PROGRAMS.map((p) => (
               <div

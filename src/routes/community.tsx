@@ -5,6 +5,7 @@ import { PageHero } from "@/components/site/SiteLayout";
 import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { SectionTitle } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/community")({
   staticData: { sitemap: true },
@@ -55,13 +56,17 @@ const OPPS = [
 
 function PCommunity() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   return (
     <>
       <BreadcrumbBar items={[{ label: "Giới thiệu" }, { label: "Cộng đồng TML" }]} />
       <PageHero
-        eyebrow="Cộng đồng"
-        title="Những con người của TML"
-        desc="Cộng đồng học tập chính thức — nơi mỗi người cùng học, cùng đóng góp."
+        eyebrow={h.community_page_eyebrow || "Cộng đồng"}
+        title={h.community_page_title || "Những con người của TML"}
+        desc={
+          h.community_page_desc ||
+          "Cộng đồng học tập chính thức — nơi mỗi người cùng học, cùng đóng góp."
+        }
       />
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
@@ -110,7 +115,10 @@ function PCommunity() {
       </section>
       <section className="bg-secondary py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <SectionTitle label="Cơ hội" title="Cơ hội dành cho cộng đồng" />
+          <SectionTitle
+            label="Cơ hội"
+            title={h.community_opportunities_title || "Cơ hội dành cho cộng đồng"}
+          />
           <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
             {OPPS.map((o) => (
               <div

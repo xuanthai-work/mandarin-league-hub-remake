@@ -96,6 +96,7 @@ export function ContentFieldInput({
         />
       )}
 
+      {field.help && !error && <p className="text-[11px] text-muted-foreground">{field.help}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );

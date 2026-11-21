@@ -1,16 +1,19 @@
-import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useTr } from "@/lib/i18n";
 import { EmptyState, SectionLabel } from "@/components/site/ui";
 import { TeacherPhotoCard } from "@/components/site/TeacherPhotoCard";
 import { usePublicTeachers, type PublicTeacher } from "@/lib/teachers";
+import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
 
 export function TeachersSection({
+  h,
   onSelectTeacher,
 }: {
+  h: HomeContent;
   onSelectTeacher: (teacher: PublicTeacher) => void;
 }) {
   const tr = useTr();
+  const preview = usePreviewMode();
   const visibleTeachers = usePublicTeachers().data ?? [];
   const pickedTeachers = visibleTeachers.filter((x) => x.show_on_home);
   const faculty = (pickedTeachers.length ? pickedTeachers : visibleTeachers).slice(0, 6);
@@ -22,20 +25,22 @@ export function TeachersSection({
           <div>
             <SectionLabel>师资团队 · {tr("Đội ngũ Giảng viên")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-              {tr("ĐỘI NGŨ GIẢNG VIÊN")}
+              {h.teachers_section_title || tr("ĐỘI NGŨ GIẢNG VIÊN")}
             </h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
-              {tr(
-                "Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập.",
-              )}
+              {h.teachers_section_desc ||
+                tr(
+                  "Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập.",
+                )}
             </p>
           </div>
-          <Link
-            to="/teachers"
+          <a
+            href={appendPreview(h.teachers_cta_url || "/teachers", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
-            {tr("Xem tất cả giáo viên")} <ArrowRight className="h-4 w-4" />
-          </Link>
+            {h.teachers_cta_label || tr("Xem tất cả các giảng viên")}{" "}
+            <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
         {faculty.length === 0 ? (
           <div className="mt-10 reveal-on-scroll">

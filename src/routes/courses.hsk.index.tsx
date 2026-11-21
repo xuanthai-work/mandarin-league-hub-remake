@@ -10,6 +10,7 @@ import { pageMeta } from "@/lib/seo";
 import { usePublishedClasses } from "@/lib/hsk-classes";
 import { useTr } from "@/lib/i18n";
 import { usePublicTeachers, teachersForLevel } from "@/lib/teachers";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/courses/hsk/")({
   staticData: { sitemap: true },
@@ -24,6 +25,7 @@ const FILTER_STATUS: CourseStatus[] = ["Đang tuyển sinh", "Sắp khai giảng
 
 function PCourses() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   const courses = getCourses();
   const { data: teachers } = usePublicTeachers();
   const { data: classes } = usePublishedClasses();
@@ -41,8 +43,8 @@ function PCourses() {
       <BreadcrumbBar items={[{ label: "Khóa học" }, { label: "Khóa học HSK 1–6" }]} />
       <PageHero
         eyebrow="Khóa học HSK"
-        title="Lộ trình HSK 1–6"
-        desc="Học trực tuyến, lộ trình rõ ràng từ nhập môn đến cao cấp."
+        title={h.hsk_page_title || "Lộ trình HSK 1–6"}
+        desc={h.hsk_page_desc || "Học trực tuyến, lộ trình rõ ràng từ nhập môn đến cao cấp."}
       />
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

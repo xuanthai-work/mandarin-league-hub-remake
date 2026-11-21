@@ -42,6 +42,10 @@ interface VerificationLookupProps {
   initialToken?: string;
   /** Render only the lookup form + results, for embedding inside a landing-page dialog. */
   compact?: boolean;
+  /** Editable page title from Trang & Nội dung (falls back to the built-in string). */
+  title?: string;
+  /** Editable page description from Trang & Nội dung (falls back to the built-in string). */
+  desc?: string;
 }
 
 type LookupState =
@@ -55,6 +59,8 @@ export function VerificationLookup({
   initialCode = "",
   initialToken = "",
   compact = false,
+  title,
+  desc,
 }: VerificationLookupProps) {
   const { t } = useT();
   const tr = useTr();
@@ -152,19 +158,20 @@ export function VerificationLookup({
               {tr("Hệ thống xác minh công khai")}
             </div>
             <h1 className="mt-3 text-3xl font-extrabold text-primary-deep md:text-5xl">
-              {isHsk ? tr("Xác minh kết quả HSK") : tr("Xác minh chứng nhận")}
+              {title || (isHsk ? tr("Xác minh kết quả HSK") : tr("Xác minh chứng nhận"))}
             </h1>
             <p className="mt-2 font-han text-xl text-primary">
               {isHsk ? "HSK 成绩验证" : "证书验证"}
             </p>
             <p className="mx-auto mt-5 max-w-2xl leading-relaxed text-muted-foreground">
-              {isHsk
-                ? tr(
-                    "Nhập mã xác minh hoặc quét mã QR để kiểm tra thông tin kết quả HSK được ghi nhận trong hệ thống TML.",
-                  )
-                : tr(
-                    "Nhập mã chứng nhận để kiểm tra trạng thái và thông tin do The Mandarin League phát hành hoặc ghi nhận.",
-                  )}
+              {desc ||
+                (isHsk
+                  ? tr(
+                      "Nhập mã xác minh hoặc quét mã QR để kiểm tra thông tin kết quả HSK được ghi nhận trong hệ thống TML.",
+                    )
+                  : tr(
+                      "Nhập mã chứng nhận để kiểm tra trạng thái và thông tin do The Mandarin League phát hành hoặc ghi nhận.",
+                    ))}
             </p>
           </div>
         </section>

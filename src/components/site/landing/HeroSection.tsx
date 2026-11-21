@@ -1,10 +1,13 @@
 import { ArrowRight } from "lucide-react";
 import { useT, useTr } from "@/lib/i18n";
-import type { HomeContent } from "@/lib/site-content";
+import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
 
 export function HeroSection({ h }: { h: HomeContent }) {
   const { lang, t } = useT();
   const tr = useTr();
+  const preview = usePreviewMode();
+  const scrollToCourses = !h.btn2_url || h.btn2_url === "/courses" || h.btn2_url === "/courses/hsk";
+  const btn2Href = scrollToCourses ? "#courses" : appendPreview(h.btn2_url, preview);
 
   return (
     <section id="hero" className="grid-lines relative scroll-mt-24 overflow-hidden bg-secondary">
@@ -25,19 +28,15 @@ export function HeroSection({ h }: { h: HomeContent }) {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
-              href={h.btn1_url || "/join"}
+              href={appendPreview(h.btn1_url || "/join", preview)}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90"
             >
               {h.btn1_label || t("cta.join")} <ArrowRight className="h-4 w-4" />
             </a>
             <a
-              href={
-                !h.btn2_url || h.btn2_url === "/courses" || h.btn2_url === "/courses/hsk"
-                  ? "#courses"
-                  : h.btn2_url
-              }
+              href={btn2Href}
               onClick={(e) => {
-                if (!h.btn2_url || h.btn2_url === "/courses" || h.btn2_url === "/courses/hsk") {
+                if (scrollToCourses) {
                   e.preventDefault();
                   document
                     .getElementById("courses")

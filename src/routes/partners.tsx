@@ -9,6 +9,7 @@ import type { PartnerCategory } from "@/lib/data/types";
 import { useActivePartners } from "@/lib/news-db";
 import { pageMeta } from "@/lib/seo";
 import { useTr } from "@/lib/i18n";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/partners")({
   staticData: { sitemap: true },
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/partners")({
 
 function PPartners() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   const [cat, setCat] = useState<PartnerCategory | "all">("all");
   const q = useActivePartners();
   const list = (q.data ?? []).filter((p) => cat === "all" || p.category === cat);
@@ -31,8 +33,10 @@ function PPartners() {
       <BreadcrumbBar items={[{ label: "Giới thiệu" }, { label: "Đối tác" }]} />
       <PageHero
         eyebrow="Đối tác"
-        title="Đồng hành cùng TML"
-        desc="Cùng kiến tạo cơ hội học tập và kết nối Việt Nam – Trung Quốc."
+        title={h.partners_page_title || "Đồng hành cùng TML"}
+        desc={
+          h.partners_page_desc || "Cùng kiến tạo cơ hội học tập và kết nối Việt Nam – Trung Quốc."
+        }
       />
       <section className="mx-auto max-w-7xl px-4 py-14 md:px-6">
         <Chips items={PARTNER_CATEGORIES} value={cat} onChange={setCat} />

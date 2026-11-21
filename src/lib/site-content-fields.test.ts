@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { HOME_DEFAULTS, SITE_DEFAULTS } from "@/lib/site-content";
+import { HOME_DEFAULTS, HOME_TEXT_KEYS, SITE_DEFAULTS } from "@/lib/site-content";
 import {
   HOME_BLOCKS,
+  HOME_SECTIONS,
+  NAV_PAGES,
   SITE_BLOCKS,
+  blocksOfSection,
   changedKeys,
   fieldError,
   toHomeForm,
@@ -116,18 +119,126 @@ describe("changedKeys", () => {
   });
 });
 
-describe("block definitions coverage", () => {
-  it("includes each base string key of HOME_DEFAULTS exactly once in HOME_BLOCKS", () => {
+describe("section / content block / navigation page structure", () => {
+  it("lists exactly the eight homepage sections in order, plus the auxiliary block", () => {
+    expect(
+      HOME_SECTIONS.filter((section) => !section.auxiliary).map((section) => section.id),
+    ).toEqual([
+      "hero",
+      "about",
+      "organization",
+      "courses",
+      "faculty",
+      "activities",
+      "partners",
+      "verify",
+    ]);
+    expect(
+      HOME_SECTIONS.filter((section) => section.auxiliary).map((section) => section.id),
+    ).toEqual(["cta"]);
+  });
+
+  it("keeps every content block inside an existing section (no pages in the sidebar)", () => {
+    expect(HOME_BLOCKS.map((block) => block.id)).toEqual([
+      "hero",
+      "about",
+      "values",
+      "community",
+      "organization",
+      "courses",
+      "faculty-section",
+      "activities",
+      "carousel",
+      "news",
+      "partners-section",
+      "verify",
+      "verify-certificate",
+      "verify-hsk",
+      "cta",
+    ]);
+    for (const block of HOME_BLOCKS) {
+      expect(
+        HOME_SECTIONS.some((section) => section.id === block.sectionId),
+        `Block ${block.id} phải thuộc một Section`,
+      ).toBe(true);
+      expect("page" in block).toBe(false);
+    }
+  });
+
+  it("keeps the three Giới thiệu content blocks on one Section screen", () => {
+    expect(blocksOfSection("about").map((block) => block.id)).toEqual([
+      "about",
+      "values",
+      "community",
+    ]);
+    expect(blocksOfSection("verify").map((block) => block.id)).toEqual([
+      "verify",
+      "verify-certificate",
+      "verify-hsk",
+    ]);
+    expect(blocksOfSection("activities").map((block) => block.id)).toEqual([
+      "activities",
+      "carousel",
+      "news",
+    ]);
+  });
+
+  it("manages navigation pages separately with their public route", () => {
+    expect(NAV_PAGES.map((page) => [page.id, page.to])).toEqual([
+      ["about-page", "/about"],
+      ["community-page", "/community"],
+      ["organization-page", "/organization"],
+      ["hsk-page", "/courses/hsk"],
+      ["courses-page", "/courses"],
+      ["teachers-page", "/teachers"],
+      ["activities-page", "/activities"],
+      ["news-page", "/news"],
+      ["partners-page", "/partners"],
+      ["verify-certificate-page", "/verify/certificate"],
+      ["verify-hsk-page", "/verify/hsk"],
+      ["join-page", "/join"],
+      ["contact-page", "/contact"],
+    ]);
+    for (const page of NAV_PAGES) {
+      expect(HOME_BLOCKS.some((block) => block.id === page.id)).toBe(false);
+      expect(HOME_SECTIONS.some((section) => section.id === page.sectionId)).toBe(true);
+    }
+  });
+
+  it("never shares a field key between a Section block and a navigation page", () => {
+    const blockKeys = new Set(HOME_BLOCKS.flatMap((block) => block.fields.map((f) => f.key)));
+    for (const page of NAV_PAGES) {
+      for (const field of page.fields) {
+        expect(
+          blockKeys.has(field.key),
+          `Khóa ${field.key} vừa thuộc Section vừa thuộc trang điều hướng`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("points every CTA link at the navigation page it belongs to", () => {
+    for (const block of HOME_BLOCKS) {
+      for (const field of block.fields) {
+        if (!field.navPage) continue;
+        const page = NAV_PAGES.find((candidate) => candidate.id === field.navPage);
+        expect(page, `CTA ${field.key} thiếu trang điều hướng ${field.navPage}`).toBeDefined();
+        expect(field.fallback).toBe(page?.to);
+      }
+    }
+  });
+
+  it("includes each base string key of HOME_DEFAULTS exactly once in blocks + nav pages", () => {
     const defaultKeys = Object.keys(HOME_DEFAULTS).filter(
       (k) => k !== "show" && !k.endsWith("_en") && !k.endsWith("_zh"),
     );
-    const blockFields = HOME_BLOCKS.flatMap((b) => b.fields.map((f) => f.key));
+    const blockFields = [...HOME_BLOCKS, ...NAV_PAGES].flatMap((block) =>
+      block.fields.map((f) => f.key),
+    );
 
     for (const key of defaultKeys) {
       const count = blockFields.filter((k) => k === key).length;
-      expect(count, `Key ${key} in HOME_DEFAULTS should appear exactly once in HOME_BLOCKS`).toBe(
-        1,
-      );
+      expect(count, `Key ${key} in HOME_DEFAULTS should appear exactly once`).toBe(1);
     }
     expect(blockFields.length).toBe(defaultKeys.length);
   });
@@ -145,6 +256,16 @@ describe("block definitions coverage", () => {
       );
     }
     expect(blockFields.length).toBe(defaultKeys.length);
+  });
+
+  it("localizes every text field of blocks and navigation pages", () => {
+    const textKeys = [...HOME_BLOCKS, ...NAV_PAGES].flatMap((block) =>
+      block.fields
+        .filter((field) => field.kind === "text" || field.kind === "area")
+        .map((field) => field.key),
+    );
+    expect(new Set(HOME_TEXT_KEYS)).toEqual(new Set(textKeys));
+    expect(HOME_TEXT_KEYS.length).toBe(textKeys.length);
   });
 });
 
@@ -187,7 +308,7 @@ describe("describeChanges", () => {
     expect(changes).toEqual([
       {
         id: "hero_title",
-        block: "Banner đầu trang",
+        block: "Banner",
         label: "Tiêu đề lớn · VI",
         before: "Cũ",
         after: "Mới",
@@ -202,7 +323,7 @@ describe("describeChanges", () => {
     expect(changes).toEqual([
       {
         id: "hero_badge",
-        block: "Banner đầu trang",
+        block: "Banner",
         label: "Dòng nhỏ phía trên · VI",
         before: "Học tiếng Trung",
         after: "Online Chinese Learning Community",
@@ -217,7 +338,7 @@ describe("describeChanges", () => {
     expect(en).toEqual([
       {
         id: "hero_title_en",
-        block: "Banner đầu trang",
+        block: "Banner",
         label: "Tiêu đề lớn · EN",
         before: "Old",
         after: "New",

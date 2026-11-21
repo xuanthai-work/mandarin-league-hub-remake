@@ -20,6 +20,7 @@ import { SectionTitle } from "@/components/site/ui";
 import { ApplicationForm } from "@/components/recruitment/ApplicationForm";
 import { getDepartments } from "@/lib/data/departments";
 import { pageMeta } from "@/lib/seo";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/join")({
   staticData: { sitemap: true },
@@ -44,6 +45,7 @@ const BENEFITS = [
 
 function PJoin() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   const { ban } = Route.useSearch();
   useEffect(() => {
     if (ban)
@@ -59,8 +61,8 @@ function PJoin() {
     <>
       <PageHero
         eyebrow="Tuyển thành viên"
-        title="Tại sao tham gia TML?"
-        desc="Vừa học tiếng Trung, vừa rèn kỹ năng và đóng góp cho cộng đồng."
+        title={h.join_page_title || "Tại sao tham gia TML?"}
+        desc={h.join_page_desc || "Vừa học tiếng Trung, vừa rèn kỹ năng và đóng góp cho cộng đồng."}
       />
       <div className="mx-auto max-w-7xl space-y-16 px-4 py-16 md:px-6">
         <a

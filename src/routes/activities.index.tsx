@@ -19,6 +19,7 @@ import {
   type LocationType,
 } from "@/lib/activities";
 import { useTr } from "@/lib/i18n";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/activities/")({
   staticData: { sitemap: true },
@@ -35,6 +36,7 @@ const sel = "rounded-lg border border-input bg-background px-3 py-2 text-sm";
 
 function PActivities() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   const [cat, setCat] = useState<ActivityCategory | "education" | "">("");
   const [time, setTime] = useState<LiveStatus | "">("");
   const [loc, setLoc] = useState<LocationType | "">("");
@@ -63,8 +65,8 @@ function PActivities() {
       <BreadcrumbBar items={[{ label: "Hoạt động & Tin tức" }, { label: "Hoạt động & Sự kiện" }]} />
       <PageHero
         eyebrow="Hoạt động"
-        title="Học qua trải nghiệm"
-        desc="Các chương trình chính thức do TML tổ chức."
+        title={h.activities_page_title || "Học qua trải nghiệm"}
+        desc={h.activities_page_desc || "Các chương trình chính thức do TML tổ chức."}
       />
       <section className="mx-auto max-w-7xl px-4 py-14 md:px-6">
         <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 md:grid-cols-[1fr_auto_auto_auto]">

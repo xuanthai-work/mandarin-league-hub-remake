@@ -7,6 +7,7 @@ import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { TeacherCard } from "@/components/site/TeacherCard";
 import { useTr } from "@/lib/i18n";
 import { teacherTags, usePublicTeachers } from "@/lib/teachers";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/teachers/")({
   staticData: { sitemap: true },
@@ -35,6 +36,7 @@ const PAGE = 12;
 
 function TeachersDirectory() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   const { data, isLoading, isError } = usePublicTeachers();
   const [q, setQ] = useState("");
   const [tag, setTag] = useState("");
@@ -54,8 +56,11 @@ function TeachersDirectory() {
       <BreadcrumbBar items={[{ label: "Giảng viên" }, { label: "Đội ngũ Giảng viên" }]} />
       <PageHero
         eyebrow="师资团队 · Teaching Faculty"
-        title="Đội ngũ Giảng viên"
-        desc="Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập."
+        title={h.teachers_page_title || "Đội ngũ Giảng viên"}
+        desc={
+          h.teachers_page_desc ||
+          "Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập."
+        }
       />
       <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
         <div className="flex flex-wrap items-center gap-3">

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { ArrowRight, CalendarDays, Star } from "lucide-react";
 import { useTr } from "@/lib/i18n";
 import {
@@ -13,7 +12,7 @@ import { EmptyState, SectionLabel } from "@/components/site/ui";
 import { PhotoOverlayCard } from "@/components/site/PhotoOverlayCard";
 import { ActivityCarousel } from "@/components/site/ActivityCarousel";
 import { fmtDate as fmtNewsDate, usePublishedNews, type NewsRow } from "@/lib/news-db";
-import type { HomeContent } from "@/lib/site-content";
+import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
 
 const ACTIVITY_CATEGORIES: ActivityCategory[] = [
   "workshop",
@@ -34,6 +33,7 @@ export function ActivitiesSection({
   onSelectNews: (news: NewsRow) => void;
 }) {
   const tr = useTr();
+  const preview = usePreviewMode();
   const [activityCat, setActivityCat] = useState<ActivityCategory | "all">("all");
 
   const activities = usePublicActivities();
@@ -51,15 +51,18 @@ export function ActivitiesSection({
           <div>
             <SectionLabel>{tr("Hoạt động tiêu biểu")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-              {tr("Học qua trải nghiệm")}
+              {h.activities_title || tr("Học qua trải nghiệm")}
             </h2>
+            {h.activities_lead && (
+              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{h.activities_lead}</p>
+            )}
           </div>
-          <Link
-            to="/activities"
+          <a
+            href={appendPreview(h.activities_cta_url || "/activities", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
-            {tr("Xem tất cả")} <ArrowRight className="h-4 w-4" />
-          </Link>
+            {h.activities_cta_label || tr("Xem tất cả")} <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2 reveal-on-scroll">
@@ -134,18 +137,18 @@ export function ActivitiesSection({
             <div>
               <SectionLabel>{tr("Bản tin & kiến thức")}</SectionLabel>
               <h3 className="mt-3 text-2xl font-bold text-primary-deep md:text-3xl">
-                {tr("Tin tức & kiến thức HSK")}
+                {h.news_section_title || tr("Tin tức & kiến thức HSK")}
               </h3>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {tr("Nội dung chính thức do The Mandarin League biên soạn.")}
+                {h.news_section_desc || tr("Nội dung chính thức do The Mandarin League biên soạn.")}
               </p>
             </div>
-            <Link
-              to="/news"
+            <a
+              href={appendPreview(h.news_cta_url || "/news", preview)}
               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
             >
-              {tr("Xem tất cả tin tức")} <ArrowRight className="h-4 w-4" />
-            </Link>
+              {h.news_cta_label || tr("Xem tất cả tin tức")} <ArrowRight className="h-4 w-4" />
+            </a>
           </div>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 reveal-on-scroll">
             {news.isLoading && <p className="text-sm text-muted-foreground">{tr("Đang tải…")}</p>}

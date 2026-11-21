@@ -1,12 +1,17 @@
-import { Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Handshake } from "lucide-react";
 import { useTr } from "@/lib/i18n";
 import { EmptyState, SectionLabel } from "@/components/site/ui";
 import { useActivePartners } from "@/lib/news-db";
-import { useSiteContent } from "@/lib/site-content";
+import {
+  appendPreview,
+  usePreviewMode,
+  useSiteContent,
+  type HomeContent,
+} from "@/lib/site-content";
 
-export function PartnersSection() {
+export function PartnersSection({ h }: { h: HomeContent }) {
   const tr = useTr();
+  const preview = usePreviewMode();
   const partnerQuery = useActivePartners();
   const partners = partnerQuery.data ?? [];
   const site = useSiteContent("site").data;
@@ -18,15 +23,20 @@ export function PartnersSection() {
           <div>
             <SectionLabel>{tr("Đối tác đồng hành")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-              {tr("Cùng TML mở rộng cơ hội học tập")}
+              {h.partners_section_title || tr("Cùng TML mở rộng cơ hội học tập")}
             </h2>
+            {h.partners_section_desc && (
+              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                {h.partners_section_desc}
+              </p>
+            )}
           </div>
-          <Link
-            to="/partners"
+          <a
+            href={appendPreview(h.partners_cta_url || "/partners", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
-            {tr("Xem tất cả đối tác")} <ArrowRight className="h-4 w-4" />
-          </Link>
+            {h.partners_cta_label || tr("Xem tất cả đối tác")} <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
         {partners.length === 0 ? (
           <div className="mt-8 reveal-on-scroll">

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { ArrowRight, CalendarDays, Clock, Users, Video, Wallet } from "lucide-react";
 import { useTr } from "@/lib/i18n";
 import { SectionLabel } from "@/components/site/ui";
@@ -13,7 +12,7 @@ import {
 import { STATUS_LABEL } from "@/lib/programs";
 import { getCourse, getCourses } from "@/lib/data/courses";
 import type { Course } from "@/lib/data/types";
-import type { HomeContent } from "@/lib/site-content";
+import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
 
 export function CoursesSection({
   h,
@@ -23,6 +22,7 @@ export function CoursesSection({
   onSelectCourse: (selection: { course: Course; cls?: HskClass }) => void;
 }) {
   const tr = useTr();
+  const preview = usePreviewMode();
   const [courseLevel, setCourseLevel] = useState(0);
 
   const classQuery = usePublishedClasses();
@@ -45,15 +45,18 @@ export function CoursesSection({
         <div>
           <SectionLabel>{tr("Khóa học HSK")}</SectionLabel>
           <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-            {tr("Chọn cấp độ phù hợp với bạn")}
+            {h.courses_title || tr("Chọn cấp độ phù hợp với bạn")}
           </h2>
+          {h.courses_lead && (
+            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{h.courses_lead}</p>
+          )}
         </div>
-        <Link
-          to="/courses/hsk"
+        <a
+          href={appendPreview(h.courses_cta_url || "/courses", preview)}
           className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
         >
-          {tr("Tất cả khóa học")} <ArrowRight className="h-4 w-4" />
-        </Link>
+          {h.courses_cta_label || tr("Tất cả các khóa học")} <ArrowRight className="h-4 w-4" />
+        </a>
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-2 reveal-on-scroll">

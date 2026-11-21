@@ -1,12 +1,17 @@
-import { Link } from "@tanstack/react-router";
 import { ArrowRight, AtSign, Facebook, Instagram, Linkedin, Mail, Music2 } from "lucide-react";
 import { useT, useTr } from "@/lib/i18n";
 import { ContactForm } from "@/components/site/ContactForm";
-import { useSiteContent, type HomeContent } from "@/lib/site-content";
+import {
+  appendPreview,
+  usePreviewMode,
+  useSiteContent,
+  type HomeContent,
+} from "@/lib/site-content";
 
 export function ContactSection({ h }: { h: HomeContent }) {
   const { t } = useT();
   const tr = useTr();
+  const preview = usePreviewMode();
   const site = useSiteContent("site").data;
 
   return (
@@ -27,12 +32,12 @@ export function ContactSection({ h }: { h: HomeContent }) {
                     "Ứng tuyển vào một trong 8 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.",
                   )}
               </p>
-              <Link
-                to="/join"
+              <a
+                href={appendPreview(h.cta_button_url || "/join", preview)}
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 font-semibold text-primary-deep transition hover:opacity-90"
               >
-                {t("cta.join")} <ArrowRight className="h-4 w-4" />
-              </Link>
+                {h.cta_button_label || t("cta.join")} <ArrowRight className="h-4 w-4" />
+              </a>
             </div>
             <div className="space-y-3 border-t border-primary-foreground/20 pt-6 text-sm">
               <a href={`mailto:${site.email}`} className="flex items-center gap-3 hover:underline">

@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
 import { useTr } from "@/lib/i18n";
 import { STATUS_LABEL, usePublishedPrograms } from "@/lib/programs";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/courses/")({
   staticData: { sitemap: true },
@@ -41,6 +42,7 @@ const FILTERS: [Filter, string][] = [
 
 function Programs() {
   const tr = useTr();
+  const h = useSiteContent("home").data;
   const { data, isLoading } = usePublishedPrograms();
   const { data: classes, isLoading: lc } = usePublishedClasses();
   const [t, setT] = useState<Filter>("all");
@@ -63,8 +65,11 @@ function Programs() {
       <BreadcrumbBar items={[{ label: "Khóa học" }, { label: "Tất cả khóa học & chuyên đề" }]} />
       <PageHero
         eyebrow="Khóa học"
-        title="Học tiếng Trung cùng The Mandarin League"
-        desc="Các lớp HSK 1–6 theo lộ trình và những chương trình học cộng đồng, chuyên đề — học trực tuyến."
+        title={h.courses_page_title || "Học tiếng Trung cùng The Mandarin League"}
+        desc={
+          h.courses_page_desc ||
+          "Các lớp HSK 1–6 theo lộ trình và những chương trình học cộng đồng, chuyên đề — học trực tuyến."
+        }
       />
       <section className="mx-auto max-w-7xl px-4 py-10 md:px-6">
         <div className="flex flex-wrap gap-2">

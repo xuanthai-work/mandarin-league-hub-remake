@@ -29,7 +29,21 @@ type Path = { id: string; d: string };
  * departments and the per-department drawer). Shared by /organization and the
  * landing page so both keep the exact same structure.
  */
-export function OrgChartSection({ id, heading = false }: { id?: string; heading?: boolean }) {
+export function OrgChartSection({
+  id,
+  heading = false,
+  title,
+  desc,
+  ctaLabel,
+  ctaHref = "/organization",
+}: {
+  id?: string;
+  heading?: boolean;
+  title?: string;
+  desc?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}) {
   const tr = useTr();
   const deps = getDepartments();
   const { data: org, isLoading } = usePublicOrgChart();
@@ -101,16 +115,16 @@ export function OrgChartSection({ id, heading = false }: { id?: string; heading?
         {heading && (
           <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
             <SectionTitle
-              label="Cơ cấu tổ chức"
-              title="Sơ đồ tổ chức TML"
-              desc="The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn."
+              label={tr("Cơ cấu tổ chức")}
+              title={title || "Sơ đồ tổ chức TML"}
+              desc={desc || "The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn."}
             />
-            <Link
-              to="/organization"
+            <a
+              href={ctaHref}
               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
             >
-              {tr("Trang cơ cấu tổ chức")} <ArrowRight className="h-4 w-4" />
-            </Link>
+              {ctaLabel || tr("Trang cơ cấu tổ chức")} <ArrowRight className="h-4 w-4" />
+            </a>
           </div>
         )}
 

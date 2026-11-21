@@ -84,6 +84,8 @@ export const PHRASES: Record<string, [string, string]> = {
       "Our teachers accompany learners on their journey to master Chinese, build language skills and open new learning opportunities.",
     ],
   "Xem tất cả giáo viên": ["查看全部教师", "View all teachers"],
+  "Xem tất cả các giảng viên": ["查看全部讲师", "View all teaching staff"],
+  "Tất cả các khóa học": ["全部课程", "All courses"],
   "Xem hồ sơ": ["查看简介", "View profile"],
   "Xem chi tiết hồ sơ": ["查看详细简介", "View full profile"],
   "Nổi bật": ["精选", "Featured"],
@@ -314,6 +316,7 @@ export const PHRASES: Record<string, [string, string]> = {
     "Verify certificates issued or recorded by The Mandarin League.",
   ],
   "Xác minh kết quả HSK": ["HSK 成绩验证", "Verify HSK result"],
+  "Tra cứu nhanh": ["快速查询", "Quick lookup"],
   "Kiểm tra kết quả HSK được TML ghi nhận hoặc xác minh trong hệ thống.": [
     "核验 TML 系统中记录或验证的 HSK 成绩。",
     "Check HSK results recorded or verified in TML's system.",

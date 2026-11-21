@@ -1,217 +1,116 @@
 import { useT, useTr } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
-import { Mail, Facebook, Instagram, AtSign, Music2, Linkedin, MapPin, Lock } from "lucide-react";
+import { AtSign, Facebook, Instagram, Lock, Mail, Music2 } from "lucide-react";
 import { useSiteContent } from "@/lib/site-content";
 
-function FooterHeading({ children }: { children: ReactNode }) {
-  return (
-    <div className="mb-4 text-sm font-semibold uppercase tracking-wider opacity-70">{children}</div>
-  );
-}
+/* 44px circular outline button, one 20px glyph centred on both axes, shared by
+   every social icon so the row can never drift out of rhythm. */
+const SOCIAL_LINK =
+  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary-foreground/25 text-primary-foreground/85 transition-colors hover:border-gold/70 hover:bg-primary-foreground/10 hover:text-gold focus-visible:outline-none focus-visible:border-gold/70 focus-visible:text-gold focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-deep";
 
-const FOOT_LINK =
-  "inline-flex items-center gap-2 opacity-85 transition hover:text-gold hover:opacity-100";
+const LEGAL_LINK =
+  "rounded-sm py-1 text-primary-foreground/75 underline-offset-4 transition-colors hover:text-gold hover:underline focus-visible:outline-none focus-visible:text-gold focus-visible:ring-2 focus-visible:ring-gold/70";
 
 export function Footer() {
   const { t } = useT();
   const tr = useTr();
   const site = useSiteContent("site").data;
+
   return (
     <footer className="mt-24 bg-primary-deep text-primary-foreground">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-2 md:px-6 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
-        {/* Brand, contact & copyright */}
-        <div className="md:col-span-2 lg:col-span-1">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-background p-1">
-              <img src="/logo.svg" alt="" className="h-12 w-12 rounded-full object-cover" />
+      {/* Brand & contact — the only content of the footer body; the header owns navigation. */}
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:py-6">
+        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,65fr)_minmax(260px,35fr)] lg:items-center lg:gap-8">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.svg"
+                alt=""
+                className="h-12 w-12 shrink-0 rounded-full object-contain"
+              />
+              <div className="min-w-0">
+                <div className="font-bold">THE MANDARIN LEAGUE</div>
+                <div className="text-sm text-primary-foreground/85">{t("brand.sub")}</div>
+                <div className="text-xs text-primary-foreground/75">
+                  {tr("Online Chinese Learning Community")}
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="font-bold">THE MANDARIN LEAGUE</div>
-              <div className="text-sm opacity-80">{t("brand.sub")}</div>
-              <div className="text-xs opacity-70">{tr("Online Chinese Learning Community")}</div>
-            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-primary-foreground/85 md:whitespace-nowrap">
+              {site.tagline || t("tagline")}
+            </p>
           </div>
-          <p className="mt-5 max-w-md text-sm leading-relaxed opacity-80">
-            {site.tagline || t("tagline")}
-          </p>
-          <a
-            href={`mailto:${site.email}`}
-            className="mt-4 inline-flex items-center gap-2 text-sm opacity-85 transition hover:text-gold hover:opacity-100"
-          >
-            <Mail className="h-4 w-4 shrink-0" />
-            {site.email}
-          </a>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm opacity-85">
+          <div className="flex flex-col items-start gap-4 lg:justify-self-end">
             <a
-              href={site.facebook}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Facebook"
-              className="rounded-full p-1 transition hover:text-gold"
+              href={`mailto:${site.email}`}
+              className="inline-flex max-w-full items-center gap-2 py-1 text-sm text-primary-foreground/90 transition-colors hover:text-gold focus-visible:outline-none focus-visible:text-gold focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-deep"
             >
-              <Facebook className="h-4 w-4" />
+              <Mail className="h-4 w-4 shrink-0" />
+              <span className="break-all">{site.email}</span>
             </a>
-            <a
-              href={site.instagram}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Instagram"
-              className="rounded-full p-1 transition hover:text-gold"
-            >
-              <Instagram className="h-4 w-4" />
-            </a>
-            {site.threads && (
+            <div className="flex items-center gap-3" aria-label="Social media links">
               <a
-                href={site.threads}
+                href={site.facebook}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook"
+                className={SOCIAL_LINK}
+              >
+                <Facebook className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
+              </a>
+              <a
+                href={site.instagram}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram"
+                className={SOCIAL_LINK}
+              >
+                <Instagram className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
+              </a>
+              <a
+                href="https://www.threads.com/@liendoanhanngu"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Threads"
-                className="rounded-full p-1 transition hover:text-gold"
+                className={SOCIAL_LINK}
               >
-                <AtSign className="h-4 w-4" />
+                <AtSign className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
               </a>
-            )}
-            {site.tiktok && (
               <a
-                href={site.tiktok}
+                href="https://www.tiktok.com/@themandarinleague?is_from_webapp=1&sender_device=pc"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="TikTok"
-                className="rounded-full p-1 transition hover:text-gold"
+                className={SOCIAL_LINK}
               >
-                <Music2 className="h-4 w-4" />
+                <Music2 className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
               </a>
-            )}
-            {site.linkedin && (
-              <a
-                href={site.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="LinkedIn"
-                className="rounded-full p-1 transition hover:text-gold"
-              >
-                <Linkedin className="h-4 w-4" />
-              </a>
-            )}
-            <span className="inline-flex items-center gap-1.5 text-xs opacity-70">
-              <MapPin className="h-3.5 w-3.5" />
-              {t("footer.online")}
-            </span>
+            </div>
           </div>
-          <p className="mt-5 text-xs opacity-55">
-            © {new Date().getFullYear()} {site.footer_note || t("footer.rights")}
-          </p>
-        </div>
-
-        {/* About TML */}
-        <div>
-          <FooterHeading>{t("footer.aboutTml")}</FooterHeading>
-          <ul className="space-y-2.5 text-sm">
-            <li>
-              <Link to="/about" className={FOOT_LINK}>
-                {t("nav./about")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/organization" className={FOOT_LINK}>
-                {t("nav./organization")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/community" className={FOOT_LINK}>
-                {t("footer.communityTml")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/partners" className={FOOT_LINK}>
-                {t("footer.partners")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" className={FOOT_LINK}>
-                {t("nav./contact")}
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Training & activities */}
-        <div>
-          <FooterHeading>{t("footer.training")}</FooterHeading>
-          <ul className="space-y-2.5 text-sm">
-            <li>
-              <Link to="/courses/hsk" className={FOOT_LINK}>
-                {t("footer.hskCourses")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/teachers" className={FOOT_LINK}>
-                {t("nav./teachers")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/activities" className={FOOT_LINK}>
-                {t("nav./activities")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/news" className={FOOT_LINK}>
-                {t("nav./news")}
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Utilities & verification */}
-        <div>
-          <FooterHeading>{t("footer.utilities")}</FooterHeading>
-          <ul className="space-y-2.5 text-sm">
-            <li>
-              <Link to="/verify/hsk" className={FOOT_LINK}>
-                {t("footer.hskLookup")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/verify/certificate" className={FOOT_LINK}>
-                {t("footer.verifyCert")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/ai-tutor" className={FOOT_LINK}>
-                {t("footer.aiTutor")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/library-access" className={FOOT_LINK}>
-                {t("footer.libraryAccess")}
-              </Link>
-            </li>
-          </ul>
         </div>
       </div>
+
       <div className="border-t border-primary-foreground/15">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 text-center text-xs sm:flex-row sm:justify-between sm:text-left">
-          <div className="space-y-1">
-            <p className="opacity-55">{t("footer.tagline")}</p>
-            <p className="flex flex-wrap justify-center gap-x-3 sm:justify-start">
-              <Link
-                to="/privacy"
-                className="opacity-70 underline-offset-2 hover:opacity-100 hover:underline"
-              >
+        <div className="mx-auto flex max-w-7xl flex-col items-start gap-3 px-4 py-3 text-xs sm:px-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col items-start gap-1.5">
+            <p className="text-primary-foreground/80">
+              © {new Date().getFullYear()} {site.footer_note || t("footer.rights")}
+            </p>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <Link to="/privacy" className={LEGAL_LINK}>
                 {t("footer.privacy")}
               </Link>
-              <Link
-                to="/terms"
-                className="opacity-70 underline-offset-2 hover:opacity-100 hover:underline"
-              >
+              <span aria-hidden="true" className="text-primary-foreground/40">
+                |
+              </span>
+              <Link to="/terms" className={LEGAL_LINK}>
                 {t("footer.terms")}
               </Link>
             </p>
           </div>
           <Link
             to="/login"
-            className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-4 py-1.5 font-medium opacity-85 transition hover:bg-primary-foreground/15 hover:opacity-100"
+            className="inline-flex min-h-10 shrink-0 items-center gap-2 self-start rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-5 py-2 font-medium text-primary-foreground transition-colors hover:border-gold/60 hover:bg-gold hover:text-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-deep md:self-auto"
           >
             <Lock className="h-3 w-3" />
             {t("footer.portal")}

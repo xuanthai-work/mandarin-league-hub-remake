@@ -66,6 +66,11 @@ export const DICT = {
   "footer.training": { vi: "Đào tạo & Hoạt động", zh: "培训与活动", en: "Training & activities" },
   "footer.utilities": { vi: "Tiện ích & Xác minh", zh: "工具与验证", en: "Tools & verification" },
   "footer.hskCourses": { vi: "Khóa học HSK", zh: "HSK 课程", en: "HSK courses" },
+  "footer.teachers": {
+    vi: "Đội ngũ giảng viên",
+    zh: "师资团队",
+    en: "Teaching team",
+  },
   "footer.verifyCert": {
     vi: "Tra cứu chứng chỉ",
     zh: "证书查询",

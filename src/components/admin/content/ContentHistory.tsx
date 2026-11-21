@@ -44,7 +44,7 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 const KEY_LABEL: Record<string, string> = {
-  home: "Trang chủ",
+  home: "Trang chủ & Trang điều hướng",
   site: "Liên hệ & Chân trang",
 };
 
@@ -112,7 +112,7 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả mục</SelectItem>
-              <SelectItem value="home">Trang chủ</SelectItem>
+              <SelectItem value="home">Trang chủ & Trang điều hướng</SelectItem>
               <SelectItem value="site">Liên hệ & Chân trang</SelectItem>
             </SelectContent>
           </Select>

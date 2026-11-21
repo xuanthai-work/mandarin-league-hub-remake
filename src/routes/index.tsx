@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTr } from "@/lib/i18n";
-import { useSiteContent } from "@/lib/site-content";
+import { appendPreview, useSiteContent } from "@/lib/site-content";
 import type { Course } from "@/lib/data/types";
 import type { HskClass } from "@/lib/hsk-classes";
 import type { PublicTeacher } from "@/lib/teachers";
@@ -75,13 +75,20 @@ function Home() {
       {h.show.about && <AboutSection h={h} />}
 
       {/* Organization: the exact SVG chart + per-department drawer from /organization */}
-      <OrgChartSection id="organization" heading />
+      <OrgChartSection
+        id="organization"
+        heading
+        title={h.organization_title}
+        desc={h.organization_desc}
+        ctaLabel={h.organization_cta_label}
+        ctaHref={appendPreview(h.organization_cta_url || "/organization", preview)}
+      />
 
       {/* Courses: HSK classes with level filter, format, seats and fee (or the 1–6 roadmap) */}
       {h.show.courses && <CoursesSection h={h} onSelectCourse={setSelectedCourse} />}
 
       {/* Faculty — medium cards balance presence and page height */}
-      <TeachersSection onSelectTeacher={setSelectedTeacher} />
+      <TeachersSection h={h} onSelectTeacher={setSelectedTeacher} />
 
       {/* Activities: category chips, activity cards and the photo carousel */}
       {h.show.activities && (
@@ -93,7 +100,7 @@ function Home() {
       )}
 
       {/* Partners */}
-      <PartnersSection />
+      <PartnersSection h={h} />
 
       {/* Verification: the two large cards from /verify plus its trust strip */}
       <VerifySection h={h} onOpenVerify={setVerifyKind} />

@@ -1,39 +1,36 @@
-import { createFileRoute, Link, useBlocker } from "@tanstack/react-router";
+import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, ExternalLink, Save, Send } from "lucide-react";
+import { ExternalLink, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  type ContentKey,
-  type HomeContent,
-  type HomeSectionKey,
-  type SiteSettings,
-} from "@/lib/site-content";
+import { type ContentKey, type HomeContent, type SiteSettings } from "@/lib/site-content";
 import {
   HOME_BLOCKS,
+  HOME_SECTIONS,
+  NAV_PAGES,
   SITE_BLOCKS,
+  blocksOfSection,
   changedKeys,
   describeChanges,
   fieldError,
+  findNavPage,
   toHomeForm,
   toSiteForm,
   type ContentBlock,
-  type HomeTextKey,
-  type SiteKey,
 } from "@/lib/site-content-fields";
 import { useConfirm } from "@/components/admin/Trash";
 import { can } from "@/lib/permission-catalog";
 import { useAdminAccess } from "./admin";
-import { trPhrase, type Lang } from "@/lib/i18n";
+import type { Lang } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ContentOutline } from "@/components/admin/content/ContentOutline";
-import { ContentFieldInput } from "@/components/admin/content/ContentFieldInput";
+import { SectionOutline, type ContentSelection } from "@/components/admin/content/SectionOutline";
+import { ContentBlockCard } from "@/components/admin/content/ContentBlockCard";
+import { NavPageEditor } from "@/components/admin/content/NavPageEditor";
 import { PublishDialog } from "@/components/admin/content/PublishDialog";
 import { ContentHistory } from "@/components/admin/content/ContentHistory";
 import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
-
 export const Route = createFileRoute("/_authenticated/admin/content")({
   staticData: { sitemap: false },
   head: () => ({
@@ -56,13 +53,32 @@ const LANG_OPTIONS: { value: Lang; label: string }[] = [
   { value: "zh", label: "中文 (ZH)" },
 ];
 
-/** Text fields are stored per language; link/social/email fields are shared. */
+type Tab = "home" | "site" | "log";
+
+/** Text fields are stored per language; link fields and section toggles are shared. */
 function valueKeys(kind: string, key: string): string[] {
   return kind === "text" || kind === "area" ? [key, `${key}_en`, `${key}_zh`] : [key];
 }
 
+function isDirtyBlock(
+  block: ContentBlock<string>,
+  form: Record<string, unknown>,
+  saved: Record<string, unknown>,
+): boolean {
+  const showForm = (form["show"] ?? {}) as Record<string, boolean>;
+  const showSaved = (saved["show"] ?? {}) as Record<string, boolean>;
+  if (block.toggle && showForm[block.toggle] !== showSaved[block.toggle]) return true;
+  return block.fields.some((field) =>
+    valueKeys(field.kind, field.key).some(
+      (key) =>
+        ((form[key] as string | undefined) ?? "").trim() !==
+        ((saved[key] as string | undefined) ?? "").trim(),
+    ),
+  );
+}
+
 function ContentAdmin() {
-  const [tab, setTab] = useState<"home" | "site" | "log">("home");
+  const [tab, setTab] = useState<Tab>("home");
   const [editLang, setEditLang] = useState<Lang>("vi");
   const qc = useQueryClient();
   const { confirm, dialog } = useConfirm();
@@ -72,8 +88,10 @@ function ContentAdmin() {
   const homeRow = useRow("home");
   const siteRow = useRow("site");
 
-  const [activeHomeId, setActiveHomeId] = useState(HOME_BLOCKS[0]?.id ?? "hero");
-  const [activeSiteId, setActiveSiteId] = useState(SITE_BLOCKS[0]?.id ?? "contact");
+  const [selection, setSelection] = useState<ContentSelection>(() => ({
+    kind: "section",
+    id: HOME_SECTIONS[0]?.id ?? "hero",
+  }));
 
   const [homeForm, setHomeForm] = useState<HomeContent>(() => toHomeForm({}));
   const [siteForm, setSiteForm] = useState<SiteSettings>(() => toSiteForm({}));
@@ -120,43 +138,49 @@ function ContentAdmin() {
   const unsavedSite = useMemo(() => changedKeys(siteForm, siteSaved).length, [siteForm, siteSaved]);
   const unsavedTotal = unsavedHome + unsavedSite;
 
-  const homeDirtyIds = useMemo(() => {
+  const homeDirtyBlocks = useMemo(() => {
     const ids = new Set<string>();
-    const form = homeForm as unknown as Record<string, string | undefined>;
-    const saved = homeSaved as unknown as Record<string, string | undefined>;
-    for (const b of HOME_BLOCKS) {
-      if (b.toggle && homeForm.show[b.toggle] !== homeSaved.show[b.toggle]) {
-        ids.add(b.id);
+    for (const block of HOME_BLOCKS) {
+      if (isDirtyBlock(block, homeForm, homeSaved)) ids.add(block.id);
+    }
+    return ids;
+  }, [homeForm, homeSaved]);
+
+  const homeDirtySections = useMemo(() => {
+    const ids = new Set<string>();
+    for (const section of HOME_SECTIONS) {
+      if (section.toggle && homeForm.show[section.toggle] !== homeSaved.show[section.toggle]) {
+        ids.add(section.id);
       }
-      for (const f of b.fields) {
-        for (const key of valueKeys(f.kind, f.key)) {
-          if ((form[key] ?? "").trim() !== (saved[key] ?? "").trim()) ids.add(b.id);
-        }
+      if (blocksOfSection(section.id).some((block) => homeDirtyBlocks.has(block.id))) {
+        ids.add(section.id);
       }
+    }
+    return ids;
+  }, [homeForm.show, homeSaved.show, homeDirtyBlocks]);
+
+  const navDirtyPages = useMemo(() => {
+    const ids = new Set<string>();
+    for (const page of NAV_PAGES) {
+      if (isDirtyBlock(page, homeForm, homeSaved)) ids.add(page.id);
     }
     return ids;
   }, [homeForm, homeSaved]);
 
   const siteDirtyIds = useMemo(() => {
     const ids = new Set<string>();
-    const form = siteForm as unknown as Record<string, string | undefined>;
-    const saved = siteSaved as unknown as Record<string, string | undefined>;
-    for (const b of SITE_BLOCKS) {
-      for (const f of b.fields) {
-        for (const key of valueKeys(f.kind, f.key)) {
-          if ((form[key] ?? "").trim() !== (saved[key] ?? "").trim()) ids.add(b.id);
-        }
-      }
+    for (const block of SITE_BLOCKS) {
+      if (isDirtyBlock(block, siteForm, siteSaved)) ids.add(block.id);
     }
     return ids;
   }, [siteForm, siteSaved]);
 
   const homeErrors = useMemo(() => {
     const errs: Record<string, string> = {};
-    for (const b of HOME_BLOCKS) {
-      for (const f of b.fields) {
-        const err = fieldError(f.kind, homeForm[f.key] ?? "");
-        if (err) errs[f.key] = err;
+    for (const block of [...HOME_BLOCKS, ...NAV_PAGES]) {
+      for (const field of block.fields) {
+        const err = fieldError(field.kind, homeForm[field.key] ?? "");
+        if (err) errs[field.key] = err;
       }
     }
     return errs;
@@ -164,10 +188,10 @@ function ContentAdmin() {
 
   const siteErrors = useMemo(() => {
     const errs: Record<string, string> = {};
-    for (const b of SITE_BLOCKS) {
-      for (const f of b.fields) {
-        const err = fieldError(f.kind, siteForm[f.key] ?? "");
-        if (err) errs[f.key] = err;
+    for (const block of SITE_BLOCKS) {
+      for (const field of block.fields) {
+        const err = fieldError(field.kind, siteForm[field.key] ?? "");
+        if (err) errs[field.key] = err;
       }
     }
     return errs;
@@ -233,9 +257,11 @@ function ContentAdmin() {
     return true;
   };
 
+  const currentKey: "home" | "site" = tab === "site" ? "site" : "home";
+
   const handlePreview = async () => {
-    const currentErrors = tab === "home" ? homeErrors : siteErrors;
-    const currentUnsaved = tab === "home" ? unsavedHome : unsavedSite;
+    const currentErrors = currentKey === "home" ? homeErrors : siteErrors;
+    const currentUnsaved = currentKey === "home" ? unsavedHome : unsavedSite;
 
     const w = window.open("about:blank", "_blank");
 
@@ -246,7 +272,7 @@ function ContentAdmin() {
     }
 
     if (currentUnsaved > 0) {
-      const success = await persist(tab as "home" | "site", false);
+      const success = await persist(currentKey, false);
       if (!success) {
         w?.close();
         return;
@@ -273,13 +299,13 @@ function ContentAdmin() {
     }
     if (key === "home") setHomeForm(toHomeForm(data));
     else setSiteForm(toSiteForm(data));
-    setTab(key);
+    setTab(key === "home" ? "home" : "site");
     toast.success("Đã nạp bản cũ vào trình sửa. Kiểm tra rồi bấm Lưu nháp hoặc Xuất bản.");
   };
 
-  const currentRow = tab === "home" ? homeRow : siteRow;
-  const currentErrors = tab === "home" ? homeErrors : siteErrors;
-  const currentUnsaved = tab === "home" ? unsavedHome : unsavedSite;
+  const currentRow = currentKey === "home" ? homeRow : siteRow;
+  const currentErrors = currentKey === "home" ? homeErrors : siteErrors;
+  const currentUnsaved = currentKey === "home" ? unsavedHome : unsavedSite;
   const draftMatchesPublished =
     changedKeys(
       (currentRow.data?.draft as Record<string, unknown>) ?? {},
@@ -292,10 +318,32 @@ function ContentAdmin() {
 
   const publishChanges = useMemo(() => {
     if (tab === "log") return [];
-    const currentPublished = currentRow.data?.published;
-    const currentForm = tab === "home" ? homeForm : siteForm;
-    return describeChanges(tab, currentPublished, currentForm);
-  }, [tab, currentRow.data?.published, homeForm, siteForm]);
+    if (currentKey === "site") {
+      return describeChanges("site", currentRow.data?.published, siteForm);
+    }
+    return describeChanges("home", currentRow.data?.published, homeForm);
+  }, [tab, currentKey, currentRow.data?.published, homeForm, siteForm]);
+
+  const updateHomeField = (key: string, value: string) =>
+    setHomeForm((prev) => ({ ...prev, [key]: value }) as HomeContent);
+  const updateSiteField = (key: string, value: string) =>
+    setSiteForm((prev) => ({ ...prev, [key]: value }) as SiteSettings);
+  const toggleHomeSection = (key: keyof HomeContent["show"], value: boolean) =>
+    setHomeForm((prev) => ({ ...prev, show: { ...prev.show, [key]: value } }));
+
+  const openNavPage = (pageId: string) => {
+    setSelection({ kind: "page", id: pageId });
+    window.scrollTo({ top: 0 });
+  };
+
+  const selectedPage = selection.kind === "page" ? findNavPage(selection.id) : undefined;
+  const activeSection =
+    HOME_SECTIONS.find(
+      (section) =>
+        section.id === (selection.kind === "section" ? selection.id : selectedPage?.sectionId),
+    ) ?? HOME_SECTIONS[0]!;
+  const sectionBlocks = blocksOfSection(activeSection.id);
+  const isSectionOff = activeSection.toggle ? homeForm.show[activeSection.toggle] === false : false;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
@@ -307,7 +355,7 @@ function ContentAdmin() {
         busy={busy}
         onCancel={() => setPublishOpen(false)}
         onConfirm={async () => {
-          const ok = await persist(tab as "home" | "site", true);
+          const ok = await persist(currentKey, true);
           if (ok) setPublishOpen(false);
         }}
       />
@@ -318,7 +366,7 @@ function ContentAdmin() {
           <SegmentedControl
             label="Mục nội dung"
             value={tab}
-            onChange={setTab}
+            onChange={(value) => setTab(value as Tab)}
             options={(
               [
                 ["home", "Trang chủ", unsavedHome > 0],
@@ -379,10 +427,10 @@ function ContentAdmin() {
                     : "· Chưa xuất bản lần nào"}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Mỗi ngôn ngữ có bản tùy chỉnh riêng; ô để trống sẽ dùng bản dịch mặc định của ngôn
-                ngữ đó. Liên kết, mạng xã hội và bật/tắt hiển thị dùng chung cho cả 3 ngôn ngữ. Lưu
-                nháp chỉ người quản trị xem được khi xem trước; Xuất bản mới hiện cho khách.
+              <p className="max-w-3xl text-xs text-muted-foreground">
+                Mỗi ngôn ngữ có bản tùy chỉnh riêng; ô để trống sẽ dùng bản dịch mặc định. Chữ trên
+                nút đổi theo ngôn ngữ, còn liên kết và bật/tắt hiển thị dùng chung. Nội dung Section
+                và trang điều hướng được lưu cùng bản nháp nhưng sửa độc lập.
               </p>
             </div>
 
@@ -400,7 +448,7 @@ function ContentAdmin() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => persist(tab as "home" | "site", false)}
+                onClick={() => persist(currentKey, false)}
                 disabled={!canSaveDraft}
               >
                 <Save className="h-4 w-4" /> Lưu nháp
@@ -423,205 +471,120 @@ function ContentAdmin() {
         )}
       </div>
 
-      {/* Tab Panels */}
+      {/* Trang chủ: cây Section → Navigation Page; bên phải là panel của mục đang chọn */}
       {tab === "home" &&
         (homeRow.isLoading ? (
           <p className="text-sm text-muted-foreground">Đang tải…</p>
         ) : (
-          <BlockEditor<HomeTextKey>
-            blocks={HOME_BLOCKS}
-            activeId={activeHomeId}
-            onSelectId={setActiveHomeId}
-            title="Cấu trúc Trang chủ"
-            lang={editLang}
-            form={homeForm}
-            saved={homeSaved}
-            onFieldChange={(k, v) => setHomeForm((prev) => ({ ...prev, [k]: v }) as HomeContent)}
-            show={homeForm.show}
-            onToggle={(k, v) =>
-              setHomeForm((prev) => ({
-                ...prev,
-                show: { ...prev.show, [k]: v },
-              }))
-            }
-            dirtyIds={homeDirtyIds}
-            errors={homeErrors}
-          />
+          <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
+            <div className="self-start lg:sticky lg:top-4 lg:w-72">
+              <SectionOutline
+                sections={HOME_SECTIONS}
+                navPages={NAV_PAGES}
+                selection={selection}
+                onSelectSection={(id) => setSelection({ kind: "section", id })}
+                onSelectPage={openNavPage}
+                show={homeForm.show}
+                onToggle={toggleHomeSection}
+                dirtySectionIds={homeDirtySections}
+                dirtyPageIds={navDirtyPages}
+              />
+            </div>
+
+            {selection.kind === "page" && selectedPage ? (
+              <NavPageEditor
+                page={selectedPage}
+                section={HOME_SECTIONS.find((section) => section.id === selectedPage.sectionId)}
+                lang={editLang}
+                form={homeForm as unknown as Record<string, unknown>}
+                saved={homeSaved as unknown as Record<string, unknown>}
+                onFieldChange={updateHomeField}
+                errors={homeErrors}
+                onBackToSection={() =>
+                  setSelection({ kind: "section", id: selectedPage.sectionId })
+                }
+              />
+            ) : (
+              <div className="min-w-0 space-y-4">
+                <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
+                  <div className="min-w-0">
+                    <h1 className="text-lg font-bold text-primary-deep">{activeSection.label}</h1>
+                    <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+                      {activeSection.summary}
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {sectionBlocks.length} khối nội dung
+                    </p>
+                  </div>
+                  {activeSection.toggle && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">Hiện trên trang chủ</span>
+                      <Switch
+                        checked={homeForm.show[activeSection.toggle] ?? true}
+                        onCheckedChange={(value) => toggleHomeSection(activeSection.toggle!, value)}
+                        aria-label={`Hiện mục ${activeSection.label}`}
+                      />
+                    </div>
+                  )}
+                </header>
+
+                {isSectionOff && (
+                  <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    Mục này đang ẩn trên trang chủ. Nội dung bên dưới vẫn được lưu cho lần bật lại.
+                  </div>
+                )}
+
+                {sectionBlocks.map((block, index) => (
+                  <ContentBlockCard
+                    key={block.id}
+                    block={block}
+                    index={index + 1}
+                    lang={editLang}
+                    form={homeForm as unknown as Record<string, unknown>}
+                    saved={homeSaved as unknown as Record<string, unknown>}
+                    onFieldChange={updateHomeField}
+                    errors={homeErrors}
+                    dirty={homeDirtyBlocks.has(block.id)}
+                    show={homeForm.show}
+                    onToggle={toggleHomeSection}
+                    onOpenNavPage={openNavPage}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         ))}
 
+      {/* Liên hệ & Chân trang */}
       {tab === "site" &&
         (siteRow.isLoading ? (
           <p className="text-sm text-muted-foreground">Đang tải…</p>
         ) : (
-          <BlockEditor<SiteKey>
-            blocks={SITE_BLOCKS}
-            activeId={activeSiteId}
-            onSelectId={setActiveSiteId}
-            title="Liên hệ & Chân trang"
-            lang={editLang}
-            form={siteForm}
-            saved={siteSaved}
-            onFieldChange={(k, v) => setSiteForm((prev) => ({ ...prev, [k]: v }) as SiteSettings)}
-            dirtyIds={siteDirtyIds}
-            errors={siteErrors}
-          />
+          <div className="min-w-0 space-y-4">
+            <header className="border-b border-border pb-3">
+              <h1 className="text-lg font-bold text-primary-deep">Liên hệ & Chân trang</h1>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+                Thông tin liên hệ và nội dung chân trang dùng chung trên toàn website.
+              </p>
+            </header>
+
+            {SITE_BLOCKS.map((block, index) => (
+              <ContentBlockCard
+                key={block.id}
+                block={block as unknown as ContentBlock<string>}
+                index={index + 1}
+                lang={editLang}
+                form={siteForm as unknown as Record<string, unknown>}
+                saved={siteSaved as unknown as Record<string, unknown>}
+                onFieldChange={updateSiteField}
+                errors={siteErrors}
+                dirty={siteDirtyIds.has(block.id)}
+              />
+            ))}
+          </div>
         ))}
 
       {tab === "log" && <ContentHistory onRestore={handleRestore} />}
-    </div>
-  );
-}
-
-function BlockEditor<K extends string>({
-  blocks,
-  activeId,
-  onSelectId,
-  title,
-  lang,
-  form,
-  saved,
-  onFieldChange,
-  show,
-  onToggle,
-  dirtyIds,
-  errors,
-}: {
-  blocks: ContentBlock<K>[];
-  activeId: string;
-  onSelectId: (id: string) => void;
-  title: string;
-  lang: Lang;
-  form: Record<string, unknown>;
-  saved: Record<string, unknown>;
-  onFieldChange: (key: string, v: string) => void;
-  show?: Record<HomeSectionKey, boolean>;
-  onToggle?: (k: HomeSectionKey, v: boolean) => void;
-  dirtyIds: Set<string>;
-  errors: Record<string, string>;
-}) {
-  const activeBlock = blocks.find((b) => b.id === activeId) ?? blocks[0]!;
-  const isOff = activeBlock.toggle && show ? show[activeBlock.toggle] === false : false;
-  const textFields = activeBlock.fields.filter((f) => f.kind === "text" || f.kind === "area");
-  const sharedFields = activeBlock.fields.filter((f) => f.kind !== "text" && f.kind !== "area");
-  const suffix = lang === "vi" ? "" : `_${lang}`;
-  const valueKey = (key: K) => `${key}${suffix}`;
-  const customizedCount = textFields.filter(
-    (f) => ((form[valueKey(f.key)] as string | undefined) ?? "").trim().length > 0,
-  ).length;
-
-  return (
-    <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
-      <div className="lg:w-72 lg:sticky lg:top-4 self-start">
-        <ContentOutline
-          blocks={blocks}
-          activeId={activeBlock.id}
-          onSelect={onSelectId}
-          show={show}
-          onToggle={onToggle}
-          dirtyIds={dirtyIds}
-          title={title}
-        />
-      </div>
-
-      <div className="flex-1 space-y-4 min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border">
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-base font-bold text-primary-deep">{activeBlock.label}</h2>
-            {textFields.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {customizedCount}/{textFields.length} ô đã tùy chỉnh
-              </span>
-            )}
-          </div>
-
-          {activeBlock.toggle && show && onToggle && (
-            <div className="flex lg:hidden items-center gap-2 text-xs">
-              <span className="text-muted-foreground">Hiện trên trang chủ</span>
-              <Switch
-                checked={show[activeBlock.toggle] ?? true}
-                onCheckedChange={(v) => onToggle(activeBlock.toggle!, v)}
-                aria-label={`Hiện khối ${activeBlock.label}`}
-              />
-            </div>
-          )}
-        </div>
-
-        {isOff && (
-          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            Khối này đang ẩn trên trang chủ.
-          </div>
-        )}
-
-        {activeBlock.fields.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-6 text-center space-y-4">
-            {activeBlock.note && (
-              <p className="text-sm text-muted-foreground">{activeBlock.note}</p>
-            )}
-            {activeBlock.manage && (
-              <div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={activeBlock.manage.to}>
-                    Mở trang {activeBlock.manage.label}
-                    <ArrowUpRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {textFields.length > 0 && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {textFields.map((f) => {
-                  const key = valueKey(f.key);
-                  const fallback = lang === "vi" ? f.fallback : trPhrase(lang, f.fallback);
-                  return (
-                    <div key={key} className={f.kind === "area" ? "sm:col-span-2" : undefined}>
-                      <ContentFieldInput
-                        field={{ ...f, fallback }}
-                        value={(form[key] as string | undefined) ?? ""}
-                        onChange={(v) => onFieldChange(key, v)}
-                        changed={
-                          ((form[key] as string | undefined) ?? "").trim() !==
-                          ((saved[key] as string | undefined) ?? "").trim()
-                        }
-                        error={null}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {sharedFields.length > 0 && (
-              <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-semibold">Liên kết & cài đặt chung</h3>
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Dùng chung cho cả 3 ngôn ngữ
-                  </span>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {sharedFields.map((f) => (
-                    <div key={f.key} className={f.kind === "area" ? "sm:col-span-2" : undefined}>
-                      <ContentFieldInput
-                        field={f}
-                        value={(form[f.key] as string | undefined) ?? ""}
-                        onChange={(v) => onFieldChange(f.key, v)}
-                        changed={
-                          ((form[f.key] as string | undefined) ?? "").trim() !==
-                          ((saved[f.key] as string | undefined) ?? "").trim()
-                        }
-                        error={errors[f.key] ?? null}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
