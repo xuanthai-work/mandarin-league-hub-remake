@@ -4,6 +4,7 @@ import {
   AUTO_MIN_MINUTES,
   classifyConference,
   formatAutoReason,
+  isSettledRun,
   MEET_POINTS,
   pickScorable,
   scoringKindFor,
@@ -19,6 +20,44 @@ describe("scoringKindFor", () => {
   it("maps work to work, club to club", () => {
     expect(scoringKindFor("work")).toBe("work");
     expect(scoringKindFor("club")).toBe("club");
+  });
+});
+
+describe("isSettledRun", () => {
+  it("always returns true for scored and too_short, even when force = true", () => {
+    expect(isSettledRun("scored")).toBe(true);
+    expect(isSettledRun("scored", false)).toBe(true);
+    expect(isSettledRun("scored", true)).toBe(true);
+
+    expect(isSettledRun("too_short")).toBe(true);
+    expect(isSettledRun("too_short", false)).toBe(true);
+    expect(isSettledRun("too_short", true)).toBe(true);
+  });
+
+  it("returns true for no_members and unknown_room when force is falsy, false when force is true", () => {
+    expect(isSettledRun("no_members")).toBe(true);
+    expect(isSettledRun("no_members", false)).toBe(true);
+    expect(isSettledRun("no_members", true)).toBe(false);
+
+    expect(isSettledRun("unknown_room")).toBe(true);
+    expect(isSettledRun("unknown_room", false)).toBe(true);
+    expect(isSettledRun("unknown_room", true)).toBe(false);
+  });
+
+  it("returns false for error, running, empty string, or unknown statuses", () => {
+    expect(isSettledRun("error")).toBe(false);
+    expect(isSettledRun("error", false)).toBe(false);
+    expect(isSettledRun("error", true)).toBe(false);
+
+    expect(isSettledRun("running")).toBe(false);
+    expect(isSettledRun("running", false)).toBe(false);
+    expect(isSettledRun("running", true)).toBe(false);
+
+    expect(isSettledRun("")).toBe(false);
+    expect(isSettledRun("", true)).toBe(false);
+
+    expect(isSettledRun("something_else")).toBe(false);
+    expect(isSettledRun("something_else", true)).toBe(false);
   });
 });
 

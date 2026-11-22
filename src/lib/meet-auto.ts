@@ -13,6 +13,13 @@ export function scoringKindFor(kind: RoomKind): "work" | "club" {
   return kind;
 }
 
+/** Dòng nhật ký có trạng thái này thì lần quét sau không xử lý lại (trừ khi force). */
+export function isSettledRun(status: string, force = false): boolean {
+  if (status === "scored" || status === "too_short") return true;
+  if (force) return false;
+  return status === "no_members" || status === "unknown_room";
+}
+
 /** Tách người được tính điểm và người ngoài Ban. Phòng 'work' chỉ tính thành viên có department === roomDepartment; 'club' tính tất cả. */
 export function pickScorable<T extends { department: string }>(
   kind: RoomKind,

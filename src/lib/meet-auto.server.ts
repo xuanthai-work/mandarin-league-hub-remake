@@ -12,6 +12,7 @@ import {
   AUTO_MIN_MINUTES,
   classifyConference,
   formatAutoReason,
+  isSettledRun,
   pickScorable,
   scoringKindFor,
   type AutoStatus,
@@ -136,12 +137,39 @@ export async function processConference(
             detail: "Tiến trình khác đã chiếm lượt xử lý.",
           };
         }
-      } else if (existing.status === "error" || existing.status === "unknown_room") {
+      } else if (existing.status === "unknown_room") {
+        if (!opts.force) {
+          return {
+            conferenceRecord,
+            status: "skipped",
+            detail: "Buổi họp thuộc phòng không có trong danh sách (dùng Chấm lại để thử lại).",
+          };
+        }
+
         const { data: updated, error: updateError } = await supabaseAdmin
           .from("meet_auto_runs")
           .update({
             status: "running",
-            detail: "Thử lại buổi họp bị lỗi hoặc chưa rõ phòng trước đó",
+            detail: "Thử lại buổi họp chưa rõ phòng (force)",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("conference_record", conferenceRecord)
+          .eq("status", existing.status)
+          .select();
+
+        if (updateError || !updated || updated.length === 0) {
+          return {
+            conferenceRecord,
+            status: "skipped",
+            detail: "Tiến trình khác đã chiếm lượt xử lý.",
+          };
+        }
+      } else if (existing.status === "error") {
+        const { data: updated, error: updateError } = await supabaseAdmin
+          .from("meet_auto_runs")
+          .update({
+            status: "running",
+            detail: "Thử lại buổi họp bị lỗi trước đó",
             updated_at: new Date().toISOString(),
           })
           .eq("conference_record", conferenceRecord)
@@ -576,9 +604,7 @@ export async function scanBotConferences(
 
   const skipSet = new Set<string>();
   for (const row of existingRuns ?? []) {
-    if (row.status === "scored" || row.status === "too_short") {
-      skipSet.add(row.conference_record);
-    } else if (row.status === "no_members" && !opts.force) {
+    if (isSettledRun(row.status, opts.force)) {
       skipSet.add(row.conference_record);
     }
   }
