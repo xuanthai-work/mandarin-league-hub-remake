@@ -50,10 +50,10 @@ async function setAdminFlag(db: SupabaseClient, userId: string, on: boolean) {
 }
 
 async function adminCount(db: SupabaseClient) {
-  const { count } = await db
-    .from("user_roles")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "admin");
+  const scorer = process.env["MEET_SCORER_USER_ID"]?.trim();
+  let q = db.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");
+  if (scorer) q = q.neq("user_id", scorer);
+  const { count } = await q;
   return count ?? 0;
 }
 

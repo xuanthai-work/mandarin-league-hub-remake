@@ -62,6 +62,13 @@ export const INTEGRATIONS: Integration[] = [
     required: ["GOOGLE_OAUTH_CLIENT_ID"],
     optional: [],
   },
+  {
+    id: "meet_auto_attendance",
+    label: "Điểm danh họp tự động",
+    affects: "Quét và tự động cộng điểm các buổi họp Google Meet của các phòng chính thức.",
+    required: ["GOOGLE_OAUTH_CLIENT_SECRET", "MEET_BOT_REFRESH_TOKEN", "MEET_SCORER_USER_ID"],
+    optional: [],
+  },
 ];
 
 const isSet = (env: Record<string, string | undefined>, key: string) =>

@@ -8,20 +8,15 @@ import {
   MEET_POINTS,
   isScorableMeeting,
   meetingMinutes,
-  parseParticipant,
   splitParticipants,
-  type LinkedMember,
   type MeetKind,
   type MeetMember,
-  type MeetParticipantRaw,
-  type ParsedParticipant,
   type UnlinkedParticipant,
 } from "./meet-attendance";
+import type { ConferenceRecordRaw } from "./meet-api.server";
 
 const accessToken = z.string().min(20).max(4096);
 const conferenceRecord = z.string().regex(CONFERENCE_RECORD_RE);
-
-type ConferenceRecordRaw = { name: string; startTime?: string; endTime?: string; space?: string };
 
 type RecordedSession = {
   meeting_kind: string;
@@ -53,26 +48,6 @@ export type MeetPreview = {
   candidates: MeetMember[];
 };
 
-async function meetGet<T>(token: string, path: string): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`https://meet.googleapis.com/v2/${path}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  } catch {
-    throw new Error("Không kết nối được Google Meet, vui lòng thử lại.");
-  }
-  if (res.status === 401) throw new Error("Phiên Google đã hết hạn, vui lòng kết nối lại.");
-  if (res.status === 403)
-    throw new Error(
-      "Tài khoản Google này không đọc được buổi họp đó (cần là chủ phòng hoặc người dự).",
-    );
-  if (res.status === 404)
-    throw new Error("Không tìm thấy buổi họp trên Google Meet (có thể đã quá 30 ngày).");
-  if (!res.ok) throw new Error("Google Meet đang lỗi, vui lòng thử lại sau.");
-  return (await res.json()) as T;
-}
-
 /** 'own' or 'all' for points.attendance, or throws. */
 async function attendanceScope(supabase: SupabaseClient<Database>): Promise<"own" | "all"> {
   const { data, error } = await supabase.rpc("perm_scope", { _action: "points.attendance" });
@@ -81,65 +56,15 @@ async function attendanceScope(supabase: SupabaseClient<Database>): Promise<"own
   return data;
 }
 
-/** Every participant of a conference record (paged, at most 10 pages of 250). */
-async function fetchParticipants(token: string, record: string): Promise<ParsedParticipant[]> {
-  const out: ParsedParticipant[] = [];
-  let pageToken = "";
-  for (let page = 0; page < 10; page += 1) {
-    const qs = new URLSearchParams({ pageSize: "250" });
-    if (pageToken) qs.set("pageToken", pageToken);
-    const data = await meetGet<{ participants?: MeetParticipantRaw[]; nextPageToken?: string }>(
-      token,
-      `${record}/participants?${qs.toString()}`,
-    );
-    for (const raw of data.participants ?? []) {
-      const parsed = parseParticipant(raw);
-      if (parsed) out.push(parsed);
-    }
-    if (!data.nextPageToken) break;
-    pageToken = data.nextPageToken;
-  }
-  return out;
-}
-
-/** Linked members for the given Google ids (admin client: the table has no client policies). */
-async function linkedMembers(subs: string[]): Promise<LinkedMember[]> {
-  if (subs.length === 0) return [];
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("member_google_accounts")
-    .select(
-      "google_sub, members!inner(id, full_name, member_code, department, position, status, is_leader, avatar_path)",
-    )
-    .in("google_sub", subs);
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []) as unknown as {
-    google_sub: string;
-    members: Omit<LinkedMember, "google_sub">;
-  }[];
-  return rows.map((row) => ({ google_sub: row.google_sub, ...row.members }));
-}
-
 /** Conference records of the last 30 days for this Google account (API paging, max 3 pages). */
 async function fetchConferenceRecords(token: string): Promise<ConferenceRecordRaw[]> {
-  const out: ConferenceRecordRaw[] = [];
-  let pageToken = "";
-  for (let page = 0; page < 3; page += 1) {
-    const qs = new URLSearchParams({ pageSize: "100" });
-    if (pageToken) qs.set("pageToken", pageToken);
-    const data = await meetGet<{
-      conferenceRecords?: ConferenceRecordRaw[];
-      nextPageToken?: string;
-    }>(token, `conferenceRecords?${qs.toString()}`);
-    out.push(...(data.conferenceRecords ?? []));
-    if (!data.nextPageToken) break;
-    pageToken = data.nextPageToken;
-  }
-  return out;
+  const { fetchConferenceRecords: fetchRecords } = await import("./meet-api.server");
+  return fetchRecords(token);
 }
 
 /** Read the record's times and participants, then split them against the linked members. */
 async function readMeeting(token: string, record: string) {
+  const { meetGet, fetchParticipants, linkedMembers } = await import("./meet-api.server");
   const raw = await meetGet<ConferenceRecordRaw>(token, record);
   const start = raw.startTime ?? null;
   const end = raw.endTime ?? null;

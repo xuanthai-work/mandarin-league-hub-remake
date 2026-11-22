@@ -1526,6 +1526,99 @@ export type Database = {
           },
         ];
       };
+      meet_auto_runs: {
+        Row: {
+          attendance_session_id: string | null;
+          conference_record: string;
+          created_at: string;
+          detail: string;
+          meeting_end: string | null;
+          meeting_start: string | null;
+          present_count: number | null;
+          room_id: string | null;
+          space_name: string | null;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          attendance_session_id?: string | null;
+          conference_record: string;
+          created_at?: string;
+          detail?: string;
+          meeting_end?: string | null;
+          meeting_start?: string | null;
+          present_count?: number | null;
+          room_id?: string | null;
+          space_name?: string | null;
+          status: string;
+          updated_at?: string;
+        };
+        Update: {
+          attendance_session_id?: string | null;
+          conference_record?: string;
+          created_at?: string;
+          detail?: string;
+          meeting_end?: string | null;
+          meeting_start?: string | null;
+          present_count?: number | null;
+          room_id?: string | null;
+          space_name?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "meet_auto_runs_attendance_session_id_fkey";
+            columns: ["attendance_session_id"];
+            isOneToOne: false;
+            referencedRelation: "attendance_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "meet_auto_runs_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "meeting_rooms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      meeting_rooms: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          created_by: string | null;
+          department: string | null;
+          id: string;
+          kind: string;
+          label: string;
+          meeting_uri: string;
+          space_name: string;
+        };
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+          department?: string | null;
+          id?: string;
+          kind: string;
+          label: string;
+          meeting_uri: string;
+          space_name: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+          department?: string | null;
+          id?: string;
+          kind?: string;
+          label?: string;
+          meeting_uri?: string;
+          space_name?: string;
+        };
+        Relationships: [];
+      };
       news_articles: {
         Row: {
           author_id: string | null;

@@ -303,6 +303,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-216-CTA-LINK-SPA-AND-SAFE-HREF`                               | Link CTA đi qua router (không tải lại trang) và lọc href an toàn cho nội dung CMS                      | 2026-11-22     | **PASS** | [task-ge-216-cta-link-spa-and-safe-href.md](tasks/task-ge-216-cta-link-spa-and-safe-href.md)                                                             |
 | `TASK-GE-217-RENAME-NHAN-XET-TO-FEEDBACK`                              | Đổi tên màn "Nhận xét" thành "Feedback" ở menu, tab, phân quyền và thông báo                           | 2026-11-22     | **PASS** | [task-ge-217-rename-nhan-xet-to-feedback.md](tasks/task-ge-217-rename-nhan-xet-to-feedback.md)                                                           |
 | `TASK-GE-218-MEET-ATTENDANCE-OWN-SCREEN`                               | Tách điểm danh Google Meet thành màn "Điểm danh họp" riêng, nhớ token đến khi hết hạn                  | 2026-11-22     | **PASS** | [task-ge-218-meet-attendance-own-screen.md](tasks/task-ge-218-meet-attendance-own-screen.md)                                                             |
+| `TASK-GE-219-MEET-AUTO-ATTENDANCE-CORE`                                | Lõi điểm danh Meet tự động: bot sở hữu phòng, quét buổi họp, chấm điểm một lần, dryRun                 | 2026-11-22     | **PASS** | [task-ge-219-meet-auto-attendance-core.md](tasks/task-ge-219-meet-auto-attendance-core.md)                                                               |
 
 ---
 
