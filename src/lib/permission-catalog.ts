@@ -103,7 +103,7 @@ export const PERMISSION_ACTIONS = [
   {
     code: "points.attendance",
     module: "points",
-    label: "Điểm danh từ Google Meet (Họp làm việc 2 điểm, Họp toàn thể 10 điểm)",
+    label: "Điểm danh từ Google Meet (mỗi buổi họp 5 điểm)",
     scoped: true,
   },
   {

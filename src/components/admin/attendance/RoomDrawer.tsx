@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { deleteMeetingRoom, updateMeetingRoom } from "@/lib/meet-auto.functions";
-import type { RoomKind } from "@/lib/meet-auto";
+import { MEET_POINTS, type RoomKind } from "@/lib/meet-auto";
 import { DEPARTMENT_IDS } from "@/lib/permission-catalog";
 import { deptName } from "@/lib/recruitment";
 import type { Database } from "@/integrations/supabase/types";
@@ -62,10 +62,10 @@ export function RoomDrawer({ room, onClose, onUpdated, onDeleted, scope }: RoomD
 
   const kindText =
     room.kind === "club"
-      ? "Họp toàn thể (10 điểm)"
+      ? `Họp toàn thể (${MEET_POINTS} điểm)`
       : room.kind === "shared"
-        ? "Họp chung (2 điểm)"
-        : `Họp ban (${deptName(room.department)}) (2 điểm)`;
+        ? `Họp chung (${MEET_POINTS} điểm)`
+        : `Họp ban (${deptName(room.department)}) (${MEET_POINTS} điểm)`;
 
   const handleCopy = async () => {
     try {
@@ -204,9 +204,9 @@ export function RoomDrawer({ room, onClose, onUpdated, onDeleted, scope }: RoomD
                     setErrorMsg(null);
                   }}
                   options={[
-                    { value: "work", label: "Họp ban (2đ)" },
-                    { value: "shared", label: "Họp chung (2đ)" },
-                    { value: "club", label: "Họp toàn thể (10đ)" },
+                    { value: "work", label: `Họp ban (${MEET_POINTS}đ)` },
+                    { value: "shared", label: `Họp chung (${MEET_POINTS}đ)` },
+                    { value: "club", label: `Họp toàn thể (${MEET_POINTS}đ)` },
                   ]}
                 />
               )}

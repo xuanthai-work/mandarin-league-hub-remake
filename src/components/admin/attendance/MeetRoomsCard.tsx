@@ -33,6 +33,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { getRoomsPresence } from "@/lib/meet-presence.functions";
 import { presenceLabel, sharedRoomWarning, type RoomPresence } from "@/lib/meet-presence";
 import { canManageRoom, type AttendanceScope, type RoomKind } from "@/lib/meet-room-access";
+import { MEET_POINTS } from "@/lib/meet-auto";
 import { deptName } from "@/lib/recruitment";
 import { matchesSearch } from "@/lib/search";
 import { CreateRoomModal } from "./CreateRoomModal";
@@ -215,8 +216,8 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
             {isViewOnly
               ? 'Danh sách phòng họp của Ban bạn, phòng họp chung và phòng họp toàn thể. Bấm "Vào phòng" để tham gia.'
               : scope === "own"
-                ? "Danh sách phòng Google Meet của Ban bạn và các phòng họp chung. Phòng Ban và phòng Chung cho 2 điểm/buổi."
-                : "Danh sách phòng Google Meet chính thức. Phòng Ban cho 2 điểm/buổi, phòng Chung cho 2 điểm/buổi, phòng Toàn thể cho 10 điểm/buổi."}
+                ? `Danh sách phòng Google Meet của Ban bạn và các phòng họp chung. Phòng Ban và phòng Chung cho ${MEET_POINTS} điểm/buổi.`
+                : `Danh sách phòng Google Meet chính thức. Phòng Ban, phòng Chung và phòng Toàn thể đều cho ${MEET_POINTS} điểm/buổi.`}
           </p>
         </div>
         {canCreate && (

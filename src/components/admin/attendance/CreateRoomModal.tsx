@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createMeetingRoom } from "@/lib/meet-auto.functions";
-import type { RoomKind } from "@/lib/meet-auto";
+import { MEET_POINTS, type RoomKind } from "@/lib/meet-auto";
 import { DEPARTMENT_IDS } from "@/lib/permission-catalog";
 import { deptName } from "@/lib/recruitment";
 
@@ -217,14 +217,14 @@ export function CreateRoomModal({
                           value: "work",
                           label: myDepartment
                             ? `Họp ban (${deptName(myDepartment)})`
-                            : "Họp ban (2đ)",
+                            : `Họp ban (${MEET_POINTS}đ)`,
                         },
-                        { value: "shared", label: "Họp chung (2đ)" },
+                        { value: "shared", label: `Họp chung (${MEET_POINTS}đ)` },
                       ]
                     : [
-                        { value: "work", label: "Họp ban (2đ)" },
-                        { value: "shared", label: "Họp chung (2đ)" },
-                        { value: "club", label: "Họp toàn thể (10đ)" },
+                        { value: "work", label: `Họp ban (${MEET_POINTS}đ)` },
+                        { value: "shared", label: `Họp chung (${MEET_POINTS}đ)` },
+                        { value: "club", label: `Họp toàn thể (${MEET_POINTS}đ)` },
                       ]
                 }
               />

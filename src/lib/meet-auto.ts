@@ -1,12 +1,14 @@
 import { MEET_MIN_MINUTES, meetingMinutes } from "./meet-attendance";
 
 export const AUTO_MIN_MINUTES = MEET_MIN_MINUTES;
+/** Mức điểm đóng góp nhận được cho mỗi buổi họp (5 điểm cho mọi loại phòng, khớp record_meet_attendance). */
+export const MEET_POINTS = 5;
 export type AutoStatus =
   "running" | "scored" | "too_short" | "no_members" | "unknown_room" | "error";
 
 export type RoomKind = "work" | "club" | "shared";
 
-/** Loại điểm gọi vào record_meet_attendance: 'work' (2 điểm) cho phòng Ban và phòng chung, 'club' (10 điểm) cho họp toàn thể. */
+/** Loại điểm gọi vào record_meet_attendance: 'work' cho phòng Ban và phòng chung, 'club' cho họp toàn thể. Cả hai đều cho 5 điểm nhưng phân biệt quyền chấm. */
 export function scoringKindFor(kind: RoomKind): "work" | "club" {
   return kind === "club" ? "club" : "work";
 }

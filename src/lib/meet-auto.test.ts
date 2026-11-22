@@ -4,12 +4,19 @@ import {
   AUTO_MIN_MINUTES,
   classifyConference,
   formatAutoReason,
+  MEET_POINTS,
   pickScorable,
   scoringKindFor,
 } from "./meet-auto";
 
+describe("MEET_POINTS", () => {
+  it("is 5 points flat for all meetings", () => {
+    expect(MEET_POINTS).toBe(5);
+  });
+});
+
 describe("scoringKindFor", () => {
-  it("maps work and shared to work (2 points), club to club (10 points)", () => {
+  it("maps work and shared to work, club to club", () => {
     expect(scoringKindFor("work")).toBe("work");
     expect(scoringKindFor("shared")).toBe("work");
     expect(scoringKindFor("club")).toBe("club");
