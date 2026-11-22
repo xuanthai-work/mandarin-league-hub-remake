@@ -1535,7 +1535,10 @@ export type Database = {
           meeting_end: string | null;
           meeting_start: string | null;
           present_count: number | null;
+          room_department: string | null;
           room_id: string | null;
+          room_kind: string | null;
+          room_label: string | null;
           space_name: string | null;
           status: string;
           updated_at: string;
@@ -1548,7 +1551,10 @@ export type Database = {
           meeting_end?: string | null;
           meeting_start?: string | null;
           present_count?: number | null;
+          room_department?: string | null;
           room_id?: string | null;
+          room_kind?: string | null;
+          room_label?: string | null;
           space_name?: string | null;
           status: string;
           updated_at?: string;
@@ -1561,7 +1567,10 @@ export type Database = {
           meeting_end?: string | null;
           meeting_start?: string | null;
           present_count?: number | null;
+          room_department?: string | null;
           room_id?: string | null;
+          room_kind?: string | null;
+          room_label?: string | null;
           space_name?: string | null;
           status?: string;
           updated_at?: string;

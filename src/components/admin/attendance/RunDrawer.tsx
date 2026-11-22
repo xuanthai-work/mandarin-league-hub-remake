@@ -23,6 +23,72 @@ export type MeetAutoRunRow = Database["public"]["Tables"]["meet_auto_runs"]["Row
   } | null;
 };
 
+export interface ResolvedRunRoom {
+  title: string;
+  isDeleted: boolean;
+  isUnknown: boolean;
+  meetingKindLabel: string | null;
+}
+
+/**
+ * Xác định tên phòng và loại họp cho một lượt chạy tự động:
+ * 1. Tên phòng hiện tại (meeting_rooms.label)
+ * 2. Tên đã chụp (room_label), kèm isDeleted khi room_id là null
+ * 3. Không có cả hai: "Phòng không có trong danh sách", không lấy space_name làm tên
+ */
+export function resolveRunRoom(run: MeetAutoRunRow | null | undefined): ResolvedRunRoom {
+  if (!run) {
+    return {
+      title: "",
+      isDeleted: false,
+      isUnknown: false,
+      meetingKindLabel: null,
+    };
+  }
+
+  // 1. Tên phòng hiện tại
+  if (run.meeting_rooms?.label) {
+    const kind = run.meeting_rooms.kind;
+    const dept = run.meeting_rooms.department;
+    const meetingKindLabel =
+      kind === "club" ? "Họp toàn thể" : dept ? `Họp ban · ${deptName(dept)}` : "Họp ban";
+    return {
+      title: run.meeting_rooms.label,
+      isDeleted: false,
+      isUnknown: false,
+      meetingKindLabel,
+    };
+  }
+
+  // 2. Tên đã chụp
+  if (run.room_label) {
+    const kind = run.room_kind;
+    const dept = run.room_department;
+    const meetingKindLabel =
+      kind === "club"
+        ? "Họp toàn thể"
+        : dept
+          ? `Họp ban · ${deptName(dept)}`
+          : kind === "work"
+            ? "Họp ban"
+            : null;
+    return {
+      title: run.room_label,
+      isDeleted: run.room_id === null,
+      isUnknown: false,
+      meetingKindLabel,
+    };
+  }
+
+  // 3. Nếu không có cả hai (dòng "Phòng lạ" hoặc dòng cũ mất phòng)
+  return {
+    title: "Phòng không có trong danh sách",
+    isDeleted: false,
+    isUnknown: true,
+    meetingKindLabel: null,
+  };
+}
+
 const STATUS_CONFIG: Record<
   string,
   { label: string; tone: "success" | "neutral" | "warning" | "danger" | "info" }
@@ -62,7 +128,7 @@ function formatVietnamTimeOnly(iso?: string | null): string {
 
 export interface RunDrawerProps {
   run: MeetAutoRunRow | null;
-  roomName: string;
+  roomName?: string;
   canManage: boolean;
   onClose: () => void;
   onRescored: () => void;
@@ -95,6 +161,21 @@ export function RunDrawer({ run, roomName, canManage, onClose, onRescored }: Run
   const { data: avatarMap } = useAvatarUrls(avatarPaths);
 
   if (!run) return null;
+
+  const roomInfo = resolveRunRoom(run);
+  const displayTitle = roomName || roomInfo.title;
+  const drawerTitle = roomInfo.isDeleted ? (
+    <span className="flex items-center gap-1.5 truncate">
+      <span className="truncate">{displayTitle}</span>
+      <span className="shrink-0 rounded bg-secondary px-1 text-[10px] text-muted-foreground font-normal">
+        đã xóa
+      </span>
+    </span>
+  ) : (
+    <span className={`truncate ${roomInfo.isUnknown ? "text-muted-foreground font-normal" : ""}`}>
+      {displayTitle}
+    </span>
+  );
 
   const conf = STATUS_CONFIG[run.status] ?? {
     label: run.status,
@@ -141,7 +222,7 @@ export function RunDrawer({ run, roomName, canManage, onClose, onRescored }: Run
   return (
     <AnimatePresence>
       <AdminDrawer
-        title={roomName}
+        title={drawerTitle}
         subtitle={timeSubtitle}
         leading={<History className="h-4 w-4 text-primary" />}
         onClose={onClose}
@@ -168,6 +249,13 @@ export function RunDrawer({ run, roomName, canManage, onClose, onRescored }: Run
             <StatusPill tone={conf.tone}>{conf.label}</StatusPill>
           </div>
 
+          {roomInfo.meetingKindLabel && (
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-muted-foreground">Loại họp:</span>
+              <span className="font-medium text-foreground">{roomInfo.meetingKindLabel}</span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2 text-xs">
             <span className="text-muted-foreground">Số người tham gia:</span>
             <span className="font-medium text-foreground">
@@ -187,8 +275,9 @@ export function RunDrawer({ run, roomName, canManage, onClose, onRescored }: Run
             </div>
           </div>
 
-          <div className="pt-1 text-[10px] text-muted-foreground font-mono break-all">
-            Mã cuộc họp: {run.conference_record}
+          <div className="space-y-1 pt-1 text-[10px] text-muted-foreground font-mono break-all">
+            {run.space_name && <div>Mã phòng Google: {run.space_name}</div>}
+            <div>Mã cuộc họp: {run.conference_record}</div>
           </div>
         </div>
 

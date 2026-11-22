@@ -313,6 +313,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-226-MEETINGS-VIEW-PERMISSION-FOR-MEMBERS`                     | Quyền meetings.view: mọi thành viên xem phòng họp và vào họp, chỉ đọc                                  | 2026-11-22     | **PASS** | [task-ge-226-meetings-view-permission-for-members.md](tasks/task-ge-226-meetings-view-permission-for-members.md)                                         |
 | `TASK-GE-227-MEET-POINTS-FLAT-5`                                       | Mọi buổi họp Meet cộng 5 điểm (Ban, chung, toàn thể), điểm cũ giữ nguyên                               | 2026-11-22     | **PASS** | [task-ge-227-meet-points-flat-5.md](tasks/task-ge-227-meet-points-flat-5.md)                                                                             |
 | `TASK-GE-228-MEET-DROP-SHARED-ROOMS`                                   | Bỏ loại phòng Họp chung, phòng họp chỉ còn Họp ban và Họp toàn thể                                     | 2026-11-23     | **PASS** | [task-ge-228-meet-drop-shared-rooms.md](tasks/task-ge-228-meet-drop-shared-rooms.md)                                                                     |
+| `TASK-GE-229-MEET-RUNS-KEEP-ROOM-NAME`                                 | Lịch sử điểm danh giữ tên phòng, loại họp và Ban kể cả khi phòng bị xóa                                | 2026-11-23     | **PASS** | [task-ge-229-meet-runs-keep-room-name.md](tasks/task-ge-229-meet-runs-keep-room-name.md)                                                                 |
 
 ---
 
