@@ -48,6 +48,19 @@ describe("allowedSections", () => {
     ]);
   });
 
+  it("opens attendance section from points.attendance without opening contributions", () => {
+    const allowed = allowedSections(perms({ "points.attendance": "own" }));
+    expect(allowed).toContain("attendance");
+    expect(allowed).not.toContain("contributions");
+  });
+
+  it("opens contributions from points.view or points.adjust without opening attendance", () => {
+    expect(allowedSections(perms({ "points.view": "own" }))).toContain("contributions");
+    expect(allowedSections(perms({ "points.view": "own" }))).not.toContain("attendance");
+    expect(allowedSections(perms({ "points.adjust": "own" }))).toContain("contributions");
+    expect(allowedSections(perms({ "points.adjust": "own" }))).not.toContain("attendance");
+  });
+
   it("opens academic sections for an academic head but not certificates", () => {
     const allowed = allowedSections(
       perms({

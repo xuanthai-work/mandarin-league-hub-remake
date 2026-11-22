@@ -1,6 +1,7 @@
 export type GoogleCredentialResponse = { credential: string };
 export type GoogleTokenResponse = {
   access_token?: string;
+  expires_in?: number | string;
   error?: string;
   error_description?: string;
 };
@@ -24,7 +25,13 @@ export type GoogleIdentityApi = {
         scope: string;
         callback: (r: GoogleTokenResponse) => void;
         error_callback?: (e: { type: string }) => void;
-      }) => { requestAccessToken: (o?: { prompt?: string }) => void };
+        hint?: string | undefined;
+      }) => {
+        requestAccessToken: (o?: {
+          prompt?: string | undefined;
+          hint?: string | undefined;
+        }) => void;
+      };
     };
   };
 };

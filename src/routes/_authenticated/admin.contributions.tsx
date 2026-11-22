@@ -2,14 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { ClipboardCheck, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdjustmentModal } from "@/components/admin/contributions/AdjustmentModal";
 import { ContributionsMetrics } from "@/components/admin/contributions/ContributionsMetrics";
 import { LeaderboardPanel } from "@/components/admin/contributions/LeaderboardPanel";
-import { MeetAttendanceModal } from "@/components/admin/contributions/MeetAttendanceModal";
 import { TransactionLedger } from "@/components/admin/contributions/TransactionLedger";
 import {
   monthStart,
@@ -48,10 +47,9 @@ function PointsPage() {
     }),
     [access.data?.department, access.data?.position],
   );
-  const canAttend = can(perms, "points.attendance");
   const canAdjust = can(perms, "points.adjust");
   const canViewHistory = can(perms, "points.view");
-  const canPick = canAttend || canAdjust;
+  const canPick = canAdjust;
   const manages = canViewHistory || canPick;
 
   const leaderboard = useQuery({
@@ -119,7 +117,6 @@ function PointsPage() {
       ).data ?? []) as PointStatRow[],
   });
 
-  const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [appliedFilter, setAppliedFilter] = useState<{
     filter: Partial<LedgerFilters>;
@@ -192,22 +189,9 @@ function PointsPage() {
   );
 
   const headerActions = useMemo(
-    () => (
-      <div className="flex items-center gap-2">
-        {canAttend && (
-          <Button
-            type="button"
-            size="admin"
-            variant="outline"
-            onClick={() => setAttendanceOpen(true)}
-            aria-label="Điểm danh từ Google Meet"
-            title="Điểm danh từ Google Meet"
-          >
-            <ClipboardCheck aria-hidden />
-            <span className="hidden sm:inline">Điểm danh từ Google Meet</span>
-          </Button>
-        )}
-        {canAdjust && (
+    () =>
+      canAdjust ? (
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             size="admin"
@@ -218,10 +202,9 @@ function PointsPage() {
             <Zap aria-hidden />
             <span className="hidden sm:inline">Thưởng / Trừ điểm</span>
           </Button>
-        )}
-      </div>
-    ),
-    [canAttend, canAdjust],
+        </div>
+      ) : null,
+    [canAdjust],
   );
 
   return (
@@ -230,7 +213,7 @@ function PointsPage() {
         title="Điểm đóng góp"
         description={
           manages
-            ? "Điều hành điểm cống hiến: bảng vinh danh, điểm danh từ Google Meet và sổ cái kiểm toán đầy đủ."
+            ? "Điều hành điểm cống hiến: bảng vinh danh và sổ cái kiểm toán đầy đủ."
             : "Bảng vinh danh điểm cống hiến của cả Liên đoàn và lịch sử điểm của riêng bạn."
         }
         actions={headerActions}
@@ -259,12 +242,6 @@ function PointsPage() {
         title={canViewHistory ? "Sổ cái lịch sử điểm" : "Lịch sử điểm của tôi"}
         appliedFilter={appliedFilter}
       />
-
-      <AnimatePresence>
-        {attendanceOpen && canAttend && (
-          <MeetAttendanceModal onClose={() => setAttendanceOpen(false)} onDone={refresh} />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {adjustOpen && canAdjust && (
