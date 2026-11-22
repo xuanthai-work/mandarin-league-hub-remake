@@ -130,7 +130,7 @@ export async function updateFeedbackStatus(id: string, decision: FeedbackDecisio
     .select("id");
   if (error) throw new Error(error.message);
   // RLS silently updates 0 rows when the caller lacks review rights.
-  if (!data?.length) throw new Error("Bạn không có quyền xử lý đơn nhận xét này");
+  if (!data?.length) throw new Error("Bạn không có quyền xử lý feedback này");
 }
 
 /** Upload a screenshot into the private bucket; returns the storage path to save on the row. */
@@ -172,27 +172,27 @@ export function describeFeedbackError(error: unknown): FeedbackErrorInfo {
   if (code === "PGRST205" || code === "42P01" || /could not find the table/i.test(raw)) {
     return {
       message:
-        "Mô-đun Nhận xét chưa được khởi tạo trên máy chủ (thiếu bảng feedbacks). Vui lòng báo Ban Công nghệ & Hệ thống chạy migration 0081_feedbacks.sql.",
+        "Mô-đun Feedback chưa được khởi tạo trên máy chủ (thiếu bảng feedbacks). Vui lòng báo Ban Công nghệ & Hệ thống chạy migration 0081_feedbacks.sql.",
       detail: raw,
     };
   }
   if (/^PGRST20[0-9]$/.test(code) || /relationship|schema cache/i.test(raw)) {
     return {
       message:
-        "Máy chủ chưa nhận diện được quan hệ dữ liệu của đơn nhận xét. Vui lòng báo Ban Công nghệ & Hệ thống.",
+        "Máy chủ chưa nhận diện được quan hệ dữ liệu của feedback. Vui lòng báo Ban Công nghệ & Hệ thống.",
       detail: raw,
     };
   }
   if (/permission denied|row-level security|jwt/i.test(raw)) {
     return {
       message:
-        "Tài khoản chưa có quyền đọc đơn nhận xét này. Vui lòng đăng nhập lại hoặc báo Ban Công nghệ & Hệ thống.",
+        "Tài khoản chưa có quyền đọc feedback này. Vui lòng đăng nhập lại hoặc báo Ban Công nghệ & Hệ thống.",
       detail: raw,
     };
   }
   if (!raw) {
     return {
-      message: "Không tải được danh sách nhận xét. Vui lòng thử lại sau ít phút.",
+      message: "Không tải được danh sách feedback. Vui lòng thử lại sau ít phút.",
       detail: "",
     };
   }

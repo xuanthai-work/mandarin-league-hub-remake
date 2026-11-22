@@ -41,7 +41,7 @@ export function withPersonalSections(allowed: string[] | "all"): string[] | "all
   return [...allowed, ...PERSONAL_SECTIONS.filter((s) => !allowed.includes(s))];
 }
 
-/** true khi người dùng chỉ có các mục cá nhân (Nhiệm vụ của mình + Điểm đóng góp + Cài đặt + Nhận xét), không có module quản trị nào. */
+/** true khi người dùng chỉ có các mục cá nhân (Nhiệm vụ của mình + Điểm đóng góp + Cài đặt + Feedback), không có module quản trị nào. */
 export function onlyPersonalSections(allowed: string[] | "all"): boolean {
   if (allowed === "all") return false;
   return allowed.every((s) => (PERSONAL_SECTIONS as readonly string[]).includes(s));

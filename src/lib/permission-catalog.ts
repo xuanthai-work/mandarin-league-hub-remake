@@ -227,7 +227,7 @@ export const PERMISSION_ACTIONS = [
   {
     code: "feedback.review",
     module: "feedback",
-    label: "Xem và xử lý mọi đơn nhận xét (trạng thái, phản hồi)",
+    label: "Xem và xử lý mọi feedback (trạng thái, phản hồi)",
     scoped: false,
   },
   { code: "trash.purge", module: "trash", label: "Xóa vĩnh viễn trong Thùng rác", scoped: false },

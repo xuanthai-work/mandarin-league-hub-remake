@@ -22,7 +22,7 @@ export const MODULE_LABELS: Record<string, string> = {
   photos: "Hình ảnh",
   partners: "Đối tác",
   content: "Trang & Nội dung",
-  feedback: "Nhận xét",
+  feedback: "Feedback",
   trash: "Thùng rác",
 };
 

@@ -46,7 +46,7 @@ import { useAdminAccess } from "./admin";
 export const Route = createFileRoute("/_authenticated/admin/feedback")({
   staticData: { sitemap: false },
   head: () => ({
-    meta: [{ title: "Nhận xét | TML Admin" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Feedback | TML Admin" }, { name: "robots", content: "noindex" }],
   }),
   component: FeedbackPage,
 });
@@ -123,11 +123,11 @@ function FeedbackPage() {
             type="button"
             size="admin"
             onClick={() => setCreating(true)}
-            aria-label="Tạo nhận xét"
-            title="Tạo nhận xét"
+            aria-label="Tạo feedback"
+            title="Tạo feedback"
           >
             <Plus aria-hidden />
-            <span className="hidden sm:inline">Tạo nhận xét</span>
+            <span className="hidden sm:inline">Tạo feedback</span>
           </Button>
         }
       />
@@ -137,7 +137,7 @@ function FeedbackPage() {
           value={q}
           onChange={(v) => refilter(() => setQ(v))}
           placeholder="Tìm tiêu đề, nội dung, họ tên, mã thành viên…"
-          label="Tìm kiếm đơn nhận xét"
+          label="Tìm kiếm feedback"
         />
         <Select value={dept} onValueChange={(v) => refilter(() => setDept(v))}>
           <SelectTrigger
@@ -159,7 +159,7 @@ function FeedbackPage() {
         </Select>
         <Select value={type} onValueChange={(v) => refilter(() => setType(v as TypeFilter))}>
           <SelectTrigger
-            aria-label="Lọc theo loại nhận xét"
+            aria-label="Lọc theo loại feedback"
             className="h-9 w-[160px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
           >
             <SelectValue>{type === "all" ? "Tất cả loại" : FEEDBACK_TYPE_LABEL[type]}</SelectValue>
@@ -201,11 +201,11 @@ function FeedbackPage() {
       </div>
 
       {list.isLoading ? (
-        <EmptyState title="Đang tải danh sách nhận xét…" />
+        <EmptyState title="Đang tải danh sách feedback…" />
       ) : list.isError ? (
         <EmptyState
           tone="error"
-          title="Không tải được danh sách nhận xét"
+          title="Không tải được danh sách feedback"
           description={
             <span className="block">
               <span className="block">{failure?.message ?? "Vui lòng thử lại sau ít phút."}</span>
@@ -224,13 +224,13 @@ function FeedbackPage() {
         />
       ) : items.length === 0 ? (
         <EmptyState
-          title={canReview ? "Chưa có đơn nhận xét nào" : "Bạn chưa gửi đơn nhận xét nào"}
-          description={`Bấm “Tạo nhận xét” để gửi báo lỗi hoặc góp ý cải thiện website.`}
+          title={canReview ? "Chưa có feedback nào" : "Bạn chưa gửi feedback nào"}
+          description={`Bấm “Tạo feedback” để gửi báo lỗi hoặc góp ý cải thiện website.`}
         />
       ) : rows.length === 0 ? (
         <EmptyState
           title="Không tìm thấy đơn phù hợp"
-          description="Thử xóa từ khóa hoặc chọn lại bộ lọc Ban, loại nhận xét và trạng thái."
+          description="Thử xóa từ khóa hoặc chọn lại bộ lọc Ban, loại feedback và trạng thái."
         />
       ) : (
         <div className="space-y-3">
@@ -238,7 +238,7 @@ function FeedbackPage() {
             columns={COLUMNS}
             minWidth="min-w-[860px]"
             isEmpty={rows.length === 0}
-            emptyMessage="Không có đơn nhận xét."
+            emptyMessage="Không có feedback."
             bodyRef={tableBodyRef}
           >
             {shown.map((f) => {

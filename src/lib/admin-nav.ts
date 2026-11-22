@@ -70,7 +70,7 @@ const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { slug: "content", label: "Trang & Nội dung", icon: FileText },
       { slug: "permissions", label: "Phân quyền", icon: KeyRound },
       { slug: "settings", label: "Cài đặt", icon: Settings },
-      { slug: "feedback", label: "Nhận xét", icon: MessageSquarePlus },
+      { slug: "feedback", label: "Feedback", icon: MessageSquarePlus },
     ],
   },
 ];

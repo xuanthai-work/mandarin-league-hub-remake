@@ -36,7 +36,7 @@ interface FeedbackDrawerProps {
   onUpdated: () => void;
 }
 
-/** Chi tiết một đơn nhận xét: người viết, nội dung, ảnh và phản hồi của Ban Hệ thống. */
+/** Chi tiết một feedback: người viết, nội dung, ảnh và phản hồi của Ban Hệ thống. */
 export function FeedbackDrawer({
   item,
   avatarUrl,

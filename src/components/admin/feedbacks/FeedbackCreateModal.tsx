@@ -28,7 +28,7 @@ interface FeedbackCreateModalProps {
   onCreated: () => void;
 }
 
-/** "Gửi nhận xét": one modal for a bug report, an improvement idea or another comment. */
+/** "Gửi feedback": one modal for a bug report, an improvement idea or another comment. */
 export function FeedbackCreateModal({ meLabel, onClose, onCreated }: FeedbackCreateModalProps) {
   const [type, setType] = useState<FeedbackType>("bug");
   const [title, setTitle] = useState("");
@@ -68,11 +68,11 @@ export function FeedbackCreateModal({ meLabel, onClose, onCreated }: FeedbackCre
     try {
       const screenshotPath = file ? await uploadFeedbackScreenshot(file) : "";
       await createFeedback({ type, title, content, screenshot_path: screenshotPath });
-      toast.success("Đã gửi nhận xét");
+      toast.success("Đã gửi feedback");
       if (preview) URL.revokeObjectURL(preview);
       onCreated();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Không gửi được nhận xét");
+      setError(e instanceof Error ? e.message : "Không gửi được feedback");
     } finally {
       setSaving(false);
     }
@@ -80,7 +80,7 @@ export function FeedbackCreateModal({ meLabel, onClose, onCreated }: FeedbackCre
 
   return (
     <AdminModal
-      title="Gửi nhận xét"
+      title="Gửi feedback"
       description={`Gửi dưới tên ${meLabel || "tài khoản của bạn"}`}
       icon={MessageSquarePlus}
       dismissible={!saving}
@@ -95,12 +95,12 @@ export function FeedbackCreateModal({ meLabel, onClose, onCreated }: FeedbackCre
             Hủy
           </Button>
           <Button type="submit" size="admin-lg" disabled={saving}>
-            {saving ? "Đang gửi…" : "Gửi nhận xét"}
+            {saving ? "Đang gửi…" : "Gửi feedback"}
           </Button>
         </div>
       }
     >
-      <FormField label="Loại nhận xét" required>
+      <FormField label="Loại feedback" required>
         {(field) => (
           <Select value={type} onValueChange={(v) => setType(v as FeedbackType)} disabled={saving}>
             <SelectTrigger {...field} className="h-9 w-full rounded-lg text-sm">
