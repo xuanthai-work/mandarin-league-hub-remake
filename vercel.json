@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/public/meet-scan", "schedule": "0 20 * * *" }]
+}

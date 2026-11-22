@@ -304,6 +304,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-217-RENAME-NHAN-XET-TO-FEEDBACK`                              | Đổi tên màn "Nhận xét" thành "Feedback" ở menu, tab, phân quyền và thông báo                           | 2026-11-22     | **PASS** | [task-ge-217-rename-nhan-xet-to-feedback.md](tasks/task-ge-217-rename-nhan-xet-to-feedback.md)                                                           |
 | `TASK-GE-218-MEET-ATTENDANCE-OWN-SCREEN`                               | Tách điểm danh Google Meet thành màn "Điểm danh họp" riêng, nhớ token đến khi hết hạn                  | 2026-11-22     | **PASS** | [task-ge-218-meet-attendance-own-screen.md](tasks/task-ge-218-meet-attendance-own-screen.md)                                                             |
 | `TASK-GE-219-MEET-AUTO-ATTENDANCE-CORE`                                | Lõi điểm danh Meet tự động: bot sở hữu phòng, quét buổi họp, chấm điểm một lần, dryRun                 | 2026-11-22     | **PASS** | [task-ge-219-meet-auto-attendance-core.md](tasks/task-ge-219-meet-auto-attendance-core.md)                                                               |
+| `TASK-GE-220-MEET-AUTO-MANAGE-AND-DAILY-SCAN`                          | Tab "Tự động" quản lý phòng và kết quả điểm danh Meet, quét hằng ngày bằng Vercel Cron                 | 2026-11-22     | **PASS** | [task-ge-220-meet-auto-manage-and-daily-scan.md](tasks/task-ge-220-meet-auto-manage-and-daily-scan.md)                                                   |
 
 ---
 

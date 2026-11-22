@@ -281,7 +281,37 @@ export async function processConference(
   }
 
   const subs = [...new Set(participants.map((p) => p.sub).filter((s): s is string => Boolean(s)))];
-  const links = await linkedMembers(subs);
+  let links: Awaited<ReturnType<typeof linkedMembers>>;
+  try {
+    links = await linkedMembers(subs);
+  } catch (err: unknown) {
+    const rawMsg =
+      err instanceof Error ? err.message : "Lỗi tra cứu tài khoản thành viên liên kết.";
+    const detail = rawMsg.slice(0, 500);
+    if (!opts.dryRun) {
+      await supabaseAdmin
+        .from("meet_auto_runs")
+        .update({
+          status: "error",
+          detail,
+          room_id: room.id,
+          space_name: space,
+          meeting_start: start,
+          meeting_end: end,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("conference_record", conferenceRecord);
+    }
+    return {
+      conferenceRecord,
+      status: "error",
+      detail,
+      kind: room.kind as "work" | "club",
+      roomLabel: room.label,
+      start,
+      end,
+    };
+  }
   const split = splitParticipants(participants, links);
 
   const matchedCount = split.matched.length;
@@ -506,8 +536,18 @@ export async function scanBotConferences(
     if (results.length >= limit) break;
     if (skipSet.has(rec.name)) continue;
 
-    const res = await processConference(rec.name, opts);
-    results.push(res);
+    try {
+      const res = await processConference(rec.name, opts);
+      results.push(res);
+    } catch (err: unknown) {
+      const rawMsg = err instanceof Error ? err.message : "Lỗi xử lý buổi họp bất ngờ.";
+      const detail = rawMsg.slice(0, 500);
+      results.push({
+        conferenceRecord: rec.name,
+        status: "error",
+        detail,
+      });
+    }
   }
 
   results.sort((a, b) => (b.start ?? "").localeCompare(a.start ?? ""));

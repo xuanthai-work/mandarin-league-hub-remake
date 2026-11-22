@@ -65,6 +65,7 @@ import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminTeachersRouteImport } from './routes/_authenticated/admin.teachers'
 import { Route as AuthenticatedMemberDashboardRouteImport } from './routes/_authenticated/member.dashboard'
 import { Route as AuthenticatedMemberLibraryRouteImport } from './routes/_authenticated/member.library'
+import { Route as ApiPublicMeetScanRouteImport } from './routes/api/public/meet-scan'
 import { Route as ApiPublicTmlAiRouteImport } from './routes/api/public/tml-ai'
 import { Route as CoursesHskIndexRouteImport } from './routes/courses.hsk.index'
 import { Route as CoursesHskCourseIdRouteImport } from './routes/courses.hsk.$courseId'
@@ -374,6 +375,11 @@ const AuthenticatedMemberLibraryRoute =
     path: '/member/library',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicMeetScanRoute = ApiPublicMeetScanRouteImport.update({
+  id: '/api/public/meet-scan',
+  path: '/api/public/meet-scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTmlAiRoute = ApiPublicTmlAiRouteImport.update({
   id: '/api/public/tml-ai',
   path: '/api/public/tml-ai',
@@ -471,6 +477,7 @@ export interface FileRoutesByFullPath {
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/member/library': typeof AuthenticatedMemberLibraryRoute
+  '/api/public/meet-scan': typeof ApiPublicMeetScanRoute
   '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -533,6 +540,7 @@ export interface FileRoutesByTo {
   '/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/member/library': typeof AuthenticatedMemberLibraryRoute
+  '/api/public/meet-scan': typeof ApiPublicMeetScanRoute
   '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -600,6 +608,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/teachers': typeof AuthenticatedAdminTeachersRoute
   '/_authenticated/member/dashboard': typeof AuthenticatedMemberDashboardRoute
   '/_authenticated/member/library': typeof AuthenticatedMemberLibraryRoute
+  '/api/public/meet-scan': typeof ApiPublicMeetScanRoute
   '/api/public/tml-ai': typeof ApiPublicTmlAiRoute
   '/courses/hsk/$courseId': typeof CoursesHskCourseIdRoute
   '/verify/certificate/$code': typeof VerifyCertificateCodeRoute
@@ -667,6 +676,7 @@ export interface FileRouteTypes {
     | '/admin/teachers'
     | '/member/dashboard'
     | '/member/library'
+    | '/api/public/meet-scan'
     | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -729,6 +739,7 @@ export interface FileRouteTypes {
     | '/admin/teachers'
     | '/member/dashboard'
     | '/member/library'
+    | '/api/public/meet-scan'
     | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -795,6 +806,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/teachers'
     | '/_authenticated/member/dashboard'
     | '/_authenticated/member/library'
+    | '/api/public/meet-scan'
     | '/api/public/tml-ai'
     | '/courses/hsk/$courseId'
     | '/verify/certificate/$code'
@@ -835,6 +847,7 @@ export interface RootRouteChildren {
   NewsIndexRoute: typeof NewsIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
   VerifyIndexRoute: typeof VerifyIndexRoute
+  ApiPublicMeetScanRoute: typeof ApiPublicMeetScanRoute
   ApiPublicTmlAiRoute: typeof ApiPublicTmlAiRoute
   VerifyCertificateCodeRoute: typeof VerifyCertificateCodeRoute
   VerifyHskCodeRoute: typeof VerifyHskCodeRoute
@@ -1236,6 +1249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMemberLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/meet-scan': {
+      id: '/api/public/meet-scan'
+      path: '/api/public/meet-scan'
+      fullPath: '/api/public/meet-scan'
+      preLoaderRoute: typeof ApiPublicMeetScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tml-ai': {
       id: '/api/public/tml-ai'
       path: '/api/public/tml-ai'
@@ -1424,6 +1444,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewsIndexRoute: NewsIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
   VerifyIndexRoute: VerifyIndexRoute,
+  ApiPublicMeetScanRoute: ApiPublicMeetScanRoute,
   ApiPublicTmlAiRoute: ApiPublicTmlAiRoute,
   VerifyCertificateCodeRoute: VerifyCertificateCodeRoute,
   VerifyHskCodeRoute: VerifyHskCodeRoute,

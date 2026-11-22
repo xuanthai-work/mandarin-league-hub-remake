@@ -4,7 +4,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import { DEPARTMENT_IDS } from "./permission-catalog";
+import { CONFERENCE_RECORD_RE } from "./meet-attendance";
 import type { AutoResult } from "./meet-auto.server";
+
+export type MeetAutoStatus = {
+  configured: boolean;
+  missing: string[];
+  canManage: boolean;
+};
 
 async function requireAttendanceScopeAll(supabase: SupabaseClient<Database>): Promise<void> {
   const { data, error } = await supabase.rpc("perm_scope", { _action: "points.attendance" });
@@ -104,4 +111,73 @@ export const createMeetingRoom = createServerFn({ method: "POST" })
     }
 
     return newRoom;
+  });
+
+export const getMeetAutoStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<MeetAutoStatus> => {
+    const { data: scope, error } = await context.supabase.rpc("perm_scope", {
+      _action: "points.attendance",
+    });
+    if (error) throw new Error(error.message);
+    if (!scope) throw new Error("Bạn không có quyền truy cập thông tin điểm danh họp.");
+
+    const requiredVars = [
+      "GOOGLE_OAUTH_CLIENT_ID",
+      "GOOGLE_OAUTH_CLIENT_SECRET",
+      "MEET_BOT_REFRESH_TOKEN",
+      "MEET_SCORER_USER_ID",
+    ] as const;
+
+    const missing = requiredVars.filter(
+      (name) => !process.env[name] || process.env[name]!.trim().length === 0,
+    );
+
+    return {
+      configured: missing.length === 0,
+      missing,
+      canManage: scope === "all",
+    };
+  });
+
+export const setMeetingRoomActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        active: z.boolean(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAttendanceScopeAll(context.supabase);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: updated, error } = await supabaseAdmin
+      .from("meeting_rooms")
+      .update({ active: data.active })
+      .eq("id", data.id)
+      .select()
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!updated) throw new Error("Không tìm thấy phòng họp cần cập nhật.");
+    return updated;
+  });
+
+export const rescoreMeetConference = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) =>
+    z
+      .object({
+        conferenceRecord: z.string().regex(CONFERENCE_RECORD_RE),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<AutoResult> => {
+    await requireAttendanceScopeAll(context.supabase);
+
+    const { processConference } = await import("./meet-auto.server");
+    return processConference(data.conferenceRecord, { force: true });
   });
