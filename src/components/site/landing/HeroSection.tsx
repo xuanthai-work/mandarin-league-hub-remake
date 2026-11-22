@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { useT, useTr } from "@/lib/i18n";
 import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
+import { CtaLink } from "@/components/site/CtaLink";
 
 export function HeroSection({ h }: { h: HomeContent }) {
   const { lang, t } = useT();
@@ -27,13 +28,13 @@ export function HeroSection({ h }: { h: HomeContent }) {
             {h.hero_lead || t("home.lead")}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a
+            <CtaLink
               href={appendPreview(h.btn1_url || "/join", preview)}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90"
             >
               {h.btn1_label || t("cta.join")} <ArrowRight className="h-4 w-4" />
-            </a>
-            <a
+            </CtaLink>
+            <CtaLink
               href={btn2Href}
               onClick={(e) => {
                 if (scrollToCourses) {
@@ -47,7 +48,7 @@ export function HeroSection({ h }: { h: HomeContent }) {
               className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-background px-6 py-3 font-semibold text-primary-deep transition hover:bg-accent"
             >
               {h.btn2_label || t("cta.hsk")}
-            </a>
+            </CtaLink>
           </div>
         </div>
         <div className="relative mx-auto w-full max-w-sm">

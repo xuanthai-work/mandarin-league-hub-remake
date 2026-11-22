@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useTr } from "@/lib/i18n";
 import { SectionLabel } from "@/components/site/ui";
+import { CtaLink } from "@/components/site/CtaLink";
 import {
   appendPreview,
   usePreviewMode,
@@ -94,12 +95,12 @@ export function AboutSection({ h }: { h: HomeContent }) {
                 "Chúng tôi tổ chức khóa học HSK, workshop, cuộc thi và các dự án sáng tạo nội dung, giúp mỗi thành viên vừa học vừa trải nghiệm.",
               )}
           </p>
-          <a
+          <CtaLink
             href={appendPreview(h.about_cta_url || "/about", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
             {h.about_cta_label || tr("Tìm hiểu thêm")} <ArrowRight className="h-4 w-4" />
-          </a>
+          </CtaLink>
         </div>
       </div>
 
@@ -160,12 +161,12 @@ export function AboutSection({ h }: { h: HomeContent }) {
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{h.community_desc}</p>
             )}
           </div>
-          <a
+          <CtaLink
             href={appendPreview(h.community_cta_url || "/community", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
             {h.community_cta_label || tr("Khám phá cộng đồng")} <ArrowRight className="h-4 w-4" />
-          </a>
+          </CtaLink>
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {COMMUNITY_GROUPS.map((g) => {

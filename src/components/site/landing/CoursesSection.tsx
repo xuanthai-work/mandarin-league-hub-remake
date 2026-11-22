@@ -13,6 +13,7 @@ import { STATUS_LABEL } from "@/lib/programs";
 import { getCourse, getCourses } from "@/lib/data/courses";
 import type { Course } from "@/lib/data/types";
 import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
+import { CtaLink } from "@/components/site/CtaLink";
 
 export function CoursesSection({
   h,
@@ -51,12 +52,12 @@ export function CoursesSection({
             <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{h.courses_lead}</p>
           )}
         </div>
-        <a
+        <CtaLink
           href={appendPreview(h.courses_cta_url || "/courses", preview)}
           className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
         >
           {h.courses_cta_label || tr("Tất cả các khóa học")} <ArrowRight className="h-4 w-4" />
-        </a>
+        </CtaLink>
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-2 reveal-on-scroll">

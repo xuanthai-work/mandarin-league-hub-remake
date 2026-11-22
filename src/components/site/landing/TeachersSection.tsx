@@ -4,6 +4,7 @@ import { EmptyState, SectionLabel } from "@/components/site/ui";
 import { TeacherPhotoCard } from "@/components/site/TeacherPhotoCard";
 import { usePublicTeachers, type PublicTeacher } from "@/lib/teachers";
 import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
+import { CtaLink } from "@/components/site/CtaLink";
 
 export function TeachersSection({
   h,
@@ -34,13 +35,13 @@ export function TeachersSection({
                 )}
             </p>
           </div>
-          <a
+          <CtaLink
             href={appendPreview(h.teachers_cta_url || "/teachers", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
             {h.teachers_cta_label || tr("Xem tất cả các giảng viên")}{" "}
             <ArrowRight className="h-4 w-4" />
-          </a>
+          </CtaLink>
         </div>
         {faculty.length === 0 ? (
           <div className="mt-10 reveal-on-scroll">

@@ -427,10 +427,21 @@ export function usePreviewMode(): boolean {
   return preview;
 }
 
+/** Chỉ cho đường dẫn nội bộ (/...), http(s):// hoặc #neo. Mọi thứ khác (javascript:, data:, //host, rỗng...) trả về fallback. */
+export function safeHref(url: string | undefined | null, fallback = "/"): string {
+  const v = (url ?? "").trim();
+  if (!v) return fallback;
+  if (v.startsWith("#")) return v;
+  if (v.startsWith("/") && !v.startsWith("//") && !/\s/.test(v)) return v;
+  if (/^https?:\/\/\S+$/i.test(v)) return v;
+  return fallback;
+}
+
 /** Giữ ?preview=1 khi CTA điều hướng nội bộ, để trang đích cũng mở bản nháp. */
-export function appendPreview(url: string, preview: boolean): string {
-  if (!preview || !url.startsWith("/") || url.startsWith("//")) return url;
-  const [base = "", hash] = url.split("#");
+export function appendPreview(url: string | undefined | null, preview: boolean): string {
+  const safe = safeHref(url);
+  if (!preview || !safe.startsWith("/") || safe.startsWith("//")) return safe;
+  const [base = "", hash] = safe.split("#");
   const separator = base.includes("?") ? "&" : "?";
   return `${base}${separator}preview=1${hash ? `#${hash}` : ""}`;
 }

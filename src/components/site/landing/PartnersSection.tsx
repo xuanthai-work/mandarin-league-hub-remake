@@ -8,6 +8,7 @@ import {
   useSiteContent,
   type HomeContent,
 } from "@/lib/site-content";
+import { CtaLink } from "@/components/site/CtaLink";
 
 export function PartnersSection({ h }: { h: HomeContent }) {
   const tr = useTr();
@@ -31,12 +32,12 @@ export function PartnersSection({ h }: { h: HomeContent }) {
               </p>
             )}
           </div>
-          <a
+          <CtaLink
             href={appendPreview(h.partners_cta_url || "/partners", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
             {h.partners_cta_label || tr("Xem tất cả đối tác")} <ArrowRight className="h-4 w-4" />
-          </a>
+          </CtaLink>
         </div>
         {partners.length === 0 ? (
           <div className="mt-8 reveal-on-scroll">

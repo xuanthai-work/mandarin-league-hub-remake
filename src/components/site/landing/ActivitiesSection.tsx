@@ -13,6 +13,7 @@ import { PhotoOverlayCard } from "@/components/site/PhotoOverlayCard";
 import { ActivityCarousel } from "@/components/site/ActivityCarousel";
 import { fmtDate as fmtNewsDate, usePublishedNews, type NewsRow } from "@/lib/news-db";
 import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
+import { CtaLink } from "@/components/site/CtaLink";
 
 const ACTIVITY_CATEGORIES: ActivityCategory[] = [
   "workshop",
@@ -57,12 +58,12 @@ export function ActivitiesSection({
               <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{h.activities_lead}</p>
             )}
           </div>
-          <a
+          <CtaLink
             href={appendPreview(h.activities_cta_url || "/activities", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
             {h.activities_cta_label || tr("Xem tất cả")} <ArrowRight className="h-4 w-4" />
-          </a>
+          </CtaLink>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2 reveal-on-scroll">
@@ -143,12 +144,12 @@ export function ActivitiesSection({
                 {h.news_section_desc || tr("Nội dung chính thức do The Mandarin League biên soạn.")}
               </p>
             </div>
-            <a
+            <CtaLink
               href={appendPreview(h.news_cta_url || "/news", preview)}
               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
             >
               {h.news_cta_label || tr("Xem tất cả tin tức")} <ArrowRight className="h-4 w-4" />
-            </a>
+            </CtaLink>
           </div>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 reveal-on-scroll">
             {news.isLoading && <p className="text-sm text-muted-foreground">{tr("Đang tải…")}</p>}

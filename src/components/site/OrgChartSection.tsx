@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { ArrowRight, GraduationCap, Users } from "lucide-react";
 
 import { PersonSlot, SectionTitle } from "@/components/site/ui";
+import { CtaLink } from "@/components/site/CtaLink";
 import {
   Dialog,
   DialogContent,
@@ -119,12 +120,12 @@ export function OrgChartSection({
               title={title || "Sơ đồ tổ chức TML"}
               desc={desc || "The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn."}
             />
-            <a
+            <CtaLink
               href={ctaHref}
               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
             >
               {ctaLabel || tr("Trang cơ cấu tổ chức")} <ArrowRight className="h-4 w-4" />
-            </a>
+            </CtaLink>
           </div>
         )}
 

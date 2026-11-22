@@ -2,6 +2,7 @@ import { ArrowRight, Award, LockKeyhole, QrCode, ShieldCheck } from "lucide-reac
 import { useTr } from "@/lib/i18n";
 import { SectionLabel } from "@/components/site/ui";
 import { appendPreview, usePreviewMode, type HomeContent } from "@/lib/site-content";
+import { CtaLink } from "@/components/site/CtaLink";
 
 const VERIFY_OPTIONS = [
   {
@@ -75,12 +76,12 @@ export function VerifySection({
                 <h3 className="mt-7 text-2xl font-extrabold text-primary-deep">{title}</h3>
                 <p className="mt-1 font-han text-lg text-primary">{option.chinese}</p>
                 <p className="mt-4 flex-1 leading-relaxed text-muted-foreground">{description}</p>
-                <a
+                <CtaLink
                   href={appendPreview(href, preview)}
                   className="mt-7 inline-flex w-full items-center justify-between gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90"
                 >
                   {label} <ArrowRight className="h-4 w-4" />
-                </a>
+                </CtaLink>
                 <button
                   type="button"
                   onClick={() => onOpenVerify(option.kind)}

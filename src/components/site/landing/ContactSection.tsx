@@ -7,6 +7,7 @@ import {
   useSiteContent,
   type HomeContent,
 } from "@/lib/site-content";
+import { CtaLink } from "@/components/site/CtaLink";
 
 export function ContactSection({ h }: { h: HomeContent }) {
   const { t } = useT();
@@ -32,12 +33,12 @@ export function ContactSection({ h }: { h: HomeContent }) {
                     "Ứng tuyển vào một trong 8 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.",
                   )}
               </p>
-              <a
+              <CtaLink
                 href={appendPreview(h.cta_button_url || "/join", preview)}
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 font-semibold text-primary-deep transition hover:opacity-90"
               >
                 {h.cta_button_label || t("cta.join")} <ArrowRight className="h-4 w-4" />
-              </a>
+              </CtaLink>
             </div>
             <div className="space-y-3 border-t border-primary-foreground/20 pt-6 text-sm">
               <a href={`mailto:${site.email}`} className="flex items-center gap-3 hover:underline">
