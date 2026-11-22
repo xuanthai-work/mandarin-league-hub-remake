@@ -312,6 +312,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-225-MEET-ROOMS-SCREEN-FOLLOW-ADMIN-CONVENTIONS`               | Màn Phòng họp theo quy ước admin: bỏ card, bộ lọc Select, bấm dòng mở drawer                           | 2026-11-22     | **PASS** | [task-ge-225-meet-rooms-screen-follow-admin-conventions.md](tasks/task-ge-225-meet-rooms-screen-follow-admin-conventions.md)                             |
 | `TASK-GE-226-MEETINGS-VIEW-PERMISSION-FOR-MEMBERS`                     | Quyền meetings.view: mọi thành viên xem phòng họp và vào họp, chỉ đọc                                  | 2026-11-22     | **PASS** | [task-ge-226-meetings-view-permission-for-members.md](tasks/task-ge-226-meetings-view-permission-for-members.md)                                         |
 | `TASK-GE-227-MEET-POINTS-FLAT-5`                                       | Mọi buổi họp Meet cộng 5 điểm (Ban, chung, toàn thể), điểm cũ giữ nguyên                               | 2026-11-22     | **PASS** | [task-ge-227-meet-points-flat-5.md](tasks/task-ge-227-meet-points-flat-5.md)                                                                             |
+| `TASK-GE-228-MEET-DROP-SHARED-ROOMS`                                   | Bỏ loại phòng Họp chung, phòng họp chỉ còn Họp ban và Họp toàn thể                                     | 2026-11-23     | **PASS** | [task-ge-228-meet-drop-shared-rooms.md](tasks/task-ge-228-meet-drop-shared-rooms.md)                                                                     |
 
 ---
 

@@ -201,35 +201,24 @@ export function CreateRoomModal({
             </div>
           )}
 
-          <FormField label="Loại cuộc họp">
-            {() => (
-              <SegmentedControl
-                label="Loại cuộc họp"
-                value={kind}
-                onChange={(val) => {
-                  setKind(val as RoomKind);
-                  setErrorMsg(null);
-                }}
-                options={
-                  scope === "own"
-                    ? [
-                        {
-                          value: "work",
-                          label: myDepartment
-                            ? `Họp ban (${deptName(myDepartment)})`
-                            : `Họp ban (${MEET_POINTS}đ)`,
-                        },
-                        { value: "shared", label: `Họp chung (${MEET_POINTS}đ)` },
-                      ]
-                    : [
-                        { value: "work", label: `Họp ban (${MEET_POINTS}đ)` },
-                        { value: "shared", label: `Họp chung (${MEET_POINTS}đ)` },
-                        { value: "club", label: `Họp toàn thể (${MEET_POINTS}đ)` },
-                      ]
-                }
-              />
-            )}
-          </FormField>
+          {scope === "all" && (
+            <FormField label="Loại cuộc họp">
+              {() => (
+                <SegmentedControl
+                  label="Loại cuộc họp"
+                  value={kind}
+                  onChange={(val) => {
+                    setKind(val as RoomKind);
+                    setErrorMsg(null);
+                  }}
+                  options={[
+                    { value: "work", label: `Họp ban (${MEET_POINTS}đ)` },
+                    { value: "club", label: `Họp toàn thể (${MEET_POINTS}đ)` },
+                  ]}
+                />
+              )}
+            </FormField>
+          )}
 
           {kind === "work" && (
             <FormField label="Ban phụ trách" required>
@@ -268,9 +257,7 @@ export function CreateRoomModal({
                 placeholder={
                   kind === "club"
                     ? "Ví dụ: Phòng Họp Toàn Thể Mandarin"
-                    : kind === "shared"
-                      ? "Ví dụ: Phòng Họp Liên Ban Dự Án"
-                      : "Ví dụ: Phòng Họp Ban Học Thuật"
+                    : "Ví dụ: Phòng Họp Ban Học Thuật"
                 }
                 maxLength={80}
                 disabled={loading}

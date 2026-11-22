@@ -16,9 +16,8 @@ describe("MEET_POINTS", () => {
 });
 
 describe("scoringKindFor", () => {
-  it("maps work and shared to work, club to club", () => {
+  it("maps work to work, club to club", () => {
     expect(scoringKindFor("work")).toBe("work");
-    expect(scoringKindFor("shared")).toBe("work");
     expect(scoringKindFor("club")).toBe("club");
   });
 });
@@ -42,12 +41,6 @@ describe("pickScorable", () => {
     expect(outside.map((m) => m.id)).toEqual(["1", "2", "3"]);
   });
 
-  it("scores all members for shared room regardless of department", () => {
-    const { scored, outside } = pickScorable("shared", null, members);
-    expect(scored.map((m) => m.id)).toEqual(["1", "2", "3"]);
-    expect(outside).toEqual([]);
-  });
-
   it("scores all members for club room regardless of department", () => {
     const { scored, outside } = pickScorable("club", null, members);
     expect(scored.map((m) => m.id)).toEqual(["1", "2", "3"]);
@@ -56,7 +49,6 @@ describe("pickScorable", () => {
 
   it("handles empty matched array cleanly", () => {
     expect(pickScorable("work", "tech", [])).toEqual({ scored: [], outside: [] });
-    expect(pickScorable("shared", null, [])).toEqual({ scored: [], outside: [] });
     expect(pickScorable("club", null, [])).toEqual({ scored: [], outside: [] });
   });
 });
@@ -107,11 +99,6 @@ describe("formatAutoReason", () => {
   it("formats club meeting correctly with date in Asia/Ho_Chi_Minh", () => {
     const reason = formatAutoReason("club", null, "2026-11-22T20:00:00Z");
     expect(reason).toBe("Điểm danh Họp toàn thể - 23/11/2026 (tự động qua Google Meet)");
-  });
-
-  it("formats shared meeting correctly with date in Asia/Ho_Chi_Minh", () => {
-    const reason = formatAutoReason("shared", null, "2026-11-22T20:00:00Z");
-    expect(reason).toBe("Điểm danh Họp chung - 23/11/2026 (tự động qua Google Meet)");
   });
 
   it("truncates reason if longer than 300 characters", () => {

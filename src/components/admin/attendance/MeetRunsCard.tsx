@@ -223,11 +223,6 @@ export function MeetRunsCard({ canManage }: { canManage: boolean; scope?: "all" 
                     title={roomName}
                   >
                     <span className="truncate">{roomName}</span>
-                    {run.meeting_rooms?.kind === "shared" && (
-                      <span className="shrink-0 rounded bg-secondary px-1 text-[10px] text-muted-foreground">
-                        Họp chung
-                      </span>
-                    )}
                   </div>
                   <span
                     title={run.conference_record}

@@ -11,33 +11,12 @@ describe("canManageRoom", () => {
     expect(
       canManageRoom("all", actor, { kind: "work", department: "hr", createdBy: "user-2" }),
     ).toBe(true);
-    expect(
-      canManageRoom("all", actor, { kind: "shared", department: null, createdBy: "user-2" }),
-    ).toBe(true);
   });
 
   it("grants access to work rooms of own department for scope 'own'", () => {
     expect(
       canManageRoom("own", actor, { kind: "work", department: "tech", createdBy: "user-2" }),
     ).toBe(true);
-  });
-
-  it("grants access to shared rooms created by actor for scope 'own'", () => {
-    expect(
-      canManageRoom("own", actor, { kind: "shared", department: null, createdBy: "user-1" }),
-    ).toBe(true);
-  });
-
-  it("denies access to shared rooms created by someone else for scope 'own'", () => {
-    expect(
-      canManageRoom("own", actor, { kind: "shared", department: null, createdBy: "user-2" }),
-    ).toBe(false);
-  });
-
-  it("denies access to shared rooms with null createdBy for scope 'own'", () => {
-    expect(canManageRoom("own", actor, { kind: "shared", department: null, createdBy: null })).toBe(
-      false,
-    );
   });
 
   it("denies access to club rooms for scope 'own'", () => {

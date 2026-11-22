@@ -30,29 +30,3 @@ export function presenceLabel(p: Pick<RoomPresence, "active" | "count"> | undefi
   }
   return "Trống";
 }
-
-/** Một dòng cảnh báo cho phòng chung đang có người, hoặc null nếu không có. */
-export function sharedRoomWarning<T extends { id?: string; kind: string; label: string }>(
-  rooms: T[],
-  presence: Map<string, RoomPresence> | Record<string, RoomPresence>,
-  roomIdOf?: (room: T) => string,
-): string | null {
-  const getP = (id: string): RoomPresence | undefined => {
-    if (presence instanceof Map) return presence.get(id);
-    return presence[id];
-  };
-
-  const busyShared: string[] = [];
-  for (const r of rooms) {
-    if (r.kind !== "shared") continue;
-    const id = roomIdOf ? roomIdOf(r) : r.id;
-    if (!id) continue;
-    const p = getP(id);
-    if (p && p.active && p.count > 0) {
-      busyShared.push(`${r.label} (${p.count} người)`);
-    }
-  }
-
-  if (busyShared.length === 0) return null;
-  return `Phòng chung đang có người họp: ${busyShared.join(", ")}. Hãy chọn phòng chung khác.`;
-}

@@ -1,16 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  AlertTriangle,
-  Copy,
-  ExternalLink,
-  Loader2,
-  Plus,
-  RefreshCw,
-  Search,
-  Video,
-} from "lucide-react";
+import { Copy, ExternalLink, Loader2, Plus, RefreshCw, Search, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
@@ -31,7 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { getRoomsPresence } from "@/lib/meet-presence.functions";
-import { presenceLabel, sharedRoomWarning, type RoomPresence } from "@/lib/meet-presence";
+import { presenceLabel, type RoomPresence } from "@/lib/meet-presence";
 import { canManageRoom, type AttendanceScope, type RoomKind } from "@/lib/meet-room-access";
 import { MEET_POINTS } from "@/lib/meet-auto";
 import { deptName } from "@/lib/recruitment";
@@ -90,8 +81,7 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
       const list = (rooms ?? []) as MeetingRoomRow[];
       const kindRank: Record<string, number> = {
         club: 0,
-        shared: 1,
-        work: 2,
+        work: 1,
       };
       return list.sort((a, b) => {
         const rankDiff = (kindRank[a.kind] ?? 99) - (kindRank[b.kind] ?? 99);
@@ -131,11 +121,6 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
     return map;
   }, [presenceList, isViewOnly]);
 
-  const warningText = useMemo(() => {
-    if (isViewOnly || !data || data.length === 0) return null;
-    return sharedRoomWarning(data, presenceMap, (r) => r.id);
-  }, [isViewOnly, data, presenceMap]);
-
   const copyLink = async (uri: string) => {
     try {
       await navigator.clipboard.writeText(uri);
@@ -166,16 +151,12 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
           list = list.filter(
             (r) => r.kind === "work" && (!department || r.department === department),
           );
-        } else if (filter === "shared") {
-          list = list.filter((r) => r.kind === "shared");
         } else if (filter === "club") {
           list = list.filter((r) => r.kind === "club");
         }
       } else {
         if (filter === "club") {
           list = list.filter((r) => r.kind === "club");
-        } else if (filter === "shared") {
-          list = list.filter((r) => r.kind === "shared");
         } else if (filter.startsWith("dept:")) {
           const targetDept = filter.slice(5);
           list = list.filter((r) => r.kind === "work" && r.department === targetDept);
@@ -214,10 +195,10 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {isViewOnly
-              ? 'Danh sách phòng họp của Ban bạn, phòng họp chung và phòng họp toàn thể. Bấm "Vào phòng" để tham gia.'
+              ? 'Danh sách phòng họp của Ban bạn và phòng họp toàn thể. Bấm "Vào phòng" để tham gia.'
               : scope === "own"
-                ? `Danh sách phòng Google Meet của Ban bạn và các phòng họp chung. Phòng Ban và phòng Chung cho ${MEET_POINTS} điểm/buổi.`
-                : `Danh sách phòng Google Meet chính thức. Phòng Ban, phòng Chung và phòng Toàn thể đều cho ${MEET_POINTS} điểm/buổi.`}
+                ? "Danh sách phòng Google Meet của Ban bạn và phòng họp toàn thể."
+                : `Danh sách phòng Google Meet chính thức. Mọi buổi họp cho ${MEET_POINTS} điểm/buổi.`}
           </p>
         </div>
         {canCreate && (
@@ -257,9 +238,6 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
                 <SelectItem value="own" className="text-xs">
                   Ban mình
                 </SelectItem>
-                <SelectItem value="shared" className="text-xs">
-                  Họp chung
-                </SelectItem>
                 <SelectItem value="club" className="text-xs">
                   Họp toàn thể
                 </SelectItem>
@@ -268,9 +246,6 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
               <>
                 <SelectItem value="club" className="text-xs">
                   Họp toàn thể
-                </SelectItem>
-                <SelectItem value="shared" className="text-xs">
-                  Họp chung
                 </SelectItem>
                 {workDepts.length > 0 && (
                   <SelectGroup>
@@ -304,15 +279,7 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
         )}
       </div>
 
-      {/* 3. Cảnh báo phòng chung đang có người (chỉ cho người quản lý) */}
-      {warningText && (
-        <div className="flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning-foreground">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
-          <span>{warningText}</span>
-        </div>
-      )}
-
-      {/* 4. Bảng phòng họp */}
+      {/* 3. Bảng phòng họp */}
       {isLoading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -356,11 +323,7 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
         <AdminTable columns={columns} minWidth="min-w-[640px]">
           {filteredRooms.map((room) => {
             const kindText =
-              room.kind === "club"
-                ? "Họp toàn thể"
-                : room.kind === "shared"
-                  ? "Họp chung (liên Ban)"
-                  : `Họp ban (${deptName(room.department)})`;
+              room.kind === "club" ? "Họp toàn thể" : `Họp ban (${deptName(room.department)})`;
 
             const presence = presenceMap.get(room.id);
             const label = presenceLabel(presence);

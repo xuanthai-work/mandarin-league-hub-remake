@@ -45,7 +45,7 @@ async function requireRoomManage(
   const dept = memberRows?.[0]?.department ?? null;
 
   if (!canManageRoom(scope, { userId, department: dept }, room)) {
-    throw new Error("Bạn chỉ được quản lý phòng họp của Ban mình hoặc phòng chung do bạn tạo.");
+    throw new Error("Bạn chỉ được quản lý phòng họp của Ban mình.");
   }
 
   return { scope, department: dept };
@@ -58,7 +58,7 @@ const scanMeetSchema = z.object({
 
 const createMeetingRoomSchema = z
   .object({
-    kind: z.enum(["work", "club", "shared"]),
+    kind: z.enum(["work", "club"]),
     department: z.string().trim().optional(),
     label: z.string().trim().min(1).max(80),
   })
@@ -75,10 +75,7 @@ const createMeetingRoomSchema = z
       if (val.department) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            val.kind === "shared"
-              ? "Họp chung không được gắn với Ban cụ thể."
-              : "Họp toàn thể không được gắn với Ban cụ thể.",
+          message: "Họp toàn thể không được gắn với Ban cụ thể.",
           path: ["department"],
         });
       }
@@ -90,7 +87,7 @@ const updateMeetingRoomSchema = z
     id: z.string().uuid(),
     label: z.string().trim().min(1).max(80).optional(),
     active: z.boolean().optional(),
-    kind: z.enum(["work", "club", "shared"]).optional(),
+    kind: z.enum(["work", "club"]).optional(),
     department: z.string().trim().nullable().optional(),
   })
   .refine(

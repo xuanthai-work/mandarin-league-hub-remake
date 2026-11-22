@@ -6,20 +6,20 @@ export const MEET_POINTS = 5;
 export type AutoStatus =
   "running" | "scored" | "too_short" | "no_members" | "unknown_room" | "error";
 
-export type RoomKind = "work" | "club" | "shared";
+export type RoomKind = "work" | "club";
 
-/** Loại điểm gọi vào record_meet_attendance: 'work' cho phòng Ban và phòng chung, 'club' cho họp toàn thể. Cả hai đều cho 5 điểm nhưng phân biệt quyền chấm. */
+/** Loại điểm gọi vào record_meet_attendance: 'work' cho phòng Ban, 'club' cho họp toàn thể. Cả hai đều cho 5 điểm nhưng phân biệt quyền chấm. */
 export function scoringKindFor(kind: RoomKind): "work" | "club" {
-  return kind === "club" ? "club" : "work";
+  return kind;
 }
 
-/** Tách người được tính điểm và người ngoài Ban. Phòng 'work' chỉ tính thành viên có department === roomDepartment; 'shared' và 'club' tính tất cả. */
+/** Tách người được tính điểm và người ngoài Ban. Phòng 'work' chỉ tính thành viên có department === roomDepartment; 'club' tính tất cả. */
 export function pickScorable<T extends { department: string }>(
   kind: RoomKind,
   roomDepartment: string | null,
   matched: T[],
 ): { scored: T[]; outside: T[] } {
-  if (kind === "shared" || kind === "club") {
+  if (kind === "club") {
     return { scored: [...matched], outside: [] };
   }
   if (!roomDepartment) {
@@ -66,8 +66,6 @@ export function formatAutoReason(
   let reason: string;
   if (kind === "work") {
     reason = `Điểm danh Họp ban ${departmentLabel?.trim() || "Ban"} - ${dateStr} (tự động qua Google Meet)`;
-  } else if (kind === "shared") {
-    reason = `Điểm danh Họp chung - ${dateStr} (tự động qua Google Meet)`;
   } else {
     reason = `Điểm danh Họp toàn thể - ${dateStr} (tự động qua Google Meet)`;
   }

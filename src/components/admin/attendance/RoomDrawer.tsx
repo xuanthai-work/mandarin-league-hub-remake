@@ -63,9 +63,7 @@ export function RoomDrawer({ room, onClose, onUpdated, onDeleted, scope }: RoomD
   const kindText =
     room.kind === "club"
       ? `Họp toàn thể (${MEET_POINTS} điểm)`
-      : room.kind === "shared"
-        ? `Họp chung (${MEET_POINTS} điểm)`
-        : `Họp ban (${deptName(room.department)}) (${MEET_POINTS} điểm)`;
+      : `Họp ban (${deptName(room.department)}) (${MEET_POINTS} điểm)`;
 
   const handleCopy = async () => {
     try {
@@ -205,7 +203,6 @@ export function RoomDrawer({ room, onClose, onUpdated, onDeleted, scope }: RoomD
                   }}
                   options={[
                     { value: "work", label: `Họp ban (${MEET_POINTS}đ)` },
-                    { value: "shared", label: `Họp chung (${MEET_POINTS}đ)` },
                     { value: "club", label: `Họp toàn thể (${MEET_POINTS}đ)` },
                   ]}
                 />
