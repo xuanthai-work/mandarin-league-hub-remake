@@ -42,7 +42,7 @@ const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { slug: "candidates", label: "Ứng viên", icon: UserPlus },
       { slug: "members", label: "Thành viên", icon: Users },
       { slug: "tasks", label: "Nhiệm vụ", icon: ListChecks },
-      { slug: "attendance", label: "Điểm danh họp", icon: ClipboardCheck },
+      { slug: "attendance", label: "Phòng họp", icon: ClipboardCheck },
       { slug: "contributions", label: "Điểm đóng góp", icon: Award },
       { slug: "benefits", label: "Quyền lợi thành viên", icon: Gift },
     ],

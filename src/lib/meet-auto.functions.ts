@@ -6,11 +6,16 @@ import type { Database } from "@/integrations/supabase/types";
 import { DEPARTMENT_IDS } from "./permission-catalog";
 import { CONFERENCE_RECORD_RE } from "./meet-attendance";
 import type { AutoResult } from "./meet-auto.server";
+import { canManageRoom, type AttendanceScope } from "./meet-room-access";
+import type { RoomKind } from "./meet-auto";
 
 export type MeetAutoStatus = {
   configured: boolean;
   missing: string[];
   canManage: boolean;
+  scope: AttendanceScope;
+  department: string | null;
+  userId: string;
 };
 
 async function requireAttendanceScopeAll(supabase: SupabaseClient<Database>): Promise<void> {
@@ -21,6 +26,29 @@ async function requireAttendanceScopeAll(supabase: SupabaseClient<Database>): Pr
       "Chỉ Co-founder hoặc Quản trị viên có quyền toàn Liên đoàn mới được thực hiện thao tác này.",
     );
   }
+}
+
+async function requireRoomManage(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  room: { kind: RoomKind; department: string | null; createdBy: string | null },
+): Promise<{ scope: AttendanceScope; department: string | null }> {
+  const { data: scope, error: scopeErr } = await supabase.rpc("perm_scope", {
+    _action: "points.attendance",
+  });
+  if (scopeErr) throw new Error(scopeErr.message);
+  if (scope !== "all" && scope !== "own") {
+    throw new Error("Bạn không có quyền quản lý phòng họp.");
+  }
+
+  const { data: memberRows } = await supabase.rpc("my_active_member");
+  const dept = memberRows?.[0]?.department ?? null;
+
+  if (!canManageRoom(scope, { userId, department: dept }, room)) {
+    throw new Error("Bạn chỉ được quản lý phòng họp của Ban mình hoặc phòng chung do bạn tạo.");
+  }
+
+  return { scope, department: dept };
 }
 
 const scanMeetSchema = z.object({
@@ -36,10 +64,10 @@ const createMeetingRoomSchema = z
   })
   .superRefine((val, ctx) => {
     if (val.kind === "work") {
-      if (!val.department || !(DEPARTMENT_IDS as readonly string[]).includes(val.department)) {
+      if (val.department && !(DEPARTMENT_IDS as readonly string[]).includes(val.department)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Họp làm việc bắt buộc chọn một Ban hợp lệ.",
+          message: "Ban phụ trách không hợp lệ.",
           path: ["department"],
         });
       }
@@ -56,6 +84,23 @@ const createMeetingRoomSchema = z
       }
     }
   });
+
+const updateMeetingRoomSchema = z
+  .object({
+    id: z.string().uuid(),
+    label: z.string().trim().min(1).max(80).optional(),
+    active: z.boolean().optional(),
+    kind: z.enum(["work", "club", "shared"]).optional(),
+    department: z.string().trim().nullable().optional(),
+  })
+  .refine(
+    (d) =>
+      d.label !== undefined ||
+      d.active !== undefined ||
+      d.kind !== undefined ||
+      d.department !== undefined,
+    { message: "Phải có ít nhất một trường cần cập nhật." },
+  );
 
 export const scanMeetNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -74,7 +119,39 @@ export const createMeetingRoom = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => createMeetingRoomSchema.parse(d))
   .handler(async ({ data, context }) => {
-    await requireAttendanceScopeAll(context.supabase);
+    // 1. Kiểm quyền và tự điền department nếu scope own tạo phòng work
+    const { data: scope, error: scopeErr } = await context.supabase.rpc("perm_scope", {
+      _action: "points.attendance",
+    });
+    if (scopeErr) throw new Error(scopeErr.message);
+    if (scope !== "all" && scope !== "own") {
+      throw new Error("Bạn không có quyền quản lý phòng họp.");
+    }
+
+    const { data: memberRows } = await context.supabase.rpc("my_active_member");
+    const actorDept = memberRows?.[0]?.department ?? null;
+
+    let targetDept = data.department ?? null;
+    if (data.kind === "work") {
+      if (scope === "own") {
+        if (!targetDept) targetDept = actorDept;
+        if (targetDept !== actorDept) {
+          throw new Error("Bạn chỉ được tạo phòng họp cho Ban của mình.");
+        }
+      } else {
+        if (!targetDept || !(DEPARTMENT_IDS as readonly string[]).includes(targetDept)) {
+          throw new Error("Họp làm việc bắt buộc chọn một Ban hợp lệ.");
+        }
+      }
+    } else {
+      targetDept = null;
+    }
+
+    await requireRoomManage(context.supabase, context.userId, {
+      kind: data.kind,
+      department: targetDept,
+      createdBy: context.userId,
+    });
 
     const { getBotAccessToken, meetPost } = await import("./meet-api.server");
     const token = await getBotAccessToken();
@@ -98,7 +175,7 @@ export const createMeetingRoom = createServerFn({ method: "POST" })
       .insert({
         label: data.label,
         kind: data.kind,
-        department: data.kind === "work" ? data.department! : null,
+        department: targetDept,
         space_name: space.name,
         meeting_uri: space.meetingUri,
         created_by: context.userId,
@@ -116,6 +193,131 @@ export const createMeetingRoom = createServerFn({ method: "POST" })
     return newRoom;
   });
 
+export const updateMeetingRoom = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => updateMeetingRoomSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Đọc phòng hiện tại
+    const { data: currentRoom, error: fetchErr } = await supabaseAdmin
+      .from("meeting_rooms")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!currentRoom) throw new Error("Không tìm thấy phòng họp cần cập nhật.");
+
+    // Kiểm tra quyền trên phòng hiện tại
+    const { scope, department: actorDept } = await requireRoomManage(
+      context.supabase,
+      context.userId,
+      {
+        kind: currentRoom.kind as RoomKind,
+        department: currentRoom.department,
+        createdBy: currentRoom.created_by,
+      },
+    );
+
+    // Scope 'own' không được đổi kind hay department
+    if (scope === "own") {
+      if (data.kind !== undefined && data.kind !== currentRoom.kind) {
+        throw new Error("Bạn không thể thay đổi loại phòng họp.");
+      }
+      if (data.department !== undefined && data.department !== currentRoom.department) {
+        throw new Error("Bạn không thể thay đổi Ban phụ trách phòng họp.");
+      }
+    }
+
+    const nextKind = (data.kind ?? currentRoom.kind) as RoomKind;
+    let nextDept: string | null;
+    if (nextKind === "work") {
+      nextDept = data.department !== undefined ? data.department : currentRoom.department;
+      if (!nextDept || !(DEPARTMENT_IDS as readonly string[]).includes(nextDept)) {
+        throw new Error("Họp làm việc bắt buộc chọn một Ban hợp lệ.");
+      }
+    } else {
+      nextDept = null;
+    }
+
+    // Kiểm tra quyền trên trạng thái mới nếu có thay đổi cấu hình
+    if (
+      !canManageRoom(
+        scope,
+        { userId: context.userId, department: actorDept },
+        { kind: nextKind, department: nextDept, createdBy: currentRoom.created_by },
+      )
+    ) {
+      throw new Error("Bạn không có quyền quản lý phòng họp với cấu hình này.");
+    }
+
+    const updatePayload: Database["public"]["Tables"]["meeting_rooms"]["Update"] = {};
+    if (data.label !== undefined) updatePayload.label = data.label;
+    if (data.active !== undefined) updatePayload.active = data.active;
+    if (data.kind !== undefined) updatePayload.kind = nextKind;
+    if (data.kind !== undefined || data.department !== undefined) {
+      updatePayload.department = nextDept;
+    }
+
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from("meeting_rooms")
+      .update(updatePayload)
+      .eq("id", data.id)
+      .select()
+      .single();
+
+    if (updateError) throw new Error(updateError.message);
+    return updated;
+  });
+
+export const deleteMeetingRoom = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: currentRoom, error: fetchErr } = await supabaseAdmin
+      .from("meeting_rooms")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!currentRoom) throw new Error("Không tìm thấy phòng họp cần xóa.");
+
+    await requireRoomManage(context.supabase, context.userId, {
+      kind: currentRoom.kind as RoomKind,
+      department: currentRoom.department,
+      createdBy: currentRoom.created_by,
+    });
+
+    const { error: delError } = await supabaseAdmin
+      .from("meeting_rooms")
+      .delete()
+      .eq("id", data.id);
+
+    if (delError) throw new Error(delError.message);
+    return { success: true };
+  });
+
+export const getMeetRunAttendees = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        conferenceRecord: z.string().regex(CONFERENCE_RECORD_RE),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.rpc("meet_run_attendees", {
+      _conference_record: data.conferenceRecord,
+    });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
 export const getMeetAutoStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MeetAutoStatus> => {
@@ -123,7 +325,12 @@ export const getMeetAutoStatus = createServerFn({ method: "GET" })
       _action: "points.attendance",
     });
     if (error) throw new Error(error.message);
-    if (!scope) throw new Error("Bạn không có quyền truy cập thông tin điểm danh họp.");
+    if (scope !== "all" && scope !== "own") {
+      throw new Error("Bạn không có quyền truy cập thông tin phòng họp.");
+    }
+
+    const { data: memberRows } = await context.supabase.rpc("my_active_member");
+    const department = memberRows?.[0]?.department ?? null;
 
     const requiredVars = [
       "GOOGLE_OAUTH_CLIENT_ID",
@@ -140,6 +347,9 @@ export const getMeetAutoStatus = createServerFn({ method: "GET" })
       configured: missing.length === 0,
       missing,
       canManage: scope === "all",
+      scope,
+      department,
+      userId: context.userId,
     };
   });
 

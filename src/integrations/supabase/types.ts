@@ -2491,6 +2491,17 @@ export type Database = {
           present_count: number;
         }[];
       };
+      meet_run_attendees: {
+        Args: { _conference_record: string };
+        Returns: {
+          member_id: string;
+          full_name: string;
+          member_code: string;
+          department: string;
+          position: string;
+          avatar_path: string | null;
+        }[];
+      };
       member_permissions: {
         Args: { _member: string };
         Returns: {

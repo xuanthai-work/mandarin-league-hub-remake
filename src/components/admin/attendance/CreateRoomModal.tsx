@@ -25,14 +25,19 @@ export function CreateRoomModal({
   open,
   onClose,
   onCreated,
+  scope,
+  myDepartment,
 }: {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
+  scope?: "all" | "own" | undefined;
+  myDepartment?: string | null | undefined;
 }) {
   const createFn = useServerFn(createMeetingRoom);
   const [kind, setKind] = useState<RoomKind>("work");
-  const [department, setDepartment] = useState<string>(DEPARTMENT_IDS[0] ?? "");
+  const defaultDept = scope === "own" && myDepartment ? myDepartment : (DEPARTMENT_IDS[0] ?? "");
+  const [department, setDepartment] = useState<string>(defaultDept);
   const [label, setLabel] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -44,7 +49,7 @@ export function CreateRoomModal({
 
   const resetForm = () => {
     setKind("work");
-    setDepartment(DEPARTMENT_IDS[0] ?? "");
+    setDepartment(defaultDept);
     setLabel("");
     setErrorMsg(null);
     setCreatedRoom(null);
@@ -76,7 +81,9 @@ export function CreateRoomModal({
       setErrorMsg("Vui lòng nhập tên phòng họp (1 đến 80 ký tự).");
       return;
     }
-    if (kind === "work" && !department) {
+    const targetDept =
+      kind === "work" ? (scope === "own" ? (myDepartment ?? "") : department) : undefined;
+    if (kind === "work" && !targetDept) {
       setErrorMsg("Vui lòng chọn Ban cho phòng họp làm việc.");
       return;
     }
@@ -88,7 +95,7 @@ export function CreateRoomModal({
       const room = await createFn({
         data: {
           kind,
-          ...(kind === "work" ? { department } : {}),
+          ...(kind === "work" ? { department: targetDept } : {}),
           label: trimmed,
         },
       });
@@ -185,31 +192,44 @@ export function CreateRoomModal({
                       setKind(val as RoomKind);
                       setErrorMsg(null);
                     }}
-                    options={[
-                      { value: "work", label: "Họp ban (2đ)" },
-                      { value: "shared", label: "Họp chung (2đ)" },
-                      { value: "club", label: "Họp toàn thể (10đ)" },
-                    ]}
+                    options={
+                      scope === "own"
+                        ? [
+                            { value: "work", label: "Họp ban (2đ)" },
+                            { value: "shared", label: "Họp chung (2đ)" },
+                          ]
+                        : [
+                            { value: "work", label: "Họp ban (2đ)" },
+                            { value: "shared", label: "Họp chung (2đ)" },
+                            { value: "club", label: "Họp toàn thể (10đ)" },
+                          ]
+                    }
                   />
                 )}
               </FormField>
 
               {kind === "work" && (
                 <FormField label="Ban phụ trách" required>
-                  {(field) => (
-                    <Select value={department} onValueChange={setDepartment}>
-                      <SelectTrigger {...field} className="w-full rounded-xl">
-                        <SelectValue placeholder="Chọn Ban" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        {DEPARTMENT_IDS.map((deptId) => (
-                          <SelectItem key={deptId} value={deptId}>
-                            {deptName(deptId)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  {(field) =>
+                    scope === "own" ? (
+                      <div className="rounded-xl border border-border bg-muted/40 px-3.5 py-2.5 text-xs font-medium text-foreground">
+                        {deptName(myDepartment ?? "") || "Ban của bạn"}
+                      </div>
+                    ) : (
+                      <Select value={department} onValueChange={setDepartment}>
+                        <SelectTrigger {...field} className="w-full rounded-xl">
+                          <SelectValue placeholder="Chọn Ban" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          {DEPARTMENT_IDS.map((deptId) => (
+                            <SelectItem key={deptId} value={deptId}>
+                              {deptName(deptId)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )
+                  }
                 </FormField>
               )}
 

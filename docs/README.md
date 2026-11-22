@@ -308,6 +308,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-221-MEET-MIN-20-MINUTES-AND-RUNS-TABLE-FIX`                   | Hạ ngưỡng điểm danh Meet còn 20 phút, sửa chữ tràn và tên phòng ở bảng kết quả                         | 2026-11-22     | **PASS** | [task-ge-221-meet-min-20-minutes-and-runs-table-fix.md](tasks/task-ge-221-meet-min-20-minutes-and-runs-table-fix.md)                                     |
 | `TASK-GE-222-MEET-SHARED-ROOMS-AND-DEPARTMENT-SCOPE`                   | Phòng họp chung, chỉ tính điểm thành viên đúng Ban, Ban chỉ thấy phòng của mình                        | 2026-11-22     | **PASS** | [task-ge-222-meet-shared-rooms-and-department-scope.md](tasks/task-ge-222-meet-shared-rooms-and-department-scope.md)                                     |
 | `TASK-GE-223-MEET-ROOM-PRESENCE-AND-DROP-MANUAL`                       | Trạng thái phòng họp (số người, đệm 60 giây, không polling), bỏ tab và code điểm danh thủ công         | 2026-11-22     | **PASS** | [task-ge-223-meet-room-presence-and-drop-manual.md](tasks/task-ge-223-meet-room-presence-and-drop-manual.md)                                             |
+| `TASK-GE-224-MEET-ROOMS-SCREEN-MANAGE-AND-ATTENDEES`                   | Đổi tên màn thành Phòng họp, xem người được điểm danh, bộ lọc, tạo/sửa/xóa phòng theo quyền            | 2026-11-22     | **PASS** | [task-ge-224-meet-rooms-screen-manage-and-attendees.md](tasks/task-ge-224-meet-rooms-screen-manage-and-attendees.md)                                     |
 
 ---
 

@@ -1,11 +1,9 @@
 import { useMemo, useState } from "react";
-import { AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Eye, History, Loader2, Play, RefreshCw, Users } from "lucide-react";
+import { History, Loader2, Play, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-import { AdminModal } from "@/components/admin/kit/AdminModal";
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
 import { StatusPill } from "@/components/admin/kit/StatusPill";
@@ -13,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { rescoreMeetConference, scanMeetNow } from "@/lib/meet-auto.functions";
-import type { AutoResult } from "@/lib/meet-auto.server";
+import { RunAttendeesModal } from "./RunAttendeesModal";
 
 type MeetAutoRunRow = Database["public"]["Tables"]["meet_auto_runs"]["Row"] & {
   meeting_rooms?: {
@@ -66,15 +64,17 @@ function shortenRecordId(record: string): string {
   return `${id.slice(0, 6)}…${id.slice(-4)}`;
 }
 
-export function MeetRunsCard({ canManage }: { canManage: boolean }) {
+export function MeetRunsCard({ canManage, scope }: { canManage: boolean; scope?: "all" | "own" }) {
   const scanFn = useServerFn(scanMeetNow);
   const rescoreFn = useServerFn(rescoreMeetConference);
 
   const [scanning, setScanning] = useState(false);
-  const [previewing, setPreviewing] = useState(false);
   const [rescoringRecord, setRescoringRecord] = useState<string | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewResults, setPreviewResults] = useState<AutoResult[]>([]);
+  const [selectedRun, setSelectedRun] = useState<{
+    conferenceRecord: string;
+    roomLabel?: string;
+    meetingTime?: string;
+  } | null>(null);
 
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["admin", "meet_auto_runs"],
@@ -132,20 +132,6 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
     }
   };
 
-  const handleDryRun = async () => {
-    setPreviewing(true);
-    try {
-      const results = await scanFn({ data: { dryRun: true } });
-      setPreviewResults(results);
-      setPreviewOpen(true);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Xem trước quét thất bại.";
-      toast.error(msg);
-    } finally {
-      setPreviewing(false);
-    }
-  };
-
   const handleRescore = async (record: string) => {
     setRescoringRecord(record);
     try {
@@ -184,38 +170,20 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
             <h2 className="text-sm font-semibold">Kết quả điểm danh tự động</h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Lịch sử các buổi họp được hệ thống quét và chấm điểm tự động (50 buổi gần nhất).
+            Hệ thống tự quét mỗi ngày lúc 03:00 sáng. Bấm &quot;Cập nhật kết quả&quot; nếu muốn quét
+            ngay.
           </p>
         </div>
 
         {canManage && (
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="admin"
-              onClick={handleDryRun}
-              disabled={previewing || scanning}
-            >
-              {previewing ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Eye className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              Xem trước
-            </Button>
-            <Button
-              type="button"
-              size="admin"
-              onClick={handleScanNow}
-              disabled={scanning || previewing}
-            >
+            <Button type="button" size="admin" onClick={handleScanNow} disabled={scanning}>
               {scanning ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Play className="mr-1.5 h-3.5 w-3.5" />
               )}
-              Quét ngay
+              Cập nhật kết quả
             </Button>
           </div>
         )}
@@ -266,8 +234,22 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
             const outsideCount =
               outsideMatch && outsideMatch[1] ? parseInt(outsideMatch[1], 10) : 0;
 
+            const isClickable = Boolean(run.attendance_session_id);
+
             return (
-              <AdminTableRow key={run.conference_record}>
+              <AdminTableRow
+                key={run.conference_record}
+                {...(isClickable
+                  ? {
+                      onOpen: () =>
+                        setSelectedRun({
+                          conferenceRecord: run.conference_record,
+                          roomLabel: roomName,
+                          meetingTime: formatVietnamDateTime(run.meeting_start),
+                        }),
+                    }
+                  : {})}
+              >
                 <td className="p-3 text-xs text-muted-foreground">
                   <div>{formatVietnamDateTime(run.meeting_start)}</div>
                   {run.meeting_end && (
@@ -346,119 +328,13 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
         </AdminTable>
       )}
 
-      {/* Preview Modal for dryRun */}
-      <AnimatePresence>
-        {previewOpen && (
-          <AdminModal
-            title="Xem trước kết quả quét Meet"
-            description="Chế độ xem trước (dryRun) mô phỏng kết quả xử lý các buổi họp đã kết thúc. Chưa có điểm nào được ghi."
-            icon={Eye}
-            size="lg"
-            onClose={() => setPreviewOpen(false)}
-            footer={
-              <div className="flex w-full items-center justify-between">
-                <span className="text-xs font-medium text-warning-foreground">
-                  ⚠️ Chưa ghi điểm vào cơ sở dữ liệu
-                </span>
-                <Button size="admin" onClick={() => setPreviewOpen(false)}>
-                  Đóng
-                </Button>
-              </div>
-            }
-          >
-            {previewResults.length === 0 ? (
-              <EmptyState
-                title="Không có buổi họp mới nào"
-                description="Tất cả các buổi họp gần đây đã được xử lý trước đó hoặc không có buổi họp nào đã kết thúc."
-              />
-            ) : (
-              <div className="space-y-3">
-                {previewResults.map((item) => {
-                  const conf = STATUS_CONFIG[item.status] ?? {
-                    label: item.status,
-                    tone: "neutral",
-                  };
-                  return (
-                    <div
-                      key={item.conferenceRecord}
-                      className="rounded-xl border border-border bg-card/60 p-3.5 text-xs shadow-2xs"
-                    >
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <div
-                          className="font-semibold text-foreground"
-                          title={item.conferenceRecord}
-                        >
-                          {item.roomLabel || shortenRecordId(item.conferenceRecord)}
-                          {item.kind && (
-                            <span className="ml-2 font-normal text-muted-foreground">
-                              (
-                              {item.kind === "work"
-                                ? "Họp ban - 2đ"
-                                : item.kind === "shared"
-                                  ? "Họp chung - 2đ"
-                                  : "Họp toàn thể - 10đ"}
-                              )
-                            </span>
-                          )}
-                        </div>
-                        <StatusPill tone={conf.tone}>{conf.label}</StatusPill>
-                      </div>
-
-                      <div className="mt-1 text-muted-foreground">
-                        Thời gian: {formatVietnamDateTime(item.start)} –{" "}
-                        {formatVietnamDateTime(item.end)}
-                      </div>
-
-                      <div className="mt-2 text-foreground">{item.detail}</div>
-
-                      {(item.presentCount !== undefined ||
-                        (item.outsideCount !== undefined && item.outsideCount > 0) ||
-                        item.leaderCount !== undefined ||
-                        item.unlinkedCount !== undefined) && (
-                        <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
-                          {item.presentCount !== undefined && (
-                            <div className="flex items-center gap-1 font-medium text-success">
-                              <Users className="h-3 w-3" />
-                              <span>{item.presentCount} người nhận điểm</span>
-                            </div>
-                          )}
-                          {item.outsideCount !== undefined && item.outsideCount > 0 && (
-                            <div>Ngoài Ban (không điểm): {item.outsideCount}</div>
-                          )}
-                          {item.leaderCount !== undefined && (
-                            <div>Lãnh đạo (không điểm): {item.leaderCount}</div>
-                          )}
-                          {item.unlinkedCount !== undefined && (
-                            <div>Chưa liên kết: {item.unlinkedCount}</div>
-                          )}
-                        </div>
-                      )}
-
-                      {item.outsideNames && item.outsideNames.length > 0 && (
-                        <div className="mt-2 rounded-lg bg-secondary/30 p-2 text-[11px]">
-                          <span className="font-medium text-muted-foreground">
-                            Ngoài Ban (không điểm):{" "}
-                          </span>
-                          <span className="text-foreground">{item.outsideNames.join(", ")}</span>
-                        </div>
-                      )}
-
-                      {item.matchedNames && item.matchedNames.length > 0 && (
-                        <div className="mt-2 rounded-lg bg-secondary/30 p-2 text-[11px]">
-                          <span className="font-medium text-muted-foreground">
-                            Thành viên dự kiến nhận điểm:{" "}
-                          </span>
-                          <span className="text-foreground">{item.matchedNames.join(", ")}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </AdminModal>
-        )}
-      </AnimatePresence>
+      <RunAttendeesModal
+        open={Boolean(selectedRun)}
+        onClose={() => setSelectedRun(null)}
+        conferenceRecord={selectedRun?.conferenceRecord ?? null}
+        roomLabel={selectedRun?.roomLabel}
+        meetingTime={selectedRun?.meetingTime}
+      />
     </div>
   );
 }

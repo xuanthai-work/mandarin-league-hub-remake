@@ -8,7 +8,7 @@ import { useAdminAccess } from "./admin";
 export const Route = createFileRoute("/_authenticated/admin/attendance")({
   staticData: { sitemap: false },
   head: () => ({
-    meta: [{ title: "Điểm danh họp | TML Admin" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Phòng họp | TML Admin" }, { name: "robots", content: "noindex" }],
   }),
   component: AttendancePage,
 });
@@ -20,15 +20,15 @@ function AttendancePage() {
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <AdminPageHeader
-        title="Điểm danh họp"
+        title="Phòng họp"
         description="Quản lý các phòng họp chính thức và kết quả điểm danh Google Meet tự động."
       />
 
       {!canAttend ? (
         <EmptyState
           tone="error"
-          title="Bạn chưa có quyền điểm danh họp"
-          description="Chỉ Trưởng Ban, Phó Ban hoặc quản trị viên mới có quyền chấm điểm danh."
+          title="Bạn chưa có quyền xem phòng họp"
+          description="Chỉ Trưởng Ban, Phó Ban hoặc quản trị viên mới có quyền xem phòng họp và kết quả điểm danh."
         />
       ) : (
         <MeetAutoPanel />
