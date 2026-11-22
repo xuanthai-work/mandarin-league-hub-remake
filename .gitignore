@@ -21,6 +21,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Google OAuth client secret files downloaded from Cloud Console
+client_secret*.json
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
