@@ -12,21 +12,26 @@ import {
   AUTO_MIN_MINUTES,
   classifyConference,
   formatAutoReason,
+  pickScorable,
+  scoringKindFor,
   type AutoStatus,
+  type RoomKind,
 } from "./meet-auto";
 
 export type AutoResult = {
   conferenceRecord: string;
   status: AutoStatus | "skipped";
   detail: string;
-  kind?: "work" | "club";
-  roomLabel?: string;
-  start?: string | null;
-  end?: string | null;
-  presentCount?: number;
-  leaderCount?: number;
-  unlinkedCount?: number;
-  matchedNames?: string[];
+  kind?: RoomKind | undefined;
+  roomLabel?: string | undefined;
+  start?: string | null | undefined;
+  end?: string | null | undefined;
+  presentCount?: number | undefined;
+  outsideCount?: number | undefined;
+  leaderCount?: number | undefined;
+  unlinkedCount?: number | undefined;
+  matchedNames?: string[] | undefined;
+  outsideNames?: string[] | undefined;
 };
 
 export async function processConference(
@@ -212,12 +217,28 @@ export async function processConference(
 
   if (classification === "too_short") {
     const detail = `Buổi họp dưới ${AUTO_MIN_MINUTES} phút, không đủ điều kiện chấm điểm.`;
+    let roomId: string | null = null;
+    let roomLabel: string | undefined = undefined;
+    let roomKind: RoomKind | undefined = undefined;
+    if (space) {
+      const { data: matchedRoom } = await supabaseAdmin
+        .from("meeting_rooms")
+        .select("id, label, kind")
+        .eq("space_name", space)
+        .maybeSingle();
+      if (matchedRoom) {
+        roomId = matchedRoom.id;
+        roomLabel = matchedRoom.label;
+        roomKind = matchedRoom.kind as RoomKind;
+      }
+    }
     if (!opts.dryRun) {
       await supabaseAdmin
         .from("meet_auto_runs")
         .update({
           status: "too_short",
           detail,
+          room_id: roomId,
           space_name: space,
           meeting_start: start,
           meeting_end: end,
@@ -225,7 +246,15 @@ export async function processConference(
         })
         .eq("conference_record", conferenceRecord);
     }
-    return { conferenceRecord, status: "too_short", detail, start, end };
+    return {
+      conferenceRecord,
+      status: "too_short",
+      detail,
+      kind: roomKind,
+      roomLabel,
+      start,
+      end,
+    };
   }
 
   // 4. Tìm phòng
@@ -254,6 +283,8 @@ export async function processConference(
     return { conferenceRecord, status: "unknown_room", detail, start, end };
   }
 
+  const roomKind = room.kind as RoomKind;
+
   // 5. Đọc người tham dự và khớp thành viên
   let participants: ParsedParticipant[];
   try {
@@ -278,7 +309,7 @@ export async function processConference(
       conferenceRecord,
       status: "error",
       detail,
-      kind: room.kind as "work" | "club",
+      kind: roomKind,
       roomLabel: room.label,
       start,
       end,
@@ -311,20 +342,25 @@ export async function processConference(
       conferenceRecord,
       status: "error",
       detail,
-      kind: room.kind as "work" | "club",
+      kind: roomKind,
       roomLabel: room.label,
       start,
       end,
     };
   }
   const split = splitParticipants(participants, links);
+  const { scored, outside } = pickScorable(roomKind, room.department, split.matched);
 
-  const matchedCount = split.matched.length;
+  const matchedCount = scored.length;
+  const outsideCount = outside.length;
   const leaderCount = split.leaders.length;
   const unlinkedCount = split.unlinked.length;
 
   if (matchedCount === 0) {
-    const detail = "Không có thành viên nào đủ điều kiện nhận điểm trong buổi họp.";
+    const detail =
+      outsideCount > 0
+        ? `Không có thành viên nào của Ban này trong buổi họp (${outsideCount} người ngoài Ban không tính điểm).`
+        : "Không có thành viên nào đủ điều kiện nhận điểm trong buổi họp.";
     if (!opts.dryRun) {
       await supabaseAdmin
         .from("meet_auto_runs")
@@ -344,13 +380,15 @@ export async function processConference(
       conferenceRecord,
       status: "no_members",
       detail,
-      kind: room.kind as "work" | "club",
+      kind: roomKind,
       roomLabel: room.label,
       start,
       end,
       presentCount: 0,
+      outsideCount,
       leaderCount,
       unlinkedCount,
+      outsideNames: opts.dryRun ? outside.map((m) => m.full_name) : undefined,
     };
   }
 
@@ -360,14 +398,16 @@ export async function processConference(
       conferenceRecord,
       status: "scored",
       detail: "Dự kiến chấm điểm (dryRun)",
-      kind: room.kind as "work" | "club",
+      kind: roomKind,
       roomLabel: room.label,
       start,
       end,
       presentCount: matchedCount,
+      outsideCount,
       leaderCount,
       unlinkedCount,
-      matchedNames: split.matched.map((m) => m.full_name),
+      matchedNames: scored.map((m) => m.full_name),
+      outsideNames: outside.map((m) => m.full_name),
     };
   }
 
@@ -392,7 +432,7 @@ export async function processConference(
       conferenceRecord,
       status: "error",
       detail,
-      kind: room.kind as "work" | "club",
+      kind: roomKind,
       roomLabel: room.label,
       start,
       end,
@@ -400,13 +440,13 @@ export async function processConference(
   }
 
   const departmentLabel = room.department ? deptName(room.department) : null;
-  const reason = formatAutoReason(room.kind as "work" | "club", departmentLabel, start!);
-  const matchedIds = split.matched.map((m) => m.id);
+  const reason = formatAutoReason(roomKind, departmentLabel, start!);
+  const matchedIds = scored.map((m) => m.id);
 
   const { data: sessionId, error: rpcError } = await supabaseAdmin.rpc("record_meet_attendance", {
     _actor: scorer,
     _conference_record: conferenceRecord,
-    _meeting_kind: room.kind,
+    _meeting_kind: scoringKindFor(roomKind),
     _meeting_start: start!,
     _meeting_end: end!,
     _matched: matchedIds,
@@ -423,7 +463,10 @@ export async function processConference(
         .maybeSingle();
 
       const sid = existingSession?.id ?? null;
-      const detail = "Buổi họp đã được chấm điểm trước đó trong hệ thống.";
+      let detail = "Buổi họp đã được chấm điểm trước đó trong hệ thống.";
+      if (outsideCount > 0) {
+        detail += ` (${outsideCount} người ngoài Ban không tính điểm).`;
+      }
       await supabaseAdmin
         .from("meet_auto_runs")
         .update({
@@ -443,11 +486,12 @@ export async function processConference(
         conferenceRecord,
         status: "scored",
         detail,
-        kind: room.kind as "work" | "club",
+        kind: roomKind,
         roomLabel: room.label,
         start,
         end,
         presentCount: matchedCount,
+        outsideCount,
         leaderCount,
         unlinkedCount,
       };
@@ -471,7 +515,7 @@ export async function processConference(
       conferenceRecord,
       status: "error",
       detail,
-      kind: room.kind as "work" | "club",
+      kind: roomKind,
       roomLabel: room.label,
       start,
       end,
@@ -479,7 +523,9 @@ export async function processConference(
   }
 
   // 8. Thành công: ghi nhận trạng thái scored
-  const detail = `Đã tự động cộng điểm cho ${matchedCount} thành viên.`;
+  const outsideSuffix =
+    outsideCount > 0 ? `, ${outsideCount} người ngoài Ban không tính điểm.` : ".";
+  const detail = `Đã tự động cộng điểm cho ${matchedCount} thành viên${outsideSuffix}`;
   await supabaseAdmin
     .from("meet_auto_runs")
     .update({
@@ -499,11 +545,12 @@ export async function processConference(
     conferenceRecord,
     status: "scored",
     detail,
-    kind: room.kind as "work" | "club",
+    kind: roomKind,
     roomLabel: room.label,
     start,
     end,
     presentCount: matchedCount,
+    outsideCount,
     leaderCount,
     unlinkedCount,
   };

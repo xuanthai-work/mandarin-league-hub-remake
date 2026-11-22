@@ -1,6 +1,58 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearBotAccessTokenCache, getBotAccessToken } from "./meet-api.server";
-import { AUTO_MIN_MINUTES, classifyConference, formatAutoReason } from "./meet-auto";
+import {
+  AUTO_MIN_MINUTES,
+  classifyConference,
+  formatAutoReason,
+  pickScorable,
+  scoringKindFor,
+} from "./meet-auto";
+
+describe("scoringKindFor", () => {
+  it("maps work and shared to work (2 points), club to club (10 points)", () => {
+    expect(scoringKindFor("work")).toBe("work");
+    expect(scoringKindFor("shared")).toBe("work");
+    expect(scoringKindFor("club")).toBe("club");
+  });
+});
+
+describe("pickScorable", () => {
+  const members = [
+    { id: "1", full_name: "Nguyen Van A", department: "tech" },
+    { id: "2", full_name: "Tran Thi B", department: "hr" },
+    { id: "3", full_name: "Le Van C", department: "tech" },
+  ];
+
+  it("filters by department for work rooms: matching is scored, others are outside", () => {
+    const { scored, outside } = pickScorable("work", "tech", members);
+    expect(scored.map((m) => m.id)).toEqual(["1", "3"]);
+    expect(outside.map((m) => m.id)).toEqual(["2"]);
+  });
+
+  it("treats all members as outside when work room has null department", () => {
+    const { scored, outside } = pickScorable("work", null, members);
+    expect(scored).toEqual([]);
+    expect(outside.map((m) => m.id)).toEqual(["1", "2", "3"]);
+  });
+
+  it("scores all members for shared room regardless of department", () => {
+    const { scored, outside } = pickScorable("shared", null, members);
+    expect(scored.map((m) => m.id)).toEqual(["1", "2", "3"]);
+    expect(outside).toEqual([]);
+  });
+
+  it("scores all members for club room regardless of department", () => {
+    const { scored, outside } = pickScorable("club", null, members);
+    expect(scored.map((m) => m.id)).toEqual(["1", "2", "3"]);
+    expect(outside).toEqual([]);
+  });
+
+  it("handles empty matched array cleanly", () => {
+    expect(pickScorable("work", "tech", [])).toEqual({ scored: [], outside: [] });
+    expect(pickScorable("shared", null, [])).toEqual({ scored: [], outside: [] });
+    expect(pickScorable("club", null, [])).toEqual({ scored: [], outside: [] });
+  });
+});
 
 describe("classifyConference", () => {
   it("returns not_ended when start or end is missing", () => {
@@ -48,6 +100,11 @@ describe("formatAutoReason", () => {
   it("formats club meeting correctly with date in Asia/Ho_Chi_Minh", () => {
     const reason = formatAutoReason("club", null, "2026-11-22T20:00:00Z");
     expect(reason).toBe("Điểm danh Họp toàn thể - 23/11/2026 (tự động qua Google Meet)");
+  });
+
+  it("formats shared meeting correctly with date in Asia/Ho_Chi_Minh", () => {
+    const reason = formatAutoReason("shared", null, "2026-11-22T20:00:00Z");
+    expect(reason).toBe("Điểm danh Họp chung - 23/11/2026 (tự động qua Google Meet)");
   });
 
   it("truncates reason if longer than 300 characters", () => {

@@ -30,7 +30,7 @@ const scanMeetSchema = z.object({
 
 const createMeetingRoomSchema = z
   .object({
-    kind: z.enum(["work", "club"]),
+    kind: z.enum(["work", "club", "shared"]),
     department: z.string().trim().optional(),
     label: z.string().trim().min(1).max(80),
   })
@@ -47,7 +47,10 @@ const createMeetingRoomSchema = z
       if (val.department) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Họp toàn thể không được gắn với Ban cụ thể.",
+          message:
+            val.kind === "shared"
+              ? "Họp chung không được gắn với Ban cụ thể."
+              : "Họp toàn thể không được gắn với Ban cụ thể.",
           path: ["department"],
         });
       }

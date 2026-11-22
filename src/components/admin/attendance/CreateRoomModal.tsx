@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createMeetingRoom } from "@/lib/meet-auto.functions";
+import type { RoomKind } from "@/lib/meet-auto";
 import { DEPARTMENT_IDS } from "@/lib/permission-catalog";
 import { deptName } from "@/lib/recruitment";
 
@@ -30,7 +31,7 @@ export function CreateRoomModal({
   onCreated: () => void;
 }) {
   const createFn = useServerFn(createMeetingRoom);
-  const [kind, setKind] = useState<"work" | "club">("work");
+  const [kind, setKind] = useState<RoomKind>("work");
   const [department, setDepartment] = useState<string>(DEPARTMENT_IDS[0] ?? "");
   const [label, setLabel] = useState("");
   const [loading, setLoading] = useState(false);
@@ -181,11 +182,12 @@ export function CreateRoomModal({
                     label="Loại cuộc họp"
                     value={kind}
                     onChange={(val) => {
-                      setKind(val as "work" | "club");
+                      setKind(val as RoomKind);
                       setErrorMsg(null);
                     }}
                     options={[
                       { value: "work", label: "Họp ban (2đ)" },
+                      { value: "shared", label: "Họp chung (2đ)" },
                       { value: "club", label: "Họp toàn thể (10đ)" },
                     ]}
                   />
@@ -211,7 +213,15 @@ export function CreateRoomModal({
                 </FormField>
               )}
 
-              <FormField label="Tên phòng họp" required>
+              <FormField
+                label="Tên phòng họp"
+                required
+                hint={
+                  kind === "shared"
+                    ? "Phòng dùng cho họp liên Ban: ai cũng được tính điểm. Hãy tạo nhiều phòng (Họp chung 1, 2, 3...) vì mỗi phòng chỉ chạy một cuộc họp cùng lúc."
+                    : undefined
+                }
+              >
                 {(field) => (
                   <AdminInput
                     {...field}
@@ -220,7 +230,13 @@ export function CreateRoomModal({
                       setLabel(e.target.value);
                       setErrorMsg(null);
                     }}
-                    placeholder="Ví dụ: Phòng họp Ban Công nghệ"
+                    placeholder={
+                      kind === "shared"
+                        ? "Ví dụ: Họp chung 1"
+                        : kind === "club"
+                          ? "Ví dụ: Phòng họp toàn thể"
+                          : "Ví dụ: Phòng họp Ban Công nghệ"
+                    }
                     maxLength={80}
                     disabled={loading}
                     autoFocus

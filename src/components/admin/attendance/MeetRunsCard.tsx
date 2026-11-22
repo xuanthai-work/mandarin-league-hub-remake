@@ -260,6 +260,11 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                 run.status === "unknown_room" ||
                 run.status === "no_members");
             const isRescoring = rescoringRecord === run.conference_record;
+            const outsideMatch = run.detail
+              ? /(\d+)\s+người ngoài Ban không tính điểm/.exec(run.detail)
+              : null;
+            const outsideCount =
+              outsideMatch && outsideMatch[1] ? parseInt(outsideMatch[1], 10) : 0;
 
             return (
               <AdminTableRow key={run.conference_record}>
@@ -272,8 +277,16 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                   )}
                 </td>
                 <td className="p-3 overflow-hidden">
-                  <div className="truncate font-medium text-foreground" title={roomName}>
-                    {roomName}
+                  <div
+                    className="flex items-center gap-1.5 truncate font-medium text-foreground"
+                    title={roomName}
+                  >
+                    <span className="truncate">{roomName}</span>
+                    {run.meeting_rooms?.kind === "shared" && (
+                      <span className="shrink-0 rounded bg-secondary px-1 text-[10px] text-muted-foreground">
+                        Họp chung
+                      </span>
+                    )}
                   </div>
                   <span
                     title={run.conference_record}
@@ -287,7 +300,14 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                 </td>
                 <td className="p-3 text-center text-xs">
                   {run.present_count !== null ? (
-                    <span className="font-medium">{run.present_count}</span>
+                    <div>
+                      <span className="font-medium">{run.present_count}</span>
+                      {outsideCount > 0 && (
+                        <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                          Ngoài Ban (không điểm): {outsideCount}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     "—"
                   )}
@@ -371,7 +391,13 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                           {item.roomLabel || shortenRecordId(item.conferenceRecord)}
                           {item.kind && (
                             <span className="ml-2 font-normal text-muted-foreground">
-                              ({item.kind === "work" ? "Họp ban - 2đ" : "Họp toàn thể - 10đ"})
+                              (
+                              {item.kind === "work"
+                                ? "Họp ban - 2đ"
+                                : item.kind === "shared"
+                                  ? "Họp chung - 2đ"
+                                  : "Họp toàn thể - 10đ"}
+                              )
                             </span>
                           )}
                         </div>
@@ -386,6 +412,7 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                       <div className="mt-2 text-foreground">{item.detail}</div>
 
                       {(item.presentCount !== undefined ||
+                        (item.outsideCount !== undefined && item.outsideCount > 0) ||
                         item.leaderCount !== undefined ||
                         item.unlinkedCount !== undefined) && (
                         <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
@@ -395,12 +422,24 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                               <span>{item.presentCount} người nhận điểm</span>
                             </div>
                           )}
+                          {item.outsideCount !== undefined && item.outsideCount > 0 && (
+                            <div>Ngoài Ban (không điểm): {item.outsideCount}</div>
+                          )}
                           {item.leaderCount !== undefined && (
                             <div>Lãnh đạo (không điểm): {item.leaderCount}</div>
                           )}
                           {item.unlinkedCount !== undefined && (
                             <div>Chưa liên kết: {item.unlinkedCount}</div>
                           )}
+                        </div>
+                      )}
+
+                      {item.outsideNames && item.outsideNames.length > 0 && (
+                        <div className="mt-2 rounded-lg bg-secondary/30 p-2 text-[11px]">
+                          <span className="font-medium text-muted-foreground">
+                            Ngoài Ban (không điểm):{" "}
+                          </span>
+                          <span className="text-foreground">{item.outsideNames.join(", ")}</span>
                         </div>
                       )}
 

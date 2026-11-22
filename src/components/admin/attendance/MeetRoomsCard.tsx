@@ -38,14 +38,20 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["admin", "meeting_rooms"],
     queryFn: async () => {
-      const { data: rooms, error: queryError } = await supabase
-        .from("meeting_rooms")
-        .select("*")
-        .order("kind", { ascending: false })
-        .order("label", { ascending: true });
+      const { data: rooms, error: queryError } = await supabase.from("meeting_rooms").select("*");
 
       if (queryError) throw queryError;
-      return (rooms ?? []) as MeetingRoomRow[];
+      const list = (rooms ?? []) as MeetingRoomRow[];
+      const kindRank: Record<string, number> = {
+        club: 0,
+        shared: 1,
+        work: 2,
+      };
+      return list.sort((a, b) => {
+        const rankDiff = (kindRank[a.kind] ?? 99) - (kindRank[b.kind] ?? 99);
+        if (rankDiff !== 0) return rankDiff;
+        return a.label.localeCompare(b.label, "vi");
+      });
     },
   });
 
@@ -98,7 +104,8 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
             <h2 className="text-sm font-semibold">Phòng họp chính thức</h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Các phòng cố định do bot Google sở hữu (quyền OPEN, vào họp thẳng).
+            Các phòng cố định do bot Google sở hữu (quyền OPEN, vào họp thẳng). Trưởng Ban và Phó
+            Ban chỉ thấy phòng của Ban mình và các phòng chung.
           </p>
         </div>
         {canManage && (
@@ -149,8 +156,12 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
       ) : (
         <AdminTable columns={columns} minWidth="min-w-[640px]">
           {data.map((room) => {
-            const isWork = room.kind === "work";
-            const kindText = isWork ? `Họp ban (${deptName(room.department)})` : "Họp toàn thể";
+            const kindText =
+              room.kind === "club"
+                ? "Họp toàn thể"
+                : room.kind === "shared"
+                  ? "Họp chung (liên Ban)"
+                  : `Họp ban (${deptName(room.department)})`;
 
             return (
               <AdminTableRow key={room.id}>
