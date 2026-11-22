@@ -6,30 +6,37 @@ import {
   Copy,
   ExternalLink,
   Loader2,
-  Pencil,
   Plus,
   RefreshCw,
-  Trash2,
+  Search,
   Video,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
-import { SegmentedControl } from "@/components/admin/kit/SegmentedControl";
+import { SearchInput } from "@/components/admin/kit/SearchInput";
 import { StatusPill } from "@/components/admin/kit/StatusPill";
-import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { CtaLink } from "@/components/site/CtaLink";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { deleteMeetingRoom } from "@/lib/meet-auto.functions";
 import { getRoomsPresence } from "@/lib/meet-presence.functions";
 import { presenceLabel, sharedRoomWarning, type RoomPresence } from "@/lib/meet-presence";
 import { canManageRoom, type RoomKind } from "@/lib/meet-room-access";
 import { deptName } from "@/lib/recruitment";
+import { matchesSearch } from "@/lib/search";
 import { CreateRoomModal } from "./CreateRoomModal";
-import { EditRoomModal } from "./EditRoomModal";
+import { RoomDrawer } from "./RoomDrawer";
 
 type MeetingRoomRow = Database["public"]["Tables"]["meeting_rooms"]["Row"];
 
@@ -56,21 +63,19 @@ function formatCheckTime(iso?: string): string {
 
 interface MeetRoomsCardProps {
   canManage: boolean;
-  scope?: "all" | "own";
-  department?: string | null;
-  userId?: string;
+  scope?: "all" | "own" | undefined;
+  department?: string | null | undefined;
+  userId?: string | undefined;
 }
 
 export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoomsCardProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<MeetingRoomRow | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const queryClient = useQueryClient();
   const presenceFn = useServerFn(getRoomsPresence);
-  const deleteFn = useServerFn(deleteMeetingRoom);
-  const { confirm, dialog } = useConfirm();
 
   const canCreate = canManage || scope === "all" || scope === "own";
 
@@ -137,106 +142,60 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
     }
   };
 
-  const handleDeleteRoom = async (room: MeetingRoomRow) => {
-    const ok = await confirm({
-      title: "Xác nhận xóa phòng họp",
-      description: `Bạn có chắc chắn muốn xóa phòng họp '${room.label}'? Lịch sử điểm danh các cuộc họp đã kết thúc trong phòng này vẫn được giữ nguyên.`,
-      confirmLabel: "Xóa phòng",
-      destructive: true,
-    });
-    if (!ok) return;
-
-    try {
-      setDeletingId(room.id);
-      await deleteFn({ data: { id: room.id } });
-      toast.success(`Đã xóa phòng họp "${room.label}"`);
-      await refetch();
-      await refetchPresence();
-      queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "meet_auto_runs"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms_presence"] });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Không thể xóa phòng họp");
-    } finally {
-      setDeletingId(null);
+  const workDepts = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of data ?? []) {
+      if (r.kind === "work" && r.department) {
+        set.add(r.department);
+      }
     }
-  };
-
-  const filterOptions = useMemo(() => {
-    if (scope === "own") {
-      return [
-        { value: "all", label: "Tất cả" },
-        { value: "own", label: "Ban mình" },
-        { value: "shared", label: "Họp chung" },
-      ];
-    }
-    const depts = Array.from(
-      new Set(
-        data?.filter((r) => r.kind === "work" && r.department).map((r) => r.department as string) ??
-          [],
-      ),
-    ).sort();
-    return [
-      { value: "all", label: "Tất cả" },
-      { value: "club", label: "Họp toàn thể" },
-      { value: "shared", label: "Họp chung" },
-      ...depts.map((d) => ({ value: `dept:${d}`, label: deptName(d) })),
-    ];
-  }, [scope, data]);
+    return Array.from(set).sort();
+  }, [data]);
 
   const filteredRooms = useMemo(() => {
     if (!data) return [];
-    if (filter === "all") return data;
-    if (scope === "own") {
-      if (filter === "own") {
-        return data.filter(
-          (r) => r.kind === "work" && (!department || r.department === department),
-        );
-      }
-      if (filter === "shared") {
-        return data.filter((r) => r.kind === "shared");
-      }
-    } else {
-      if (filter === "club") return data.filter((r) => r.kind === "club");
-      if (filter === "shared") return data.filter((r) => r.kind === "shared");
-      if (filter.startsWith("dept:")) {
-        const targetDept = filter.slice(5);
-        return data.filter((r) => r.kind === "work" && r.department === targetDept);
+    let list = data;
+
+    // 1. Filter by category
+    if (filter !== "all") {
+      if (scope === "own") {
+        if (filter === "own") {
+          list = list.filter(
+            (r) => r.kind === "work" && (!department || r.department === department),
+          );
+        } else if (filter === "shared") {
+          list = list.filter((r) => r.kind === "shared");
+        }
+      } else {
+        if (filter === "club") {
+          list = list.filter((r) => r.kind === "club");
+        } else if (filter === "shared") {
+          list = list.filter((r) => r.kind === "shared");
+        } else if (filter.startsWith("dept:")) {
+          const targetDept = filter.slice(5);
+          list = list.filter((r) => r.kind === "work" && r.department === targetDept);
+        }
       }
     }
-    return data;
-  }, [data, filter, scope, department]);
 
-  const canManageAny = useMemo(() => {
-    if (!data) return false;
-    return data.some((room) =>
-      canManageRoom(
-        scope,
-        { userId: userId ?? "", department },
-        { kind: room.kind as RoomKind, department: room.department, createdBy: room.created_by },
-      ),
-    );
-  }, [data, scope, userId, department]);
-
-  const columns: AdminColumn[] = useMemo(() => {
-    const cols: AdminColumn[] = [
-      { key: "label", label: "Tên phòng", className: "w-[30%]" },
-      { key: "kind", label: "Loại cuộc họp", className: canManageAny ? "w-[20%]" : "w-[25%]" },
-      { key: "link", label: "Liên kết Meet", className: canManageAny ? "w-[25%]" : "w-[25%]" },
-      {
-        key: "status",
-        label: "Trạng thái",
-        className: canManageAny ? "w-[15%] text-right" : "w-[20%] text-right",
-      },
-    ];
-    if (canManageAny) {
-      cols.push({ key: "actions", label: "Thao tác", className: "w-[10%] text-right" });
+    // 2. Filter by search query (accent-insensitive)
+    if (searchQuery.trim()) {
+      list = list.filter((r) => matchesSearch(r.label, searchQuery));
     }
-    return cols;
-  }, [canManageAny]);
+
+    return list;
+  }, [data, filter, scope, department, searchQuery]);
+
+  const columns: AdminColumn[] = [
+    { key: "label", label: "Tên phòng", className: "w-[35%]" },
+    { key: "kind", label: "Loại cuộc họp", className: "w-[25%]" },
+    { key: "link", label: "Liên kết Meet", className: "w-[25%]" },
+    { key: "status", label: "Trạng thái", className: "w-[15%] text-right" },
+  ];
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-xs">
+    <div className="space-y-4">
+      {/* 1. Header hàng tiêu đề phần */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -249,27 +208,86 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
               : "Danh sách phòng Google Meet chính thức. Phòng Ban cho 2 điểm/buổi, phòng Chung cho 2 điểm/buổi, phòng Toàn thể cho 10 điểm/buổi."}
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        {canCreate && (
           <Button
-            type="button"
-            variant="outline"
-            size="admin-icon"
-            onClick={() => refetchPresence()}
-            disabled={isFetchingPresence}
-            aria-label="Kiểm tra lại"
-            title="Kiểm tra lại"
+            size="admin"
+            onClick={() => setCreateOpen(true)}
+            className="self-start sm:self-auto"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isFetchingPresence ? "animate-spin" : ""}`} />
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            Tạo phòng
           </Button>
-          {canCreate && (
-            <Button size="admin" onClick={() => setCreateOpen(true)}>
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Tạo phòng
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
+      {/* 2. Thanh lọc */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Tìm tên phòng…"
+          label="Tìm kiếm phòng họp"
+        />
+
+        <Select value={filter} onValueChange={setFilter}>
+          <SelectTrigger
+            aria-label="Lọc phòng họp"
+            className="h-9 w-[190px] rounded-xl border-input bg-card text-xs font-normal shadow-xs"
+          >
+            <SelectValue placeholder="Lọc phòng họp" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="text-xs">
+              Tất cả
+            </SelectItem>
+            {scope === "own" ? (
+              <>
+                <SelectItem value="own" className="text-xs">
+                  Ban mình
+                </SelectItem>
+                <SelectItem value="shared" className="text-xs">
+                  Họp chung
+                </SelectItem>
+              </>
+            ) : (
+              <>
+                <SelectItem value="club" className="text-xs">
+                  Họp toàn thể
+                </SelectItem>
+                <SelectItem value="shared" className="text-xs">
+                  Họp chung
+                </SelectItem>
+                {workDepts.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                      Họp ban
+                    </SelectLabel>
+                    {workDepts.map((d) => (
+                      <SelectItem key={d} value={`dept:${d}`} className="text-xs">
+                        {deptName(d)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+              </>
+            )}
+          </SelectContent>
+        </Select>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="admin-icon"
+          onClick={() => refetchPresence()}
+          disabled={isFetchingPresence}
+          aria-label="Kiểm tra lại"
+          title="Kiểm tra lại"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isFetchingPresence ? "animate-spin" : ""}`} />
+        </Button>
+      </div>
+
+      {/* 3. Cảnh báo phòng chung đang có người */}
       {warningText && (
         <div className="flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning-foreground">
           <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
@@ -277,17 +295,7 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
         </div>
       )}
 
-      {Boolean(data && data.length > 0 && filterOptions.length > 1) && (
-        <div className="overflow-x-auto pb-1">
-          <SegmentedControl
-            label="Lọc phòng họp"
-            value={filter}
-            onChange={(val) => setFilter(val)}
-            options={filterOptions}
-          />
-        </div>
-      )}
-
+      {/* 4. Bảng phòng họp */}
       {isLoading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -323,8 +331,9 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
         />
       ) : filteredRooms.length === 0 ? (
         <EmptyState
+          icon={Search}
           title="Không có phòng họp phù hợp"
-          description="Không tìm thấy phòng họp nào theo bộ lọc đã chọn."
+          description="Không tìm thấy phòng họp nào theo bộ lọc hoặc từ khóa tìm kiếm đã chọn."
         />
       ) : (
         <AdminTable columns={columns} minWidth="min-w-[640px]">
@@ -353,7 +362,10 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
             );
 
             return (
-              <AdminTableRow key={room.id}>
+              <AdminTableRow
+                key={room.id}
+                {...(canManageThis ? { onOpen: () => setEditingRoom(room) } : {})}
+              >
                 <td className="p-3">
                   <div className="font-medium text-foreground">{room.label}</div>
                   <div className="text-xs text-muted-foreground">{room.space_name}</div>
@@ -396,47 +408,13 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
                     )}
                   </div>
                 </td>
-                {canManageAny && (
-                  <td className="p-3 text-right">
-                    {canManageThis ? (
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="admin-icon"
-                          title="Sửa phòng họp"
-                          aria-label="Sửa phòng họp"
-                          onClick={() => setEditingRoom(room)}
-                          className="h-7 w-7"
-                        >
-                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="admin-icon"
-                          title="Xóa phòng họp"
-                          aria-label="Xóa phòng họp"
-                          disabled={deletingId === room.id}
-                          onClick={() => handleDeleteRoom(room)}
-                          className="h-7 w-7"
-                        >
-                          {deletingId === room.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          )}
-                        </Button>
-                      </div>
-                    ) : null}
-                  </td>
-                )}
               </AdminTableRow>
             );
           })}
         </AdminTable>
       )}
 
+      {/* Drawer tạo phòng */}
       <CreateRoomModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
@@ -451,9 +429,9 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
         }}
       />
 
+      {/* Drawer sửa phòng */}
       {editingRoom && (
-        <EditRoomModal
-          open={Boolean(editingRoom)}
+        <RoomDrawer
           room={editingRoom}
           scope={scope}
           onClose={() => setEditingRoom(null)}
@@ -464,10 +442,15 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
             queryClient.invalidateQueries({ queryKey: ["admin", "meet_auto_runs"] });
             queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms_presence"] });
           }}
+          onDeleted={() => {
+            refetch();
+            refetchPresence();
+            queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "meet_auto_runs"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms_presence"] });
+          }}
         />
       )}
-
-      {dialog}
     </div>
   );
 }

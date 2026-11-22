@@ -44,7 +44,7 @@ export function MeetAutoPanel() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <MeetRoomsCard
         canManage={data.canManage}
         scope={data.scope}
