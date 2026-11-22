@@ -1619,6 +1619,38 @@ export type Database = {
         };
         Relationships: [];
       };
+      meeting_room_presence: {
+        Row: {
+          active: boolean;
+          checked_at: string;
+          participant_count: number;
+          refreshing_at: string | null;
+          room_id: string;
+        };
+        Insert: {
+          active?: boolean;
+          checked_at?: string;
+          participant_count?: number;
+          refreshing_at?: string | null;
+          room_id: string;
+        };
+        Update: {
+          active?: boolean;
+          checked_at?: string;
+          participant_count?: number;
+          refreshing_at?: string | null;
+          room_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "meeting_room_presence_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: true;
+            referencedRelation: "meeting_rooms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       news_articles: {
         Row: {
           author_id: string | null;

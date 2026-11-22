@@ -178,3 +178,38 @@ export async function fetchConferenceRecords(token: string): Promise<ConferenceR
   }
   return out;
 }
+
+/** spaces/{id}: có buổi họp đang diễn ra không (activeConference). */
+export async function getSpace(
+  token: string,
+  spaceName: string,
+): Promise<{ activeConference?: { conferenceRecord: string } }> {
+  if (!/^spaces\/[A-Za-z0-9_-]{1,100}$/.test(spaceName)) {
+    throw new Error("Mã space Google Meet không hợp lệ.");
+  }
+  return meetGet<{ activeConference?: { conferenceRecord: string } }>(token, spaceName);
+}
+
+/** Đếm người đang ở trong một buổi họp: participants lọc "latestEndTime IS NULL" (tối đa 2 trang x 250). */
+export async function countActiveParticipants(
+  token: string,
+  conferenceRecord: string,
+): Promise<number> {
+  let count = 0;
+  let pageToken = "";
+  for (let page = 0; page < 2; page += 1) {
+    const qs = new URLSearchParams({
+      pageSize: "250",
+      filter: "latestEndTime IS NULL",
+    });
+    if (pageToken) qs.set("pageToken", pageToken);
+    const data = await meetGet<{
+      participants?: unknown[];
+      nextPageToken?: string;
+    }>(token, `${conferenceRecord}/participants?${qs.toString()}`);
+    count += data.participants?.length ?? 0;
+    if (!data.nextPageToken) break;
+    pageToken = data.nextPageToken;
+  }
+  return count;
+}

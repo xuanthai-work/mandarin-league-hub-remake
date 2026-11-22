@@ -1,12 +1,4 @@
-/** Google scope needed to read Meet conference records and participants. */
-export const MEET_SCOPE = "https://www.googleapis.com/auth/meetings.space.readonly";
 export const MEET_MIN_MINUTES = 20;
-export const MEET_POINTS = { work: 2, club: 10 } as const;
-export type MeetKind = keyof typeof MEET_POINTS;
-export const MEET_KIND_LABEL: Record<MeetKind, string> = {
-  work: "Họp làm việc",
-  club: "Họp toàn thể",
-};
 export const CONFERENCE_RECORD_RE = /^conferenceRecords\/[A-Za-z0-9_-]{1,200}$/;
 
 /** Raw participant as returned by meet.googleapis.com/v2/.../participants. */
@@ -51,11 +43,6 @@ export function meetingMinutes(start?: string | null, end?: string | null): numb
   const e = Date.parse(end);
   if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return null;
   return Math.floor((e - s) / 60_000);
-}
-
-export function isScorableMeeting(start?: string | null, end?: string | null): boolean {
-  const minutes = meetingMinutes(start, end);
-  return minutes !== null && minutes >= MEET_MIN_MINUTES;
 }
 
 /** A linked Google account joined to its member row (server side). */

@@ -307,6 +307,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-220-MEET-AUTO-MANAGE-AND-DAILY-SCAN`                          | Tab "Tự động" quản lý phòng và kết quả điểm danh Meet, quét hằng ngày bằng Vercel Cron                 | 2026-11-22     | **PASS** | [task-ge-220-meet-auto-manage-and-daily-scan.md](tasks/task-ge-220-meet-auto-manage-and-daily-scan.md)                                                   |
 | `TASK-GE-221-MEET-MIN-20-MINUTES-AND-RUNS-TABLE-FIX`                   | Hạ ngưỡng điểm danh Meet còn 20 phút, sửa chữ tràn và tên phòng ở bảng kết quả                         | 2026-11-22     | **PASS** | [task-ge-221-meet-min-20-minutes-and-runs-table-fix.md](tasks/task-ge-221-meet-min-20-minutes-and-runs-table-fix.md)                                     |
 | `TASK-GE-222-MEET-SHARED-ROOMS-AND-DEPARTMENT-SCOPE`                   | Phòng họp chung, chỉ tính điểm thành viên đúng Ban, Ban chỉ thấy phòng của mình                        | 2026-11-22     | **PASS** | [task-ge-222-meet-shared-rooms-and-department-scope.md](tasks/task-ge-222-meet-shared-rooms-and-department-scope.md)                                     |
+| `TASK-GE-223-MEET-ROOM-PRESENCE-AND-DROP-MANUAL`                       | Trạng thái phòng họp (số người, đệm 60 giây, không polling), bỏ tab và code điểm danh thủ công         | 2026-11-22     | **PASS** | [task-ge-223-meet-room-presence-and-drop-manual.md](tasks/task-ge-223-meet-room-presence-and-drop-manual.md)                                             |
 
 ---
 

@@ -1,19 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, ExternalLink, Loader2, Plus, Video } from "lucide-react";
+import { AlertTriangle, Copy, ExternalLink, Loader2, Plus, RefreshCw, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminTable, AdminTableRow, type AdminColumn } from "@/components/admin/kit/AdminTable";
 import { EmptyState } from "@/components/admin/kit/EmptyState";
 import { StatusPill } from "@/components/admin/kit/StatusPill";
-import { useConfirm } from "@/components/admin/kit/useConfirm";
 import { CtaLink } from "@/components/site/CtaLink";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { setMeetingRoomActive } from "@/lib/meet-auto.functions";
+import { getRoomsPresence } from "@/lib/meet-presence.functions";
+import { presenceLabel, sharedRoomWarning, type RoomPresence } from "@/lib/meet-presence";
 import { deptName } from "@/lib/recruitment";
 import { CreateRoomModal } from "./CreateRoomModal";
 
@@ -29,11 +28,20 @@ function isMissingTableError(err: unknown): boolean {
   return code === "42P01" || (msg.includes("relation") && msg.includes("does not exist"));
 }
 
+function formatCheckTime(iso?: string): string {
+  if (!iso || iso === "1970-01-01T00:00:00Z") return "";
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return "";
+  return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
+
 export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
   const [createOpen, setCreateOpen] = useState(false);
-  const [switchingId, setSwitchingId] = useState<string | null>(null);
-  const setActiveFn = useServerFn(setMeetingRoomActive);
-  const { confirm, dialog } = useConfirm();
+  const presenceFn = useServerFn(getRoomsPresence);
 
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["admin", "meeting_rooms"],
@@ -55,29 +63,39 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
     },
   });
 
-  const handleToggle = async (id: string, label: string, nextActive: boolean) => {
-    if (!nextActive) {
-      const ok = await confirm({
-        title: "Tắt phòng họp",
-        description: `Bạn có chắc muốn tắt "${label}"?\nCác buổi họp tiếp theo trong phòng này sẽ không được tự động chấm điểm.`,
-        confirmLabel: "Tắt phòng",
-        destructive: true,
-      });
-      if (!ok) return;
-    }
+  const {
+    data: presenceList,
+    isFetching: isFetchingPresence,
+    refetch: refetchPresence,
+  } = useQuery({
+    queryKey: ["admin", "meeting_rooms_presence"],
+    queryFn: async () => {
+      try {
+        return await presenceFn();
+      } catch {
+        return [];
+      }
+    },
+    enabled: Boolean(data && data.length > 0),
+    staleTime: 60_000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
 
-    setSwitchingId(id);
-    try {
-      await setActiveFn({ data: { id, active: nextActive } });
-      toast.success(nextActive ? `Đã bật "${label}"` : `Đã tắt "${label}"`);
-      await refetch();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Cập nhật trạng thái phòng họp thất bại.";
-      toast.error(msg);
-    } finally {
-      setSwitchingId(null);
+  const presenceMap = useMemo(() => {
+    const map = new Map<string, RoomPresence>();
+    for (const p of presenceList ?? []) {
+      map.set(p.roomId, p);
     }
-  };
+    return map;
+  }, [presenceList]);
+
+  const warningText = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    return sharedRoomWarning(data, presenceMap, (r) => r.id);
+  }, [data, presenceMap]);
 
   const copyLink = async (uri: string) => {
     try {
@@ -108,17 +126,34 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
             Ban chỉ thấy phòng của Ban mình và các phòng chung.
           </p>
         </div>
-        {canManage && (
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
+            type="button"
+            variant="outline"
             size="admin"
-            onClick={() => setCreateOpen(true)}
-            className="self-start sm:self-auto"
+            onClick={() => refetchPresence()}
+            disabled={isFetchingPresence}
           >
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Tạo phòng
+            <RefreshCw
+              className={`mr-1.5 h-3.5 w-3.5 ${isFetchingPresence ? "animate-spin" : ""}`}
+            />
+            Kiểm tra lại
           </Button>
-        )}
+          {canManage && (
+            <Button size="admin" onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Tạo phòng
+            </Button>
+          )}
+        </div>
       </div>
+
+      {warningText && (
+        <div className="flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning-foreground">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
+          <span>{warningText}</span>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground">
@@ -163,6 +198,12 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
                   ? "Họp chung (liên Ban)"
                   : `Họp ban (${deptName(room.department)})`;
 
+            const presence = presenceMap.get(room.id);
+            const label = presenceLabel(presence);
+            const isBusy = presence?.active && presence.count > 0;
+            const tone = isBusy ? "info" : "neutral";
+            const checkTime = formatCheckTime(presence?.checkedAt);
+
             return (
               <AdminTableRow key={room.id}>
                 <td className="p-3">
@@ -194,16 +235,16 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
                   </div>
                 </td>
                 <td className="p-3 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <StatusPill tone={room.active ? "success" : "neutral"}>
-                      {room.active ? "Đang dùng" : "Tắt"}
-                    </StatusPill>
-                    {canManage && (
-                      <Switch
-                        checked={room.active}
-                        disabled={switchingId === room.id}
-                        onCheckedChange={(checked) => handleToggle(room.id, room.label, checked)}
-                      />
+                  <div className="flex flex-col items-end gap-1">
+                    <StatusPill tone={tone}>{label}</StatusPill>
+                    {checkTime && (
+                      <span className="text-[10px] text-muted-foreground">
+                        kiểm tra lúc {checkTime}
+                        {presence?.stale ? " (cũ)" : ""}
+                      </span>
+                    )}
+                    {!room.active && (
+                      <span className="text-[10px] font-medium text-warning">Không tính điểm</span>
                     )}
                   </div>
                 </td>
@@ -213,12 +254,13 @@ export function MeetRoomsCard({ canManage }: { canManage: boolean }) {
         </AdminTable>
       )}
 
-      {dialog}
-
       <CreateRoomModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={() => refetch()}
+        onCreated={() => {
+          refetch();
+          refetchPresence();
+        }}
       />
     </div>
   );
