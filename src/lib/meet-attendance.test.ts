@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MEET_MIN_MINUTES,
   isScorableMeeting,
   meetingMinutes,
   parseParticipant,
@@ -73,10 +74,11 @@ describe("meetingMinutes", () => {
 });
 
 describe("isScorableMeeting", () => {
-  it("requires at least 30 finished minutes", () => {
-    expect(isScorableMeeting("2026-11-08T01:00:00Z", "2026-11-08T01:29:00Z")).toBe(false);
-    expect(isScorableMeeting("2026-11-08T01:00:00Z", "2026-11-08T01:30:00Z")).toBe(true);
+  it("requires at least 20 finished minutes", () => {
+    expect(isScorableMeeting("2026-11-08T01:00:00Z", "2026-11-08T01:19:00Z")).toBe(false);
+    expect(isScorableMeeting("2026-11-08T01:00:00Z", "2026-11-08T01:20:00Z")).toBe(true);
     expect(isScorableMeeting("2026-11-08T01:00:00Z")).toBe(false);
+    expect(MEET_MIN_MINUTES).toBe(20);
   });
 });
 

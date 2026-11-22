@@ -1,6 +1,6 @@
-import { meetingMinutes } from "./meet-attendance";
+import { MEET_MIN_MINUTES, meetingMinutes } from "./meet-attendance";
 
-export const AUTO_MIN_MINUTES = 30;
+export const AUTO_MIN_MINUTES = MEET_MIN_MINUTES;
 export type AutoStatus =
   "running" | "scored" | "too_short" | "no_members" | "unknown_room" | "error";
 

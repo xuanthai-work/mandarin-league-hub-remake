@@ -17,6 +17,7 @@ import { useAvatarUrls } from "@/lib/avatars";
 import { getGoogleClientId } from "@/lib/google-link.functions";
 import {
   MEET_KIND_LABEL,
+  MEET_MIN_MINUTES,
   MEET_POINTS,
   type MeetKind,
   type MeetMember,
@@ -294,7 +295,7 @@ export function MeetAttendanceView() {
                       ) : c.end === null ? (
                         <StatusPill tone="info">Đang diễn ra</StatusPill>
                       ) : !c.scorable ? (
-                        <StatusPill tone="neutral">Dưới 30 phút</StatusPill>
+                        <StatusPill tone="neutral">Dưới {MEET_MIN_MINUTES} phút</StatusPill>
                       ) : (
                         <StatusPill tone="warning">Chưa chấm</StatusPill>
                       )}
@@ -352,7 +353,7 @@ export function MeetAttendanceView() {
                 </p>
               ) : !p.scorable ? (
                 <p className="rounded-xl border border-warning-foreground/30 bg-warning-soft px-3 py-2 text-xs text-foreground">
-                  Chỉ chấm được buổi họp đã kết thúc và kéo dài từ 30 phút.
+                  Chỉ chấm được buổi họp đã kết thúc và kéo dài từ {MEET_MIN_MINUTES} phút.
                 </p>
               ) : null}
 

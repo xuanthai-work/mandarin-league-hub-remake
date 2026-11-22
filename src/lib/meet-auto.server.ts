@@ -8,7 +8,12 @@ import {
   meetGet,
 } from "./meet-api.server";
 import { CONFERENCE_RECORD_RE, splitParticipants, type ParsedParticipant } from "./meet-attendance";
-import { classifyConference, formatAutoReason, type AutoStatus } from "./meet-auto";
+import {
+  AUTO_MIN_MINUTES,
+  classifyConference,
+  formatAutoReason,
+  type AutoStatus,
+} from "./meet-auto";
 
 export type AutoResult = {
   conferenceRecord: string;
@@ -206,7 +211,7 @@ export async function processConference(
   }
 
   if (classification === "too_short") {
-    const detail = "Buổi họp dưới 30 phút, không đủ điều kiện chấm điểm.";
+    const detail = `Buổi họp dưới ${AUTO_MIN_MINUTES} phút, không đủ điều kiện chấm điểm.`;
     if (!opts.dryRun) {
       await supabaseAdmin
         .from("meet_auto_runs")

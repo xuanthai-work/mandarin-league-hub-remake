@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import {
   CONFERENCE_RECORD_RE,
+  MEET_MIN_MINUTES,
   MEET_POINTS,
   isScorableMeeting,
   meetingMinutes,
@@ -191,7 +192,7 @@ export const recordMeetAttendance = createServerFn({ method: "POST" })
     // Read the roster from Google again; the browser only sends the hand-added members.
     const { start, end, split } = await readMeeting(data.accessToken, data.conferenceRecord);
     if (!end || !isScorableMeeting(start, end))
-      throw new Error("Chỉ chấm buổi họp đã kết thúc và kéo dài từ 30 phút.");
+      throw new Error(`Chỉ chấm buổi họp đã kết thúc và kéo dài từ ${MEET_MIN_MINUTES} phút.`);
 
     const kind: MeetKind = data.kind;
     const matchedIds = split.matched.map((m) => m.id);

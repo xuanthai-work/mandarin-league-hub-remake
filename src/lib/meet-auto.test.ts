@@ -13,15 +13,15 @@ describe("classifyConference", () => {
     expect(classifyConference("2026-11-22T10:30:00Z", "2026-11-22T10:00:00Z")).toBe("not_ended");
   });
 
-  it("returns too_short when meeting is under 30 minutes (e.g. 29 mins)", () => {
+  it("returns too_short when meeting is under 20 minutes (e.g. 19 mins)", () => {
     const start = "2026-11-22T10:00:00Z";
-    const end = "2026-11-22T10:29:59Z";
+    const end = "2026-11-22T10:19:59Z";
     expect(classifyConference(start, end)).toBe("too_short");
   });
 
-  it("returns ok when meeting is exactly 30 minutes", () => {
+  it("returns ok when meeting is exactly 20 minutes", () => {
     const start = "2026-11-22T10:00:00Z";
-    const end = "2026-11-22T10:30:00Z";
+    const end = "2026-11-22T10:20:00Z";
     expect(classifyConference(start, end)).toBe("ok");
   });
 
@@ -32,7 +32,7 @@ describe("classifyConference", () => {
   });
 
   it("respects AUTO_MIN_MINUTES constant", () => {
-    expect(AUTO_MIN_MINUTES).toBe(30);
+    expect(AUTO_MIN_MINUTES).toBe(20);
   });
 });
 

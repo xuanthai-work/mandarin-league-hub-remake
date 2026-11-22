@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -59,6 +59,13 @@ function formatVietnamDateTime(iso?: string | null): string {
   }).format(d);
 }
 
+function shortenRecordId(record: string): string {
+  const prefix = "conferenceRecords/";
+  const id = record.startsWith(prefix) ? record.slice(prefix.length) : record;
+  if (id.length <= 12) return id;
+  return `${id.slice(0, 6)}…${id.slice(-4)}`;
+}
+
 export function MeetRunsCard({ canManage }: { canManage: boolean }) {
   const scanFn = useServerFn(scanMeetNow);
   const rescoreFn = useServerFn(rescoreMeetConference);
@@ -83,6 +90,28 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
       return (runs ?? []) as unknown as MeetAutoRunRow[];
     },
   });
+
+  const { data: rooms } = useQuery({
+    queryKey: ["admin", "meeting_rooms"],
+    queryFn: async () => {
+      const { data: list, error: queryError } = await supabase
+        .from("meeting_rooms")
+        .select("*")
+        .order("kind", { ascending: false })
+        .order("label", { ascending: true });
+
+      if (queryError) throw queryError;
+      return list ?? [];
+    },
+  });
+
+  const roomsBySpace = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of rooms ?? []) {
+      if (r.space_name) map.set(r.space_name, r.label);
+    }
+    return map;
+  }, [rooms]);
 
   const handleScanNow = async () => {
     setScanning(true);
@@ -220,7 +249,11 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
               label: run.status,
               tone: "neutral",
             };
-            const roomName = run.meeting_rooms?.label || run.space_name || run.conference_record;
+            const roomName =
+              run.meeting_rooms?.label ||
+              (run.space_name ? roomsBySpace.get(run.space_name) : undefined) ||
+              run.space_name ||
+              shortenRecordId(run.conference_record);
             const canRescore =
               canManage &&
               (run.status === "error" ||
@@ -238,11 +271,16 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                     </div>
                   )}
                 </td>
-                <td className="p-3">
-                  <div className="font-medium text-foreground">{roomName}</div>
-                  <div className="font-mono text-[11px] text-muted-foreground">
-                    {run.conference_record}
+                <td className="p-3 overflow-hidden">
+                  <div className="truncate font-medium text-foreground" title={roomName}>
+                    {roomName}
                   </div>
+                  <span
+                    title={run.conference_record}
+                    className="block max-w-full truncate font-mono text-[11px] text-muted-foreground cursor-help"
+                  >
+                    {shortenRecordId(run.conference_record)}
+                  </span>
                 </td>
                 <td className="p-3">
                   <StatusPill tone={conf.tone}>{conf.label}</StatusPill>
@@ -326,8 +364,11 @@ export function MeetRunsCard({ canManage }: { canManage: boolean }) {
                       className="rounded-xl border border-border bg-card/60 p-3.5 text-xs shadow-2xs"
                     >
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="font-semibold text-foreground">
-                          {item.roomLabel || item.conferenceRecord}
+                        <div
+                          className="font-semibold text-foreground"
+                          title={item.conferenceRecord}
+                        >
+                          {item.roomLabel || shortenRecordId(item.conferenceRecord)}
                           {item.kind && (
                             <span className="ml-2 font-normal text-muted-foreground">
                               ({item.kind === "work" ? "Họp ban - 2đ" : "Họp toàn thể - 10đ"})
