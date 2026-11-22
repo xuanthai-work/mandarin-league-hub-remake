@@ -51,7 +51,7 @@ export function MeetAutoPanel() {
         department={data.department}
         userId={data.userId}
       />
-      <MeetRunsCard canManage={data.canManage} scope={data.scope} />
+      {data.scope !== "view" && <MeetRunsCard canManage={data.canManage} scope={data.scope} />}
     </div>
   );
 }

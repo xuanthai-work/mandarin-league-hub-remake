@@ -310,6 +310,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-223-MEET-ROOM-PRESENCE-AND-DROP-MANUAL`                       | Trạng thái phòng họp (số người, đệm 60 giây, không polling), bỏ tab và code điểm danh thủ công         | 2026-11-22     | **PASS** | [task-ge-223-meet-room-presence-and-drop-manual.md](tasks/task-ge-223-meet-room-presence-and-drop-manual.md)                                             |
 | `TASK-GE-224-MEET-ROOMS-SCREEN-MANAGE-AND-ATTENDEES`                   | Đổi tên màn thành Phòng họp, xem người được điểm danh, bộ lọc, tạo/sửa/xóa phòng theo quyền            | 2026-11-22     | **PASS** | [task-ge-224-meet-rooms-screen-manage-and-attendees.md](tasks/task-ge-224-meet-rooms-screen-manage-and-attendees.md)                                     |
 | `TASK-GE-225-MEET-ROOMS-SCREEN-FOLLOW-ADMIN-CONVENTIONS`               | Màn Phòng họp theo quy ước admin: bỏ card, bộ lọc Select, bấm dòng mở drawer                           | 2026-11-22     | **PASS** | [task-ge-225-meet-rooms-screen-follow-admin-conventions.md](tasks/task-ge-225-meet-rooms-screen-follow-admin-conventions.md)                             |
+| `TASK-GE-226-MEETINGS-VIEW-PERMISSION-FOR-MEMBERS`                     | Quyền meetings.view: mọi thành viên xem phòng họp và vào họp, chỉ đọc                                  | 2026-11-22     | **PASS** | [task-ge-226-meetings-view-permission-for-members.md](tasks/task-ge-226-meetings-view-permission-for-members.md)                                         |
 
 ---
 

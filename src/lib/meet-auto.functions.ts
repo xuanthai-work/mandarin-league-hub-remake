@@ -13,7 +13,7 @@ export type MeetAutoStatus = {
   configured: boolean;
   missing: string[];
   canManage: boolean;
-  scope: AttendanceScope;
+  scope: "all" | "own" | "view";
   department: string | null;
   userId: string;
 };
@@ -325,12 +325,34 @@ export const getMeetAutoStatus = createServerFn({ method: "GET" })
       _action: "points.attendance",
     });
     if (error) throw new Error(error.message);
-    if (scope !== "all" && scope !== "own") {
-      throw new Error("Bạn không có quyền truy cập thông tin phòng họp.");
+
+    let effectiveScope: "all" | "own" | "view";
+    if (scope === "all" || scope === "own") {
+      effectiveScope = scope;
+    } else {
+      const { data: hasView } = await context.supabase.rpc("has_perm", {
+        _action: "meetings.view",
+      });
+      if (hasView) {
+        effectiveScope = "view";
+      } else {
+        throw new Error("Bạn không có quyền truy cập thông tin phòng họp.");
+      }
     }
 
     const { data: memberRows } = await context.supabase.rpc("my_active_member");
     const department = memberRows?.[0]?.department ?? null;
+
+    if (effectiveScope === "view") {
+      return {
+        configured: true,
+        missing: [],
+        canManage: false,
+        scope: "view",
+        department,
+        userId: context.userId,
+      };
+    }
 
     const requiredVars = [
       "GOOGLE_OAUTH_CLIENT_ID",
@@ -346,8 +368,8 @@ export const getMeetAutoStatus = createServerFn({ method: "GET" })
     return {
       configured: missing.length === 0,
       missing,
-      canManage: scope === "all",
-      scope,
+      canManage: effectiveScope === "all",
+      scope: effectiveScope,
       department,
       userId: context.userId,
     };

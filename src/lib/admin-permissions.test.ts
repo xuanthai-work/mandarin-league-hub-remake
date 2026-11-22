@@ -54,6 +54,12 @@ describe("allowedSections", () => {
     expect(allowed).not.toContain("contributions");
   });
 
+  it("opens attendance section from meetings.view without opening contributions", () => {
+    const allowed = allowedSections(perms({ "meetings.view": "all" }));
+    expect(allowed).toContain("attendance");
+    expect(allowed).not.toContain("contributions");
+  });
+
   it("opens contributions from points.view or points.adjust without opening attendance", () => {
     expect(allowedSections(perms({ "points.view": "own" }))).toContain("contributions");
     expect(allowedSections(perms({ "points.view": "own" }))).not.toContain("attendance");
@@ -150,6 +156,25 @@ describe("onlyPersonalSections", () => {
   it("is false when the user has module sections or full access", () => {
     expect(onlyPersonalSections(["partners", "tasks", "contributions", "settings"])).toBe(false);
     expect(onlyPersonalSections("all")).toBe(false);
+  });
+
+  it("is true when the user has personal sections plus attendance", () => {
+    expect(
+      onlyPersonalSections(["tasks", "contributions", "settings", "feedback", "attendance"]),
+    ).toBe(true);
+  });
+
+  it("is false when attendance is present with another module section", () => {
+    expect(
+      onlyPersonalSections([
+        "tasks",
+        "contributions",
+        "settings",
+        "feedback",
+        "attendance",
+        "members",
+      ]),
+    ).toBe(false);
   });
 });
 

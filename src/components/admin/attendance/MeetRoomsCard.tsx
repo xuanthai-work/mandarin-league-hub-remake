@@ -32,7 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { getRoomsPresence } from "@/lib/meet-presence.functions";
 import { presenceLabel, sharedRoomWarning, type RoomPresence } from "@/lib/meet-presence";
-import { canManageRoom, type RoomKind } from "@/lib/meet-room-access";
+import { canManageRoom, type AttendanceScope, type RoomKind } from "@/lib/meet-room-access";
 import { deptName } from "@/lib/recruitment";
 import { matchesSearch } from "@/lib/search";
 import { CreateRoomModal } from "./CreateRoomModal";
@@ -63,7 +63,7 @@ function formatCheckTime(iso?: string): string {
 
 interface MeetRoomsCardProps {
   canManage: boolean;
-  scope?: "all" | "own" | undefined;
+  scope?: "all" | "own" | "view" | undefined;
   department?: string | null | undefined;
   userId?: string | undefined;
 }
@@ -77,7 +77,8 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
   const queryClient = useQueryClient();
   const presenceFn = useServerFn(getRoomsPresence);
 
-  const canCreate = canManage || scope === "all" || scope === "own";
+  const isViewOnly = scope === "view";
+  const canCreate = !isViewOnly && (canManage || scope === "all" || scope === "own");
 
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["admin", "meeting_rooms"],
@@ -112,7 +113,7 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
         return [];
       }
     },
-    enabled: Boolean(data && data.length > 0),
+    enabled: !isViewOnly && Boolean(data && data.length > 0),
     staleTime: 60_000,
     refetchInterval: false,
     refetchOnWindowFocus: false,
@@ -122,16 +123,17 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
 
   const presenceMap = useMemo(() => {
     const map = new Map<string, RoomPresence>();
+    if (isViewOnly) return map;
     for (const p of presenceList ?? []) {
       map.set(p.roomId, p);
     }
     return map;
-  }, [presenceList]);
+  }, [presenceList, isViewOnly]);
 
   const warningText = useMemo(() => {
-    if (!data || data.length === 0) return null;
+    if (isViewOnly || !data || data.length === 0) return null;
     return sharedRoomWarning(data, presenceMap, (r) => r.id);
-  }, [data, presenceMap]);
+  }, [isViewOnly, data, presenceMap]);
 
   const copyLink = async (uri: string) => {
     try {
@@ -158,13 +160,15 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
 
     // 1. Filter by category
     if (filter !== "all") {
-      if (scope === "own") {
+      if (scope === "own" || isViewOnly) {
         if (filter === "own") {
           list = list.filter(
             (r) => r.kind === "work" && (!department || r.department === department),
           );
         } else if (filter === "shared") {
           list = list.filter((r) => r.kind === "shared");
+        } else if (filter === "club") {
+          list = list.filter((r) => r.kind === "club");
         }
       } else {
         if (filter === "club") {
@@ -184,14 +188,19 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
     }
 
     return list;
-  }, [data, filter, scope, department, searchQuery]);
+  }, [data, filter, scope, isViewOnly, department, searchQuery]);
 
-  const columns: AdminColumn[] = [
-    { key: "label", label: "Tên phòng", className: "w-[35%]" },
-    { key: "kind", label: "Loại cuộc họp", className: "w-[25%]" },
-    { key: "link", label: "Liên kết Meet", className: "w-[25%]" },
-    { key: "status", label: "Trạng thái", className: "w-[15%] text-right" },
-  ];
+  const columns: AdminColumn[] = useMemo(() => {
+    const base: AdminColumn[] = [
+      { key: "label", label: "Tên phòng", className: isViewOnly ? "w-[40%]" : "w-[35%]" },
+      { key: "kind", label: "Loại cuộc họp", className: isViewOnly ? "w-[30%]" : "w-[25%]" },
+      { key: "link", label: "Liên kết Meet", className: isViewOnly ? "w-[30%]" : "w-[25%]" },
+    ];
+    if (!isViewOnly) {
+      base.push({ key: "status", label: "Trạng thái", className: "w-[15%] text-right" });
+    }
+    return base;
+  }, [isViewOnly]);
 
   return (
     <div className="space-y-4">
@@ -203,9 +212,11 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
             <h2 className="text-sm font-semibold">Phòng họp chính thức</h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {scope === "own"
-              ? "Danh sách phòng Google Meet của Ban bạn và các phòng họp chung. Phòng Ban và phòng Chung cho 2 điểm/buổi."
-              : "Danh sách phòng Google Meet chính thức. Phòng Ban cho 2 điểm/buổi, phòng Chung cho 2 điểm/buổi, phòng Toàn thể cho 10 điểm/buổi."}
+            {isViewOnly
+              ? 'Danh sách phòng họp của Ban bạn, phòng họp chung và phòng họp toàn thể. Bấm "Vào phòng" để tham gia.'
+              : scope === "own"
+                ? "Danh sách phòng Google Meet của Ban bạn và các phòng họp chung. Phòng Ban và phòng Chung cho 2 điểm/buổi."
+                : "Danh sách phòng Google Meet chính thức. Phòng Ban cho 2 điểm/buổi, phòng Chung cho 2 điểm/buổi, phòng Toàn thể cho 10 điểm/buổi."}
           </p>
         </div>
         {canCreate && (
@@ -240,13 +251,16 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
             <SelectItem value="all" className="text-xs">
               Tất cả
             </SelectItem>
-            {scope === "own" ? (
+            {scope === "own" || isViewOnly ? (
               <>
                 <SelectItem value="own" className="text-xs">
                   Ban mình
                 </SelectItem>
                 <SelectItem value="shared" className="text-xs">
                   Họp chung
+                </SelectItem>
+                <SelectItem value="club" className="text-xs">
+                  Họp toàn thể
                 </SelectItem>
               </>
             ) : (
@@ -274,20 +288,22 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
           </SelectContent>
         </Select>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="admin-icon"
-          onClick={() => refetchPresence()}
-          disabled={isFetchingPresence}
-          aria-label="Kiểm tra lại"
-          title="Kiểm tra lại"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isFetchingPresence ? "animate-spin" : ""}`} />
-        </Button>
+        {!isViewOnly && (
+          <Button
+            type="button"
+            variant="outline"
+            size="admin-icon"
+            onClick={() => refetchPresence()}
+            disabled={isFetchingPresence}
+            aria-label="Kiểm tra lại"
+            title="Kiểm tra lại"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetchingPresence ? "animate-spin" : ""}`} />
+          </Button>
+        )}
       </div>
 
-      {/* 3. Cảnh báo phòng chung đang có người */}
+      {/* 3. Cảnh báo phòng chung đang có người (chỉ cho người quản lý) */}
       {warningText && (
         <div className="flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning-foreground">
           <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
@@ -314,11 +330,11 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
         />
       ) : !data || data.length === 0 ? (
         <EmptyState
-          title="Chưa có phòng họp chính thức nào"
+          title="Chưa có phòng họp nào"
           description={
             canCreate
               ? "Bấm 'Tạo phòng' để bot Google tạo phòng họp đầu tiên."
-              : "Chưa có phòng họp nào được tạo trong hệ thống."
+              : "Chưa có phòng họp nào được hiển thị."
           }
           action={
             canCreate ? (
@@ -351,15 +367,17 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
             const tone = isBusy ? "info" : "neutral";
             const checkTime = formatCheckTime(presence?.checkedAt);
 
-            const canManageThis = canManageRoom(
-              scope,
-              { userId: userId ?? "", department },
-              {
-                kind: room.kind as RoomKind,
-                department: room.department,
-                createdBy: room.created_by,
-              },
-            );
+            const canManageThis =
+              !isViewOnly &&
+              canManageRoom(
+                scope as AttendanceScope,
+                { userId: userId ?? "", department },
+                {
+                  kind: room.kind as RoomKind,
+                  department: room.department,
+                  createdBy: room.created_by,
+                },
+              );
 
             return (
               <AdminTableRow
@@ -368,7 +386,9 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
               >
                 <td className="p-3">
                   <div className="font-medium text-foreground">{room.label}</div>
-                  <div className="text-xs text-muted-foreground">{room.space_name}</div>
+                  {!isViewOnly && (
+                    <div className="text-xs text-muted-foreground">{room.space_name}</div>
+                  )}
                 </td>
                 <td className="p-3 text-xs text-muted-foreground">{kindText}</td>
                 <td className="p-3">
@@ -394,20 +414,24 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
                     </Button>
                   </div>
                 </td>
-                <td className="p-3 text-right">
-                  <div className="flex flex-col items-end gap-1">
-                    <StatusPill tone={tone}>{label}</StatusPill>
-                    {checkTime && (
-                      <span className="text-[10px] text-muted-foreground">
-                        kiểm tra lúc {checkTime}
-                        {presence?.stale ? " (cũ)" : ""}
-                      </span>
-                    )}
-                    {!room.active && (
-                      <span className="text-[10px] font-medium text-warning">Không tính điểm</span>
-                    )}
-                  </div>
-                </td>
+                {!isViewOnly && (
+                  <td className="p-3 text-right">
+                    <div className="flex flex-col items-end gap-1">
+                      <StatusPill tone={tone}>{label}</StatusPill>
+                      {checkTime && (
+                        <span className="text-[10px] text-muted-foreground">
+                          kiểm tra lúc {checkTime}
+                          {presence?.stale ? " (cũ)" : ""}
+                        </span>
+                      )}
+                      {!room.active && (
+                        <span className="text-[10px] font-medium text-warning">
+                          Không tính điểm
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                )}
               </AdminTableRow>
             );
           })}
@@ -415,25 +439,27 @@ export function MeetRoomsCard({ canManage, scope, department, userId }: MeetRoom
       )}
 
       {/* Drawer tạo phòng */}
-      <CreateRoomModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        scope={scope}
-        myDepartment={department}
-        onCreated={() => {
-          refetch();
-          refetchPresence();
-          queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms"] });
-          queryClient.invalidateQueries({ queryKey: ["admin", "meet_auto_runs"] });
-          queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms_presence"] });
-        }}
-      />
+      {!isViewOnly && (
+        <CreateRoomModal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          scope={scope === "all" || scope === "own" ? scope : undefined}
+          myDepartment={department}
+          onCreated={() => {
+            refetch();
+            refetchPresence();
+            queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "meet_auto_runs"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "meeting_rooms_presence"] });
+          }}
+        />
+      )}
 
       {/* Drawer sửa phòng */}
-      {editingRoom && (
+      {!isViewOnly && editingRoom && (
         <RoomDrawer
           room={editingRoom}
-          scope={scope}
+          scope={scope === "all" || scope === "own" ? scope : undefined}
           onClose={() => setEditingRoom(null)}
           onUpdated={() => {
             refetch();

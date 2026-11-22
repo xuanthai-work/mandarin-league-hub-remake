@@ -11,7 +11,7 @@ export const SECTION_ACTIONS: Record<string, readonly PermissionCode[]> = {
   candidates: ["candidates.view", "candidates.edit"],
   members: ["members.view"],
   tasks: ["tasks.view"],
-  attendance: ["points.attendance"],
+  attendance: ["points.attendance", "meetings.view"],
   contributions: ["points.view", "points.adjust"],
   benefits: ["benefits.manage"],
   courses: ["courses.view", "courses.edit"],
@@ -42,10 +42,15 @@ export function withPersonalSections(allowed: string[] | "all"): string[] | "all
   return [...allowed, ...PERSONAL_SECTIONS.filter((s) => !allowed.includes(s))];
 }
 
-/** true khi người dùng chỉ có các mục cá nhân (Nhiệm vụ của mình + Điểm đóng góp + Cài đặt + Feedback), không có module quản trị nào. */
+/**
+ * true khi người dùng chỉ có các mục cá nhân (Nhiệm vụ của mình + Điểm đóng góp + Cài đặt + Feedback), không có module quản trị nào.
+ * Bỏ qua 'attendance' vì mọi thành viên đều có quyền meetings.view để xem và vào phòng họp, giữ nguyên trang đích sau đăng nhập là /admin/tasks.
+ */
 export function onlyPersonalSections(allowed: string[] | "all"): boolean {
   if (allowed === "all") return false;
-  return allowed.every((s) => (PERSONAL_SECTIONS as readonly string[]).includes(s));
+  return allowed.every(
+    (s) => (PERSONAL_SECTIONS as readonly string[]).includes(s) || s === "attendance",
+  );
 }
 
 /** true when the user holds `code` organisation-wide (admin flag or scope "all"). */

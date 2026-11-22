@@ -107,6 +107,12 @@ export const PERMISSION_ACTIONS = [
     scoped: true,
   },
   {
+    code: "meetings.view",
+    module: "points",
+    label: "Xem phòng họp và liên kết vào họp",
+    scoped: false,
+  },
+  {
     code: "points.adjust",
     module: "points",
     label: "Thưởng hoặc trừ 5, 10 hoặc 20 điểm kèm minh chứng (người chức thấp hơn)",
