@@ -316,6 +316,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-229-MEET-RUNS-KEEP-ROOM-NAME`                                 | Lịch sử điểm danh giữ tên phòng, loại họp và Ban kể cả khi phòng bị xóa                                | 2026-11-23     | **PASS** | [task-ge-229-meet-runs-keep-room-name.md](tasks/task-ge-229-meet-runs-keep-room-name.md)                                                                 |
 | `TASK-GE-230-MEET-SCAN-SKIP-SETTLED-RUNS`                              | Quét bỏ qua buổi phòng lạ đã xử lý xong, chỉ thử lại buổi lỗi                                          | 2026-11-23     | **PASS** | [task-ge-230-meet-scan-skip-settled-runs.md](tasks/task-ge-230-meet-scan-skip-settled-runs.md)                                                           |
 | `TASK-GE-231-CONTENT-SAVE-NEVER-STUCK`                                 | Trang nội dung: lỗi mạng không làm kẹt trạng thái lưu và xuất bản                                      | 2026-11-23     | **PASS** | [task-ge-231-content-save-never-stuck.md](tasks/task-ge-231-content-save-never-stuck.md)                                                                 |
+| `TASK-GE-232-CONTENT-PUBLISH-ERROR-TEXT`                               | Sửa thông báo lỗi xuất bản nội dung cho đúng quyền Co-founder                                          | 2026-11-23     | **PASS** | [task-ge-232-content-publish-error-text.md](tasks/task-ge-232-content-publish-error-text.md)                                                             |
 
 ---
 

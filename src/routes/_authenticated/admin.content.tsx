@@ -369,7 +369,7 @@ function ContentAdmin() {
 
     if (error) {
       toast.error(
-        "Không xuất bản được (cần quyền Admin hoặc Trưởng/Phó Ban Truyền thông): " + error.message,
+        "Không xuất bản được (chỉ Co-founder hoặc Admin mới có quyền xuất bản): " + error.message,
       );
       return false;
     }
