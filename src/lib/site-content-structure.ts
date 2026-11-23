@@ -51,16 +51,12 @@ export type ContentBlock<K extends string> = {
   label: string;
   /** Section chứa khối này. */
   sectionId: string;
-  /** Mô tả ngắn hiện dưới tên khối trong trình sửa. */
-  summary?: string;
   /** Khối có công tắc ẩn/hiện (khóa trong HomeContent.show) */
   toggle?: HomeSectionKey;
   /** Khối luôn hiện, không tắt được */
   always?: boolean;
   /** Khối tự hiện theo dữ liệu nơi khác, không có công tắc */
   auto?: boolean;
-  /** Dòng giải thích ngắn hiện trong thẻ của khối */
-  note?: string;
   /** Khối lấy dữ liệu từ module khác */
   manage?: { label: string; to: ManageRoute };
   fields: ContentField<K>[];
@@ -69,8 +65,6 @@ export type ContentBlock<K extends string> = {
 export type HomeSection = {
   id: string;
   label: string;
-  /** Mô tả ngắn của section trong trình sửa. */
-  summary: string;
   toggle?: HomeSectionKey;
   /** Section luôn hiện, không tắt được */
   always?: boolean;
@@ -102,7 +96,6 @@ export type NavPage<K extends string> = {
   to: NavRoute;
   /** Section có CTA dẫn tới trang này. */
   sectionId: string;
-  summary: string;
   fields: ContentField<K>[];
 };
 
@@ -138,7 +131,6 @@ const link = (
   label: string,
   fallback: string,
   navPage?: string,
-  help?: string,
 ): ContentField<HomeTextKey> => ({
   key,
   label,
@@ -147,11 +139,14 @@ const link = (
   max: T,
   group: "cta",
   ...(navPage ? { navPage } : {}),
-  ...(help ? { help } : {}),
 });
-const ctaLabel = (key: HomeTextKey, fallback: string): ContentField<HomeTextKey> => ({
+const ctaLabel = (
+  key: HomeTextKey,
+  fallback: string,
+  label = "Chữ trên nút",
+): ContentField<HomeTextKey> => ({
   key,
-  label: "Chữ trên nút",
+  label,
   kind: "text",
   fallback,
   max: 80,
@@ -163,55 +158,46 @@ export const HOME_SECTIONS: HomeSection[] = [
   {
     id: "hero",
     label: "Banner đầu trang",
-    summary: "Khối mở đầu: tiêu đề lớn, lời dẫn và hai nút CTA.",
     always: true,
   },
   {
     id: "about",
     label: "Giới thiệu",
-    summary: "Giới thiệu TML, giá trị cốt lõi và cộng đồng TML trên trang chủ.",
     toggle: "about",
   },
   {
     id: "organization",
     label: "Cơ cấu tổ chức",
-    summary: "Sơ đồ Ban Điều hành và 8 Ban chuyên môn.",
     always: true,
   },
   {
     id: "courses",
     label: "Khóa học HSK",
-    summary: "Các lớp HSK đang mở và lộ trình HSK 1–6.",
     toggle: "courses",
   },
   {
     id: "faculty",
     label: "Đội ngũ giảng viên",
-    summary: "Giới thiệu ngắn và danh sách giảng viên nổi bật.",
     auto: true,
   },
   {
     id: "activities",
     label: "Hoạt động tiêu biểu",
-    summary: "Hoạt động, hình ảnh và bản tin của TML.",
     toggle: "activities",
   },
   {
     id: "partners",
     label: "Đối tác đồng hành",
-    summary: "Logo và thông tin các đối tác của TML.",
     always: true,
   },
   {
     id: "verify",
     label: "Trung tâm xác minh",
-    summary: "Hai cổng tra cứu chứng nhận và kết quả HSK.",
     always: true,
   },
   {
     id: "cta",
     label: "Kêu gọi tham gia & Liên hệ",
-    summary: "Khối cuối trang: kêu gọi ứng tuyển và thông tin liên hệ.",
     toggle: "cta",
     auxiliary: true,
   },
@@ -223,8 +209,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Banner",
     sectionId: "hero",
     always: true,
-    summary: "Tiêu đề lớn, lời dẫn và hai nút CTA ở đầu trang chủ.",
-    note: "Nút “Tham gia TML” mặc định mở trang điều hướng Tham gia TML. Nút phụ mặc định cuộn xuống mục Khóa học.",
     fields: [
       text("hero_badge", "Dòng nhỏ phía trên", "Online Chinese Learning Community"),
       text("hero_title", "Tiêu đề lớn", "The Mandarin League"),
@@ -233,10 +217,10 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
         "Lời dẫn",
         "Cộng đồng học tiếng Trung trực tuyến dành cho người Việt – nơi học HSK bài bản, giao lưu văn hóa và cùng nhau phát triển.",
       ),
-      ctaLabel("btn1_label", "Tham gia TML"),
-      link("btn1_url", "Nút chính – liên kết", "/join"),
-      ctaLabel("btn2_label", "Xem khóa học HSK"),
-      link("btn2_url", "Nút phụ – liên kết", "/courses/hsk"),
+      ctaLabel("btn1_label", "Tham gia TML", "Chữ nút chính"),
+      link("btn1_url", "Trang mở nút chính", "/join", "join-page"),
+      ctaLabel("btn2_label", "Xem khóa học HSK", "Chữ nút phụ"),
+      link("btn2_url", "Trang mở nút phụ", "/courses/hsk", "hsk-page"),
     ],
   },
   {
@@ -244,7 +228,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Về TML",
     sectionId: "about",
     always: true,
-    summary: "Tiêu đề, hai đoạn giới thiệu, số liệu thống kê, ảnh và nút “Tìm hiểu thêm”.",
     fields: [
       text("about_title", "Tiêu đề", "Học tiếng Trung cùng một cộng đồng thực thụ"),
       area(
@@ -264,13 +247,7 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
       text("stat3_value", "Số liệu 3 – con số", "Hàng tháng", 40),
       text("stat3_label", "Số liệu 3 – chú thích", "Workshop & sự kiện", 80),
       ctaLabel("about_cta_label", "Tìm hiểu thêm"),
-      link(
-        "about_cta_url",
-        "Nút “Tìm hiểu thêm” – liên kết",
-        "/about",
-        "about-page",
-        "Mặc định mở Trang chi tiết Về TML.",
-      ),
+      link("about_cta_url", "Mở trang", "/about", "about-page"),
     ],
   },
   {
@@ -278,8 +255,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Giá trị cốt lõi",
     sectionId: "about",
     always: true,
-    summary: "Bốn giá trị cốt lõi kèm icon, tiêu đề và mô tả.",
-    note: "Đây là một khối nội dung của Section Giới thiệu, không phải trang riêng.",
     fields: [
       text("values_title", "Tiêu đề khối", "Giá trị cốt lõi"),
       area("values_lead", "Lời dẫn"),
@@ -298,7 +273,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Cộng đồng TML",
     sectionId: "about",
     always: true,
-    summary: "Khối giới thiệu cộng đồng với ảnh và nút “Khám phá cộng đồng”.",
     fields: [
       text("community_title", "Tiêu đề", "Những con người cùng tạo nên TML"),
       area(
@@ -307,13 +281,7 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
         "Thành viên, giảng viên, tình nguyện viên, mentor và đại sứ cùng làm nên cộng đồng TML.",
       ),
       ctaLabel("community_cta_label", "Khám phá cộng đồng"),
-      link(
-        "community_cta_url",
-        "Nút “Khám phá cộng đồng” – liên kết",
-        "/community",
-        "community-page",
-        "Mặc định mở Trang chi tiết Cộng đồng TML.",
-      ),
+      link("community_cta_url", "Mở trang", "/community", "community-page"),
     ],
   },
   {
@@ -321,7 +289,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Sơ đồ tổ chức",
     sectionId: "organization",
     always: true,
-    summary: "Tiêu đề, mô tả và nút mở trang cơ cấu tổ chức.",
     manage: { label: "Cơ cấu & Ban", to: "/admin/departments" },
     fields: [
       text("organization_title", "Tiêu đề", "Sơ đồ tổ chức TML"),
@@ -331,12 +298,7 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
         "The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn.",
       ),
       ctaLabel("organization_cta_label", "Trang cơ cấu tổ chức"),
-      link(
-        "organization_cta_url",
-        "Nút “Trang cơ cấu tổ chức” – liên kết",
-        "/organization",
-        "organization-page",
-      ),
+      link("organization_cta_url", "Mở trang", "/organization", "organization-page"),
     ],
   },
   {
@@ -344,13 +306,12 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Khóa học HSK 1–6",
     sectionId: "courses",
     toggle: "courses",
-    summary: "Tiêu đề, lời dẫn và nút mở danh sách tất cả khóa học.",
     manage: { label: "Khóa học", to: "/admin/courses" },
     fields: [
       text("courses_title", "Tiêu đề khối", "Chọn cấp độ phù hợp với bạn"),
       area("courses_lead", "Lời dẫn"),
       ctaLabel("courses_cta_label", "Tất cả các khóa học"),
-      link("courses_cta_url", "Nút “Tất cả các khóa học” – liên kết", "/courses", "courses-page"),
+      link("courses_cta_url", "Mở trang", "/courses", "courses-page"),
     ],
   },
   {
@@ -358,7 +319,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Giới thiệu đội ngũ giảng viên",
     sectionId: "faculty",
     always: true,
-    summary: "Tiêu đề, lời dẫn và nút mở danh sách giảng viên.",
     manage: { label: "Giáo viên", to: "/admin/teachers" },
     fields: [
       text("teachers_section_title", "Tiêu đề khối", "ĐỘI NGŨ GIẢNG VIÊN"),
@@ -368,12 +328,7 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
         "Đội ngũ giáo viên đồng hành cùng người học trên hành trình chinh phục tiếng Trung, phát triển năng lực ngôn ngữ và mở rộng cơ hội học tập.",
       ),
       ctaLabel("teachers_cta_label", "Xem tất cả các giảng viên"),
-      link(
-        "teachers_cta_url",
-        "Nút “Xem tất cả các giảng viên” – liên kết",
-        "/teachers",
-        "teachers-page",
-      ),
+      link("teachers_cta_url", "Mở trang", "/teachers", "teachers-page"),
     ],
   },
   {
@@ -381,13 +336,12 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Học tập qua trải nghiệm",
     sectionId: "activities",
     toggle: "activities",
-    summary: "Tiêu đề, lời dẫn và nút mở tất cả hoạt động.",
     manage: { label: "Hoạt động", to: "/admin/activities" },
     fields: [
       text("activities_title", "Tiêu đề khối", "Học qua trải nghiệm"),
       area("activities_lead", "Lời dẫn"),
       ctaLabel("activities_cta_label", "Xem tất cả"),
-      link("activities_cta_url", "Nút “Xem tất cả” – liên kết", "/activities", "activities-page"),
+      link("activities_cta_url", "Mở trang", "/activities", "activities-page"),
     ],
   },
   {
@@ -395,8 +349,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Hình ảnh hoạt động",
     sectionId: "activities",
     toggle: "carousel",
-    summary: "Dải ảnh hoạt động lấy từ trang Hình ảnh.",
-    note: "Ảnh lấy từ trang Hình ảnh (các ảnh đang bật hiển thị). Khối này không có nội dung chữ để sửa.",
     manage: { label: "Hình ảnh", to: "/admin/photos" },
     fields: [],
   },
@@ -404,13 +356,12 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     id: "news",
     label: "Bản tin & Kiến thức",
     sectionId: "activities",
-    summary: "Ba bài viết mới nhất và nút mở danh sách tin tức.",
     manage: { label: "Tin tức", to: "/admin/news" },
     fields: [
       text("news_section_title", "Tiêu đề khối", "Tin tức & kiến thức HSK"),
       area("news_section_desc", "Mô tả", "Nội dung chính thức do The Mandarin League biên soạn."),
       ctaLabel("news_cta_label", "Xem tất cả tin tức"),
-      link("news_cta_url", "Nút “Xem tất cả tin tức” – liên kết", "/news", "news-page"),
+      link("news_cta_url", "Mở trang", "/news", "news-page"),
     ],
   },
   {
@@ -418,13 +369,12 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Danh sách đối tác",
     sectionId: "partners",
     always: true,
-    summary: "Tiêu đề, lời dẫn và nút mở danh sách đối tác.",
     manage: { label: "Đối tác", to: "/admin/partners" },
     fields: [
       text("partners_section_title", "Tiêu đề khối", "Cùng TML mở rộng cơ hội học tập"),
       area("partners_section_desc", "Lời dẫn"),
       ctaLabel("partners_cta_label", "Xem tất cả đối tác"),
-      link("partners_cta_url", "Nút “Xem tất cả đối tác” – liên kết", "/partners", "partners-page"),
+      link("partners_cta_url", "Mở trang", "/partners", "partners-page"),
     ],
   },
   {
@@ -432,7 +382,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Trung tâm xác minh",
     sectionId: "verify",
     always: true,
-    summary: "Tiêu đề và mô tả chung của khu vực tra cứu.",
     fields: [
       text("verify_page_title", "Tiêu đề khối", "Tra cứu chứng nhận & điểm HSK"),
       area(
@@ -447,7 +396,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Xác minh chứng nhận",
     sectionId: "verify",
     always: true,
-    summary: "Thẻ tra cứu chứng nhận và nút mở trang xác minh chứng nhận.",
     manage: { label: "Chứng nhận", to: "/admin/certificates" },
     fields: [
       text("verify_cert_card_title", "Tiêu đề thẻ", "Xác minh chứng nhận"),
@@ -457,12 +405,7 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
         "Kiểm tra tính xác thực của chứng nhận do The Mandarin League phát hành hoặc ghi nhận.",
       ),
       ctaLabel("verify_cert_cta_label", "Xác minh chứng nhận"),
-      link(
-        "verify_cert_cta_url",
-        "Nút “Xác minh chứng nhận” – liên kết",
-        "/verify/certificate",
-        "verify-certificate-page",
-      ),
+      link("verify_cert_cta_url", "Mở trang", "/verify/certificate", "verify-certificate-page"),
     ],
   },
   {
@@ -470,7 +413,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Xác minh kết quả HSK",
     sectionId: "verify",
     always: true,
-    summary: "Thẻ tra cứu kết quả HSK và nút mở trang xác minh kết quả.",
     manage: { label: "Kết quả HSK", to: "/admin/hsk" },
     fields: [
       text("verify_hsk_card_title", "Tiêu đề thẻ", "Xác minh kết quả HSK"),
@@ -480,12 +422,7 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
         "Kiểm tra kết quả HSK được TML ghi nhận hoặc xác minh trong hệ thống.",
       ),
       ctaLabel("verify_hsk_cta_label", "Xác minh kết quả HSK"),
-      link(
-        "verify_hsk_cta_url",
-        "Nút “Xác minh kết quả HSK” – liên kết",
-        "/verify/hsk",
-        "verify-hsk-page",
-      ),
+      link("verify_hsk_cta_url", "Mở trang", "/verify/hsk", "verify-hsk-page"),
     ],
   },
   {
@@ -493,8 +430,6 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
     label: "Kêu gọi tham gia & Liên hệ",
     sectionId: "cta",
     toggle: "cta",
-    summary: "Lời kêu gọi ứng tuyển, nút tham gia và thông tin liên hệ.",
-    note: "Thông tin liên hệ (email, mạng xã hội) quản lý ở mục “Liên hệ & Chân trang”.",
     fields: [
       text("cta_title", "Tiêu đề", "Sẵn sàng trở thành một phần của TML?"),
       area(
@@ -503,7 +438,7 @@ export const HOME_BLOCKS: ContentBlock<HomeTextKey>[] = [
         "Ứng tuyển vào một trong 8 Ban, học hỏi kỹ năng mới và cùng lan tỏa tình yêu tiếng Trung.",
       ),
       ctaLabel("cta_button_label", "Tham gia TML"),
-      link("cta_button_url", "Nút “Tham gia TML” – liên kết", "/join", "join-page"),
+      link("cta_button_url", "Mở trang", "/join", "join-page"),
     ],
   },
 ];
@@ -515,7 +450,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Về TML",
     to: "/about",
     sectionId: "about",
-    summary: "Trang mở khi bấm “Tìm hiểu thêm” ở khối Về TML.",
     fields: [
       text("about_page_title", "Tiêu đề trang", "The Mandarin League"),
       area(
@@ -556,7 +490,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Cộng đồng TML",
     to: "/community",
     sectionId: "about",
-    summary: "Trang mở khi bấm “Khám phá cộng đồng” ở khối Cộng đồng TML.",
     fields: [
       text("community_page_eyebrow", "Nhãn trên tiêu đề", "Cộng đồng"),
       text("community_page_title", "Tiêu đề trang", "Những con người của TML"),
@@ -577,7 +510,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Chi tiết cơ cấu tổ chức",
     to: "/organization",
     sectionId: "organization",
-    summary: "Trang mở khi bấm “Trang cơ cấu tổ chức”.",
     fields: [
       text("organization_page_title", "Tiêu đề trang", "Sơ đồ tổ chức TML"),
       area(
@@ -592,7 +524,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Khóa học HSK 1–6",
     to: "/courses/hsk",
     sectionId: "courses",
-    summary: "Trang lộ trình chi tiết HSK 1–6.",
     fields: [
       text("hsk_page_title", "Tiêu đề trang", "Lộ trình HSK 1–6"),
       area(
@@ -607,7 +538,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Tất cả khóa học",
     to: "/courses",
     sectionId: "courses",
-    summary: "Trang mở khi bấm “Tất cả các khóa học”.",
     fields: [
       text("courses_page_title", "Tiêu đề trang", "Học tiếng Trung cùng The Mandarin League"),
       area(
@@ -622,7 +552,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Tất cả giảng viên",
     to: "/teachers",
     sectionId: "faculty",
-    summary: "Trang mở khi bấm “Xem tất cả các giảng viên”.",
     fields: [
       text("teachers_page_title", "Tiêu đề trang", "Đội ngũ Giảng viên"),
       area(
@@ -637,7 +566,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Tất cả hoạt động",
     to: "/activities",
     sectionId: "activities",
-    summary: "Trang mở khi bấm “Xem tất cả” ở khối Hoạt động.",
     fields: [
       text("activities_page_title", "Tiêu đề trang", "Học qua trải nghiệm"),
       area("activities_page_desc", "Mô tả trang", "Các chương trình chính thức do TML tổ chức."),
@@ -648,7 +576,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Tất cả tin tức",
     to: "/news",
     sectionId: "activities",
-    summary: "Trang mở khi bấm “Xem tất cả tin tức”.",
     fields: [
       text("news_page_title", "Tiêu đề trang", "Tin tức & kiến thức"),
       area(
@@ -663,7 +590,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Tất cả đối tác",
     to: "/partners",
     sectionId: "partners",
-    summary: "Trang mở khi bấm “Xem tất cả đối tác”.",
     fields: [
       text("partners_page_title", "Tiêu đề trang", "Đồng hành cùng TML"),
       area(
@@ -678,7 +604,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Xác minh chứng nhận",
     to: "/verify/certificate",
     sectionId: "verify",
-    summary: "Trang mở khi bấm “Xác minh chứng nhận”.",
     fields: [
       text("verify_certificate_title", "Tiêu đề trang", "Xác minh chứng nhận"),
       area(
@@ -693,7 +618,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Xác minh kết quả HSK",
     to: "/verify/hsk",
     sectionId: "verify",
-    summary: "Trang mở khi bấm “Xác minh kết quả HSK”.",
     fields: [
       text("verify_hsk_title", "Tiêu đề trang", "Xác minh kết quả HSK"),
       area(
@@ -708,7 +632,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Tham gia TML",
     to: "/join",
     sectionId: "cta",
-    summary: "Trang mở khi bấm “Tham gia TML” ở banner và khối liên hệ.",
     fields: [
       text("join_page_title", "Tiêu đề trang", "Tại sao tham gia TML?"),
       area(
@@ -723,7 +646,6 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
     label: "Liên hệ",
     to: "/contact",
     sectionId: "cta",
-    summary: "Trang liên hệ công khai của TML.",
     fields: [
       text("contact_page_title", "Tiêu đề trang", "Kết nối với TML"),
       area("contact_page_desc", "Mô tả trang", "Chúng tôi luôn sẵn lòng lắng nghe."),
@@ -731,12 +653,31 @@ export const NAV_PAGES: NavPage<HomeTextKey>[] = [
   },
 ];
 
+/**
+ * Đích đến cho nút CTA, hiển thị bằng TÊN TRANG thay vì đường dẫn kỹ thuật.
+ * Người quản lý nội dung không cần biết “/about” là gì — chọn “Về TML” là đủ.
+ */
+export type ContentDestination = { value: string; label: string; group: string };
+
+export const CONTENT_DESTINATIONS: ContentDestination[] = [
+  { value: "/", label: "Trang chủ", group: "" },
+  ...NAV_PAGES.map((page) => ({
+    value: page.to,
+    label: page.label,
+    group: HOME_SECTIONS.find((section) => section.id === page.sectionId)?.label ?? "",
+  })),
+];
+
+/** Tên trang hiển thị cho một đường dẫn (nếu có trong danh sách đích đến). */
+export function destinationLabel(value: string): string | undefined {
+  return CONTENT_DESTINATIONS.find((destination) => destination.value === value)?.label;
+}
+
 export const SITE_BLOCKS: ContentBlock<SiteKey>[] = [
   {
     id: "contact",
     label: "Liên hệ & Mạng xã hội",
     sectionId: "site",
-    summary: "Email và các kênh mạng xã hội hiển thị ở chân trang.",
     fields: [
       {
         key: "email",
@@ -768,7 +709,6 @@ export const SITE_BLOCKS: ContentBlock<SiteKey>[] = [
     id: "footer",
     label: "Chân trang",
     sectionId: "site",
-    summary: "Mô tả ngắn và dòng bản quyền.",
     fields: [
       {
         key: "tagline",

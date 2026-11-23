@@ -6,11 +6,19 @@ import {
   type SiteSettings,
 } from "@/lib/site-content";
 import { trPhrase, type Lang } from "@/lib/i18n";
-import { HOME_BLOCKS, HOME_SECTIONS, NAV_PAGES, SITE_BLOCKS } from "@/lib/site-content-structure";
-import type { ContentBlock, ContentField } from "@/lib/site-content-structure";
+import {
+  HOME_BLOCKS,
+  HOME_SECTIONS,
+  NAV_PAGES,
+  SITE_BLOCKS,
+  destinationLabel,
+  type ContentBlock,
+  type ContentField,
+} from "@/lib/site-content-structure";
 
 export type {
   ContentBlock,
+  ContentDestination,
   ContentField,
   FieldKind,
   HomeSection,
@@ -21,11 +29,13 @@ export type {
   SiteKey,
 } from "@/lib/site-content-structure";
 export {
+  CONTENT_DESTINATIONS,
   HOME_BLOCKS,
   HOME_SECTIONS,
   NAV_PAGES,
   SITE_BLOCKS,
   blocksOfSection,
+  destinationLabel,
   navPagesOfSection,
   findBlock,
   findNavPage,
@@ -153,12 +163,18 @@ export function describeChanges(
       if (!changed.has(f.key)) return;
       const va = String(a[f.key] ?? "").trim();
       const vb = String(b[f.key] ?? "").trim();
+      const display = (value: string) => {
+        const raw = value || f.fallback;
+        if (!raw) return EMPTY_HIDDEN;
+        // Nút CTA hiển thị tên trang, không phải đường dẫn kỹ thuật.
+        return f.kind === "link" ? (destinationLabel(raw) ?? raw) : raw;
+      };
       out.push({
         id: f.key,
         block: block.label,
         label: f.label,
-        before: va || f.fallback || EMPTY_HIDDEN,
-        after: vb || f.fallback || EMPTY_HIDDEN,
+        before: display(va),
+        after: display(vb),
         beforeDefault: !va,
         afterDefault: !vb,
       });

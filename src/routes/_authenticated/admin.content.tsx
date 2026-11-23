@@ -428,9 +428,8 @@ function ContentAdmin() {
                 </span>
               </div>
               <p className="max-w-3xl text-xs text-muted-foreground">
-                Mỗi ngôn ngữ có bản tùy chỉnh riêng; ô để trống sẽ dùng bản dịch mặc định. Chữ trên
-                nút đổi theo ngôn ngữ, còn liên kết và bật/tắt hiển thị dùng chung. Nội dung Section
-                và trang điều hướng được lưu cùng bản nháp nhưng sửa độc lập.
+                Ô để trống sẽ dùng nội dung mặc định. Liên kết và bật/tắt hiển thị dùng chung cho cả
+                3 ngôn ngữ.
               </p>
             </div>
 
@@ -506,16 +505,8 @@ function ContentAdmin() {
               />
             ) : (
               <div className="min-w-0 space-y-4">
-                <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
-                  <div className="min-w-0">
-                    <h1 className="text-lg font-bold text-primary-deep">{activeSection.label}</h1>
-                    <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
-                      {activeSection.summary}
-                    </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {sectionBlocks.length} khối nội dung
-                    </p>
-                  </div>
+                <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                  <h1 className="text-lg font-bold text-primary-deep">{activeSection.label}</h1>
                   {activeSection.toggle && (
                     <div className="flex items-center gap-2 text-xs">
                       <span className="text-muted-foreground">Hiện trên trang chủ</span>
@@ -547,7 +538,6 @@ function ContentAdmin() {
                     dirty={homeDirtyBlocks.has(block.id)}
                     show={homeForm.show}
                     onToggle={toggleHomeSection}
-                    onOpenNavPage={openNavPage}
                   />
                 ))}
               </div>
@@ -563,9 +553,6 @@ function ContentAdmin() {
           <div className="min-w-0 space-y-4">
             <header className="border-b border-border pb-3">
               <h1 className="text-lg font-bold text-primary-deep">Liên hệ & Chân trang</h1>
-              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
-                Thông tin liên hệ và nội dung chân trang dùng chung trên toàn website.
-              </p>
             </header>
 
             {SITE_BLOCKS.map((block, index) => (

@@ -54,3 +54,5 @@ justdoit-*.md
 
 # Specific private docs
 docs/SMTP_AND_PORTALS_GUIDE.md
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

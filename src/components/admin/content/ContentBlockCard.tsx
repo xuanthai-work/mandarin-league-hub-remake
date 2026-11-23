@@ -1,22 +1,35 @@
-import { ArrowUpRight, Layers, Link2, TriangleAlert } from "lucide-react";
+import { ArrowUpRight, Layers, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { ContentFieldInput } from "@/components/admin/content/ContentFieldInput";
 import {
-  NAV_PAGES,
-  findNavPage,
+  CONTENT_DESTINATIONS,
   isLocalizedField,
   type ContentBlock,
+  type ContentDestination,
 } from "@/lib/site-content-fields";
 import { trPhrase, type Lang } from "@/lib/i18n";
 import type { HomeSectionKey } from "@/lib/site-content";
+
+/** Gom các trang đích theo Section để menu chọn dễ đọc. */
+const DESTINATION_GROUPS = CONTENT_DESTINATIONS.reduce<
+  { label: string; items: ContentDestination[] }[]
+>((groups, destination) => {
+  const existing = groups.find((group) => group.label === destination.group);
+  if (existing) existing.items.push(destination);
+  else groups.push({ label: destination.group, items: [destination] });
+  return groups;
+}, []);
 
 export type ContentBlockCardProps = {
   block: ContentBlock<string>;
@@ -30,7 +43,6 @@ export type ContentBlockCardProps = {
   dirty: boolean;
   show?: Record<HomeSectionKey, boolean> | undefined;
   onToggle?: ((key: HomeSectionKey, value: boolean) => void) | undefined;
-  onOpenNavPage?: ((pageId: string) => void) | undefined;
 };
 
 export function ContentBlockCard({
@@ -44,7 +56,6 @@ export function ContentBlockCard({
   dirty,
   show,
   onToggle,
-  onOpenNavPage,
 }: ContentBlockCardProps) {
   const suffix = lang === "vi" ? "" : `_${lang}`;
   const valueKey = (key: string) => `${key}${suffix}`;
@@ -53,12 +64,6 @@ export function ContentBlockCard({
   const ctaFields = block.fields.filter((field) => field.group === "cta");
   const textFields = generalFields.filter(isLocalizedField);
   const sharedFields = generalFields.filter((field) => !isLocalizedField(field));
-  const textFieldCount = block.fields.filter(isLocalizedField).length;
-  const customizedCount = block.fields.filter(
-    (field) =>
-      isLocalizedField(field) &&
-      ((form[valueKey(field.key)] as string | undefined) ?? "").trim().length > 0,
-  ).length;
   const isOff = block.toggle && show ? show[block.toggle] === false : false;
 
   const changed = (key: string) =>
@@ -90,63 +95,47 @@ export function ContentBlockCard({
       aria-labelledby={`block-${block.id}`}
       className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
     >
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border/70 bg-muted/20 px-4 py-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[11px] font-bold tabular-nums text-primary">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 bg-muted/20 px-4 py-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[11px] font-bold tabular-nums text-primary">
             {index}
           </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 id={`block-${block.id}`} className="text-sm font-bold text-primary-deep">
-                {block.label}
-              </h3>
-              {block.always && (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  Luôn hiện
-                </span>
-              )}
-              {block.auto && (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  Tự động
-                </span>
-              )}
-              {block.fields.length === 0 && (
-                <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  <Layers aria-hidden className="h-3 w-3" /> Lấy từ module khác
-                </span>
-              )}
-              {dirty && (
-                <span
-                  className="inline-block h-1.5 w-1.5 rounded-full bg-gold"
-                  aria-label="Khối có thay đổi chưa lưu"
-                />
-              )}
-            </div>
-            {block.summary && (
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                {block.summary}
-              </p>
-            )}
-          </div>
+          <h3 id={`block-${block.id}`} className="truncate text-sm font-bold text-primary-deep">
+            {block.label}
+          </h3>
+          {block.always && (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              Luôn hiện
+            </span>
+          )}
+          {block.auto && (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              Tự động
+            </span>
+          )}
+          {block.fields.length === 0 && (
+            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              <Layers aria-hidden className="h-3 w-3" /> Lấy từ module khác
+            </span>
+          )}
+          {dirty && (
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full bg-gold"
+              aria-label="Khối có thay đổi chưa lưu"
+            />
+          )}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {textFieldCount > 0 && (
-            <span className="text-[11px] text-muted-foreground">
-              {customizedCount}/{textFieldCount} ô đã tùy chỉnh
-            </span>
-          )}
-          {block.toggle && show && onToggle && (
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              Hiện trên trang chủ
-              <Switch
-                checked={show[block.toggle] ?? true}
-                onCheckedChange={(value) => onToggle(block.toggle!, value)}
-                aria-label={`Hiện khối ${block.label}`}
-              />
-            </span>
-          )}
-        </div>
+        {block.toggle && show && onToggle && (
+          <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+            Hiện trên trang chủ
+            <Switch
+              checked={show[block.toggle] ?? true}
+              onCheckedChange={(value) => onToggle(block.toggle!, value)}
+              aria-label={`Hiện khối ${block.label}`}
+            />
+          </span>
+        )}
       </header>
 
       <div className="space-y-4 px-4 py-4">
@@ -154,12 +143,6 @@ export function ContentBlockCard({
           <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             Khối này đang ẩn trên trang chủ.
           </div>
-        )}
-
-        {block.note && (
-          <p className="rounded-lg border border-dashed border-border bg-muted/20 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-            {block.note}
-          </p>
         )}
 
         {block.fields.length === 0 ? (
@@ -218,7 +201,6 @@ export function ContentBlockCard({
                 saved={saved}
                 errors={errors}
                 onFieldChange={onFieldChange}
-                onOpenNavPage={onOpenNavPage}
               />
             )}
 
@@ -239,6 +221,7 @@ export function ContentBlockCard({
   );
 }
 
+/** Nhóm nút CTA: chữ trên nút (theo ngôn ngữ) và liên kết (dùng chung). */
 function CtaBox({
   fields,
   lang,
@@ -246,7 +229,6 @@ function CtaBox({
   saved,
   errors,
   onFieldChange,
-  onOpenNavPage,
 }: {
   fields: ContentBlock<string>["fields"];
   lang: Lang;
@@ -254,116 +236,132 @@ function CtaBox({
   saved: Record<string, unknown>;
   errors: Record<string, string>;
   onFieldChange: (key: string, value: string) => void;
-  onOpenNavPage?: ((pageId: string) => void) | undefined;
 }) {
   const suffix = lang === "vi" ? "" : `_${lang}`;
-  const linkField = fields.find((field) => field.navPage);
-  const page = findNavPage(linkField?.navPage);
-  const linkValue = linkField
-    ? ((form[linkField.key] as string | undefined) ?? "").trim() || linkField.fallback
-    : "";
-  const selectedPage =
-    page && linkValue === page.to
-      ? page
-      : NAV_PAGES.find((candidate) => candidate.to === linkValue);
-  const mismatch = !!page && !!linkValue && linkValue !== page.to;
 
   const changed = (key: string) =>
     ((form[key] as string | undefined) ?? "").trim() !==
     ((saved[key] as string | undefined) ?? "").trim();
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-primary/[0.03] p-4">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Link2 aria-hidden className="h-4 w-4 text-primary" />
-        <h4 className="text-xs font-semibold">Nút CTA</h4>
-        <span className="text-[11px] text-muted-foreground">
-          Chữ trên nút đổi theo ngôn ngữ, liên kết dùng chung.
-        </span>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {fields.map((field) => {
-          const localized = isLocalizedField(field);
-          const key = localized ? `${field.key}${suffix}` : field.key;
-          const fallback =
-            localized && lang !== "vi" ? trPhrase(lang, field.fallback) : field.fallback;
-          return (
-            <div key={key} className={field.kind === "area" ? "sm:col-span-2" : undefined}>
+    <div className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-2">
+      {fields.map((field) => {
+        const localized = isLocalizedField(field);
+        const key = localized ? `${field.key}${suffix}` : field.key;
+        const fallback =
+          localized && lang !== "vi" ? trPhrase(lang, field.fallback) : field.fallback;
+        const current = (form[key] as string | undefined) ?? "";
+        return (
+          <div key={key} className={field.kind === "area" ? "sm:col-span-2" : undefined}>
+            {field.kind === "link" ? (
+              <DestinationSelect
+                field={{ ...field, fallback }}
+                value={current}
+                onSelect={(value) => onFieldChange(key, value)}
+                changed={changed(key)}
+                error={errors[field.key] ?? null}
+              />
+            ) : (
               <ContentFieldInput
                 field={{ ...field, fallback }}
-                value={(form[key] as string | undefined) ?? ""}
+                value={current}
                 onChange={(value) => onFieldChange(key, value)}
                 changed={changed(key)}
                 error={errors[field.key] ?? null}
               />
-            </div>
-          );
-        })}
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Chọn trang đích bằng tên trang (không bắt người dùng gõ đường dẫn). */
+function DestinationSelect({
+  field,
+  value,
+  onSelect,
+  changed,
+  error,
+}: {
+  field: ContentBlock<string>["fields"][number];
+  value: string;
+  onSelect: (value: string) => void;
+  changed: boolean;
+  error: string | null;
+}) {
+  const id = `field-${field.key}`;
+  // Ô trống nghĩa là dùng trang mặc định của nút, nên hiển thị sẵn trang đó.
+  const effective = value || field.fallback;
+  const known = CONTENT_DESTINATIONS.some((destination) => destination.value === effective);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <label
+          htmlFor={id}
+          className="flex items-center gap-1.5 text-xs font-medium text-foreground"
+        >
+          <span>{field.label}</span>
+          {changed && (
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full bg-gold"
+              aria-label="Có thay đổi chưa lưu"
+            />
+          )}
+        </label>
+
+        {value ? (
+          <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+            <span>Đã sửa</span>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onSelect("")}
+              aria-label="Dùng trang mặc định"
+              className="h-auto rounded p-0.5 text-primary/70 hover:bg-transparent hover:text-primary [&_svg]:size-3"
+            >
+              <RotateCcw aria-hidden />
+            </Button>
+          </span>
+        ) : (
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            Mặc định
+          </span>
+        )}
       </div>
 
-      {page && (
-        <div className="mt-3 space-y-2 rounded-lg border border-border bg-card p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-medium text-muted-foreground">
-              Trang điều hướng của nút
-            </span>
-            <Select
-              value={selectedPage?.id ?? "__custom"}
-              onValueChange={(value) => {
-                if (value === "__custom" || !linkField) return;
-                const target = NAV_PAGES.find((candidate) => candidate.id === value);
-                if (target) onFieldChange(linkField.key, target.to);
-              }}
-            >
-              <SelectTrigger
-                className="h-8 w-full max-w-xs rounded-lg bg-card text-xs"
-                aria-label="Chọn trang điều hướng cho nút CTA"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__custom">Liên kết tùy chỉnh (bên trên)</SelectItem>
-                {NAV_PAGES.map((candidate) => (
-                  <SelectItem key={candidate.id} value={candidate.id}>
-                    {candidate.label} · {candidate.to}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-            <span>
-              Khối này mặc định mở <strong className="text-foreground">{page.label}</strong> (
-              {page.to}).
-            </span>
-            {onOpenNavPage && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="admin-sm"
-                onClick={() => onOpenNavPage(page.id)}
-              >
-                Sửa trang điều hướng
-              </Button>
-            )}
-            <Button type="button" variant="ghost" size="admin-sm" asChild>
-              <a href={page.to} target="_blank" rel="noreferrer">
-                Mở trang
-                <ArrowUpRight aria-hidden />
-              </a>
-            </Button>
-          </div>
-
-          {mismatch && (
-            <p className="flex items-start gap-1.5 rounded bg-gold-soft/60 px-2 py-1.5 text-[11px] text-warning-foreground">
-              <TriangleAlert aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Nút đang trỏ tới {linkValue}, không phải trang điều hướng của khối ({page.to}).
-            </p>
+      <Select value={effective || undefined} onValueChange={onSelect}>
+        <SelectTrigger
+          id={id}
+          aria-invalid={Boolean(error)}
+          className={cn("bg-card", error && "border-destructive")}
+        >
+          <SelectValue placeholder="Chọn trang" />
+        </SelectTrigger>
+        <SelectContent>
+          {DESTINATION_GROUPS.map((group) => (
+            <SelectGroup key={group.label || "trang-chu"}>
+              {group.label && (
+                <SelectLabel className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {group.label}
+                </SelectLabel>
+              )}
+              {group.items.map((destination) => (
+                <SelectItem key={destination.value} value={destination.value}>
+                  {destination.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          ))}
+          {!known && effective && (
+            <SelectItem value={effective}>Trang khác ({effective})</SelectItem>
           )}
-        </div>
-      )}
+        </SelectContent>
+      </Select>
+
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }

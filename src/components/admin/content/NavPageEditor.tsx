@@ -52,17 +52,7 @@ export function NavPageEditor({
           <div className="flex flex-wrap items-center gap-2">
             <FileText aria-hidden className="h-4 w-4 text-primary/70" />
             <h1 className="text-lg font-bold text-primary-deep">{page.label}</h1>
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              Trang điều hướng · {page.to}
-            </span>
           </div>
-          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
-            {page.summary}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Trang này chỉ mở khi khách bấm CTA tương ứng. Sửa ở đây không làm thay đổi nội dung
-            Section{section ? ` “${section.label}”` : ""}.
-          </p>
         </div>
         <Button variant="outline" size="admin-sm" asChild>
           <a href={page.to} target="_blank" rel="noreferrer">
