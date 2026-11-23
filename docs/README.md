@@ -317,6 +317,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-230-MEET-SCAN-SKIP-SETTLED-RUNS`                              | Quét bỏ qua buổi phòng lạ đã xử lý xong, chỉ thử lại buổi lỗi                                          | 2026-11-23     | **PASS** | [task-ge-230-meet-scan-skip-settled-runs.md](tasks/task-ge-230-meet-scan-skip-settled-runs.md)                                                           |
 | `TASK-GE-231-CONTENT-SAVE-NEVER-STUCK`                                 | Trang nội dung: lỗi mạng không làm kẹt trạng thái lưu và xuất bản                                      | 2026-11-23     | **PASS** | [task-ge-231-content-save-never-stuck.md](tasks/task-ge-231-content-save-never-stuck.md)                                                                 |
 | `TASK-GE-232-CONTENT-PUBLISH-ERROR-TEXT`                               | Sửa thông báo lỗi xuất bản nội dung cho đúng quyền Co-founder                                          | 2026-11-23     | **PASS** | [task-ge-232-content-publish-error-text.md](tasks/task-ge-232-content-publish-error-text.md)                                                             |
+| `TASK-GE-233-CONTENT-FORM-HELPERS`                                     | Trang nội dung: gom helper chọn form và kiểm lỗi, bỏ cast lặp                                          | 2026-11-23     | **PASS** | [task-ge-233-content-form-helpers.md](tasks/task-ge-233-content-form-helpers.md)                                                                         |
 
 ---
 

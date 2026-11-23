@@ -54,6 +54,14 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 type Tab = "home" | "site" | "log";
 
+/** Khối nội dung (cast một lần) để kiểm lỗi theo từng bản ghi. */
+const HOME_VALIDATION_BLOCKS = [...HOME_BLOCKS, ...NAV_PAGES] as unknown as ContentBlock<string>[];
+const SITE_VALIDATION_BLOCKS = SITE_BLOCKS as unknown as ContentBlock<string>[];
+
+function validateContent(target: SaveTarget, form: Record<string, unknown>) {
+  return fieldsErrors(target === "home" ? HOME_VALIDATION_BLOCKS : SITE_VALIDATION_BLOCKS, form);
+}
+
 /** Lỗi của mọi ô nhập trong một tập khối (ô trống luôn hợp lệ). */
 function fieldsErrors(blocks: ContentBlock<string>[], form: Record<string, unknown>) {
   const errs: Record<string, string> = {};
@@ -125,6 +133,17 @@ function ContentAdmin() {
   homeFormRef.current = homeForm;
   const siteFormRef = useRef(siteForm);
   siteFormRef.current = siteForm;
+
+  const getForm = (target: SaveTarget) =>
+    (target === "home" ? homeFormRef.current : siteFormRef.current) as unknown as Record<
+      string,
+      unknown
+    >;
+  const getSavedForm = (target: SaveTarget) =>
+    (target === "home" ? prevHomeSavedRef.current : prevSiteSavedRef.current) as unknown as Record<
+      string,
+      unknown
+    > | null;
 
   const rowExistsRef = useRef<Record<SaveTarget, boolean>>({ home: false, site: false });
   rowExistsRef.current = {
@@ -209,20 +228,12 @@ function ContentAdmin() {
   }, [siteForm, siteSaved]);
 
   const homeErrors = useMemo(
-    () =>
-      fieldsErrors(
-        [...HOME_BLOCKS, ...NAV_PAGES] as unknown as ContentBlock<string>[],
-        homeForm as unknown as Record<string, unknown>,
-      ),
+    () => validateContent("home", homeForm as unknown as Record<string, unknown>),
     [homeForm],
   );
 
   const siteErrors = useMemo(
-    () =>
-      fieldsErrors(
-        SITE_BLOCKS as unknown as ContentBlock<string>[],
-        siteForm as unknown as Record<string, unknown>,
-      ),
+    () => validateContent("site", siteForm as unknown as Record<string, unknown>),
     [siteForm],
   );
 
@@ -246,20 +257,11 @@ function ContentAdmin() {
       const inFlight = savingRef.current[target];
       if (inFlight) return inFlight;
 
-      const form =
-        target === "home"
-          ? (homeFormRef.current as unknown as Record<string, unknown>)
-          : (siteFormRef.current as unknown as Record<string, unknown>);
-      const saved =
-        target === "home"
-          ? (prevHomeSavedRef.current as unknown as Record<string, unknown> | null)
-          : (prevSiteSavedRef.current as unknown as Record<string, unknown> | null);
+      const form = getForm(target);
+      const saved = getSavedForm(target);
       if (saved && changedKeys(form, saved).length === 0) return Promise.resolve(true);
 
-      const errs =
-        target === "home"
-          ? fieldsErrors([...HOME_BLOCKS, ...NAV_PAGES] as unknown as ContentBlock<string>[], form)
-          : fieldsErrors(SITE_BLOCKS as unknown as ContentBlock<string>[], form);
+      const errs = validateContent(target, form);
       if (Object.keys(errs).length > 0) {
         setSaveStatus((prev) => ({ ...prev, [target]: "error" }));
         return Promise.resolve(false);
@@ -331,14 +333,8 @@ function ContentAdmin() {
 
   /** Xuất bản bản mới nhất lên website (draft và published cùng nội dung). */
   const publishNow = async (targetKey: SaveTarget): Promise<boolean> => {
-    const form =
-      targetKey === "home"
-        ? (homeFormRef.current as unknown as Record<string, unknown>)
-        : (siteFormRef.current as unknown as Record<string, unknown>);
-    const errs =
-      targetKey === "home"
-        ? fieldsErrors([...HOME_BLOCKS, ...NAV_PAGES] as unknown as ContentBlock<string>[], form)
-        : fieldsErrors(SITE_BLOCKS as unknown as ContentBlock<string>[], form);
+    const form = getForm(targetKey);
+    const errs = validateContent(targetKey, form);
     if (Object.keys(errs).length > 0) {
       toast.error("Vui lòng sửa các ô bị lỗi trước khi xuất bản");
       return false;
