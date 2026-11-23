@@ -320,6 +320,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-233-CONTENT-FORM-HELPERS`                                     | Trang nội dung: gom helper chọn form và kiểm lỗi, bỏ cast lặp                                          | 2026-11-23     | **PASS** | [task-ge-233-content-form-helpers.md](tasks/task-ge-233-content-form-helpers.md)                                                                         |
 | `TASK-GE-234-CONTENT-SHARED-ROW-WRITE`                                 | Trang nội dung: gom phần ghi site_content dùng chung cho lưu nháp và xuất bản                          | 2026-11-23     | **PASS** | [task-ge-234-content-shared-row-write.md](tasks/task-ge-234-content-shared-row-write.md)                                                                 |
 | `TASK-GE-235-CONTENT-HISTORY-HIDE-AUTOSAVES`                           | Lịch sử nội dung: mặc định ẩn các dòng lưu nháp tự động                                                | 2026-11-23     | **PASS** | [task-ge-235-content-history-hide-autosaves.md](tasks/task-ge-235-content-history-hide-autosaves.md)                                                     |
+| `TASK-GE-236-CONTENT-AUDIT-COALESCE-DRAFTS`                            | Migration 0091: gộp các lần lưu nháp liền nhau trong nhật ký nội dung                                  | 2026-11-23     | **PASS** | [task-ge-236-content-audit-coalesce-drafts.md](tasks/task-ge-236-content-audit-coalesce-drafts.md)                                                       |
 
 ---
 
