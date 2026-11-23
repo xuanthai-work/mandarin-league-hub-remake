@@ -1,7 +1,7 @@
 import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, Save, Send } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { type ContentKey, type HomeContent, type SiteSettings } from "@/lib/site-content";
@@ -22,7 +22,6 @@ import {
 import { useConfirm } from "@/components/admin/Trash";
 import { can } from "@/lib/permission-catalog";
 import { useAdminAccess } from "./admin";
-import type { Lang } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { SectionOutline, type ContentSelection } from "@/components/admin/content/SectionOutline";
@@ -47,13 +46,25 @@ function useRow(key: ContentKey) {
   });
 }
 
-const LANG_OPTIONS: { value: Lang; label: string }[] = [
-  { value: "vi", label: "Tiếng Việt" },
-  { value: "en", label: "English (EN)" },
-  { value: "zh", label: "中文 (ZH)" },
-];
+/** Chờ người dùng ngừng gõ một nhịp rồi mới lưu, tránh gửi request liên tục. */
+const AUTOSAVE_DELAY = 2000;
+
+type SaveTarget = "home" | "site";
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 type Tab = "home" | "site" | "log";
+
+/** Lỗi của mọi ô nhập trong một tập khối (ô trống luôn hợp lệ). */
+function fieldsErrors(blocks: ContentBlock<string>[], form: Record<string, unknown>) {
+  const errs: Record<string, string> = {};
+  for (const block of blocks) {
+    for (const field of block.fields) {
+      const err = fieldError(field.kind, (form[field.key] as string | undefined) ?? "");
+      if (err) errs[field.key] = err;
+    }
+  }
+  return errs;
+}
 
 /** Text fields are stored per language; link fields and section toggles are shared. */
 function valueKeys(kind: string, key: string): string[] {
@@ -79,7 +90,8 @@ function isDirtyBlock(
 
 function ContentAdmin() {
   const [tab, setTab] = useState<Tab>("home");
-  const [editLang, setEditLang] = useState<Lang>("vi");
+  // Nội dung chỉ chỉnh bằng tiếng Việt; bản dịch cũ trong DB vẫn được giữ nguyên.
+  const editLang = "vi" as const;
   const qc = useQueryClient();
   const { confirm, dialog } = useConfirm();
   const access = useAdminAccess();
@@ -97,12 +109,33 @@ function ContentAdmin() {
   const [siteForm, setSiteForm] = useState<SiteSettings>(() => toSiteForm({}));
   const [busy, setBusy] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<Record<SaveTarget, SaveStatus>>({
+    home: "idle",
+    site: "idle",
+  });
 
   const homeSaved = useMemo(() => toHomeForm(homeRow.data?.draft), [homeRow.data?.draft]);
   const siteSaved = useMemo(() => toSiteForm(siteRow.data?.draft), [siteRow.data?.draft]);
 
   const prevHomeSavedRef = useRef<HomeContent | null>(null);
   const prevSiteSavedRef = useRef<SiteSettings | null>(null);
+
+  // Bản mới nhất của form cho callback lưu tự động (tránh đọc state cũ trong setTimeout).
+  const homeFormRef = useRef(homeForm);
+  homeFormRef.current = homeForm;
+  const siteFormRef = useRef(siteForm);
+  siteFormRef.current = siteForm;
+
+  const rowExistsRef = useRef<Record<SaveTarget, boolean>>({ home: false, site: false });
+  rowExistsRef.current = {
+    home: homeRow.data !== null && homeRow.data !== undefined,
+    site: siteRow.data !== null && siteRow.data !== undefined,
+  };
+  // Request lưu đang chạy, để không gửi trùng và để Xem trước/Xuất bản chờ lưu xong.
+  const savingRef = useRef<Record<SaveTarget, Promise<boolean> | null>>({
+    home: null,
+    site: null,
+  });
 
   useEffect(() => {
     if (homeRow.data !== undefined) {
@@ -175,27 +208,23 @@ function ContentAdmin() {
     return ids;
   }, [siteForm, siteSaved]);
 
-  const homeErrors = useMemo(() => {
-    const errs: Record<string, string> = {};
-    for (const block of [...HOME_BLOCKS, ...NAV_PAGES]) {
-      for (const field of block.fields) {
-        const err = fieldError(field.kind, homeForm[field.key] ?? "");
-        if (err) errs[field.key] = err;
-      }
-    }
-    return errs;
-  }, [homeForm]);
+  const homeErrors = useMemo(
+    () =>
+      fieldsErrors(
+        [...HOME_BLOCKS, ...NAV_PAGES] as unknown as ContentBlock<string>[],
+        homeForm as unknown as Record<string, unknown>,
+      ),
+    [homeForm],
+  );
 
-  const siteErrors = useMemo(() => {
-    const errs: Record<string, string> = {};
-    for (const block of SITE_BLOCKS) {
-      for (const field of block.fields) {
-        const err = fieldError(field.kind, siteForm[field.key] ?? "");
-        if (err) errs[field.key] = err;
-      }
-    }
-    return errs;
-  }, [siteForm]);
+  const siteErrors = useMemo(
+    () =>
+      fieldsErrors(
+        SITE_BLOCKS as unknown as ContentBlock<string>[],
+        siteForm as unknown as Record<string, unknown>,
+      ),
+    [siteForm],
+  );
 
   useBlocker({
     shouldBlockFn: async () => {
@@ -211,78 +240,166 @@ function ContentAdmin() {
     enableBeforeUnload: () => unsavedTotal > 0,
   });
 
-  const persist = async (targetKey: "home" | "site", publish: boolean): Promise<boolean> => {
-    const errs = targetKey === "home" ? homeErrors : siteErrors;
+  /** Lưu bản nháp mới nhất (tự động lưu, xem trước). Không đụng tới bản đã xuất bản. */
+  const saveDraft = useCallback(
+    (target: SaveTarget): Promise<boolean> => {
+      const inFlight = savingRef.current[target];
+      if (inFlight) return inFlight;
+
+      const form =
+        target === "home"
+          ? (homeFormRef.current as unknown as Record<string, unknown>)
+          : (siteFormRef.current as unknown as Record<string, unknown>);
+      const saved =
+        target === "home"
+          ? (prevHomeSavedRef.current as unknown as Record<string, unknown> | null)
+          : (prevSiteSavedRef.current as unknown as Record<string, unknown> | null);
+      if (saved && changedKeys(form, saved).length === 0) return Promise.resolve(true);
+
+      const errs =
+        target === "home"
+          ? fieldsErrors([...HOME_BLOCKS, ...NAV_PAGES] as unknown as ContentBlock<string>[], form)
+          : fieldsErrors(SITE_BLOCKS as unknown as ContentBlock<string>[], form);
+      if (Object.keys(errs).length > 0) {
+        setSaveStatus((prev) => ({ ...prev, [target]: "error" }));
+        return Promise.resolve(false);
+      }
+
+      setSaveStatus((prev) => ({ ...prev, [target]: "saving" }));
+      const payload = { key: target, draft: form as never };
+      const run = (async () => {
+        try {
+          const { error } = rowExistsRef.current[target]
+            ? await supabase.from("site_content").update(payload).eq("key", target)
+            : await supabase.from("site_content").insert(payload);
+
+          if (error) {
+            setSaveStatus((prev) => ({ ...prev, [target]: "error" }));
+            return false;
+          }
+
+          rowExistsRef.current[target] = true;
+          if (target === "home") prevHomeSavedRef.current = form as unknown as HomeContent;
+          else prevSiteSavedRef.current = form as unknown as SiteSettings;
+
+          qc.setQueryData(["admin-content", target], (old: unknown) => ({
+            ...((old as object) ?? {}),
+            draft: form,
+          }));
+          qc.invalidateQueries({ queryKey: ["site-content", target] });
+          setSaveStatus((prev) => ({ ...prev, [target]: "saved" }));
+          return true;
+        } finally {
+          savingRef.current[target] = null;
+        }
+      })();
+      savingRef.current[target] = run;
+      return run;
+    },
+    [qc],
+  );
+
+  // Tự động lưu sau khi người dùng ngừng chỉnh sửa một nhịp.
+  useEffect(() => {
+    if (homeRow.data === undefined) return;
+    if (changedKeys(homeForm, homeSaved).length === 0) return;
+    if (savingRef.current.home) return;
+    const timer = setTimeout(() => void saveDraft("home"), AUTOSAVE_DELAY);
+    return () => clearTimeout(timer);
+  }, [homeForm, homeSaved, homeRow.data, saveDraft]);
+
+  useEffect(() => {
+    if (siteRow.data === undefined) return;
+    if (changedKeys(siteForm, siteSaved).length === 0) return;
+    if (savingRef.current.site) return;
+    const timer = setTimeout(() => void saveDraft("site"), AUTOSAVE_DELAY);
+    return () => clearTimeout(timer);
+  }, [siteForm, siteSaved, siteRow.data, saveDraft]);
+
+  /** Chờ lần lưu đang chạy rồi lưu nốt phần mới nhất (dùng trước khi Xem trước). */
+  const flushDraft = async (target: SaveTarget): Promise<boolean> => {
+    const inFlight = savingRef.current[target];
+    if (inFlight) {
+      const ok = await inFlight;
+      if (!ok) return false;
+    }
+    return saveDraft(target);
+  };
+
+  /** Xuất bản bản mới nhất lên website (draft và published cùng nội dung). */
+  const publishNow = async (targetKey: SaveTarget): Promise<boolean> => {
+    const form =
+      targetKey === "home"
+        ? (homeFormRef.current as unknown as Record<string, unknown>)
+        : (siteFormRef.current as unknown as Record<string, unknown>);
+    const errs =
+      targetKey === "home"
+        ? fieldsErrors([...HOME_BLOCKS, ...NAV_PAGES] as unknown as ContentBlock<string>[], form)
+        : fieldsErrors(SITE_BLOCKS as unknown as ContentBlock<string>[], form);
     if (Object.keys(errs).length > 0) {
-      toast.error("Vui lòng sửa các ô bị lỗi trước khi lưu");
+      toast.error("Vui lòng sửa các ô bị lỗi trước khi xuất bản");
       return false;
     }
 
+    // Chờ lần tự động lưu đang chạy để không ghi đè bản mới hơn.
+    const inFlight = savingRef.current[targetKey];
+    if (inFlight) await inFlight;
+
     setBusy(true);
-    const form = targetKey === "home" ? homeForm : siteForm;
-    const row = targetKey === "home" ? homeRow : siteRow;
     const payload = {
       key: targetKey,
       draft: form as never,
-      ...(publish ? { published: form as never, published_at: new Date().toISOString() } : {}),
+      published: form as never,
+      published_at: new Date().toISOString(),
     };
-    const { error } = row.data
+    const { error } = rowExistsRef.current[targetKey]
       ? await supabase.from("site_content").update(payload).eq("key", targetKey)
       : await supabase.from("site_content").insert(payload);
     setBusy(false);
 
     if (error) {
       toast.error(
-        "Không lưu được (cần quyền Admin hoặc Trưởng/Phó Ban Truyền thông): " + error.message,
+        "Không xuất bản được (cần quyền Admin hoặc Trưởng/Phó Ban Truyền thông): " + error.message,
       );
       return false;
     }
 
-    toast.success(publish ? "Đã xuất bản lên website" : "Đã lưu nháp");
-
-    if (targetKey === "home") {
-      prevHomeSavedRef.current = form as HomeContent;
-    } else {
-      prevSiteSavedRef.current = form as SiteSettings;
-    }
+    rowExistsRef.current[targetKey] = true;
+    if (targetKey === "home") prevHomeSavedRef.current = form as unknown as HomeContent;
+    else prevSiteSavedRef.current = form as unknown as SiteSettings;
 
     qc.setQueryData(["admin-content", targetKey], (old: unknown) => ({
       ...((old as object) ?? {}),
       draft: form,
-      ...(publish ? { published: form, published_at: payload.published_at } : {}),
+      published: form,
+      published_at: payload.published_at,
     }));
     qc.invalidateQueries({ queryKey: ["admin-content", targetKey] });
     qc.invalidateQueries({ queryKey: ["site-content", targetKey] });
     qc.invalidateQueries({ queryKey: ["content-audit"] });
+    setSaveStatus((prev) => ({ ...prev, [targetKey]: "saved" }));
+    toast.success("Đã xuất bản lên website");
     return true;
   };
 
   const currentKey: "home" | "site" = tab === "site" ? "site" : "home";
 
   const handlePreview = async () => {
-    const currentErrors = currentKey === "home" ? homeErrors : siteErrors;
-    const currentUnsaved = currentKey === "home" ? unsavedHome : unsavedSite;
-
+    // Mở tab trước để trình duyệt không chặn popup, rồi mới chờ lưu.
     const w = window.open("about:blank", "_blank");
 
-    if (Object.keys(currentErrors).length > 0) {
+    const saved = await flushDraft(currentKey);
+    if (!saved) {
       w?.close();
-      toast.error("Sửa các ô bị lỗi trước khi xem trước");
+      toast.error("Chưa lưu được nội dung mới nhất nên chưa mở được xem trước");
       return;
     }
 
-    if (currentUnsaved > 0) {
-      const success = await persist(currentKey, false);
-      if (!success) {
-        w?.close();
-        return;
-      }
-    }
-
+    const url = `/?preview=1&lang=${editLang}`;
     if (w) {
-      w.location.href = `/?preview=1&lang=${editLang}`;
+      w.location.href = url;
     } else {
-      window.open(`/?preview=1&lang=${editLang}`, "_blank");
+      window.open(url, "_blank");
     }
   };
 
@@ -300,7 +417,9 @@ function ContentAdmin() {
     if (key === "home") setHomeForm(toHomeForm(data));
     else setSiteForm(toSiteForm(data));
     setTab(key === "home" ? "home" : "site");
-    toast.success("Đã nạp bản cũ vào trình sửa. Kiểm tra rồi bấm Lưu nháp hoặc Xuất bản.");
+    toast.success(
+      "Đã nạp bản cũ vào trình sửa. Nội dung sẽ được tự động lưu; bấm Xuất bản nếu muốn đưa lên website.",
+    );
   };
 
   const currentRow = currentKey === "home" ? homeRow : siteRow;
@@ -314,7 +433,6 @@ function ContentAdmin() {
   const hasNothingToPublish = currentUnsaved === 0 && draftMatchesPublished;
   const canPublish =
     !busy && Object.keys(currentErrors).length === 0 && !hasNothingToPublish && mayPublish;
-  const canSaveDraft = !busy && currentUnsaved > 0 && Object.keys(currentErrors).length === 0;
 
   const publishChanges = useMemo(() => {
     if (tab === "log") return [];
@@ -355,7 +473,7 @@ function ContentAdmin() {
         busy={busy}
         onCancel={() => setPublishOpen(false)}
         onConfirm={async () => {
-          const ok = await persist(currentKey, true);
+          const ok = await publishNow(currentKey);
           if (ok) setPublishOpen(false);
         }}
       />
@@ -390,47 +508,24 @@ function ContentAdmin() {
           />
         </div>
 
-        {tab !== "log" && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Ngôn ngữ nội dung</span>
-            <SegmentedControl
-              label="Ngôn ngữ nội dung"
-              value={editLang}
-              onChange={setEditLang}
-              options={LANG_OPTIONS}
-            />
-          </div>
-        )}
-
         {/* Status Line + Action Buttons */}
         {tab !== "log" && (
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-1.5 text-sm">
-                {currentUnsaved > 0 ? (
-                  <span className="flex items-center gap-1.5 font-medium text-foreground">
-                    <span
-                      className="inline-block h-2 w-2 rounded-full bg-gold"
-                      aria-hidden="true"
-                    />
-                    <span>{currentUnsaved} thay đổi chưa lưu</span>
-                  </span>
-                ) : !draftMatchesPublished ? (
-                  <span className="font-medium text-gold">Đã lưu nháp · chưa xuất bản</span>
-                ) : (
-                  <span className="text-muted-foreground">Website đang hiển thị bản mới nhất</span>
-                )}
+            <div className="flex flex-wrap items-center gap-1.5 text-sm">
+              <SaveIndicator
+                status={
+                  currentUnsaved > 0 && saveStatus[currentKey] !== "error"
+                    ? "saving"
+                    : saveStatus[currentKey]
+                }
+                onRetry={() => void saveDraft(currentKey)}
+              />
 
-                <span className="text-muted-foreground">
-                  {currentRow.data?.published_at
-                    ? `· Xuất bản lần cuối ${new Date(currentRow.data.published_at).toLocaleString("vi-VN")}`
-                    : "· Chưa xuất bản lần nào"}
-                </span>
-              </div>
-              <p className="max-w-3xl text-xs text-muted-foreground">
-                Ô để trống sẽ dùng nội dung mặc định. Liên kết và bật/tắt hiển thị dùng chung cho cả
-                3 ngôn ngữ.
-              </p>
+              <span className="text-muted-foreground">
+                {currentRow.data?.published_at
+                  ? `· Xuất bản lần cuối ${new Date(currentRow.data.published_at).toLocaleString("vi-VN")}`
+                  : "· Chưa xuất bản lần nào"}
+              </span>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -442,15 +537,6 @@ function ContentAdmin() {
                 disabled={busy}
               >
                 <ExternalLink className="h-4 w-4" /> Xem trước
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => persist(currentKey, false)}
-                disabled={!canSaveDraft}
-              >
-                <Save className="h-4 w-4" /> Lưu nháp
               </Button>
               <Button
                 type="button"
@@ -508,7 +594,7 @@ function ContentAdmin() {
                 <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
                   <h1 className="text-lg font-bold text-primary-deep">{activeSection.label}</h1>
                   {activeSection.toggle && (
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs lg:hidden">
                       <span className="text-muted-foreground">Hiện trên trang chủ</span>
                       <Switch
                         checked={homeForm.show[activeSection.toggle] ?? true}
@@ -573,5 +659,42 @@ function ContentAdmin() {
 
       {tab === "log" && <ContentHistory onRestore={handleRestore} />}
     </div>
+  );
+}
+
+/** Trạng thái lưu tự động: Đang lưu / Đã lưu / Lỗi lưu (kèm nút thử lại). */
+function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry: () => void }) {
+  if (status === "error") {
+    return (
+      <span className="flex items-center gap-1.5 font-medium text-destructive">
+        <AlertCircle className="h-3.5 w-3.5" aria-hidden />
+        Lỗi lưu
+        <Button
+          type="button"
+          variant="ghost"
+          size="admin-sm"
+          onClick={onRetry}
+          className="h-auto px-1.5 py-0 text-xs"
+        >
+          Thử lại
+        </Button>
+      </span>
+    );
+  }
+
+  if (status === "saving") {
+    return (
+      <span className="flex items-center gap-1.5 text-muted-foreground" role="status">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+        Đang lưu…
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex items-center gap-1.5 text-muted-foreground" role="status">
+      <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden />
+      Đã lưu
+    </span>
   );
 }

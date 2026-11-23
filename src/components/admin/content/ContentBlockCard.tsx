@@ -176,12 +176,7 @@ export function ContentBlockCard({
 
             {sharedFields.length > 0 && (
               <div className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-2">
-                <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
-                  <h4 className="text-xs font-semibold">Liên kết & cài đặt chung</h4>
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Dùng chung cho cả 3 ngôn ngữ
-                  </span>
-                </div>
+                <h4 className="text-xs font-semibold sm:col-span-2">Liên kết & cài đặt chung</h4>
                 {sharedFields.map((field) => (
                   <div
                     key={field.key}

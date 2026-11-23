@@ -234,7 +234,7 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
                   Nạp bản này vào trình sửa
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
-                  Chỉ nạp vào ô sửa, chưa lưu. Kiểm tra lại rồi bấm Lưu nháp hoặc Xuất bản.
+                  Chỉ nạp vào ô sửa; nội dung sẽ tự động lưu. Bấm Xuất bản để đưa lên website.
                 </p>
               </div>
             </m.div>
