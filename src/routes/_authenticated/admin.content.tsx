@@ -289,6 +289,9 @@ function ContentAdmin() {
           qc.invalidateQueries({ queryKey: ["site-content", target] });
           setSaveStatus((prev) => ({ ...prev, [target]: "saved" }));
           return true;
+        } catch {
+          setSaveStatus((prev) => ({ ...prev, [target]: "error" }));
+          return false;
         } finally {
           savingRef.current[target] = null;
         }
@@ -352,10 +355,17 @@ function ContentAdmin() {
       published: form as never,
       published_at: new Date().toISOString(),
     };
-    const { error } = rowExistsRef.current[targetKey]
-      ? await supabase.from("site_content").update(payload).eq("key", targetKey)
-      : await supabase.from("site_content").insert(payload);
-    setBusy(false);
+    let error: { message: string } | null = null;
+    try {
+      const res = rowExistsRef.current[targetKey]
+        ? await supabase.from("site_content").update(payload).eq("key", targetKey)
+        : await supabase.from("site_content").insert(payload);
+      error = res.error;
+    } catch (e) {
+      error = { message: e instanceof Error ? e.message : "Lỗi kết nối" };
+    } finally {
+      setBusy(false);
+    }
 
     if (error) {
       toast.error(
