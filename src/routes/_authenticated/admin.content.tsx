@@ -156,6 +156,35 @@ function ContentAdmin() {
     site: null,
   });
 
+  const writeRow = async (
+    target: SaveTarget,
+    fields: { draft: unknown; published?: unknown; published_at?: string },
+  ): Promise<{ message: string } | null> => {
+    const payload = { key: target, ...fields } as never;
+    try {
+      const { error } = rowExistsRef.current[target]
+        ? await supabase.from("site_content").update(payload).eq("key", target)
+        : await supabase.from("site_content").insert(payload);
+      return error;
+    } catch (e) {
+      return { message: e instanceof Error ? e.message : "Lỗi kết nối" };
+    }
+  };
+
+  const commitRow = useCallback(
+    (target: SaveTarget, form: Record<string, unknown>, extra: Record<string, unknown> = {}) => {
+      rowExistsRef.current[target] = true;
+      if (target === "home") prevHomeSavedRef.current = form as unknown as HomeContent;
+      else prevSiteSavedRef.current = form as unknown as SiteSettings;
+      qc.setQueryData(["admin-content", target], (old: unknown) => ({
+        ...((old as object) ?? {}),
+        draft: form,
+        ...extra,
+      }));
+    },
+    [qc],
+  );
+
   useEffect(() => {
     if (homeRow.data !== undefined) {
       const newSaved = toHomeForm(homeRow.data?.draft);
@@ -268,26 +297,15 @@ function ContentAdmin() {
       }
 
       setSaveStatus((prev) => ({ ...prev, [target]: "saving" }));
-      const payload = { key: target, draft: form as never };
       const run = (async () => {
         try {
-          const { error } = rowExistsRef.current[target]
-            ? await supabase.from("site_content").update(payload).eq("key", target)
-            : await supabase.from("site_content").insert(payload);
-
+          const error = await writeRow(target, { draft: form });
           if (error) {
             setSaveStatus((prev) => ({ ...prev, [target]: "error" }));
             return false;
           }
 
-          rowExistsRef.current[target] = true;
-          if (target === "home") prevHomeSavedRef.current = form as unknown as HomeContent;
-          else prevSiteSavedRef.current = form as unknown as SiteSettings;
-
-          qc.setQueryData(["admin-content", target], (old: unknown) => ({
-            ...((old as object) ?? {}),
-            draft: form,
-          }));
+          commitRow(target, form);
           qc.invalidateQueries({ queryKey: ["site-content", target] });
           setSaveStatus((prev) => ({ ...prev, [target]: "saved" }));
           return true;
@@ -301,7 +319,7 @@ function ContentAdmin() {
       savingRef.current[target] = run;
       return run;
     },
-    [qc],
+    [qc, commitRow],
   );
 
   // Tự động lưu sau khi người dùng ngừng chỉnh sửa một nhịp.
@@ -344,21 +362,11 @@ function ContentAdmin() {
     const inFlight = savingRef.current[targetKey];
     if (inFlight) await inFlight;
 
+    const published_at = new Date().toISOString();
     setBusy(true);
-    const payload = {
-      key: targetKey,
-      draft: form as never,
-      published: form as never,
-      published_at: new Date().toISOString(),
-    };
     let error: { message: string } | null = null;
     try {
-      const res = rowExistsRef.current[targetKey]
-        ? await supabase.from("site_content").update(payload).eq("key", targetKey)
-        : await supabase.from("site_content").insert(payload);
-      error = res.error;
-    } catch (e) {
-      error = { message: e instanceof Error ? e.message : "Lỗi kết nối" };
+      error = await writeRow(targetKey, { draft: form, published: form, published_at });
     } finally {
       setBusy(false);
     }
@@ -370,16 +378,7 @@ function ContentAdmin() {
       return false;
     }
 
-    rowExistsRef.current[targetKey] = true;
-    if (targetKey === "home") prevHomeSavedRef.current = form as unknown as HomeContent;
-    else prevSiteSavedRef.current = form as unknown as SiteSettings;
-
-    qc.setQueryData(["admin-content", targetKey], (old: unknown) => ({
-      ...((old as object) ?? {}),
-      draft: form,
-      published: form,
-      published_at: payload.published_at,
-    }));
+    commitRow(targetKey, form, { published: form, published_at });
     qc.invalidateQueries({ queryKey: ["admin-content", targetKey] });
     qc.invalidateQueries({ queryKey: ["site-content", targetKey] });
     qc.invalidateQueries({ queryKey: ["content-audit"] });
