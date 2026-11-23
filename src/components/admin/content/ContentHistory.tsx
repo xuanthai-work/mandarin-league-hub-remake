@@ -20,6 +20,8 @@ export interface ContentHistoryProps {
   onRestore: (key: "home" | "site", data: unknown) => void;
 }
 
+type ActionScope = "important" | "all";
+
 type AuditLogRow = {
   id: string;
   created_at: string;
@@ -58,18 +60,20 @@ const HISTORY_COLS: AdminColumn[] = [
 
 export function ContentHistory({ onRestore }: ContentHistoryProps) {
   const [filter, setFilter] = useState<"all" | "home" | "site">("all");
+  const [actionScope, setActionScope] = useState<ActionScope>("important");
   const [selectedItem, setSelectedItem] = useState<EnrichedRow | null>(null);
 
   const q = useQuery({
-    queryKey: ["content-audit"],
-    queryFn: async () =>
-      (
-        await supabase
-          .from("content_audit_logs")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(100)
-      ).data ?? [],
+    queryKey: ["content-audit", actionScope],
+    queryFn: async () => {
+      let query = supabase
+        .from("content_audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (actionScope === "important") query = query.in("action", ["publish", "create"]);
+      return (await query).data ?? [];
+    },
   });
 
   const enrichedRows = useMemo(() => {
@@ -104,7 +108,7 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
   return (
     <div className="space-y-4">
       {/* Filter */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="w-52">
           <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "home" | "site")}>
             <SelectTrigger className="w-full bg-card">
@@ -117,6 +121,17 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
             </SelectContent>
           </Select>
         </div>
+        <div className="w-52">
+          <Select value={actionScope} onValueChange={(v) => setActionScope(v as ActionScope)}>
+            <SelectTrigger className="w-full bg-card">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="important">Xuất bản & tạo mới</SelectItem>
+              <SelectItem value="all">Tất cả thao tác (gồm lưu nháp)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Table */}
@@ -124,7 +139,13 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
         columns={HISTORY_COLS}
         minWidth="min-w-[680px]"
         isEmpty={q.isLoading || filteredRows.length === 0}
-        emptyMessage={q.isLoading ? "Đang tải…" : "Chưa có thay đổi."}
+        emptyMessage={
+          q.isLoading
+            ? "Đang tải…"
+            : actionScope === "important"
+              ? "Chưa có lần xuất bản nào. Chọn “Tất cả thao tác” để xem cả bản nháp."
+              : "Chưa có thay đổi."
+        }
       >
         {filteredRows.map((item) => {
           const { row, changes } = item;

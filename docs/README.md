@@ -319,6 +319,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-232-CONTENT-PUBLISH-ERROR-TEXT`                               | Sửa thông báo lỗi xuất bản nội dung cho đúng quyền Co-founder                                          | 2026-11-23     | **PASS** | [task-ge-232-content-publish-error-text.md](tasks/task-ge-232-content-publish-error-text.md)                                                             |
 | `TASK-GE-233-CONTENT-FORM-HELPERS`                                     | Trang nội dung: gom helper chọn form và kiểm lỗi, bỏ cast lặp                                          | 2026-11-23     | **PASS** | [task-ge-233-content-form-helpers.md](tasks/task-ge-233-content-form-helpers.md)                                                                         |
 | `TASK-GE-234-CONTENT-SHARED-ROW-WRITE`                                 | Trang nội dung: gom phần ghi site_content dùng chung cho lưu nháp và xuất bản                          | 2026-11-23     | **PASS** | [task-ge-234-content-shared-row-write.md](tasks/task-ge-234-content-shared-row-write.md)                                                                 |
+| `TASK-GE-235-CONTENT-HISTORY-HIDE-AUTOSAVES`                           | Lịch sử nội dung: mặc định ẩn các dòng lưu nháp tự động                                                | 2026-11-23     | **PASS** | [task-ge-235-content-history-hide-autosaves.md](tasks/task-ge-235-content-history-hide-autosaves.md)                                                     |
 
 ---
 
