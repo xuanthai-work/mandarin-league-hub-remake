@@ -10,6 +10,7 @@ export type NavPageEditorProps = {
   lang: Lang;
   form: Record<string, unknown>;
   saved: Record<string, unknown>;
+  published: Record<string, unknown>;
   onFieldChange: (key: string, value: string) => void;
   errors: Record<string, string>;
   onBackToSection: () => void;
@@ -25,6 +26,7 @@ export function NavPageEditor({
   lang,
   form,
   saved,
+  published,
   onFieldChange,
   errors,
   onBackToSection,
@@ -33,6 +35,9 @@ export function NavPageEditor({
   const changed = (key: string) =>
     ((form[key] as string | undefined) ?? "").trim() !==
     ((saved[key] as string | undefined) ?? "").trim();
+  const isDraft = (key: string) =>
+    ((form[key] as string | undefined) ?? "").trim() !==
+    ((published[key] as string | undefined) ?? "").trim();
 
   return (
     <div className="min-w-0 space-y-4">
@@ -75,6 +80,7 @@ export function NavPageEditor({
                 value={raw}
                 onChange={(value) => onFieldChange(key, value)}
                 changed={changed(key)}
+                draft={isDraft(key)}
                 error={errors[field.key] ?? null}
               />
             </div>

@@ -38,6 +38,8 @@ export type ContentBlockCardProps = {
   lang: Lang;
   form: Record<string, unknown>;
   saved: Record<string, unknown>;
+  /** Bản đang hiển thị trên website, để biết mục nào mới là bản nháp. */
+  published: Record<string, unknown>;
   onFieldChange: (key: string, value: string) => void;
   errors: Record<string, string>;
   dirty: boolean;
@@ -51,6 +53,7 @@ export function ContentBlockCard({
   lang,
   form,
   saved,
+  published,
   onFieldChange,
   errors,
   dirty,
@@ -69,6 +72,9 @@ export function ContentBlockCard({
   const changed = (key: string) =>
     ((form[key] as string | undefined) ?? "").trim() !==
     ((saved[key] as string | undefined) ?? "").trim();
+  const isDraft = (key: string) =>
+    ((form[key] as string | undefined) ?? "").trim() !==
+    ((published[key] as string | undefined) ?? "").trim();
 
   const fieldInput = (
     field: ContentBlock<string>["fields"][number],
@@ -85,6 +91,7 @@ export function ContentBlockCard({
         value={raw}
         onChange={(value) => onFieldChange(key, value)}
         changed={changed(key)}
+        draft={isDraft(key)}
         error={errors[field.key] ?? null}
       />
     );
@@ -113,11 +120,16 @@ export function ContentBlockCard({
               Tự động
             </span>
           )}
-          {block.fields.length === 0 && (
-            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              <Layers aria-hidden className="h-3 w-3" /> Lấy từ module khác
-            </span>
-          )}
+          {block.fields.length === 0 &&
+            (block.manage ? (
+              <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                <Layers aria-hidden className="h-3 w-3" /> Lấy từ module khác
+              </span>
+            ) : (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Chữ cố định
+              </span>
+            ))}
           {dirty && (
             <span
               className="inline-block h-1.5 w-1.5 rounded-full bg-gold"
@@ -148,7 +160,9 @@ export function ContentBlockCard({
         {block.fields.length === 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
-              Khối này không có nội dung chữ để sửa trực tiếp.
+              {block.manage
+                ? "Khối này lấy dữ liệu từ module khác, không có nội dung chữ để sửa trực tiếp."
+                : "Toàn bộ chữ trong khối này là cố định, không cần chỉnh trong Trang & Nội dung."}
             </p>
             {block.manage && (
               <Button variant="outline" size="admin-sm" asChild>
@@ -194,6 +208,7 @@ export function ContentBlockCard({
                 lang={lang}
                 form={form}
                 saved={saved}
+                published={published}
                 errors={errors}
                 onFieldChange={onFieldChange}
               />
@@ -222,6 +237,7 @@ function CtaBox({
   lang,
   form,
   saved,
+  published,
   errors,
   onFieldChange,
 }: {
@@ -229,6 +245,7 @@ function CtaBox({
   lang: Lang;
   form: Record<string, unknown>;
   saved: Record<string, unknown>;
+  published: Record<string, unknown>;
   errors: Record<string, string>;
   onFieldChange: (key: string, value: string) => void;
 }) {
@@ -237,6 +254,9 @@ function CtaBox({
   const changed = (key: string) =>
     ((form[key] as string | undefined) ?? "").trim() !==
     ((saved[key] as string | undefined) ?? "").trim();
+  const isDraft = (key: string) =>
+    ((form[key] as string | undefined) ?? "").trim() !==
+    ((published[key] as string | undefined) ?? "").trim();
 
   return (
     <div className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-2">
@@ -252,6 +272,7 @@ function CtaBox({
               <DestinationSelect
                 field={{ ...field, fallback }}
                 value={current}
+                published={(published[key] as string | undefined) ?? ""}
                 onSelect={(value) => onFieldChange(key, value)}
                 changed={changed(key)}
                 error={errors[field.key] ?? null}
@@ -262,6 +283,7 @@ function CtaBox({
                 value={current}
                 onChange={(value) => onFieldChange(key, value)}
                 changed={changed(key)}
+                draft={isDraft(key)}
                 error={errors[field.key] ?? null}
               />
             )}
@@ -276,12 +298,14 @@ function CtaBox({
 function DestinationSelect({
   field,
   value,
+  published,
   onSelect,
   changed,
   error,
 }: {
   field: ContentBlock<string>["fields"][number];
   value: string;
+  published: string;
   onSelect: (value: string) => void;
   changed: boolean;
   error: string | null;
@@ -289,6 +313,7 @@ function DestinationSelect({
   const id = `field-${field.key}`;
   // Ô trống nghĩa là dùng trang mặc định của nút, nên hiển thị sẵn trang đó.
   const effective = value || field.fallback;
+  const draft = effective !== (published || field.fallback);
   const known = CONTENT_DESTINATIONS.some((destination) => destination.value === effective);
 
   return (
@@ -307,24 +332,24 @@ function DestinationSelect({
           )}
         </label>
 
-        {value ? (
-          <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-            <span>Đã sửa</span>
+        <span className="flex items-center gap-1.5">
+          {draft && (
+            <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[10px] font-medium text-primary-deep">
+              Nháp
+            </span>
+          )}
+          {value && (
             <Button
               type="button"
               variant="ghost"
               onClick={() => onSelect("")}
               aria-label="Dùng trang mặc định"
-              className="h-auto rounded p-0.5 text-primary/70 hover:bg-transparent hover:text-primary [&_svg]:size-3"
+              className="h-auto rounded p-0.5 text-muted-foreground hover:bg-transparent hover:text-primary [&_svg]:size-3"
             >
               <RotateCcw aria-hidden />
             </Button>
-          </span>
-        ) : (
-          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            Mặc định
-          </span>
-        )}
+          )}
+        </span>
       </div>
 
       <Select value={effective || undefined} onValueChange={onSelect}>

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTr } from "@/lib/i18n";
-import { appendPreview, useSiteContent } from "@/lib/site-content";
+import { useSiteContent } from "@/lib/site-content";
 import type { Course } from "@/lib/data/types";
 import type { HskClass } from "@/lib/hsk-classes";
 import type { PublicTeacher } from "@/lib/teachers";
@@ -75,14 +75,7 @@ function Home() {
       {h.show.about && <AboutSection h={h} />}
 
       {/* Organization: the exact SVG chart + per-department drawer from /organization */}
-      <OrgChartSection
-        id="organization"
-        heading
-        title={h.organization_title}
-        desc={h.organization_desc}
-        ctaLabel={h.organization_cta_label}
-        ctaHref={appendPreview(h.organization_cta_url || "/organization", preview)}
-      />
+      <OrgChartSection id="organization" heading desc={h.organization_desc} />
 
       {/* Courses: HSK classes with level filter, format, seats and fee (or the 1–6 roadmap) */}
       {h.show.courses && <CoursesSection h={h} onSelectCourse={setSelectedCourse} />}
@@ -103,7 +96,7 @@ function Home() {
       <PartnersSection h={h} />
 
       {/* Verification: the two large cards from /verify plus its trust strip */}
-      <VerifySection h={h} onOpenVerify={setVerifyKind} />
+      <VerifySection onOpenVerify={setVerifyKind} />
 
       {/* Contact & join */}
       {h.show.cta && <ContactSection h={h} />}

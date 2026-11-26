@@ -24,7 +24,7 @@ export function PartnersSection({ h }: { h: HomeContent }) {
           <div>
             <SectionLabel>{tr("Đối tác đồng hành")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-              {h.partners_section_title || tr("Cùng TML mở rộng cơ hội học tập")}
+              {tr("Cùng TML mở rộng cơ hội học tập")}
             </h2>
             {h.partners_section_desc && (
               <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
@@ -33,10 +33,10 @@ export function PartnersSection({ h }: { h: HomeContent }) {
             )}
           </div>
           <CtaLink
-            href={appendPreview(h.partners_cta_url || "/partners", preview)}
+            href={appendPreview("/partners", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
-            {h.partners_cta_label || tr("Xem tất cả đối tác")} <ArrowRight className="h-4 w-4" />
+            {tr("Xem tất cả đối tác")} <ArrowRight className="h-4 w-4" />
           </CtaLink>
         </div>
         {partners.length === 0 ? (

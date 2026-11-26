@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { z } from "zod";
 
 import { CONTACT } from "@/components/site/SiteLayout";
+import { useSiteContent } from "@/lib/site-content";
 import { useTr } from "@/lib/i18n";
 
 const schema = z.object({
@@ -17,6 +18,8 @@ const FIELD =
 /** Shared message form: opens the visitor's mail app addressed to the TML inbox. */
 export function ContactForm({ className = "" }: { className?: string }) {
   const tr = useTr();
+  const site = useSiteContent("site").data;
+  const inbox = site.email || CONTACT.email;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
 
@@ -31,7 +34,7 @@ export function ContactForm({ className = "" }: { className?: string }) {
     }
     setErrors({});
     const body = `Họ tên: ${r.data.name}\nEmail: ${r.data.email}\n\n${r.data.message}`;
-    window.location.href = `mailto:${CONTACT.email}?subject=${encodeURIComponent(r.data.subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:${inbox}?subject=${encodeURIComponent(r.data.subject)}&body=${encodeURIComponent(body)}`;
     setSent(true);
   }
 

@@ -52,17 +52,17 @@ export function ActivitiesSection({
           <div>
             <SectionLabel>{tr("Hoạt động tiêu biểu")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-              {h.activities_title || tr("Học qua trải nghiệm")}
+              {tr("Học qua trải nghiệm")}
             </h2>
             {h.activities_lead && (
               <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{h.activities_lead}</p>
             )}
           </div>
           <CtaLink
-            href={appendPreview(h.activities_cta_url || "/activities", preview)}
+            href={appendPreview("/activities", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
-            {h.activities_cta_label || tr("Xem tất cả")} <ArrowRight className="h-4 w-4" />
+            {tr("Xem tất cả")} <ArrowRight className="h-4 w-4" />
           </CtaLink>
         </div>
 
@@ -138,17 +138,17 @@ export function ActivitiesSection({
             <div>
               <SectionLabel>{tr("Bản tin & kiến thức")}</SectionLabel>
               <h3 className="mt-3 text-2xl font-bold text-primary-deep md:text-3xl">
-                {h.news_section_title || tr("Tin tức & kiến thức HSK")}
+                {tr("Tin tức & kiến thức HSK")}
               </h3>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {h.news_section_desc || tr("Nội dung chính thức do The Mandarin League biên soạn.")}
+                {tr("Nội dung chính thức do The Mandarin League biên soạn.")}
               </p>
             </div>
             <CtaLink
-              href={appendPreview(h.news_cta_url || "/news", preview)}
+              href={appendPreview("/news", preview)}
               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
             >
-              {h.news_cta_label || tr("Xem tất cả tin tức")} <ArrowRight className="h-4 w-4" />
+              {tr("Xem tất cả tin tức")} <ArrowRight className="h-4 w-4" />
             </CtaLink>
           </div>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 reveal-on-scroll">

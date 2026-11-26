@@ -47,7 +47,7 @@ const ACTION_LABEL: Record<string, string> = {
 
 const KEY_LABEL: Record<string, string> = {
   home: "Trang chủ & Trang điều hướng",
-  site: "Liên hệ & Chân trang",
+  site: "Liên hệ & Mạng xã hội",
 };
 
 const HISTORY_COLS: AdminColumn[] = [
@@ -117,7 +117,7 @@ export function ContentHistory({ onRestore }: ContentHistoryProps) {
             <SelectContent>
               <SelectItem value="all">Tất cả mục</SelectItem>
               <SelectItem value="home">Trang chủ & Trang điều hướng</SelectItem>
-              <SelectItem value="site">Liên hệ & Chân trang</SelectItem>
+              <SelectItem value="site">Liên hệ & Mạng xã hội</SelectItem>
             </SelectContent>
           </Select>
         </div>

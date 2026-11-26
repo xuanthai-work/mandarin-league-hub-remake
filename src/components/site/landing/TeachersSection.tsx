@@ -26,7 +26,7 @@ export function TeachersSection({
           <div>
             <SectionLabel>师资团队 · {tr("Đội ngũ Giảng viên")}</SectionLabel>
             <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-              {h.teachers_section_title || tr("ĐỘI NGŨ GIẢNG VIÊN")}
+              {tr("ĐỘI NGŨ GIẢNG VIÊN")}
             </h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
               {h.teachers_section_desc ||
@@ -36,11 +36,10 @@ export function TeachersSection({
             </p>
           </div>
           <CtaLink
-            href={appendPreview(h.teachers_cta_url || "/teachers", preview)}
+            href={appendPreview("/teachers", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
-            {h.teachers_cta_label || tr("Xem tất cả các giảng viên")}{" "}
-            <ArrowRight className="h-4 w-4" />
+            {tr("Xem tất cả các giảng viên")} <ArrowRight className="h-4 w-4" />
           </CtaLink>
         </div>
         {faculty.length === 0 ? (

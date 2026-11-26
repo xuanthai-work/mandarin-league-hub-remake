@@ -46,17 +46,17 @@ export function CoursesSection({
         <div>
           <SectionLabel>{tr("Khóa học HSK")}</SectionLabel>
           <h2 className="mt-3 text-3xl font-bold text-primary-deep md:text-4xl">
-            {h.courses_title || tr("Chọn cấp độ phù hợp với bạn")}
+            {tr("Chọn cấp độ phù hợp với bạn")}
           </h2>
           {h.courses_lead && (
             <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{h.courses_lead}</p>
           )}
         </div>
         <CtaLink
-          href={appendPreview(h.courses_cta_url || "/courses", preview)}
+          href={appendPreview("/courses", preview)}
           className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
         >
-          {h.courses_cta_label || tr("Tất cả các khóa học")} <ArrowRight className="h-4 w-4" />
+          {tr("Tất cả các khóa học")} <ArrowRight className="h-4 w-4" />
         </CtaLink>
       </div>
 

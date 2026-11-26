@@ -14,6 +14,7 @@ import {
 import { getDepartments } from "@/lib/data/departments";
 import type { Department } from "@/lib/data/types";
 import { useTr } from "@/lib/i18n";
+import { appendPreview, usePreviewMode } from "@/lib/site-content";
 import {
   advisorsOf,
   initials,
@@ -46,6 +47,7 @@ export function OrgChartSection({
   ctaHref?: string;
 }) {
   const tr = useTr();
+  const preview = usePreviewMode();
   const deps = getDepartments();
   const { data: org, isLoading } = usePublicOrgChart();
   const { data: advisors } = usePublicAdvisors();
@@ -117,11 +119,13 @@ export function OrgChartSection({
           <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
             <SectionTitle
               label={tr("Cơ cấu tổ chức")}
-              title={title || "Sơ đồ tổ chức TML"}
-              desc={desc || "The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn."}
+              title={title || tr("Sơ đồ tổ chức TML")}
+              desc={
+                desc || tr("The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn.")
+              }
             />
             <CtaLink
-              href={ctaHref}
+              href={appendPreview(ctaHref, preview)}
               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
             >
               {ctaLabel || tr("Trang cơ cấu tổ chức")} <ArrowRight className="h-4 w-4" />

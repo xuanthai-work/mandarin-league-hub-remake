@@ -144,6 +144,7 @@ describe("section / content block / navigation page structure", () => {
       "about",
       "values",
       "community",
+      "community-groups",
       "organization",
       "courses",
       "faculty-section",
@@ -165,11 +166,12 @@ describe("section / content block / navigation page structure", () => {
     }
   });
 
-  it("keeps the three Giới thiệu content blocks on one Section screen", () => {
+  it("keeps the Giới thiệu content blocks on one Section screen", () => {
     expect(blocksOfSection("about").map((block) => block.id)).toEqual([
       "about",
       "values",
       "community",
+      "community-groups",
     ]);
     expect(blocksOfSection("verify").map((block) => block.id)).toEqual([
       "verify",
@@ -287,29 +289,24 @@ describe("toHomeForm and toSiteForm", () => {
 
   it("keeps per-language text fields in the admin forms", () => {
     const home = toHomeForm({
-      hero_title: "Vi",
-      hero_title_en: "En",
-      hero_title_zh: "Zh",
+      about_title: "Vi",
+      about_title_en: "En",
+      about_title_zh: "Zh",
     });
-    expect(home.hero_title).toBe("Vi");
-    expect(home.hero_title_en).toBe("En");
-    expect(home.hero_title_zh).toBe("Zh");
-
-    const site = toSiteForm({ tagline: "Vi", tagline_en: "En", tagline_zh: "Zh" });
-    expect(site.tagline).toBe("Vi");
-    expect(site.tagline_en).toBe("En");
-    expect(site.tagline_zh).toBe("Zh");
+    expect(home.about_title).toBe("Vi");
+    expect(home.about_title_en).toBe("En");
+    expect(home.about_title_zh).toBe("Zh");
   });
 });
 
 describe("describeChanges", () => {
   it("detects text modifications", () => {
-    const changes = describeChanges("home", { hero_title: "Cũ" }, { hero_title: "Mới" });
+    const changes = describeChanges("home", { about_title: "Cũ" }, { about_title: "Mới" });
     expect(changes).toEqual([
       {
-        id: "hero_title",
-        block: "Banner",
-        label: "Tiêu đề lớn · VI",
+        id: "about_title",
+        block: "Về TML",
+        label: "Tiêu đề · VI",
         before: "Cũ",
         after: "Mới",
         beforeDefault: false,
@@ -319,14 +316,18 @@ describe("describeChanges", () => {
   });
 
   it("handles clearing to default fallback with beforeDefault/afterDefault flags", () => {
-    const changes = describeChanges("home", { hero_badge: "Học tiếng Trung" }, { hero_badge: "" });
+    const changes = describeChanges(
+      "home",
+      { about_cta_label: "Tìm hiểu ngay" },
+      { about_cta_label: "" },
+    );
     expect(changes).toEqual([
       {
-        id: "hero_badge",
-        block: "Banner",
-        label: "Dòng nhỏ phía trên · VI",
-        before: "Học tiếng Trung",
-        after: "Online Chinese Learning Community",
+        id: "about_cta_label",
+        block: "Về TML",
+        label: "Chữ trên nút · VI",
+        before: "Tìm hiểu ngay",
+        after: "Tìm hiểu thêm",
         beforeDefault: false,
         afterDefault: true,
       },
@@ -334,12 +335,12 @@ describe("describeChanges", () => {
   });
 
   it("reports English/Chinese variants separately with translated fallbacks", () => {
-    const en = describeChanges("home", { hero_title_en: "Old" }, { hero_title_en: "New" });
+    const en = describeChanges("home", { about_title_en: "Old" }, { about_title_en: "New" });
     expect(en).toEqual([
       {
-        id: "hero_title_en",
-        block: "Banner",
-        label: "Tiêu đề lớn · EN",
+        id: "about_title_en",
+        block: "Về TML",
+        label: "Tiêu đề · EN",
         before: "Old",
         after: "New",
         beforeDefault: false,
@@ -356,18 +357,18 @@ describe("describeChanges", () => {
     });
   });
 
-  it("shows 'Để trống (ẩn)' for fields with empty fallback like threads", () => {
+  it("shows 'Để trống (ẩn)' for fields with empty fallback like linkedin", () => {
     const changes = describeChanges(
       "site",
-      { threads: "https://threads.net/@tml" },
-      { threads: "" },
+      { linkedin: "https://linkedin.com/company/tml" },
+      { linkedin: "" },
     );
     expect(changes).toEqual([
       {
-        id: "threads",
+        id: "linkedin",
         block: "Liên hệ & Mạng xã hội",
-        label: "Threads",
-        before: "https://threads.net/@tml",
+        label: "LinkedIn",
+        before: "https://linkedin.com/company/tml",
         after: "Để trống (ẩn)",
         beforeDefault: false,
         afterDefault: true,
@@ -397,10 +398,10 @@ describe("describeChanges", () => {
   it("orders changes by visual block and field order", () => {
     const changes = describeChanges(
       "home",
-      { cta_title: "Cũ", hero_title: "Cũ" },
-      { cta_title: "Mới", hero_title: "Mới" },
+      { cta_title: "Cũ", about_title: "Cũ" },
+      { cta_title: "Mới", about_title: "Mới" },
     );
-    expect(changes.map((c) => c.id)).toEqual(["hero_title", "cta_title"]);
+    expect(changes.map((c) => c.id)).toEqual(["about_title", "cta_title"]);
   });
 
   it("ignores unknown keys not in block definitions", () => {

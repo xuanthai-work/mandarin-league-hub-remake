@@ -34,10 +34,10 @@ export function ContactSection({ h }: { h: HomeContent }) {
                   )}
               </p>
               <CtaLink
-                href={appendPreview(h.cta_button_url || "/join", preview)}
+                href={appendPreview("/join", preview)}
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 font-semibold text-primary-deep transition hover:opacity-90"
               >
-                {h.cta_button_label || t("cta.join")} <ArrowRight className="h-4 w-4" />
+                {t("cta.join")} <ArrowRight className="h-4 w-4" />
               </CtaLink>
             </div>
             <div className="space-y-3 border-t border-primary-foreground/20 pt-6 text-sm">

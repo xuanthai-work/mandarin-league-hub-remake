@@ -60,13 +60,47 @@ const COMMUNITY_GROUPS: {
   icon: typeof Users;
   t: string;
   d: string;
+  titleKey: HomeTextFieldKey;
+  descKey: HomeTextFieldKey;
   to?: "/organization" | "/teachers";
 }[] = [
-  { icon: Users, t: "Thành viên", d: "Những người đang tham gia TML.", to: "/organization" },
-  { icon: GraduationCap, t: "Giáo viên", d: "Đội ngũ giảng dạy và chuyên môn.", to: "/teachers" },
-  { icon: HandHeart, t: "Tình nguyện viên", d: "Đóng góp cho hoạt động của TML." },
-  { icon: Sparkles, t: "Mentor", d: "Hỗ trợ học tập và phát triển." },
-  { icon: Megaphone, t: "Đại sứ", d: "Lan tỏa hình ảnh và hoạt động TML." },
+  {
+    icon: Users,
+    t: "Thành viên",
+    d: "Những người đang tham gia TML.",
+    titleKey: "community1_title",
+    descKey: "community1_desc",
+    to: "/organization",
+  },
+  {
+    icon: GraduationCap,
+    t: "Giáo viên",
+    d: "Đội ngũ giảng dạy và chuyên môn.",
+    titleKey: "community2_title",
+    descKey: "community2_desc",
+    to: "/teachers",
+  },
+  {
+    icon: HandHeart,
+    t: "Tình nguyện viên",
+    d: "Đóng góp cho hoạt động của TML.",
+    titleKey: "community3_title",
+    descKey: "community3_desc",
+  },
+  {
+    icon: Sparkles,
+    t: "Mentor",
+    d: "Hỗ trợ học tập và phát triển.",
+    titleKey: "community4_title",
+    descKey: "community4_desc",
+  },
+  {
+    icon: Megaphone,
+    t: "Đại sứ",
+    d: "Lan tỏa hình ảnh và hoạt động TML.",
+    titleKey: "community5_title",
+    descKey: "community5_desc",
+  },
 ];
 
 export function AboutSection({ h }: { h: HomeContent }) {
@@ -155,17 +189,17 @@ export function AboutSection({ h }: { h: HomeContent }) {
               {tr("Cộng đồng TML")}
             </div>
             <h3 className="mt-1 text-xl font-bold text-primary-deep">
-              {h.community_title || tr("Những con người cùng tạo nên TML")}
+              {tr("Những con người cùng tạo nên TML")}
             </h3>
             {h.community_desc && (
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{h.community_desc}</p>
             )}
           </div>
           <CtaLink
-            href={appendPreview(h.community_cta_url || "/community", preview)}
+            href={appendPreview("/community", preview)}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
-            {h.community_cta_label || tr("Khám phá cộng đồng")} <ArrowRight className="h-4 w-4" />
+            {tr("Khám phá cộng đồng")} <ArrowRight className="h-4 w-4" />
           </CtaLink>
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -182,17 +216,23 @@ export function AboutSection({ h }: { h: HomeContent }) {
                     <ArrowRight className="h-3.5 w-3.5 text-primary opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
                   </div>
                   <div className="mt-2 font-semibold text-primary-deep group-hover:text-primary">
-                    {tr(g.t)}
+                    {h[g.titleKey] || tr(g.t)}
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{tr(g.d)}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {h[g.descKey] || tr(g.d)}
+                  </p>
                 </Link>
               );
 
             return (
               <div key={g.t} className="rounded-xl bg-secondary p-4">
                 <g.icon className="h-5 w-5 text-primary" />
-                <div className="mt-2 font-semibold text-primary-deep">{tr(g.t)}</div>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{tr(g.d)}</p>
+                <div className="mt-2 font-semibold text-primary-deep">
+                  {h[g.titleKey] || tr(g.t)}
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {h[g.descKey] || tr(g.d)}
+                </p>
               </div>
             );
           })}

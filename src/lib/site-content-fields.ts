@@ -123,7 +123,7 @@ export function changedKeys(a: Record<string, unknown>, b: Record<string, unknow
 
 /** Một thay đổi để hiển thị. Ô trống được hiển thị bằng chữ mặc định (cờ *Default = true). */
 export type FieldChange = {
-  id: string; // "hero_title" hoặc "show.about"
+  id: string; // "about_title" hoặc "show.about"
   block: string; // tên khối, ví dụ "Banner đầu trang"
   label: string; // tên ô, hoặc "Hiển thị trên trang chủ" với công tắc
   before: string;

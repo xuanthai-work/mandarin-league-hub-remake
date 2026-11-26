@@ -9,7 +9,10 @@ export interface ContentFieldInputProps {
   field: ContentField<string>;
   value: string;
   onChange: (v: string) => void;
+  /** Khác bản nháp đã lưu → chấm vàng “chưa lưu”. */
   changed: boolean;
+  /** Khác bản đã xuất bản → nhãn “Nháp”. */
+  draft: boolean;
   error: string | null;
 }
 
@@ -18,6 +21,7 @@ export function ContentFieldInput({
   value,
   onChange,
   changed,
+  draft,
   error,
 }: ContentFieldInputProps) {
   const id = `field-${field.key}`;
@@ -41,29 +45,26 @@ export function ContentFieldInput({
         </label>
 
         <div className="flex items-center gap-2">
-          {!hasValue ? (
-            field.fallback !== "" ? (
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                Mặc định
-              </span>
-            ) : (
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                Để trống = ẩn
-              </span>
-            )
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-              <span>Đã sửa</span>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onChange("")}
-                aria-label="Dùng chữ mặc định"
-                className="h-auto rounded p-0.5 text-primary/70 hover:bg-transparent hover:text-primary [&_svg]:size-3"
-              >
-                <RotateCcw aria-hidden />
-              </Button>
+          {draft && (
+            <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[10px] font-medium text-primary-deep">
+              Nháp
             </span>
+          )}
+          {!draft && !hasValue && field.fallback === "" && (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              Để trống = ẩn
+            </span>
+          )}
+          {hasValue && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onChange("")}
+              aria-label="Dùng chữ mặc định"
+              className="h-auto rounded p-0.5 text-muted-foreground hover:bg-transparent hover:text-primary [&_svg]:size-3"
+            >
+              <RotateCcw aria-hidden />
+            </Button>
           )}
 
           <span className="text-[11px] text-muted-foreground tabular-nums">

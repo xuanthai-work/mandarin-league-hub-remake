@@ -15,7 +15,7 @@ import { PageHero } from "@/components/site/SiteLayout";
 import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { SectionTitle } from "@/components/site/ui";
 import { pageMeta } from "@/lib/seo";
-import { useSiteContent } from "@/lib/site-content";
+import { useSiteContent, type HomeTextFieldKey } from "@/lib/site-content";
 
 export const Route = createFileRoute("/about")({
   staticData: { sitemap: true },
@@ -28,11 +28,42 @@ export const Route = createFileRoute("/about")({
   component: PAbout,
 });
 
-const VALUES = [
-  { icon: BookOpen, t: "Học tập", d: "Học bài bản, thực chất." },
-  { icon: Users, t: "Cộng đồng", d: "Cùng nhau tiến bộ." },
-  { icon: Sparkles, t: "Sáng tạo", d: "Đổi mới cách học." },
-  { icon: HeartHandshake, t: "Trách nhiệm", d: "Minh bạch, tận tâm." },
+/** 4 giá trị dùng chung nội dung với khối “Giá trị cốt lõi” trên trang chủ. */
+const VALUES: {
+  icon: typeof Users;
+  t: string;
+  d: string;
+  titleKey: HomeTextFieldKey;
+  descKey: HomeTextFieldKey;
+}[] = [
+  {
+    icon: BookOpen,
+    t: "Học tập",
+    d: "Học bài bản, thực chất.",
+    titleKey: "value1_title",
+    descKey: "value1_desc",
+  },
+  {
+    icon: Users,
+    t: "Cộng đồng",
+    d: "Cùng nhau tiến bộ.",
+    titleKey: "value2_title",
+    descKey: "value2_desc",
+  },
+  {
+    icon: Sparkles,
+    t: "Sáng tạo",
+    d: "Đổi mới cách học.",
+    titleKey: "value3_title",
+    descKey: "value3_desc",
+  },
+  {
+    icon: HeartHandshake,
+    t: "Trách nhiệm",
+    d: "Minh bạch, tận tâm.",
+    titleKey: "value4_title",
+    descKey: "value4_desc",
+  },
 ];
 
 const STEPS = [
@@ -58,16 +89,14 @@ function PAbout() {
       <BreadcrumbBar items={[{ label: "Giới thiệu" }, { label: "Về TML" }]} />
       <PageHero
         eyebrow="Giới thiệu"
-        title={h.about_page_title || "The Mandarin League"}
-        desc={
-          h.about_page_desc || "Liên Đoàn Hán Ngữ · 普通话联盟 — Online Chinese Learning Community."
-        }
+        title="The Mandarin League"
+        desc="Liên Đoàn Hán Ngữ · 普通话联盟 — Online Chinese Learning Community."
       />
       <div className="mx-auto max-w-7xl space-y-20 px-4 py-16 md:px-6">
         <section className="grid gap-8 md:grid-cols-2">
           <SectionTitle
-            label={h.about_page_intro_label || "01 · TML là gì?"}
-            title={h.about_page_intro_title || "Cộng đồng giáo dục tiếng Trung trực tuyến"}
+            label={tr("01 · TML là gì?")}
+            title={h.about_page_intro_title || tr("Cộng đồng giáo dục tiếng Trung trực tuyến")}
           />
           <p className="text-muted-foreground">
             {h.about_page_intro_body ||
@@ -80,14 +109,14 @@ function PAbout() {
           {[
             {
               icon: Target,
-              l: h.about_page_mission_label || "02 · Sứ mệnh",
+              l: "02 · Sứ mệnh",
               d:
                 h.about_page_mission ||
                 "Giúp người Việt học tiếng Trung hiệu quả, dễ tiếp cận và giàu trải nghiệm.",
             },
             {
               icon: Telescope,
-              l: h.about_page_vision_label || "03 · Tầm nhìn",
+              l: "03 · Tầm nhìn",
               d:
                 h.about_page_vision ||
                 "Trở thành cộng đồng học tiếng Trung trực tuyến uy tín, cầu nối giáo dục Việt – Trung.",
@@ -103,24 +132,21 @@ function PAbout() {
           ))}
         </section>
         <section>
-          <SectionTitle
-            label="04 · Giá trị cốt lõi"
-            title={h.about_page_values_title || "Điều chúng tôi theo đuổi"}
-          />
+          <SectionTitle label={tr("04 · Giá trị cốt lõi")} title={tr("Điều chúng tôi theo đuổi")} />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {VALUES.map((v) => (
               <div key={v.t} className="rounded-2xl border border-border bg-card p-6">
                 <v.icon className="h-6 w-6 text-gold" />
-                <div className="mt-3 font-bold text-primary-deep">{tr(v.t)}</div>
-                <div className="text-sm text-muted-foreground">{tr(v.d)}</div>
+                <div className="mt-3 font-bold text-primary-deep">{h[v.titleKey] || tr(v.t)}</div>
+                <div className="text-sm text-muted-foreground">{h[v.descKey] || tr(v.d)}</div>
               </div>
             ))}
           </div>
         </section>
         <section>
           <SectionTitle
-            label="05 · Cách hoạt động"
-            title={h.about_page_steps_title || "TML hoạt động như thế nào?"}
+            label={tr("05 · Cách hoạt động")}
+            title={tr("TML hoạt động như thế nào?")}
           />
           <ol className="mt-8 grid gap-4 md:grid-cols-4">
             {STEPS.map((s, i) => (
@@ -132,10 +158,7 @@ function PAbout() {
           </ol>
         </section>
         <section>
-          <SectionTitle
-            label="06 · Chương trình"
-            title={h.about_page_programs_title || "Các chương trình chính"}
-          />
+          <SectionTitle label={tr("06 · Chương trình")} title={tr("Các chương trình chính")} />
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {PROGRAMS.map((p) => (
               <div

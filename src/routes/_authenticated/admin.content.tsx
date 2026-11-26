@@ -124,6 +124,15 @@ function ContentAdmin() {
 
   const homeSaved = useMemo(() => toHomeForm(homeRow.data?.draft), [homeRow.data?.draft]);
   const siteSaved = useMemo(() => toSiteForm(siteRow.data?.draft), [siteRow.data?.draft]);
+  // Bản đang hiển thị trên website — dùng để biết mục nào còn là bản nháp.
+  const homePublished = useMemo(
+    () => toHomeForm(homeRow.data?.published),
+    [homeRow.data?.published],
+  );
+  const sitePublished = useMemo(
+    () => toSiteForm(siteRow.data?.published),
+    [siteRow.data?.published],
+  );
 
   const prevHomeSavedRef = useRef<HomeContent | null>(null);
   const prevSiteSavedRef = useRef<SiteSettings | null>(null);
@@ -493,7 +502,7 @@ function ContentAdmin() {
             options={(
               [
                 ["home", "Trang chủ", unsavedHome > 0],
-                ["site", "Liên hệ & Chân trang", unsavedSite > 0],
+                ["site", "Liên hệ & Mạng xã hội", unsavedSite > 0],
                 ["log", "Lịch sử thay đổi", false],
               ] as const
             ).map(([k, label, isDirty]) => ({
@@ -588,6 +597,7 @@ function ContentAdmin() {
                 lang={editLang}
                 form={homeForm as unknown as Record<string, unknown>}
                 saved={homeSaved as unknown as Record<string, unknown>}
+                published={homePublished as unknown as Record<string, unknown>}
                 onFieldChange={updateHomeField}
                 errors={homeErrors}
                 onBackToSection={() =>
@@ -624,6 +634,7 @@ function ContentAdmin() {
                     lang={editLang}
                     form={homeForm as unknown as Record<string, unknown>}
                     saved={homeSaved as unknown as Record<string, unknown>}
+                    published={homePublished as unknown as Record<string, unknown>}
                     onFieldChange={updateHomeField}
                     errors={homeErrors}
                     dirty={homeDirtyBlocks.has(block.id)}
@@ -636,14 +647,14 @@ function ContentAdmin() {
           </div>
         ))}
 
-      {/* Liên hệ & Chân trang */}
+      {/* Liên hệ & Mạng xã hội */}
       {tab === "site" &&
         (siteRow.isLoading ? (
           <p className="text-sm text-muted-foreground">Đang tải…</p>
         ) : (
           <div className="min-w-0 space-y-4">
             <header className="border-b border-border pb-3">
-              <h1 className="text-lg font-bold text-primary-deep">Liên hệ & Chân trang</h1>
+              <h1 className="text-lg font-bold text-primary-deep">Liên hệ & Mạng xã hội</h1>
             </header>
 
             {SITE_BLOCKS.map((block, index) => (
@@ -654,6 +665,7 @@ function ContentAdmin() {
                 lang={editLang}
                 form={siteForm as unknown as Record<string, unknown>}
                 saved={siteSaved as unknown as Record<string, unknown>}
+                published={sitePublished as unknown as Record<string, unknown>}
                 onFieldChange={updateSiteField}
                 errors={siteErrors}
                 dirty={siteDirtyIds.has(block.id)}
