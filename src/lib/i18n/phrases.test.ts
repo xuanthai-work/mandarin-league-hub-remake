@@ -53,3 +53,9 @@ describe("PHRASES (TASK-GE-205)", () => {
     expect(trPhrase("en", "Khám phá khóa học")).toBe("Explore courses");
   });
 });
+
+describe("about page numbered labels (TASK-GE-238)", () => {
+  it("translates the community card label", () => {
+    expect(PHRASES["09 · Cộng đồng"]).toEqual(["09 · 社区", "09 · Community"]);
+  });
+});

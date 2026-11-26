@@ -290,6 +290,7 @@ export const PHRASES: Record<string, [string, string]> = {
   ],
   "Xem sơ đồ": ["查看架构图", "View chart"],
   "08 · Đối tác & cơ hội": ["08 · 合作伙伴与机遇", "08 · Partners & opportunities"],
+  "09 · Cộng đồng": ["09 · 社区", "09 · Community"],
   "Cùng TML mở rộng cơ hội học tập": [
     "与 TML 一起拓展学习机会",
     "Expand learning opportunities with TML",
