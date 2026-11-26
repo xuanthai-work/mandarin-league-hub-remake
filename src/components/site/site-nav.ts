@@ -83,9 +83,3 @@ export const LANDING_NAV: LandingNavItem[] = [
   },
   { id: "contact", label: "Liên hệ", dict: "nav./contact", show: "cta", page: "/contact" },
 ];
-
-export const CONTACT = {
-  email: "community@themandarinleague.bond",
-  facebook: "https://www.facebook.com/themandarinleague/",
-  instagram: "https://www.instagram.com/liendoanhanngu?stkn=MXJzbXhkY3kyNDc2aw==",
-};

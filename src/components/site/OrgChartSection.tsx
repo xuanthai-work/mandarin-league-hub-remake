@@ -34,17 +34,11 @@ type Path = { id: string; d: string };
 export function OrgChartSection({
   id,
   heading = false,
-  title,
   desc,
-  ctaLabel,
-  ctaHref = "/organization",
 }: {
   id?: string;
   heading?: boolean;
-  title?: string;
   desc?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
 }) {
   const tr = useTr();
   const preview = usePreviewMode();
@@ -119,16 +113,16 @@ export function OrgChartSection({
           <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
             <SectionTitle
               label={tr("Cơ cấu tổ chức")}
-              title={title || tr("Sơ đồ tổ chức TML")}
+              title={tr("Sơ đồ tổ chức TML")}
               desc={
                 desc || tr("The Mandarin League vận hành bởi Ban Điều hành và 8 Ban chuyên môn.")
               }
             />
             <CtaLink
-              href={appendPreview(ctaHref, preview)}
+              href={appendPreview("/organization", preview)}
               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
             >
-              {ctaLabel || tr("Trang cơ cấu tổ chức")} <ArrowRight className="h-4 w-4" />
+              {tr("Trang cơ cấu tổ chức")} <ArrowRight className="h-4 w-4" />
             </CtaLink>
           </div>
         )}

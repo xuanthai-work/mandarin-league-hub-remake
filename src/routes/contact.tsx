@@ -1,7 +1,7 @@
 import { useTr } from "@/lib/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { Briefcase, GraduationCap, Handshake, Mail, Megaphone, Users } from "lucide-react";
-import { PageHero, CONTACT } from "@/components/site/SiteLayout";
+import { PageHero } from "@/components/site/SiteLayout";
 import { ContactForm } from "@/components/site/ContactForm";
 import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { pageMeta } from "@/lib/seo";
@@ -26,6 +26,7 @@ const GROUPS = [
 function PContact() {
   const tr = useTr();
   const h = useSiteContent("home").data;
+  const site = useSiteContent("site").data;
   return (
     <>
       <BreadcrumbBar items={[{ label: "Liên hệ" }]} />
@@ -37,17 +38,17 @@ function PContact() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:px-6 lg:grid-cols-[1fr_1.3fr]">
         <div>
           <a
-            href={`mailto:${CONTACT.email}`}
+            href={`mailto:${site.email}`}
             className="flex items-center gap-3 rounded-2xl bg-brand-gradient p-6 font-semibold text-primary-foreground"
           >
             <Mail className="h-6 w-6" />
-            {CONTACT.email}
+            {site.email}
           </a>
           <div className="mt-6 grid grid-cols-2 gap-3">
             {GROUPS.map((g) => (
               <a
                 key={g.t}
-                href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(`[${g.t}] `)}`}
+                href={`mailto:${site.email}?subject=${encodeURIComponent(`[${g.t}] `)}`}
                 className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 font-medium hover:border-primary/50"
               >
                 <g.icon className="h-5 w-5 text-primary" />

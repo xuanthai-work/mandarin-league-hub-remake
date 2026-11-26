@@ -63,28 +63,24 @@ export function ContactSection({ h }: { h: HomeContent }) {
                 <Instagram className="h-5 w-5" />
                 Instagram TML
               </a>
-              {site.threads && (
-                <a
-                  href={site.threads}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 hover:underline"
-                >
-                  <AtSign className="h-5 w-5" />
-                  Threads TML
-                </a>
-              )}
-              {site.tiktok && (
-                <a
-                  href={site.tiktok}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 hover:underline"
-                >
-                  <Music2 className="h-5 w-5" />
-                  TikTok TML
-                </a>
-              )}
+              <a
+                href={site.threads}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 hover:underline"
+              >
+                <AtSign className="h-5 w-5" />
+                Threads TML
+              </a>
+              <a
+                href={site.tiktok}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 hover:underline"
+              >
+                <Music2 className="h-5 w-5" />
+                TikTok TML
+              </a>
               {site.linkedin && (
                 <a
                   href={site.linkedin}

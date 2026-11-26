@@ -4,7 +4,7 @@ import { CrystalParticles } from "./CrystalParticles";
 import { Header } from "./SiteHeader";
 import { Footer } from "./SiteFooter";
 
-export { CONTACT, LANDING_NAV } from "@/components/site/site-nav";
+export { LANDING_NAV } from "@/components/site/site-nav";
 export type { NavChild, NavPage, LandingNavItem } from "@/components/site/site-nav";
 
 export function SiteLayout({ children }: { children: ReactNode }) {

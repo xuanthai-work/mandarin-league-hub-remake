@@ -321,6 +321,7 @@ Tài liệu này lưu trữ lịch sử các task implementation đã hoàn thà
 | `TASK-GE-234-CONTENT-SHARED-ROW-WRITE`                                 | Trang nội dung: gom phần ghi site_content dùng chung cho lưu nháp và xuất bản                          | 2026-11-23     | **PASS** | [task-ge-234-content-shared-row-write.md](tasks/task-ge-234-content-shared-row-write.md)                                                                 |
 | `TASK-GE-235-CONTENT-HISTORY-HIDE-AUTOSAVES`                           | Lịch sử nội dung: mặc định ẩn các dòng lưu nháp tự động                                                | 2026-11-23     | **PASS** | [task-ge-235-content-history-hide-autosaves.md](tasks/task-ge-235-content-history-hide-autosaves.md)                                                     |
 | `TASK-GE-236-CONTENT-AUDIT-COALESCE-DRAFTS`                            | Migration 0091: gộp các lần lưu nháp liền nhau trong nhật ký nội dung                                  | 2026-11-23     | **PASS** | [task-ge-236-content-audit-coalesce-drafts.md](tasks/task-ge-236-content-audit-coalesce-drafts.md)                                                       |
+| `TASK-GE-237-CONTENT-SOCIAL-LINKS-SAFE-AND-CONTACT-EMAIL`              | Lọc link mạng xã hội từ CMS và dùng chung một email liên hệ                                            | 2026-11-26     | **PASS** | [task-ge-237-content-social-links-safe-and-contact-email.md](tasks/task-ge-237-content-social-links-safe-and-contact-email.md)                           |
 
 ---
 

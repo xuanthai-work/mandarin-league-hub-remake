@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowUpRight, Handshake } from "lucide-react";
-import { PageHero, CONTACT } from "@/components/site/SiteLayout";
+import { PageHero } from "@/components/site/SiteLayout";
 import { BreadcrumbBar } from "@/components/site/PageBreadcrumb";
 import { Chips, EmptyState } from "@/components/site/ui";
 import { PARTNER_CATEGORIES } from "@/lib/data/partners";
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/partners")({
 function PPartners() {
   const tr = useTr();
   const h = useSiteContent("home").data;
+  const site = useSiteContent("site").data;
   const [cat, setCat] = useState<PartnerCategory | "all">("all");
   const q = useActivePartners();
   const list = (q.data ?? []).filter((p) => cat === "all" || p.category === cat);
@@ -75,7 +76,7 @@ function PPartners() {
         <div className="mt-14 rounded-3xl bg-brand-gradient p-10 text-center text-primary-foreground">
           <h2 className="text-2xl font-bold">{tr("Bạn muốn hợp tác cùng TML?")}</h2>
           <a
-            href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(tr("Hợp tác cùng TML"))}`}
+            href={`mailto:${site.email}?subject=${encodeURIComponent(tr("Hợp tác cùng TML"))}`}
             className="mt-6 inline-flex rounded-full bg-background px-7 py-3 font-semibold text-primary-deep hover:opacity-90"
           >
             {tr("TRỞ THÀNH ĐỐI TÁC")}

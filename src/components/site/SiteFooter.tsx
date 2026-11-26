@@ -8,10 +8,6 @@ import { useSiteContent } from "@/lib/site-content";
 const SOCIAL_LINK =
   "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary-foreground/25 text-primary-foreground/85 transition-colors hover:border-gold/70 hover:bg-primary-foreground/10 hover:text-gold focus-visible:outline-none focus-visible:border-gold/70 focus-visible:text-gold focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-deep";
 
-/** Tài khoản mặc định khi Trang & Nội dung chưa đặt liên kết riêng. */
-const THREADS_URL = "https://www.threads.com/@liendoanhanngu";
-const TIKTOK_URL = "https://www.tiktok.com/@themandarinleague?is_from_webapp=1&sender_device=pc";
-
 const LEGAL_LINK =
   "rounded-sm py-1 text-primary-foreground/75 underline-offset-4 transition-colors hover:text-gold hover:underline focus-visible:outline-none focus-visible:text-gold focus-visible:ring-2 focus-visible:ring-gold/70";
 
@@ -72,7 +68,7 @@ export function Footer() {
                 <Instagram className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
               </a>
               <a
-                href={site.threads || THREADS_URL}
+                href={site.threads}
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Threads"
@@ -81,7 +77,7 @@ export function Footer() {
                 <AtSign className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
               </a>
               <a
-                href={site.tiktok || TIKTOK_URL}
+                href={site.tiktok}
                 target="_blank"
                 rel="noreferrer"
                 aria-label="TikTok"

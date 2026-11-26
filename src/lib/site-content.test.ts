@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendPreview, safeHref } from "./site-content";
+import { appendPreview, mergeContent, safeHref, SITE_DEFAULTS } from "./site-content";
 
 describe("safeHref", () => {
   it("allows safe internal, anchor and https links", () => {
@@ -55,5 +55,42 @@ describe("appendPreview", () => {
     expect(appendPreview("javascript:alert(1)", true)).not.toMatch(/^javascript:/i);
     expect(appendPreview("javascript:alert(1)", true)).toBe("/?preview=1");
     expect(appendPreview("//evil.com", true)).toBe("/?preview=1");
+  });
+});
+
+describe("mergeContent social links", () => {
+  const bad = ["//evil.example.com", "data:text/html,x", "javascript:alert(1)", "/about"];
+
+  it("rejects non-http(s) social urls for facebook and threads, keeping defaults", () => {
+    for (const url of bad) {
+      const merged = mergeContent("site", { facebook: url, threads: url });
+      expect(merged.facebook).toBe(SITE_DEFAULTS.facebook);
+      expect(merged.threads).toBe(SITE_DEFAULTS.threads);
+    }
+  });
+
+  it("rejects non-http(s) social urls for linkedin, keeping empty string", () => {
+    for (const url of bad) {
+      expect(mergeContent("site", { linkedin: url }).linkedin).toBe("");
+    }
+  });
+
+  it("keeps valid trimmed https urls", () => {
+    const merged = mergeContent("site", {
+      facebook: "  https://facebook.com/custom  ",
+      linkedin: " https://linkedin.com/company/tml ",
+    });
+    expect(merged.facebook).toBe("https://facebook.com/custom");
+    expect(merged.linkedin).toBe("https://linkedin.com/company/tml");
+  });
+
+  it("uses built-in defaults when threads and tiktok are empty", () => {
+    const merged = mergeContent("site", { threads: "   ", tiktok: "" });
+    expect(merged.threads).toBe(SITE_DEFAULTS.threads);
+    expect(merged.tiktok).toBe(SITE_DEFAULTS.tiktok);
+  });
+
+  it("does not filter home links such as about_cta_url", () => {
+    expect(mergeContent("home", { about_cta_url: "/about" }).about_cta_url).toBe("/about");
   });
 });

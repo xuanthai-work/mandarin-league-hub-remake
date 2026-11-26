@@ -95,7 +95,7 @@ function blankTranslations<T extends string>(keys: readonly T[]): Translations<T
   return out as Translations<T>;
 }
 
-/** Site-wide settings (footer, contact, social). Empty string = use built-in default. */
+/** Site-wide settings (footer, contact, social). Empty string = use built-in default (except LinkedIn, which hides when empty). */
 type SiteSettingsBase = {
   email: string;
   facebook: string;
@@ -110,8 +110,8 @@ export const SITE_DEFAULTS: SiteSettings = {
   email: "community@themandarinleague.bond",
   facebook: "https://www.facebook.com/themandarinleague/",
   instagram: "https://www.instagram.com/liendoanhanngu?stkn=MXJzbXhkY3kyNDc2aw==",
-  threads: "",
-  tiktok: "",
+  threads: "https://www.threads.com/@liendoanhanngu",
+  tiktok: "https://www.tiktok.com/@themandarinleague?is_from_webapp=1&sender_device=pc",
   linkedin: "",
 };
 
@@ -299,16 +299,23 @@ export function localizeContent<K extends ContentKey>(
   return out as (typeof DEFAULTS)[K];
 }
 
+/** Link mạng xã hội đi thẳng vào <a href>, nên chỉ nhận URL http(s) tuyệt đối. */
+const SOCIAL_KEYS = new Set(["facebook", "instagram", "threads", "tiktok", "linkedin"]);
+
 /** Merge stored JSON over defaults so missing/blank fields never break the layout. */
 export function mergeContent<K extends ContentKey>(key: K, raw: unknown): (typeof DEFAULTS)[K] {
   const base = DEFAULTS[key] as Record<string, unknown>;
   const src = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const out: Record<string, unknown> = { ...base };
   for (const k of Object.keys(base)) {
-    if (k === "show")
+    if (k === "show") {
       out["show"] = { ...(base["show"] as object), ...((src["show"] as object) ?? {}) };
-    else if (typeof src[k] === "string" && (src[k] as string).trim())
-      out[k] = (src[k] as string).trim();
+      continue;
+    }
+    const value = typeof src[k] === "string" ? (src[k] as string).trim() : "";
+    if (!value) continue;
+    if (key === "site" && SOCIAL_KEYS.has(k) && !/^https?:\/\/\S+$/i.test(value)) continue;
+    out[k] = value;
   }
   return out as (typeof DEFAULTS)[K];
 }
